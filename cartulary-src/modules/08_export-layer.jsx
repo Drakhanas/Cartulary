@@ -672,6 +672,33 @@ const resolveImageManifestForHtmlExport = async (refs, dirHandle) => {
   return manifest;
 };
 
+// Natural pixel size of an image given as a data URL, or null if it will not
+// decode. The map canvas's viewBox is the image's natural size (pins are
+// normalized to that rect), so the export has to know it before it can write
+// the svg; the manifest only carries the bytes.
+const loadImageNaturalSizeForExport = (src) => new Promise(resolve => {
+  const img = new Image();
+  img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+  img.onerror = () => resolve(null);
+  img.src = src;
+});
+
+// Map<image ref, {width, height}|null> for every map image the manifest
+// resolved. Entry-field images are not measured; nothing positions against them.
+const resolveMapImageSizesForHtmlExport = async (state, manifest) => {
+  const sizes = new Map();
+  if (!manifest) return sizes;
+  const maps = Array.isArray(state.cartographia) ? state.cartographia : [];
+  for (const rec of maps) {
+    const ref = rec && rec.mapData && rec.mapData.image;
+    if (!ref || sizes.has(ref)) continue;
+    const dataUrl = manifest.get(ref);
+    if (!dataUrl) continue;
+    sizes.set(ref, await loadImageNaturalSizeForExport(dataUrl));
+  }
+  return sizes;
+};
+
 // Project a calendar-date value from one calendar's frame to another, via
 // absoluteDay. Returns the projected {year, monthIndex, day, approximate}
 // or null if conversion fails. When fromCal === toCal, returns the original
@@ -885,12 +912,13 @@ const renderFieldForHtml = (field, val, ctx) => {
   }
 };
 
-// Render a map-kind entry's mapData as a static image with absolute-positioned
-// pin overlay + numbered legend below. Pins filter through isPinVisibleAtAbsDay
-// when ctx.currentMomentDay is set; null currentMomentDay shows all pins (per
-// the warning-and-proceed flow in the export modal).
+// Render a map record's mapData as the drawing canvas (the one svg tree, string
+// serialized; the image inlined inside it when there is one) with the
+// absolute-positioned pin overlay + numbered legend below. Pins filter through
+// isPinVisibleAtAbsDay when ctx.currentMomentDay is set; null currentMomentDay
+// shows all pins (per the warning-and-proceed flow in the export modal).
 const renderMapHtml = (entry, tpl, state, ctx) => {
-  const mapData = entry.mapData || { image: null, pins: [] };
+  const mapData = ensureMapData(entry.mapData);
   const allPins = Array.isArray(mapData.pins) ? mapData.pins : [];
 
   // currentMoment-aware pin filtering. Permanent pins always visible (handled
@@ -905,18 +933,27 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
     visiblePins = allPins;
   }
 
-  // Resolve the map background image through the manifest
+  // Resolve the map background image through the manifest, and its natural
+  // size through the sizes map; the canvas is drawn at that size.
   const imageDataUrl = (mapData.image && ctx.imageManifest) ? ctx.imageManifest.get(mapData.image) : null;
+  const imageSize = (imageDataUrl && ctx.imageSizes) ? ctx.imageSizes.get(mapData.image) : null;
 
   let imgHtml;
   if (imageDataUrl) {
-    imgHtml = `<img class="map-image" src="${htmlEscape(imageDataUrl)}" alt="" />`;
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, {
+      id: entry.id,
+      className: "map-image",
+      label: entry.name,
+      imageHref: imageDataUrl,
+      imageWidth: imageSize ? imageSize.width : null,
+      imageHeight: imageSize ? imageSize.height : null,
+    }));
   } else if (mapData.image) {
     imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>`;
-  } else if (visiblePins.length === 0) {
-    return `<div class="map-empty">(empty map: no image, no pins)</div>`;
+  } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
+    return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = `<div class="map-image-placeholder">(no map image; pins below)</div>`;
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name }));
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /
@@ -1272,6 +1309,7 @@ const buildHtmlExport = async (state, options, dirHandle) => {
   // missing files surface as placeholders.
   const imageRefs = collectImageRefsForHtmlExport(state);
   const imageManifest = await resolveImageManifestForHtmlExport(imageRefs, dirHandle);
+  const imageSizes = await resolveMapImageSizesForHtmlExport(state, imageManifest);
 
   // Resolve display calendar choice
   let displayCalendarChoice;
@@ -1300,6 +1338,7 @@ const buildHtmlExport = async (state, options, dirHandle) => {
     options,
     currentMomentDay,
     imageManifest,
+    imageSizes,
   };
 
   // Group entries by template; alphabetical within group
