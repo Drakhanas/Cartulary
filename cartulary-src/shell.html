@@ -1412,6 +1412,42 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .map-pin-faded{opacity:.28;transition:opacity .15s}
 .map-pin-faded:hover{opacity:.7}
 
+/* Map drawing tools (v1.6 pillar 3) */
+.map-tools{
+  display:flex;flex-direction:column;gap:6px;padding:8px 10px;
+  background:var(--surf2);border:1px solid var(--border);border-bottom:none;
+}
+.map-tools-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.map-tools-label{
+  font-family:'DM Sans',sans-serif;font-size:calc(10px * var(--font-scale));
+  letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-left:6px;
+}
+.map-tools-label:first-child{margin-left:0}
+.map-tools-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.map-tools-select{width:auto;padding:3px 8px;font-size:calc(11px * var(--font-scale))}
+.map-swatches{display:inline-flex;align-items:center;gap:4px}
+.map-swatch{
+  width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
+  border:1px solid var(--border2);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
+}
+.map-swatch.active{outline:2px solid var(--accent);outline-offset:1px}
+.map-swatch-none{
+  background:transparent;position:relative;overflow:hidden;
+}
+.map-swatch-none::after{
+  content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1.5px;
+  background:var(--danger);transform:rotate(45deg);transform-origin:center;
+}
+.map-canvas:focus{outline:none}
+.map-canvas.draw-mode .map-image{pointer-events:auto}
+.map-canvas.draw-mode .map-pin{pointer-events:none;opacity:.5}
+.map-canvas.tool-select{cursor:default}
+.map-canvas.tool-rect,.map-canvas.tool-ellipse,.map-canvas.tool-polygon,.map-canvas.tool-stroke{cursor:crosshair}
+.map-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:6}
+.map-canvas.tool-select .map-overlay{pointer-events:auto}
+.map-canvas.tool-select .map-overlay [data-shape]{cursor:move}
+.map-canvas.tool-select .map-overlay [data-vertex]{cursor:crosshair}
+
 /* ── Calendar editor ── */
 .cal-editor{margin-top:8px}
 .cal-row{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--surf2);border:1px solid var(--border);border-radius:3px;margin-bottom:5px;position:relative}
