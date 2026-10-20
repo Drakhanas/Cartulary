@@ -1,0 +1,97 @@
+CARTULARY v1.5 - PATCH NOTES
+============================
+
+NEW VIEWS
+---------
+
+Glossopoeia - a dedicated workspace for constructed languages.
+  Each language gets eleven workspaces: Phonology (Inventory and
+  Phonotactics), Morphology, Noun Number, Pronouns, Verbs, Grammatica
+  (Syntax and Complex Structures), Lexicon, Orthography, and Corpus.
+  - Build a phoneme inventory with optional articulatory features.
+  - Define syllable structure, stress, phonotactic constraints, and
+    phonological rules.
+  - Morphology toolbox: grammatical values, affixes, word-building
+    processes, and inflection classes with paradigm grids.
+  - Diachronic forking: clone a language into a daughter and run
+    sound-change rules to derive its inventory from the parent.
+  - Per-language import and export.
+  - ConLang and Lexeme entries appear as nodes in Concordance and can
+    be referenced from Characters, Locations, Cultures, and more.
+
+  The old Language / Glossary template is replaced by Glossopoeia.
+  Existing language entries are migrated automatically when you load
+  your world; nothing is lost.
+
+Ephemeris - a workspace for astronomical bodies and orbital math.
+  - Define stars, planets, moons, and other bodies with mass, radius,
+    axial tilt, and full orbital elements.
+  - Compute finds conjunctions, oppositions, eclipses, transit windows,
+    and nodal crossings across any date range.
+  - Observe gives a day-by-day sky view with steppers (day / week /
+    month / year, forward and back).
+  - Habitable zone modeling with three thermal models and a luminosity
+    override.
+  - Forced Alignment: specify when an astronomical event should occur
+    in your world and it back-solves the orbital parameters to match.
+  - Moons defined here feed the moon-phase icons in Kalendarium's
+    calendar grid, so you define a moon once and it works everywhere.
+
+
+PACKS
+-----
+
+Packs are template bundles you can install in a single import. A
+collision modal handles any names that already exist in your world,
+and packs export individually the same way templates and stemmas do.
+
+Space Opera pack (ships with v1.5) - eight templates wired together
+  with cross-references: Vessel, Technology, Cargo / Commodity,
+  Colony / Station / Habitat, Route, AI / Synthetic, Crew, and
+  Powers / Abilities.
+
+
+NEW FIELD TYPES
+---------------
+
+Grid - a 2D table you can add to any entry or custom template. Each
+  cell is independently typed (text, number, entry-ref, calendar date,
+  or date range).
+
+Longform note - a dedicated long-text field with Indent and Divider
+  toolbar buttons, for prose sections that need more structure than a
+  plain text area.
+
+
+NEW BUILT-IN TEMPLATE
+---------------------
+
+House / Dynasty / Clan / Bloodline - for ruling families, dynastic
+  lines, and hereditary organizations.
+
+
+SMALLER CHANGES
+---------------
+
+- Entry-ref field labels now carry a dotted underline. Hover one to
+  see which template it targets and any active filter.
+- Calendars now offer five date-display presets.
+- Concordance remembers node positions for ConLang and Astronomical
+  Body nodes, not just regular entries; positions survive reload,
+  export, and device transfer.
+- Concordance uses a containment layout that keeps the graph from
+  drifting off-screen.
+- Concordance opens with no templates checked, so a large world no
+  longer renders as one giant tangle on open. Tick the templates you
+  want, or use the "all" link to show everything.
+- A long tail of bug fixes and corrections to the in-app help text.
+
+
+WHERE TO FIND HELP
+------------------
+
+The full usage guide is inside the application: click the Home icon
+in the sidebar. Full documentation is also at cartulary.world.
+
+Questions or bug reports: drakhanas.itch.io/cartulary (page comments)
+or the Discord at discord.gg/zWMKXfZtcC.

@@ -1,0 +1,9 @@
+# build outputs: regenerable byte-for-byte from the tree
+inlining/out/
+# extracted packages (deps/*.tgz are the pinned offline set)
+node_modules/
+# python
+__pycache__/
+*.pyc
+# the parse gate's old hard-coded input path
+/cartulary.html

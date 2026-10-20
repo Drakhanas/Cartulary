@@ -1,0 +1,4 @@
+# Bytes in, bytes out. The reconstitution gate is byte-identity on the assembled
+# body, so no checkout on any platform may touch a line ending. This unsets the
+# text attribute for every path: git never converts, diffs still work.
+* -text

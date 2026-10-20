@@ -1,0 +1,38 @@
+name: gate
+
+# Every push runs the same gates a session runs by hand. Nothing here reaches the
+# network: the parser comes from deps/, the tree carries its own anchor.
+on: [push, pull_request]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: reconstitution gate (verify)
+        run: python3 inlining/build_inline.py verify
+
+      - name: assemble the working HTML
+        run: python3 inlining/build_inline.py working
+
+      - name: parse gate
+        run: |
+          mkdir -p babelcheck/node_modules/@babel/parser
+          tar -xzf deps/parser-7.25.3.tgz -C babelcheck/node_modules/@babel/parser --strip-components=1
+          node babelcheck/check.js
+
+      - name: build-gate teeth
+        run: python3 inlining/prove_gate_teeth.py
+
+      - name: doc gate
+        run: python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --facts docs/facts.json
+
+      - name: doc-gate teeth
+        run: python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src

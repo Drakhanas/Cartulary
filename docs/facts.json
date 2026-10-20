@@ -1,0 +1,400 @@
+{
+  "derived": {
+    "module_file_count": 38,
+    "total_lines": 39337,
+    "raw_body_lines": 39337,
+    "canonical_lines": 37303,
+    "decl_count": 419,
+    "no_trailing_newline": 30,
+    "active_anchor": "reference-r026-body.jsx"
+  },
+  "published": {
+    "module_file_count": {
+      "value": 38,
+      "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
+    },
+    "total_lines": {
+      "value": 39337,
+      "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
+    },
+    "arc_count": {
+      "value": 28,
+      "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
+    },
+    "no_trailing_nl": {
+      "value": 30,
+      "pattern": "(\\d+) of the 38 files have no trailing newline"
+    },
+    "decl_count": {
+      "value": 419,
+      "pattern": "decl-set (?:PASS at )?(\\d+)"
+    },
+    "canonical_lines": {
+      "value": 37303,
+      "pattern": "sequence PASS at ([\\d,]+)"
+    },
+    "raw_body_lines": {
+      "value": 39337,
+      "pattern": "raw line count PASS at ([\\d,]+)"
+    },
+    "header_count": {
+      "value": 74,
+      "pattern": "(\\d+) column-0 section headers"
+    },
+    "shears_resolved": {
+      "value": [
+        11,
+        "eleven"
+      ],
+      "pattern": "(?:^|\\s)(eleven|\\d+) sheared section headers"
+    },
+    "shears_remaining": {
+      "value": [
+        0,
+        "zero"
+      ],
+      "pattern": "(zero|one|\\d+) sheared headers? remains?"
+    },
+    "probe_count": {
+      "value": [
+        7,
+        "seven"
+      ],
+      "pattern": "(seven|\\d+) mutation probes"
+    },
+    "named_modules": {
+      "value": [
+        19,
+        "nineteen"
+      ],
+      "pattern": "(?i)(nineteen|\\d+) named modules"
+    },
+    "trunk_arcs": {
+      "value": [
+        9,
+        "nine"
+      ],
+      "pattern": "(?i)(nine|\\d+) trunk arcs"
+    },
+    "carves_proven": {
+      "value": 19,
+      "pattern": "proven on (\\d+) carves"
+    },
+    "anchor_bytes": {
+      "value": 2008051,
+      "pattern": "anchor is ([\\d,]+) bytes"
+    },
+    "anchor_rotations": {
+      "value": [
+        "eight",
+        8
+      ],
+      "pattern": "(?i)rotated (eight|\\d+) times"
+    },
+    "trunk16_lines": {
+      "value": 2051,
+      "pattern": "`16_trunk` \\((\\d+)\\)"
+    },
+    "trunk16_tiling": {
+      "value": "2051",
+      "pattern": "265 \\+ 1028 \\+ 758 = (\\d+)"
+    }
+  },
+  "assertions": [
+    {
+      "file": "14_form-engine-edit.jsx",
+      "line": 1223,
+      "contains": "Longform + rich text editor"
+    },
+    {
+      "file": "14_form-engine-edit.jsx",
+      "line": 1225,
+      "contains": "function LongformEditor"
+    },
+    {
+      "file": "13_form-engine-display.jsx",
+      "line": 264,
+      "contains": "Longform + markdown display"
+    },
+    {
+      "file": "13_form-engine-display.jsx",
+      "line": 266,
+      "contains": "function LongformDisplay"
+    },
+    {
+      "file": "17_chronometric.jsx",
+      "line": 2,
+      "contains": "Timeline view"
+    },
+    {
+      "file": "17_chronometric.jsx",
+      "line": 4,
+      "contains": "function TimelineView"
+    },
+    {
+      "file": "17_chronometric.jsx",
+      "line": 1528,
+      "contains": "}"
+    },
+    {
+      "file": "18_linea.jsx",
+      "line": 2,
+      "contains": "Family tree view"
+    },
+    {
+      "file": "18_linea.jsx",
+      "line": 4,
+      "contains": "function buildFamilyData"
+    },
+    {
+      "file": "18_linea.jsx",
+      "line": 646,
+      "contains": "}"
+    },
+    {
+      "file": "19_stemma.jsx",
+      "line": 2,
+      "contains": "Stemma helpers and canvas"
+    },
+    {
+      "file": "19_stemma.jsx",
+      "line": 9,
+      "contains": "const STEMMA_SLOTS"
+    },
+    {
+      "file": "19_stemma.jsx",
+      "line": 1410,
+      "contains": "}"
+    },
+    {
+      "file": "20_trunk.jsx",
+      "line": 2,
+      "contains": "Node-source registry"
+    },
+    {
+      "file": "23_kalendarium.jsx",
+      "line": 2,
+      "contains": "Kalendarium views"
+    },
+    {
+      "file": "23_kalendarium.jsx",
+      "line": 876,
+      "contains": "}"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 2,
+      "contains": "Settings"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 4,
+      "contains": "function SettingsView"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 265,
+      "contains": "}"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 267,
+      "contains": "Graph view"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 277,
+      "contains": "const VAGUE_EDGE_LABELS"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 279,
+      "contains": "function GraphView"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1293,
+      "contains": "}"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1295,
+      "contains": "Map view"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1297,
+      "contains": "function useMapImageUrl"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1932,
+      "contains": "Cartographia"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1940,
+      "contains": "function CartographiaIndexView"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 2051,
+      "contains": "}"
+    },
+    {
+      "file": "22_ephemeris/01_shell.jsx",
+      "line": 10,
+      "contains": "Ephemeris view (v1.5)"
+    },
+    {
+      "file": "22_ephemeris/01_shell.jsx",
+      "line": 36,
+      "contains": "function EphemerisView"
+    },
+    {
+      "file": "24_home-data.jsx",
+      "line": 2,
+      "contains": "Home view (app instructions)"
+    },
+    {
+      "file": "08_export-layer.jsx",
+      "line": 1441,
+      "contains": "HTML export modal"
+    },
+    {
+      "file": "08_export-layer.jsx",
+      "line": 1452,
+      "contains": "function HtmlExportModal"
+    },
+    {
+      "file": "05_field-system.jsx",
+      "line": 167,
+      "contains": "Relation value helpers"
+    },
+    {
+      "file": "05_field-system.jsx",
+      "line": 552,
+      "contains": "v1.3 select / cascade / required helpers"
+    },
+    {
+      "file": "03_persistence.jsx",
+      "line": 367,
+      "contains": "Version History panel"
+    },
+    {
+      "file": "26_modals.jsx",
+      "line": 2,
+      "contains": "Destructive Op confirmation modal"
+    },
+    {
+      "file": "26_modals.jsx",
+      "line": 98,
+      "contains": "Reset Template confirmation modal"
+    },
+    {
+      "file": "26_modals.jsx",
+      "line": 100,
+      "contains": "function ResetTemplateModal"
+    },
+    {
+      "file": "09_trunk.jsx",
+      "line": 172,
+      "contains": "Initial state"
+    },
+    {
+      "file": "12_trunk.jsx",
+      "line": 2,
+      "contains": "App"
+    },
+    {
+      "file": "10_migrate.jsx",
+      "line": 5805,
+      "contains": "marked.use({"
+    }
+  ],
+  "spans": {
+    "16_trunk.jsx": [
+      [
+        1,
+        265,
+        "head (SettingsView)"
+      ],
+      [
+        266,
+        1293,
+        "concordance"
+      ],
+      [
+        1294,
+        2051,
+        "cartographia"
+      ]
+    ],
+    "17_chronometric.jsx": [
+      [
+        1,
+        1528,
+        "chronometric"
+      ]
+    ],
+    "18_linea.jsx": [
+      [
+        1,
+        646,
+        "linea"
+      ]
+    ],
+    "19_stemma.jsx": [
+      [
+        1,
+        1410,
+        "stemma"
+      ]
+    ],
+    "23_kalendarium.jsx": [
+      [
+        1,
+        876,
+        "kalendarium"
+      ]
+    ]
+  },
+  "required_strings": {
+    "handoff.md": [
+      "r030",
+      "reference-r026-body.jsx",
+      "2facf10cea574525",
+      "header placement",
+      "prove_gate_teeth.py",
+      "build_inline.py gather",
+      "check_docs.py",
+      "all five checks green",
+      "back to front",
+      "23_kalendarium"
+    ],
+    "cartulary-spine-manifest.md": [
+      "## 11. Header integrity",
+      "r030",
+      "23_kalendarium",
+      "reference-r026-body.jsx",
+      "2facf10cea574525"
+    ],
+    "changelog.md": [
+      "r026",
+      "r027",
+      "r028",
+      "r029",
+      "r030",
+      "2facf10cea574525"
+    ],
+    "roadmap.md": [
+      "r030"
+    ],
+    "cartulary-doctrine.md": [
+      "r030"
+    ],
+    "journal-entry.txt": [
+      "r030"
+    ]
+  }
+}

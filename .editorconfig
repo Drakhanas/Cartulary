@@ -1,0 +1,9 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+# 30 of the 38 module files carry no trailing newline, on purpose; an editor
+# that adds one changes the file (harmless to the gate, noise in the record).
+insert_final_newline = false
+trim_trailing_whitespace = false

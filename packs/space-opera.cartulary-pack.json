@@ -1,0 +1,1405 @@
+{
+  "cartulary_pack_export": 1,
+  "exported_at": "2026-06-06T22:47:17.686837+00:00",
+  "pack": {
+    "id": "space-opera",
+    "name": "Space Opera",
+    "description": "A system-agnostic worldbuilding kit for space opera: ships, crews, technology, AI, powers, cargo, trade routes, and the places they dock.",
+    "templateIds": [
+      "vessel",
+      "technology",
+      "cargo-commodity",
+      "colony-station-habitat",
+      "route",
+      "ai-synthetic",
+      "crew",
+      "powers-abilities"
+    ]
+  },
+  "templates": [
+    {
+      "id": "vessel",
+      "name": "Vessel",
+      "icon": "🚀",
+      "color": "#6e9ec8",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-ves-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-registry-hull-no",
+          "label": "Registry / Hull No.",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-owner-operator",
+          "label": "Owner / Operator",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-ves-captain-commander",
+          "label": "Captain / Commander",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Character"
+        },
+        {
+          "id": "f-ves-crew",
+          "label": "Crew",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Crew"
+        },
+        {
+          "id": "f-ves-ship-ai",
+          "label": "Ship AI",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "AI / Synthetic"
+        },
+        {
+          "id": "f-ves-built-launched",
+          "label": "Built / Launched",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-class-hull-type",
+          "label": "Class / Hull Type",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Capital Ship",
+            "Carrier",
+            "Corvette",
+            "Cruiser",
+            "Dreadnought",
+            "Fighter",
+            "Freighter",
+            "Frigate",
+            "Shuttle",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ves-home-port",
+          "label": "Home Port",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Colony / Station / Habitat"
+        },
+        {
+          "id": "f-ves-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Active",
+            "Derelict",
+            "Destroyed",
+            "Impounded",
+            "Lost",
+            "Mothballed",
+            "Under Construction",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ves-tonnage",
+          "label": "Tonnage",
+          "type": "number",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-crew-capacity",
+          "label": "Crew Capacity",
+          "type": "number",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-sublight-drive",
+          "label": "Sublight Drive",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ves-ftl-capable",
+          "label": "FTL Capable",
+          "type": "select",
+          "halfWidth": true,
+          "options": [
+            "No",
+            "Yes"
+          ]
+        },
+        {
+          "id": "f-ves-ftl-drive-type",
+          "label": "FTL Drive Type",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "showWhen": {
+            "fieldLabel": "FTL Capable",
+            "values": [
+              "Yes"
+            ]
+          },
+          "options": [
+            "Fold Drive",
+            "Gate / Wormhole",
+            "Hyperdrive",
+            "Jump Drive",
+            "Warp Drive",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ves-ftl-rating-range",
+          "label": "FTL Rating / Range",
+          "type": "text",
+          "halfWidth": true,
+          "showWhen": {
+            "fieldLabel": "FTL Capable",
+            "values": [
+              "Yes"
+            ]
+          }
+        },
+        {
+          "id": "f-ves-sister-ships-fleet",
+          "label": "Sister Ships / Fleet",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Vessel"
+        },
+        {
+          "id": "f-ves-systems-hardpoints",
+          "label": "Systems & Hardpoints",
+          "type": "grid"
+        },
+        {
+          "id": "f-ves-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ves-appearance",
+          "label": "Appearance",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ves-service-history",
+          "label": "Service History",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ves-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "technology",
+      "name": "Technology",
+      "icon": "🛠",
+      "color": "#c8a96e",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-tec-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-tec-introduced-invented",
+          "label": "Introduced / Invented",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-tec-domain-category",
+          "label": "Domain / Category",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Computing / Cybernetics",
+            "Defense / Shielding",
+            "Life Support",
+            "Medical / Bio",
+            "Power / Energy",
+            "Propulsion",
+            "Sensors / Comms",
+            "Utility / Industrial",
+            "Weapons",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-tec-subtype",
+          "label": "Subtype",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "dependsOnLabel": "Domain / Category",
+          "optionsByParent": {
+            "Propulsion": [
+              "Antimatter Drive",
+              "Fusion Torch",
+              "Ion Drive",
+              "Jump Drive",
+              "Reactionless",
+              "Warp Coil",
+              "Other"
+            ],
+            "Power / Energy": [
+              "Antimatter Reactor",
+              "Capacitor Bank",
+              "Fission Reactor",
+              "Fusion Reactor",
+              "Solar / Stellar",
+              "Zero-Point",
+              "Other"
+            ],
+            "Weapons": [
+              "Beam / Energy",
+              "Kinetic / Railgun",
+              "Missile / Torpedo",
+              "Particle",
+              "Plasma",
+              "Point-Defense",
+              "Other"
+            ],
+            "Defense / Shielding": [
+              "Ablative Armor",
+              "ECM / Jamming",
+              "Energy Shield",
+              "Point-Defense Grid",
+              "Stealth / Cloak",
+              "Other"
+            ],
+            "Sensors / Comms": [
+              "Deep-Scan Array",
+              "FTL Comms",
+              "Lidar / Radar",
+              "Stealth Detection",
+              "Subspace Comms",
+              "Other"
+            ],
+            "Computing / Cybernetics": [
+              "Cyberware Implant",
+              "Drone Control",
+              "Navigation Suite",
+              "Neural Interface",
+              "Ship Computer",
+              "Other"
+            ],
+            "Medical / Bio": [
+              "Autodoc",
+              "Cloning / Vat",
+              "Cryo / Stasis",
+              "Gene Therapy",
+              "Nanomedicine",
+              "Other"
+            ],
+            "Life Support": [
+              "Atmosphere Recycler",
+              "Gravity Generator",
+              "Hydroponics",
+              "Radiation Shielding",
+              "Other"
+            ],
+            "Utility / Industrial": [
+              "Cargo Handling",
+              "Fabricator",
+              "Mining / Extraction",
+              "Repair / Drydock",
+              "Tractor / Grapple",
+              "Other"
+            ]
+          }
+        },
+        {
+          "id": "f-tec-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Experimental",
+            "In Production",
+            "Lost / Forgotten",
+            "Obsolete",
+            "Prototype",
+            "Standard Issue",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-tec-availability-legality",
+          "label": "Availability / Legality",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Banned",
+            "Black Market",
+            "Classified",
+            "Common",
+            "Controlled",
+            "Experimental",
+            "Military-Only",
+            "Open Market",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-tec-kardashev-scale",
+          "label": "Kardashev Scale",
+          "type": "select",
+          "halfWidth": true,
+          "options": [
+            "Type 0",
+            "Type I",
+            "Type II",
+            "Type III",
+            "Type IV"
+          ]
+        },
+        {
+          "id": "f-tec-tech-tier",
+          "label": "Tech Tier",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "dependsOnLabel": "Kardashev Scale",
+          "optionsByParent": {
+            "Type 0": [
+              "Combustion",
+              "Nuclear Fission",
+              "Information Age",
+              "Early Fusion",
+              "Other"
+            ],
+            "Type I": [
+              "Full Fusion",
+              "Climate Control",
+              "Global Energy Grid",
+              "Orbital Infrastructure",
+              "Other"
+            ],
+            "Type II": [
+              "Dyson Swarm",
+              "Star Lifting",
+              "Antimatter Industry",
+              "Interstellar Drive",
+              "Other"
+            ],
+            "Type III": [
+              "Galactic Power Network",
+              "Wormhole Engineering",
+              "Stellar Manipulation",
+              "Other"
+            ],
+            "Type IV": [
+              "Spacetime Engineering",
+              "Universal Computation",
+              "Reality Authoring",
+              "Other"
+            ]
+          }
+        },
+        {
+          "id": "f-tec-manufacturer-origin",
+          "label": "Manufacturer / Origin",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-tec-based-on",
+          "label": "Based On",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Magic / Tech System"
+        },
+        {
+          "id": "f-tec-power-draw-output",
+          "label": "Power Draw / Output",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-tec-size-mass",
+          "label": "Size / Mass",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-tec-fuel-consumables",
+          "label": "Fuel / Consumables",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Cargo / Commodity"
+        },
+        {
+          "id": "f-tec-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-tec-function-mechanics",
+          "label": "Function / Mechanics",
+          "type": "textarea"
+        },
+        {
+          "id": "f-tec-limitations-drawbacks",
+          "label": "Limitations / Drawbacks",
+          "type": "textarea"
+        },
+        {
+          "id": "f-tec-development-history",
+          "label": "Development History",
+          "type": "textarea"
+        },
+        {
+          "id": "f-tec-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "cargo-commodity",
+      "name": "Cargo / Commodity",
+      "icon": "📦",
+      "color": "#b07a4a",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-car-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-car-controlling-faction",
+          "label": "Controlling Faction",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-car-commodity-type",
+          "label": "Commodity Type",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Agricultural / Food",
+            "Chemical",
+            "Contraband / Illicit",
+            "Data / Information",
+            "Energy / Fuel",
+            "Industrial / Raw Material",
+            "Luxury / Art",
+            "Manufactured Goods",
+            "Medical / Biological",
+            "Ordnance / Weapons",
+            "Personnel / Passengers",
+            "Water / Volatiles",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-car-supply-availability",
+          "label": "Supply / Availability",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Abundant",
+            "Plentiful",
+            "Common",
+            "Scarce",
+            "Rare",
+            "Depleted",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-car-hazard-class",
+          "label": "Hazard Class",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Biohazard",
+            "Corrosive",
+            "Cryogenic",
+            "Explosive",
+            "Inert / Safe",
+            "Radioactive",
+            "Toxic",
+            "Volatile",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-car-legality",
+          "label": "Legality",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Banned",
+            "Black Market",
+            "Controlled",
+            "Licensed",
+            "Open Trade",
+            "Restricted",
+            "Taxed",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-car-base-value-price",
+          "label": "Base Value / Price",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-car-unit-of-measure",
+          "label": "Unit of Measure",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-car-source-worlds",
+          "label": "Source Worlds",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplates": [
+            "Location",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-car-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-car-uses-applications",
+          "label": "Uses / Applications",
+          "type": "textarea"
+        },
+        {
+          "id": "f-car-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "colony-station-habitat",
+      "name": "Colony / Station / Habitat",
+      "icon": "🛰",
+      "color": "#6ec8a9",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-col-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-col-founded-established",
+          "label": "Founded / Established",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-col-location-system",
+          "label": "Location / System",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Location"
+        },
+        {
+          "id": "f-col-governing-faction",
+          "label": "Governing Faction",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-col-type-class",
+          "label": "Type / Class",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Asteroid Outpost",
+            "Deep-Space Station",
+            "Generation Ship",
+            "Megastructure",
+            "Moon Base",
+            "Orbital Station",
+            "Planetary Colony",
+            "Surface Settlement",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-col-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Abandoned",
+            "Active",
+            "Contested",
+            "Decommissioned",
+            "Destroyed",
+            "Quarantined",
+            "Ruined",
+            "Under Construction",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-col-population",
+          "label": "Population",
+          "type": "number",
+          "halfWidth": true
+        },
+        {
+          "id": "f-col-gravity",
+          "label": "Gravity",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Gravity Plating",
+            "Microgravity / Zero-G",
+            "Planetary (Natural)",
+            "Spin / Centrifugal",
+            "Variable",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-col-docking-capacity",
+          "label": "Docking Capacity",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-col-sealed-environment",
+          "label": "Sealed Environment",
+          "type": "select",
+          "halfWidth": true,
+          "options": [
+            "No",
+            "Yes"
+          ]
+        },
+        {
+          "id": "f-col-life-support",
+          "label": "Life Support",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "showWhen": {
+            "fieldLabel": "Sealed Environment",
+            "values": [
+              "Yes"
+            ]
+          },
+          "options": [
+            "Biosphere / Closed-Loop",
+            "Chemical Scrubbers",
+            "Hydroponic",
+            "Imported / Supplied",
+            "Terraformed (None Needed)",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-col-atmosphere",
+          "label": "Atmosphere",
+          "type": "text",
+          "halfWidth": true,
+          "showWhen": {
+            "fieldLabel": "Sealed Environment",
+            "values": [
+              "Yes"
+            ]
+          }
+        },
+        {
+          "id": "f-col-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-col-notable-features",
+          "label": "Notable Features",
+          "type": "textarea"
+        },
+        {
+          "id": "f-col-history",
+          "label": "History",
+          "type": "textarea"
+        },
+        {
+          "id": "f-col-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "route",
+      "name": "Route",
+      "icon": "🧭",
+      "color": "#c86e9e",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-rou-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-rou-established",
+          "label": "Established",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-rou-controlling-faction",
+          "label": "Controlling Faction",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-rou-route-type",
+          "label": "Route Type",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Courier",
+            "Exploration / Survey",
+            "Migration",
+            "Military Supply",
+            "Patrol",
+            "Pilgrimage",
+            "Smuggling",
+            "Trade",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-rou-origin",
+          "label": "Origin",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplates": [
+            "Location",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-rou-destination",
+          "label": "Destination",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplates": [
+            "Location",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-rou-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Abandoned",
+            "Active",
+            "Blockaded",
+            "Contested",
+            "Dangerous",
+            "Decommissioned",
+            "Seasonal",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-rou-hazard-level",
+          "label": "Hazard Level",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Safe",
+            "Low",
+            "Moderate",
+            "High",
+            "Extreme",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-rou-distance",
+          "label": "Distance",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-rou-transit-time",
+          "label": "Transit Time",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-rou-waypoints",
+          "label": "Waypoints",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplates": [
+            "Location",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-rou-commodities-carried",
+          "label": "Commodities Carried",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Cargo / Commodity"
+        },
+        {
+          "id": "f-rou-hazards-threats",
+          "label": "Hazards / Threats",
+          "type": "textarea"
+        },
+        {
+          "id": "f-rou-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-rou-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "ai-synthetic",
+      "name": "AI / Synthetic",
+      "icon": "🤖",
+      "color": "#9e6ec8",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-ai-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ai-created-activated",
+          "label": "Created / Activated",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ai-type-class",
+          "label": "Type / Class",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Android / Synth",
+            "Combat Intelligence",
+            "Drone Hive / Swarm",
+            "Embodied Robot",
+            "Governor / Administrative",
+            "Ship Mind",
+            "Uploaded Consciousness",
+            "Virtual Intelligence",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ai-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Active",
+            "Archived",
+            "Corrupted",
+            "Decommissioned",
+            "Destroyed",
+            "Dormant",
+            "Quarantined",
+            "Rogue",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ai-manufacturer-creator",
+          "label": "Manufacturer / Creator",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-ai-allegiance-serves",
+          "label": "Allegiance / Serves",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-ai-substrate",
+          "label": "Substrate",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplates": [
+            "Technology"
+          ],
+          "refFilters": {
+            "Technology": {
+              "fieldLabel": "Domain / Category",
+              "allowedValues": [
+                "Computing / Cybernetics"
+              ]
+            }
+          }
+        },
+        {
+          "id": "f-ai-host-embodiment",
+          "label": "Host / Embodiment",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplates": [
+            "Vessel",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-ai-autonomy-level",
+          "label": "Autonomy Level",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Tool / Directed",
+            "Assisted",
+            "Semi-Autonomous",
+            "Fully Autonomous",
+            "Self-Determining",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ai-sentience",
+          "label": "Sentience",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Non-Sentient",
+            "Reactive",
+            "Aware",
+            "Sapient",
+            "Transcendent",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ai-disposition",
+          "label": "Disposition",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Benevolent",
+            "Hostile",
+            "Indifferent",
+            "Loyal",
+            "Rogue",
+            "Servile",
+            "Unpredictable",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-ai-processing-capability",
+          "label": "Processing / Capability",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-ai-directives-core-purpose",
+          "label": "Directives / Core Purpose",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ai-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ai-personality-behavior",
+          "label": "Personality / Behavior",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ai-history",
+          "label": "History",
+          "type": "textarea"
+        },
+        {
+          "id": "f-ai-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "crew",
+      "name": "Crew",
+      "icon": "👥",
+      "color": "#c8836e",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-cre-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-cre-formed-founded",
+          "label": "Formed / Founded",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-cre-type-class",
+          "label": "Type / Class",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Away Team",
+            "Boarding Party",
+            "Crew Complement",
+            "Maintenance Crew",
+            "Mercenary Band",
+            "Military Unit",
+            "Pirate Gang",
+            "Research Team",
+            "Station Staff",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-cre-status",
+          "label": "Status",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Active",
+            "Captured",
+            "Deceased / Lost",
+            "Deserted",
+            "Disbanded",
+            "MIA",
+            "On Leave",
+            "Reassigned",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-cre-affiliation",
+          "label": "Affiliation",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Faction / Government / Organization"
+        },
+        {
+          "id": "f-cre-size-headcount",
+          "label": "Size / Headcount",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-cre-specialization-role",
+          "label": "Specialization / Role",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Combat / Boarding",
+            "Engineering",
+            "Exploration",
+            "Logistics / Supply",
+            "Medical",
+            "Reconnaissance",
+            "Salvage",
+            "Science / Research",
+            "Security",
+            "Trade / Commerce",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-cre-morale-cohesion",
+          "label": "Morale / Cohesion",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Mutinous",
+            "Low",
+            "Steady",
+            "High",
+            "Devoted",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-cre-assignment-posting",
+          "label": "Assignment / Posting",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplates": [
+            "Vessel",
+            "Colony / Station / Habitat"
+          ]
+        },
+        {
+          "id": "f-cre-commander-leader",
+          "label": "Commander / Leader",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Character"
+        },
+        {
+          "id": "f-cre-members",
+          "label": "Members",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Character"
+        },
+        {
+          "id": "f-cre-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-cre-reputation-deeds",
+          "label": "Reputation / Deeds",
+          "type": "textarea"
+        },
+        {
+          "id": "f-cre-history",
+          "label": "History",
+          "type": "textarea"
+        },
+        {
+          "id": "f-cre-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "id": "powers-abilities",
+      "name": "Powers / Abilities",
+      "icon": "⚡",
+      "color": "#c8c46e",
+      "origin": "user",
+      "fields": [
+        {
+          "id": "f-pow-other-names",
+          "label": "Other Names",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-pow-discovered-recorded",
+          "label": "Discovered / Recorded",
+          "type": "calendar-date",
+          "halfWidth": true
+        },
+        {
+          "id": "f-pow-type-category",
+          "label": "Type / Category",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Biotic / Energy",
+            "Defensive",
+            "Enhancement",
+            "Healing / Regeneration",
+            "Mental / Telepathic",
+            "Movement / Teleportation",
+            "Offensive",
+            "Precognition / Sensory",
+            "Telekinetic",
+            "Transformation",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-pow-based-on-system",
+          "label": "Based On / System",
+          "type": "entry-ref",
+          "halfWidth": true,
+          "refTemplate": "Magic / Tech System"
+        },
+        {
+          "id": "f-pow-source-origin",
+          "label": "Source / Origin",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Cybernetic",
+            "Divine / Cosmic",
+            "Genetic / Innate",
+            "Mutation",
+            "Psionic",
+            "Ritual / Trained",
+            "Technological Augment",
+            "Unknown",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-pow-prerequisite-training",
+          "label": "Prerequisite / Training",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-pow-potency-power-level",
+          "label": "Potency / Power Level",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Trivial",
+            "Minor",
+            "Moderate",
+            "Major",
+            "Devastating",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-pow-rarity",
+          "label": "Rarity",
+          "type": "select",
+          "halfWidth": true,
+          "otherTextField": true,
+          "options": [
+            "Ubiquitous",
+            "Common",
+            "Uncommon",
+            "Rare",
+            "Unique",
+            "Other"
+          ]
+        },
+        {
+          "id": "f-pow-range",
+          "label": "Range",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-pow-cost-cooldown",
+          "label": "Cost / Cooldown",
+          "type": "text",
+          "halfWidth": true
+        },
+        {
+          "id": "f-pow-practitioners-wielders",
+          "label": "Practitioners / Wielders",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Character"
+        },
+        {
+          "id": "f-pow-associated-species",
+          "label": "Associated Species",
+          "type": "entry-ref",
+          "multi": true,
+          "refTemplate": "Race / Species / Ancestry"
+        },
+        {
+          "id": "f-pow-description",
+          "label": "Description",
+          "type": "textarea"
+        },
+        {
+          "id": "f-pow-origin-lore",
+          "label": "Origin / Lore",
+          "type": "textarea"
+        },
+        {
+          "id": "f-pow-effect-mechanics",
+          "label": "Effect / Mechanics",
+          "type": "textarea"
+        },
+        {
+          "id": "f-pow-limitations-drawbacks",
+          "label": "Limitations / Drawbacks",
+          "type": "textarea"
+        },
+        {
+          "id": "f-pow-notes",
+          "label": "Notes",
+          "type": "textarea"
+        }
+      ]
+    }
+  ]
+}

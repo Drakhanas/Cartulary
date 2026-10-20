@@ -1,0 +1,18 @@
+{
+  "name": "inlining",
+  "version": "1.1.0",
+  "description": "Cartulary dual-build inlining pipeline",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/standalone": "^7.23.5",
+    "@babel/core": "^7.23.5",
+    "@babel/preset-react": "^7.23.0",
+    "@fontsource/cormorant-garamond": "^5.2.11",
+    "@fontsource/dm-sans": "^5.2.8",
+    "d3": "^7.8.5",
+    "jszip": "^3.10.1",
+    "marked": "^4.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

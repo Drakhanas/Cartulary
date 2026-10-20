@@ -1,0 +1,104 @@
+# Turnover conventions
+
+Companion to the `cartulary-turnover` skill. The skill says the conventions live here; they
+did not exist in any delivered form, so this is a reconstruction from the doc set's actual
+practice as of session 17. Where this file and the delivered documents disagree, the
+documents are the evidence and this file is the defect.
+
+## Where the toolchain lives
+
+The gate, its probes, and this file ship INSIDE the skill package, so the toolchain travels
+with the instructions. Session 17 found two of the four missing with nothing in any document
+saying they had ever existed, and both had to be rebuilt from the spec.
+
+| File | Home | Why |
+|---|---|---|
+| `check_docs.py` | skill directory | the gate |
+| `prove_teeth.py` | skill directory | probes the gate; resolves the checker through `Path(__file__).parent`, so it must sit beside it |
+| `conventions.md` | skill directory | this file; phase 1 reads it |
+| `facts.json` | with the documents | per-project state, regenerated each session by `--write-facts`; not skill code |
+
+Invoke by skill path; nothing writes to that directory:
+
+```
+SK=/mnt/skills/plugins/cartulary-turnover
+python3 $SK/check_docs.py --docs DOCS --src SRC --facts DOCS/facts.json
+python3 $SK/prove_teeth.py --docs DOCS --src SRC
+```
+
+If the skill is not loaded in a session, the gate is not available and neither is the
+requirement, which is coherent: the gate belongs to the skill. What is NOT acceptable is
+running the phases without it and calling the result a turnover.
+
+Build tooling is a separate toolchain with a separate home: `build_inline.py`,
+`canonicalize.py`, `prove_gate_teeth.py`, and the current cut script ship in the source
+bundle's `inlining/`. One home each, or they drift.
+
+Deliver the documents as ONE zip. Loose file cards mean one upload per file and a chance to
+miss one, which is how `check_docs.py` and `conventions.md` stopped existing.
+
+## The six documents
+
+**`handoff.md`** is the living current-state document, fully rewritten each batch. It stands
+alone: a fresh chat reads it top to bottom and can work. Order matters, because a cold reader
+goes top-down and stops when they think they have enough.
+
+1. Version-line banner, then the NEXT banner. What to do next, with expected signals stated
+   in advance where a cut cannot return a clean verdict.
+2. Cold-start prerequisites. Verify commands, not claims about state.
+3. The tree, the gate, the anchor.
+4. What is done, then the current session in detail.
+5. Architecture, build setup, carry-forward facts, preferences, doc layout, backlog.
+
+State a fact in exactly ONE place. A superseding section elsewhere does not retire a stale
+note; strike stale text at its source. An earlier edition carried the `/mnt/project` sync
+status in two sections two hundred lines apart, and a top-down reader got both.
+
+**`changelog.md`** is append-only. The active file holds the open version only; closed
+versions are frozen in their own files. History is preserved verbatim, including its errors:
+older session blocks fall out of the checker's live region on purpose. If a superseded block
+contains a wrong figure, say so at delivery rather than editing it. Use `[stale: reason]`
+inline when a live block deliberately quotes something retired.
+
+**`roadmap.md`** appends a dated `=== ADDED ... ===` block per session. Everything above the
+newest block is superseded and unchecked.
+
+**`cartulary-doctrine.md`** appends dated entries. One lesson per bullet, each naming the
+defect that produced it in parentheses. A doctrine entry with no incident behind it is an
+opinion.
+
+**`cartulary-spine-manifest.md`** is the modularization oracle: module map, source layout,
+carve status, gate design, anchor history. Sections become records rather than plans as work
+lands; when a section closes, rewrite it as history and say what it cost.
+
+**`journal-entry.txt`** is one new entry per session, for Drak to paste into
+`/mnt/transcripts/journal.txt`. First person, narrative, no headers, and it is the one place
+that records what went wrong and what it felt like to get it wrong. It is not a status
+report; the changelog already is one.
+
+## Rules that apply to all six
+
+- **No em dashes in newly authored text**, in any of the four forms. Pre-v1.6 content is
+  frozen and never swept; the baseline is what makes "newly authored" measurable.
+- **No banned adjectives or AI-isms** from Drak's preference set, same baseline logic.
+- Contractions by default. Vary sentence length. No end-summary recaps.
+- **Every published number carries its derivation.** If a script produced it, the rule goes
+  in `facts.json` and the prose quotes the fact.
+- **Filename references decay.** `NN_` prefixes reflow on every upstream insertion, so
+  re-verify every `NN_name.jsx` reference against the live tree at each turnover.
+- **Per-arc and per-module line counts are Python `splitlines()` counts**, never `wc -l`.
+
+## `facts.json`
+
+`derived` is regenerated by `--write-facts` and never hand-edited. The four hand-authored
+sections are the coverage, and the gate is only as good as what goes in them:
+
+- `published`: every figure the docs state, with a regex that finds it in prose. `value` may
+  be a list so a figure written as a word and as a numeral both pass.
+- `assertions`: every `file:line` claim the prose makes about the tree.
+- `spans`: the full tiling per arc, checked for rule-1 conformance and exact coverage.
+- `required_strings`: per document, strings that must survive a correction round. This is how
+  a fix is proven to have landed in every sibling.
+
+When a review round finds a figure the gate missed, add it to `facts.json` in the same pass
+as the fix.
