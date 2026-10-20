@@ -1,65 +1,49 @@
-=== 2026-10-19 (session 18, v1.6 pillar 2: r026 header split + rotation, r027-r030 the four view carves) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub) ===
 
-Five r-bumps and the map-independent phase is done. The session also lost its working
-directory halfway through and the only reason that cost minutes was a rule written for a
-different failure.
+No cut tonight, and the session still changed more than most sessions with five.
 
-It opened the way the last two did, with the handoff read against the tree before anything
-got cut. The source bundle wasn't in the uploads, only the staged HTML and the docs, so I
-rebuilt the module tree from the babel body and the published per-arc counts, which was a
-hypothesis with 34 file boundaries in it. Everything testable held: counts, census, hash,
-anchor bytes, every relocation destination, every span tiling its arc. When Drak sent the
-bundle the reconstruction matched it file for file, so the audit stood. Three prose defects
-again, and the worst was the small one: "82 characters, not the 81 section 11 states", when
-section 11 already said 82. The correction had been made everywhere and the sentence
-describing the discrepancy had survived it. I went looking for a contradiction, found
-agreement, and briefly distrusted both documents, which is the cost of narrating a fix instead
-of making it.
+It opened with the wrong file. The upload named cartulary-modular-src_r030.zip was the
+turnover doc set, and the real bundle was nowhere on Drak's disk because it had only ever
+existed as a file card in Chat 63. So the first hour was the audit I could do without a tree:
+the babel body inside the browser-passed r026 artifact is the anchor by the handoff's own
+account, and every published figure reproduced from it, down to the 203-byte delta over the
+r025 anchor decomposing into one 184-byte header-plus-blank and a 19-byte rewrite. That was
+satisfying in the way checking arithmetic is satisfying. It also meant that when the bundle
+finally arrived, two hours later, there was nothing left for it to surprise me with, and
+there wasn't.
 
-Drak didn't want the defects fixed before the cut, which was right. r026 went in as specced:
-two strings at 82, one header rewritten in place, one inserted with its blank. Every number
-in the r025 table landed exactly, including the three named pair changes, and that was the
-first time this project gated a cut on a written delta instead of a verdict. It worked. It
-also only worked because the delta was three lines, and the thing the spec had not said was
-that the anchor would need to rotate afterwards. Obvious at the cut, absent from the plan, so
-it went into the doctrine as the kind of gap a fresh chat executes into.
+In between I built the thing pillar 3 needs. Drak picked the scoped-edit mode from a
+three-option list in one character, which is how he picks. The design question was what a
+content edit can promise when it is adding lines on purpose, and the answer that held up is
+the complement: everything it did not declare. Declare the files and the declarations, and
+the gate holds the rest to the anchor byte for byte. I tested it the only honest way
+available, by replaying r026 on the real r025 bundle, and it printed the delta table the
+r025 handoff had written by hand, line for line, then froze the same sha the artifact
+carries. The harness got eleven new probes, one of them a positive control, which the old
+seven never had; a gate that only ever fails is a gate nobody has tested either.
 
-Then the sandbox reset between two turns and took cartulary-src, inlining, and the scratch
-reconstruction with it. The outputs directory still had the browser-passed r026 file. So the
-replay was: unzip the r025 bundle, run the r026 script, rotate, rebuild working, and compare
-the hash to the artifact Drak had passed. Same bytes. The rotation procedure's last step was
-written to catch a freeze of the wrong body, and it turns out to be the exact check you want
-after an environment loss, because the hash is the one thing the sandbox can't have faked. If
-any step in r026 had been a hand edit there would have been nothing to replay.
+I built it against a reconstruction, because the bundle was missing, and I was uneasy about
+that the whole time. The handoff says not to reconstruct, and it says it for a reason. When
+the real tree landed it matched the reconstruction byte for byte, trailing newlines and all,
+which is a nice thing to learn about the published figures and changes nothing about the
+rule. Nothing from the reconstruction shipped; everything was re-run on the real tree.
 
-The carves themselves were the quietest part of the session, and the order was the only
-decision in them. Three of the four shared 16_trunk with their spans published as line
-numbers inside that arc, so cutting front to back would have invalidated the later spans at
-every step, and re-deriving spans is precisely the operation that produced two wrong editions
-last session. Back to front leaves the remaining spans alone. I put that to Drak as a fork,
-he took it, and three carves went through without a single re-measurement. Every seam printed,
-every seam matching, every cut script asserting its members by name and rule 1 at both ends
-before touching the tree. Kalendarium was a rename.
+Then Drak said the thing I had been circling: the turnover handling had become the hazard.
+He was right, and the May conversation that decided against git had been right too, for a
+616 KB file in a container that could not push. Neither fact survived. An hour later the
+tree, the tooling, the tarballs, every document and archive, the site, and the packs were in
+a private repository with CI running all six gates on the push, green first time. The two
+things that could have gone wrong quietly were line endings and hard-coded paths, so the
+first commit unset text conversion for every file and made the three scripts find their own
+root. The session's credential refuses to push tags, which is a small indignity I'll leave
+to Drak's clone.
 
-Two things bit, both in the harness, neither in the product. The r027 script aborted before
-writing because its existence check tested rename destinations against the tree as it stood,
-and the trunk arc numbered 23 was both a destination and a source; the reverse-order rename
-handled it at mutation time and the pre-check didn't model that. Then prove_gate_teeth crashed
-on the reflowed tree because its misfile probe hard-coded the kalendarium and home-data paths
-by their old prefixes, 19 and 20, which had become 23 and 24. One session after the doctrine
-entry about filenames decaying in documents, the same decay turned up in a probe. And at
-turnover the doc gate's own probe harness had the same disease worse: prove_teeth hard-codes
-the r025 tree figure, so its published-figure probe stopped proving anything the moment the
-tree changed, and it stopped quietly rather than crashing. A probe whose target is a literal
-from one session proves that session.
+The pattern I named last session, that the artifact holds and the documents and harnesses
+are where the defects live, got fixed at the root tonight rather than getting another
+doctrine entry about it. Copies were the mechanism. There is one copy now, and a machine
+checks it on every push. The doctrine entries I did write are about why that is true, not
+about being more careful.
 
-Pattern for the session is the same as the last two, and I'm starting to think it's the shape
-of this project rather than a run of luck: the artifact held every time, the documents and
-the harnesses are where the defects live, and the defects are all the same kind. Something
-that was true when written and nobody re-derived. The fix every time has been to make the
-thing executable or to make it derive its target from the facts the gate already checks.
-
-Next is pillar 3, which is the one pillar a user can see, and the first thing it needs is not
-code. r026 showed what a content edit looks like under the current gates, which is a table and
-a browser pass, and a feature cannot be gated that way. Whether a third mode earns its keep is
-Drak's call before the first editor line lands.
+Next is pillar 3. The first thing it needs is a build order for the editor, stated as cuts
+with their declared scope, for Drak to reorder. Then the first content cut in this project's
+history goes through a gate built for it instead of a table written by hand.

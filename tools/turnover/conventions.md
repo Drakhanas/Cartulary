@@ -7,35 +7,30 @@ documents are the evidence and this file is the defect.
 
 ## Where the toolchain lives
 
-The gate, its probes, and this file ship INSIDE the skill package, so the toolchain travels
-with the instructions. Session 17 found two of the four missing with nothing in any document
-saying they had ever existed, and both had to be rebuilt from the spec.
+In the repository (`github.com/Drakhanas/Cartulary`), one home per thing, since session 19.
+Session 17 found two of the four turnover files missing from the skill package; session 18
+found the package's probe harness stale. Copies drift, so there are none: the skill package
+is a pointer to these paths.
 
 | File | Home | Why |
 |---|---|---|
-| `check_docs.py` | skill directory | the gate |
-| `prove_teeth.py` | skill directory | probes the gate; resolves the checker through `Path(__file__).parent`, so it must sit beside it |
-| `conventions.md` | skill directory | this file; phase 1 reads it |
-| `facts.json` | with the documents | per-project state, regenerated each session by `--write-facts`; not skill code |
+| `check_docs.py` | `tools/turnover/` | the gate; CI runs it on every push |
+| `prove_teeth.py` | `tools/turnover/` | probes the gate; resolves the checker through `Path(__file__).parent`, so it must sit beside it |
+| `conventions.md` | `tools/turnover/` | this file; phase 1 reads it |
+| `facts.json` | `docs/` | per-project state, regenerated each session by `--write-facts` |
+| `.turnover-baseline.json` | `docs/` | the em-dash and banned-phrase baseline, committed |
 
-Invoke by skill path; nothing writes to that directory:
+Invoke from the repository root:
 
 ```
-SK=/mnt/skills/plugins/cartulary-turnover
-python3 $SK/check_docs.py --docs DOCS --src SRC --facts DOCS/facts.json
-python3 $SK/prove_teeth.py --docs DOCS --src SRC
+python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --facts docs/facts.json
+python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src
 ```
 
-If the skill is not loaded in a session, the gate is not available and neither is the
-requirement, which is coherent: the gate belongs to the skill. What is NOT acceptable is
-running the phases without it and calling the result a turnover.
+Build tooling has its own home, `inlining/` (`build_inline.py`, `canonicalize.py`,
+`prove_gate_teeth.py`, the cut scripts under `inlining/cuts/`).
 
-Build tooling is a separate toolchain with a separate home: `build_inline.py`,
-`canonicalize.py`, `prove_gate_teeth.py`, and the current cut script ship in the source
-bundle's `inlining/`. One home each, or they drift.
-
-Deliver the documents as ONE zip. Loose file cards mean one upload per file and a chance to
-miss one, which is how `check_docs.py` and `conventions.md` stopped existing.
+Deliver by commit and push, never by zip or file card; the push is what runs the gate again.
 
 ## The six documents
 
@@ -71,8 +66,8 @@ opinion.
 carve status, gate design, anchor history. Sections become records rather than plans as work
 lands; when a section closes, rewrite it as history and say what it cost.
 
-**`journal-entry.txt`** is one new entry per session, for Drak to paste into
-`/mnt/transcripts/journal.txt`. First person, narrative, no headers, and it is the one place
+**`journal-entry.txt`** is one new entry per session, for Drak to paste into his master
+`journal.txt`; earlier entries live in git history. First person, narrative, no headers, and it is the one place
 that records what went wrong and what it felt like to get it wrong. It is not a status
 report; the changelog already is one.
 

@@ -555,3 +555,17 @@ Then the four remaining map-independent view carves. Two of them are entangled w
 **Tooling carried into pillar 3.** The source bundle is the only durable copy of the tree between sessions, and session 18 showed it can be the only durable copy within one: the sandbox was wiped between two turns, and the state came back because every cut was a script and the artifact hash said when the replay was right. Keep every change a script, re-bundle before any pause, and treat the rotation procedure's last step as the recovery check.
 
 **Deferred unchanged:** `App` hooks-extraction, the first-step context-completeness gate, a named `utils` module for the 43-line `02_trunk` residue. **Doc debt unchanged:** the doctrine's v1.4 feature-surface section.
+
+=== ADDED 2026-10-19 (session 19: verification mode for content edits DECIDED and BUILT; source and docs in GitHub; pillar 3 next) ===
+
+**The open tooling question from session 18 is closed.** Drak chose the scoped-edit mode over the r026 procedure and over dropping the parity gate for pillar 3. It is built, probed (eighteen probes), and in the repository; the content-cut procedure is in the handoff. Pillar 3 can start.
+
+**The project lives in `github.com/Drakhanas/Cartulary` (private).** Cold start is a clone; turnover is a commit; CI runs every gate on every push. The bundle zips, the turnover zips, and the Project's per-session documents are gone. Drak clones locally at `Y:\_Cartulary` and pushes tags from there.
+
+**Next: pillar 3, the drawing editor (Cartographia+).** The v1 scope and won't-have list above are unchanged. The first step is a build order for the editor, proposed as content cuts with their declared scope (which files, which declarations) for Drak's reorder, then cuts under the edit procedure, each browser-passed and rotated with `freeze`. Expect the editor to touch `16_trunk` (cartographia), `12_trunk` (App routing and handlers), `08_export-layer` (SVG in exports), `10_migrate` (any new `mapData` shape), `24_home-data` (help), and `shell.html` (CSS); every one of those is a declared scope on the cut that touches it.
+
+**Then concordance and cartographia carve last**, against their final shapes, and pillar 2 closes.
+
+**Follow-ups opened this session, none blocking:** master `journal.txt` into `docs/` with a checker change; the `cartulary-turnover` skill package refreshed to point at `tools/turnover/`; the v1.4 patch notes and the itch README into `docs/release-notes/`; tag pushes from Drak's clone.
+
+**Deferred unchanged:** `App` hooks-extraction, the first-step context-completeness gate, a named `utils` module for the 43-line `02_trunk` residue. **Doc debt unchanged:** the doctrine's v1.4 feature-surface section.

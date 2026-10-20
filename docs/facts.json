@@ -57,10 +57,10 @@
     },
     "probe_count": {
       "value": [
-        7,
-        "seven"
+        18,
+        "eighteen"
       ],
-      "pattern": "(seven|\\d+) mutation probes"
+      "pattern": "(?i)(eighteen|seven|\\d+) mutation probes"
     },
     "named_modules": {
       "value": [
@@ -98,6 +98,10 @@
     "trunk16_tiling": {
       "value": "2051",
       "pattern": "265 \\+ 1028 \\+ 758 = (\\d+)"
+    },
+    "repo": {
+      "value": "Drakhanas/Cartulary",
+      "pattern": "github\\.com/(Drakhanas/Cartulary)"
     }
   },
   "assertions": [
@@ -370,14 +374,22 @@
       "check_docs.py",
       "all five checks green",
       "back to front",
-      "23_kalendarium"
+      "23_kalendarium",
+      "Drakhanas/Cartulary",
+      "build_inline.py edit",
+      "freeze r###",
+      "reference-r026-layout.json",
+      "tools/turnover/check_docs.py",
+      "eighteen mutation probes"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
       "r030",
       "23_kalendarium",
       "reference-r026-body.jsx",
-      "2facf10cea574525"
+      "2facf10cea574525",
+      "reference-r026-layout.json",
+      "Eighteen probes"
     ],
     "changelog.md": [
       "r026",
@@ -385,16 +397,23 @@
       "r028",
       "r029",
       "r030",
-      "2facf10cea574525"
+      "2facf10cea574525",
+      "session 19",
+      "Drakhanas/Cartulary",
+      "eighteen mutation probes"
     ],
     "roadmap.md": [
-      "r030"
+      "r030",
+      "Drakhanas/Cartulary"
     ],
     "cartulary-doctrine.md": [
-      "r030"
+      "r030",
+      "Drakhanas/Cartulary",
+      "session 19"
     ],
     "journal-entry.txt": [
-      "r030"
+      "r030",
+      "session 19"
     ]
   }
 }

@@ -58,31 +58,32 @@ paragraphs and a doctrine entry.)*
 **G5. If a fix would add more lines than it removes, stop and ask.** That is the
 tripwire for G1.
 
-## What ships with this skill
+## Where the toolchain lives (session 19 onward)
 
-Four files, and the skill does not work without all four. Session 17 found `check_docs.py`
-and `conventions.md` missing entirely, with only `prove_teeth.py` and a stale `facts.json`
-surviving in the project folder, and nothing in any document had ever said they existed.
-Both were rebuilt from this spec. They live HERE, in the skill directory, so the toolchain
-travels with the instructions and cannot be half-delivered again:
+In the repository, `github.com/Drakhanas/Cartulary`, under `tools/turnover/`. Session 17
+found two of the four files missing from the skill package and rebuilt them; session 18
+found the package's `prove_teeth.py` had gone stale against the tree and could only be
+replaced by Drak. A copy that lives in a skill package drifts, so there are no copies: the
+skill package carries this file as a pointer, and the scripts are invoked from the clone.
 
 - `SKILL.md` : this file.
 - `check_docs.py` : the gate. Takes `--docs DIR --src DIR` plus one of `--facts`,
   `--write-facts`, `--baseline`. Exits 0 on `DOCS GREEN`.
 - `prove_teeth.py` : ten mutation probes against the gate. Resolves the checker through
-  `Path(__file__).parent`, so it must stay beside `check_docs.py`.
+  `Path(__file__).parent`, so it must stay beside `check_docs.py`. Its targets derive from
+  `facts.json`, never from a literal of one session.
 - `conventions.md` : per-document authoring rules and what goes where. Phase 1 reads it.
 
 `facts.json` is NOT skill code. It is per-project state, regenerated each session by
-`--write-facts`, and lives with the documents. `facts.example.json` here shows the four
-hand-authored sections for a project that has none yet.
+`--write-facts`, and lives with the documents at `docs/facts.json`, as does the em-dash and
+banned-phrase baseline at `docs/.turnover-baseline.json`. `facts.example.json` shows the
+four hand-authored sections for a project that has none yet.
 
-Invoke the scripts by their skill path; nothing writes to this directory:
+Invoke from the repository root; CI runs the same two commands on every push:
 
 ```
-SK=/mnt/skills/plugins/cartulary-turnover
-python3 $SK/check_docs.py --docs DOCS --src SRC --facts DOCS/facts.json
-python3 $SK/prove_teeth.py --docs DOCS --src SRC
+python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --facts docs/facts.json
+python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src
 ```
 
 ## Phases
@@ -92,9 +93,13 @@ Run them in order. Do not skip 0.
 ### Phase 0: baseline and ground truth (before writing anything)
 
 ```
-python3 check_docs.py --docs DOCS --src SRC --write-facts DOCS/facts.json
-python3 check_docs.py --docs DOCS --src SRC --baseline DOCS/.turnover-baseline.json
+python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --write-facts docs/facts.json
 ```
+
+The baseline (`docs/.turnover-baseline.json`) is committed and normally left alone: newly
+authored text must add no em dashes and no banned phrases, so the counts never need to
+rise. Re-write it with `--baseline docs/.turnover-baseline.json` only when verbatim
+pre-v1.6 content is relocated between documents.
 
 `--write-facts` derives file count, total lines, canonical lines, declaration
 count, no-trailing-newline count, and the active anchor **from the live tree**.
@@ -128,7 +133,7 @@ reported items and stop.
 ### Phase 2: gate
 
 ```
-python3 check_docs.py --docs DOCS --src SRC --facts DOCS/facts.json
+python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --facts docs/facts.json
 ```
 
 Fix and re-run until `DOCS GREEN`. When a check fires, decide honestly whether
@@ -140,7 +145,7 @@ a checker bug, fix the checker and go to phase 3.
 ### Phase 3: prove the gate still has teeth
 
 ```
-python3 prove_teeth.py --docs DOCS --src SRC
+python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src
 ```
 
 Mandatory after any change to `check_docs.py` or `facts.json`. Ten mutation
@@ -176,9 +181,10 @@ not against the other documents:
 
 ### Phase 5: deliver
 
-Only after phases 2, 3, and 4 are clean. Present the changed documents plus the
-source bundle. State what changed and its size; if a correction round added more
-than it removed, say so and say why (G5).
+Only after phases 2, 3, and 4 are clean. Commit the documents (one turnover commit,
+the r-number in the message) and push; CI runs phases 2 and 3 again. State what
+changed and its size from the commit stat; if a correction round added more than it
+removed, say so and say why (G5). There is no zip and no upload.
 
 ## Marking deliberately superseded text
 
