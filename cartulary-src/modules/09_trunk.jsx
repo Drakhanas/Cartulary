@@ -134,7 +134,9 @@ const makeDefaultGlossopoeiaState = () => ({
 
 // Cartographia map slice (v1.6 r001). Maps were promoted from kind:"map"
 // entries to a flat, Stemma-shaped state slice. Each record:
-//   { id, name, tags:[], fields:{}, mapData:{image,pins}, updatedAt }
+//   { id, name, tags:[], fields:{}, mapData:{image,pins,drawing}, updatedAt }
+// mapData.drawing (v1.6 pillar 3) is the vector drawing under the pins; its
+// shape and normalizers live with the Cartographia view (ensureMapData).
 // The three fields render through the shared EntryForm via cartographiaMapSchema
 // (the Glossopoeia pattern); the canvas (MapView/MapEditor) composes above them
 // in the Cartographia per-map view. Empty on fresh worlds; existing kind:"map"
@@ -213,4 +215,7 @@ const makeInitialState = () => migrate({
   glossopoeia: makeDefaultGlossopoeiaState(),
   // Cartographia map slice (v1.6 r001). See makeDefaultCartographiaState.
   cartographia: makeDefaultCartographiaState(),
+  // Map stamps imported from stamp packs (v1.6 pillar 3). World-scoped,
+  // [{id, name, viewBox, body}]. Empty on fresh worlds; see ensureMapStamps.
+  mapStamps: [],
 });

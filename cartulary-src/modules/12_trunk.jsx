@@ -1052,7 +1052,7 @@ function App() {
     if (isLocked) return;
     if (!confirmDiscardDraft()) return;
     const id = `map-${genId().slice(-6)}`;
-    const draft = { id, name: "", tags: [], fields: {}, mapData: { image: null, pins: [] } };
+    const draft = { id, name: "", tags: [], fields: {}, mapData: makeDefaultMapData() };
     setActiveMapId(id);
     setMapDraft(draft);
     initialMapDraftRef.current = JSON.stringify(draft);
@@ -1077,7 +1077,7 @@ function App() {
       name,
       tags: (mapDraft.tags || []).filter(t => t && t.trim()),
       fields: mapDraft.fields || {},
-      mapData: mapDraft.mapData || { image: null, pins: [] },
+      mapData: ensureMapData(mapDraft.mapData),
       updatedAt: isoNow(),
     };
     updateState(s => {

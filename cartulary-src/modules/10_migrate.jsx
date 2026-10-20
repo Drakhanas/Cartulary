@@ -235,6 +235,17 @@ const migrate = (state) => {
       state.templates = state.templates.filter(t => !(t && t.kind === "map"));
     }
   }
+  // Map drawing model (v1.6 pillar 3, r031): every map record carries
+  // mapData.drawing. Backfilled through ensureMapData so a pre-pillar-3 world
+  // loads with an empty default drawing (one layer, vellum background) and a
+  // malformed drawing coerces to defaults rather than throwing. Idempotent:
+  // a normalized record passes through unchanged. Null entries in the slice
+  // are dropped; records are never dropped.
+  state.cartographia = state.cartographia
+    .filter(m => m && typeof m === "object")
+    .map(m => ({ ...m, mapData: ensureMapData(m.mapData) }));
+  // Imported map stamps (v1.6 pillar 3). Empty until stamp packs land.
+  state.mapStamps = ensureMapStamps(state.mapStamps);
   // Packs (v1.5): backfill the slice for pre-pack worlds, and defensively
   // normalize each pack's shape so downstream reads can assume {id, name,
   // description, templateIds:[...]}. Dangling ids (templates since deleted) are
