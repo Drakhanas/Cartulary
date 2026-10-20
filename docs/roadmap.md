@@ -198,7 +198,7 @@ Primitive map creator inside Cartographia. Currently Maps requires the user to b
 **v1 explicit won't-have list (the load-bearing artifact):**
 - Freehand brush tools
 - Custom color picker
-- Layers
+- Layers beyond a named, ordered, show/hide, lock list: no opacity, no blend modes, no per-layer export. (The list itself was added by decision at session 19; this line originally read "Layers".)
 - Procedural generation
 - Image import as drawable surface
 - Image export beyond SVG/PNG
@@ -563,6 +563,8 @@ Then the four remaining map-independent view carves. Two of them are entangled w
 **The project lives in `github.com/Drakhanas/Cartulary` (private).** Cold start is a clone; turnover is a commit; CI runs every gate on every push. The bundle zips, the turnover zips, and the Project's per-session documents are gone. Drak clones locally at `Y:\_Cartulary` and pushes tags from there.
 
 **Next: pillar 3, the drawing editor (Cartographia+).** The v1 scope and won't-have list above are unchanged. The first step is a build order for the editor, proposed as content cuts with their declared scope (which files, which declarations) for Drak's reorder, then cuts under the edit procedure, each browser-passed and rotated with `freeze`. Expect the editor to touch `16_trunk` (cartographia), `12_trunk` (App routing and handlers), `08_export-layer` (SVG in exports), `10_migrate` (any new `mapData` shape), `24_home-data` (help), and `shell.html` (CSS); every one of those is a declared scope on the cut that touches it.
+
+**Build sheet locked (session 19, after proposal-review): `docs/cartographia-plus-spec.md`.** Eight cuts with declared scope, the data model, the one-renderer rule, the stamp-pack sanitizer, and one recorded scope change: layers (named, ordered, show/hide, lock; nothing more) are in, overriding the v1 won't-have list above. Cut 1 (data model) is next.
 
 **Then concordance and cartographia carve last**, against their final shapes, and pillar 2 closes.
 

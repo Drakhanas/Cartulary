@@ -380,7 +380,8 @@
       "freeze r###",
       "reference-r026-layout.json",
       "tools/turnover/check_docs.py",
-      "eighteen mutation probes"
+      "eighteen mutation probes",
+      "cartographia-plus-spec.md"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -400,11 +401,13 @@
       "2facf10cea574525",
       "session 19",
       "Drakhanas/Cartulary",
-      "eighteen mutation probes"
+      "eighteen mutation probes",
+      "cartographia-plus-spec.md"
     ],
     "roadmap.md": [
       "r030",
-      "Drakhanas/Cartulary"
+      "Drakhanas/Cartulary",
+      "cartographia-plus-spec.md"
     ],
     "cartulary-doctrine.md": [
       "r030",

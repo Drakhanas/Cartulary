@@ -366,4 +366,6 @@ Artifact clean again. Everything found was in prose authored during the two prev
 
 **Doc defects found at turnover, fixed here.** The doctrine's Distribution section said there is no separate source repository, which is now false as written; reworded where it lives. `facts.json` carried `probe_count` at seven; eighteen.
 
+**Pillar 3 build sheet locked.** `docs/cartographia-plus-spec.md`, after proposal-review against the live cartographia run and its seams (`MapView`/`MapEditor`, `renderMapHtml`, the r001 migration shape, the App's `mapDraft` routes). Eight cuts with declared scope; SVG rendering through one node tree with two serializers; `mapData.drawing` with layers, shapes, background; `state.mapStamps` with a whitelist sanitizer on import; pins unchanged. One scope change recorded: layers (named, ordered, show/hide, lock) are in, overriding the roadmap's v1 won't-have, corrected where it lives. Palette locked at eight hex colors. Cut 1 is next.
+
 **Verification posture.** Gate tooling changed, so teeth re-proven: eighteen probes, all bit, on the real tree and again from the repository clone with relocatable paths. Doc gate DOCS GREEN at delivery; CI re-runs every gate on push. Dual-build finals still not cut for r001-r030.
