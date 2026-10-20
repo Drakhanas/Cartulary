@@ -1447,6 +1447,25 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .map-canvas.tool-select .map-overlay{pointer-events:auto}
 .map-canvas.tool-select .map-overlay [data-shape]{cursor:move}
 .map-canvas.tool-select .map-overlay [data-vertex]{cursor:crosshair}
+.map-canvas.tool-text{cursor:text}
+.map-tools-text{width:180px;padding:3px 8px;font-size:calc(12px * var(--font-scale))}
+.map-tools-num{width:64px;padding:3px 6px;font-size:calc(12px * var(--font-scale));text-align:center}
+.map-layers{
+  display:flex;flex-direction:column;gap:4px;padding:8px 10px;
+  background:var(--surf2);border:1px solid var(--border);border-top:1px dashed var(--border);border-bottom:none;
+}
+.map-layers-head{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.map-layers-note{font-size:calc(11px * var(--font-scale));color:var(--text-dim);font-style:italic}
+.map-layer-row{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px}
+.map-layer-row.active{background:var(--surf3)}
+.map-layer-row.hidden-layer .map-layer-name{color:var(--text-dim);font-style:italic}
+.map-layer-pick{
+  width:22px;height:22px;padding:0;border:none;background:transparent;cursor:pointer;
+  color:var(--text-dim);font-size:calc(14px * var(--font-scale));line-height:1;
+}
+.map-layer-pick.active{color:var(--accent)}
+.map-layer-name{width:180px;padding:3px 8px;font-size:calc(12px * var(--font-scale))}
+.map-layer-count{font-size:calc(11px * var(--font-scale));color:var(--text-dim);min-width:60px}
 
 /* ── Calendar editor ── */
 .cal-editor{margin-top:8px}
