@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r032) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r033) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -75,3 +75,16 @@ nothing to test but pins, new maps, and the zoom, and that is exactly right; a r
 no tools is a change you prove by showing nothing changed, and the parchment map with every
 shape type exists only because a fixture can carry shapes the editor cannot yet make. Cut
 3 is where the map stops being a thing you look at.
+
+And it was. Six forks proposed, six recommendations taken in four words, and then the first
+cut in this project that Drak sent back, three times, each time right. A polygon that looks
+like a line because the default fill was the color of the paper. No way to stop drawing
+without throwing the shape away. A line you could not grab because its hit area was its own
+stroke, under two pixels wide. And then the handles I added for him, dead at their centres,
+which I would have sworn worked because the probe said so; the probe had dragged a corner
+that sat on the shape's own hit area, and a whole-shape move gave the same number as a
+point move. That one goes in the doctrine. Every round was the same shape: revise the
+script, put the two files back to r032, replay, gate, probe, stage. Nothing was ever edited
+by hand, and the script that is committed is the one that produced the tree, which is the
+whole point of the procedure and the first time it was tested by someone changing their
+mind mid-cut. Eleven rotations. The map takes a coastline now.
