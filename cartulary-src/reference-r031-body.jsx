@@ -5704,7 +5704,9 @@ const makeDefaultGlossopoeiaState = () => ({
 
 // Cartographia map slice (v1.6 r001). Maps were promoted from kind:"map"
 // entries to a flat, Stemma-shaped state slice. Each record:
-//   { id, name, tags:[], fields:{}, mapData:{image,pins}, updatedAt }
+//   { id, name, tags:[], fields:{}, mapData:{image,pins,drawing}, updatedAt }
+// mapData.drawing (v1.6 pillar 3) is the vector drawing under the pins; its
+// shape and normalizers live with the Cartographia view (ensureMapData).
 // The three fields render through the shared EntryForm via cartographiaMapSchema
 // (the Glossopoeia pattern); the canvas (MapView/MapEditor) composes above them
 // in the Cartographia per-map view. Empty on fresh worlds; existing kind:"map"
@@ -5783,6 +5785,9 @@ const makeInitialState = () => migrate({
   glossopoeia: makeDefaultGlossopoeiaState(),
   // Cartographia map slice (v1.6 r001). See makeDefaultCartographiaState.
   cartographia: makeDefaultCartographiaState(),
+  // Map stamps imported from stamp packs (v1.6 pillar 3). World-scoped,
+  // [{id, name, viewBox, body}]. Empty on fresh worlds; see ensureMapStamps.
+  mapStamps: [],
 });
 
 // ─── Field normalization ───────────────────────────────────────────────────────
@@ -6021,6 +6026,17 @@ const migrate = (state) => {
       state.templates = state.templates.filter(t => !(t && t.kind === "map"));
     }
   }
+  // Map drawing model (v1.6 pillar 3, r031): every map record carries
+  // mapData.drawing. Backfilled through ensureMapData so a pre-pillar-3 world
+  // loads with an empty default drawing (one layer, vellum background) and a
+  // malformed drawing coerces to defaults rather than throwing. Idempotent:
+  // a normalized record passes through unchanged. Null entries in the slice
+  // are dropped; records are never dropped.
+  state.cartographia = state.cartographia
+    .filter(m => m && typeof m === "object")
+    .map(m => ({ ...m, mapData: ensureMapData(m.mapData) }));
+  // Imported map stamps (v1.6 pillar 3). Empty until stamp packs land.
+  state.mapStamps = ensureMapStamps(state.mapStamps);
   // Packs (v1.5): backfill the slice for pre-pack worlds, and defensively
   // normalize each pack's shape so downstream reads can assume {id, name,
   // description, templateIds:[...]}. Dangling ids (templates since deleted) are
@@ -12719,7 +12735,7 @@ function App() {
     if (isLocked) return;
     if (!confirmDiscardDraft()) return;
     const id = `map-${genId().slice(-6)}`;
-    const draft = { id, name: "", tags: [], fields: {}, mapData: { image: null, pins: [] } };
+    const draft = { id, name: "", tags: [], fields: {}, mapData: makeDefaultMapData() };
     setActiveMapId(id);
     setMapDraft(draft);
     initialMapDraftRef.current = JSON.stringify(draft);
@@ -12744,7 +12760,7 @@ function App() {
       name,
       tags: (mapDraft.tags || []).filter(t => t && t.trim()),
       fields: mapDraft.fields || {},
-      mapData: mapDraft.mapData || { image: null, pins: [] },
+      mapData: ensureMapData(mapDraft.mapData),
       updatedAt: isoNow(),
     };
     updateState(s => {
@@ -21441,6 +21457,166 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       </div>
     </div>
   );
+}
+
+// ─── Map drawing model (v1.6 pillar 3) ─────────────────────────────────────────
+// The vector drawing under a map's pins. Pure data: mapData.drawing is a
+// viewBox-sized canvas with a background and ordered layers of shapes. The
+// renderer (cut 2) and the editor (cuts 3+) consume it, migrate() backfills it
+// on load, and ensureMapData() coerces anything malformed to defaults on read
+// rather than throwing (defensive validation before state touches). Pins stay
+// 0-1 normalized to the canvas rect and are NOT part of the drawing. Build
+// sheet: docs/cartographia-plus-spec.md.
+
+// The fixed palette the editor offers. Stored as hex on each shape, so a stamp
+// pack can carry colors outside it; the palette constrains authoring, not data.
+const MAP_PALETTE = [
+  { id: "ink",       label: "Ink",       hex: "#2b2420" },
+  { id: "sepia",     label: "Sepia",     hex: "#6b4e2e" },
+  { id: "parchment", label: "Parchment", hex: "#e8dcc0" },
+  { id: "forest",    label: "Forest",    hex: "#4f6b3a" },
+  { id: "water",     label: "Water",     hex: "#5b7f99" },
+  { id: "stone",     label: "Stone",     hex: "#8a8378" },
+  { id: "blood",     label: "Blood",     hex: "#8c3b2e" },
+  { id: "chalk",     label: "Chalk",     hex: "#f4efe4" },
+];
+
+// Background presets for image-less maps: a fill plus a grain amount (0-1) for
+// the feTurbulence texture the renderer lays over it. Not drawn under an image.
+const MAP_BACKGROUND_PRESETS = [
+  { id: "white",     label: "White",     fill: "#ffffff", grain: 0 },
+  { id: "vellum",    label: "Vellum",    fill: "#f1e9d6", grain: 0.25 },
+  { id: "parchment", label: "Parchment", fill: "#e8dcc0", grain: 0.45 },
+];
+const MAP_STROKE_WIDTHS = [2, 4, 8];        // viewBox units
+const MAP_TEXT_SIZES = [24, 36, 56];        // viewBox units, Cormorant Garamond
+const MAP_SHAPE_TYPES = ["rect", "ellipse", "polygon", "stroke", "text", "stamp"];
+// Default canvas for a map with no image. With an image, the renderer sets the
+// drawing's size to the image's natural pixel size the first time it loads
+// while the drawing is still empty (cut 2); after that the size is fixed,
+// because pins are normalized to the canvas rect and would move otherwise.
+const MAP_DRAWING_DEFAULT_SIZE = { width: 1600, height: 1000 };
+
+function makeDefaultMapLayer(name) {
+  return { id: `layer-${genId().slice(-6)}`, name: name || "Drawing", visible: true, locked: false, shapes: [] };
+}
+
+function makeDefaultDrawing(width, height) {
+  const preset = MAP_BACKGROUND_PRESETS[1]; // vellum
+  return {
+    width: Number.isFinite(width) && width > 0 ? Math.round(width) : MAP_DRAWING_DEFAULT_SIZE.width,
+    height: Number.isFinite(height) && height > 0 ? Math.round(height) : MAP_DRAWING_DEFAULT_SIZE.height,
+    background: { fill: preset.fill, grain: preset.grain },
+    layers: [makeDefaultMapLayer("Drawing")],
+  };
+}
+
+// One shape, coerced to its type's field set. Returns null for a shape that
+// cannot be rendered (unknown type, a polygon with fewer than three points, a
+// stamp with no stamp id); the caller drops those. Everything else lands on a
+// default rather than failing, and a well-formed shape round-trips unchanged.
+function ensureMapShape(s) {
+  if (!s || typeof s !== "object") return null;
+  const type = MAP_SHAPE_TYPES.includes(s.type) ? s.type : null;
+  if (!type) return null;
+  const num = (v, d) => (Number.isFinite(v) ? v : d);
+  const hex = (v) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : null);
+  const pick = (v, list, d) => (list.includes(v) ? v : d);
+  const out = {
+    id: (typeof s.id === "string" && s.id) ? s.id : `shape-${genId().slice(-6)}`,
+    type,
+    fill: hex(s.fill),
+    stroke: hex(s.stroke),
+    strokeWidth: pick(s.strokeWidth, MAP_STROKE_WIDTHS, 4),
+  };
+  if (type === "rect" || type === "ellipse" || type === "text" || type === "stamp") {
+    out.x = num(s.x, 0);
+    out.y = num(s.y, 0);
+  }
+  if (type === "rect" || type === "ellipse" || type === "stamp") {
+    out.w = Math.max(1, num(s.w, 100));
+    out.h = Math.max(1, num(s.h, 100));
+  }
+  if (type === "rect" || type === "polygon" || type === "stroke") {
+    out.smooth = s.smooth === true;
+  }
+  if (type === "polygon" || type === "stroke") {
+    const pts = (Array.isArray(s.points) ? s.points : [])
+      .filter(p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+      .map(p => [p[0], p[1]]);
+    if (pts.length < (type === "polygon" ? 3 : 2)) return null;
+    out.points = pts;
+  }
+  if (type === "text") {
+    out.text = typeof s.text === "string" ? s.text : "";
+    out.fontSize = pick(s.fontSize, MAP_TEXT_SIZES, 36);
+    out.rotation = num(s.rotation, 0);
+  }
+  if (type === "stamp") {
+    if (typeof s.stampId !== "string" || !s.stampId) return null;
+    out.stampId = s.stampId;
+    out.rotation = num(s.rotation, 0);
+  }
+  return out;
+}
+
+// The whole drawing, coerced. Ids are preserved where present and minted where
+// absent, so a second pass over the result changes nothing; migrate() relies
+// on that.
+function ensureDrawingShape(drawing) {
+  const src = (drawing && typeof drawing === "object") ? drawing : {};
+  const num = (v, d) => (Number.isFinite(v) ? v : d);
+  const hex = (v) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : null);
+  const preset = MAP_BACKGROUND_PRESETS[1];
+  const bg = (src.background && typeof src.background === "object") ? src.background : {};
+  const layersSrc = (Array.isArray(src.layers) ? src.layers : []).filter(l => l && typeof l === "object");
+  const layers = layersSrc.map((l, i) => ({
+    id: (typeof l.id === "string" && l.id) ? l.id : `layer-${genId().slice(-6)}`,
+    name: (typeof l.name === "string" && l.name.trim()) ? l.name : `Layer ${i + 1}`,
+    visible: l.visible !== false,
+    locked: l.locked === true,
+    shapes: (Array.isArray(l.shapes) ? l.shapes : []).map(ensureMapShape).filter(Boolean),
+  }));
+  if (layers.length === 0) layers.push(makeDefaultMapLayer("Drawing"));
+  return {
+    width: Math.max(1, Math.round(num(src.width, MAP_DRAWING_DEFAULT_SIZE.width))),
+    height: Math.max(1, Math.round(num(src.height, MAP_DRAWING_DEFAULT_SIZE.height))),
+    background: {
+      fill: hex(bg.fill) || preset.fill,
+      grain: Math.max(0, Math.min(1, num(bg.grain, preset.grain))),
+    },
+    layers,
+  };
+}
+
+// mapData as every consumer may assume it: image (string or null, as the r001
+// migration kept it), pins (array, untouched here), drawing (normalized).
+function ensureMapData(md) {
+  const src = (md && typeof md === "object") ? md : {};
+  return {
+    image: typeof src.image === "string" ? src.image : null,
+    pins: Array.isArray(src.pins) ? src.pins : [],
+    drawing: ensureDrawingShape(src.drawing),
+  };
+}
+
+function makeDefaultMapData() {
+  return ensureMapData(null);
+}
+
+// state.mapStamps: stamps imported from stamp packs, world-scoped. Shape-checked
+// here; the import sanitizer (allowlisted elements and attributes) arrives with
+// stamp packs (cut 6) and runs on import and on load. Until then nothing renders
+// a stamp, so an unsanitized body cannot reach a page.
+function ensureMapStamps(list) {
+  return (Array.isArray(list) ? list : [])
+    .filter(s => s && typeof s === "object" && typeof s.id === "string" && s.id)
+    .map(s => ({
+      id: s.id,
+      name: (typeof s.name === "string" && s.name.trim()) ? s.name : s.id,
+      viewBox: typeof s.viewBox === "string" ? s.viewBox : "0 0 64 64",
+      body: typeof s.body === "string" ? s.body : "",
+    }));
 }
 
 // ─── Map view ──────────────────────────────────────────────────────────────────
