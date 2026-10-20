@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r033) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r034) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -88,3 +88,15 @@ script, put the two files back to r032, replay, gate, probe, stage. Nothing was 
 by hand, and the script that is committed is the one that produced the tree, which is the
 whole point of the procedure and the first time it was tested by someone changing their
 mind mid-cut. Eleven rotations. The map takes a coastline now.
+
+Cut 4 went in one round, which after cut 3 felt suspicious. Text, undo, layers: five forks,
+five recommendations, four words back. The one I argued against the sheet on was undo. The
+sheet said drawing only, and the sheet was wrong in the way plans are wrong, by guessing
+that narrower is cheaper. A snapshot of the record is a snapshot of the record; the pins
+ride along for nothing, and the only design in the whole feature is naming the gesture so a
+drag is one step. The probe caught the one bug before Drak could, and it was a focus bug,
+which is the kind that only exists once there is a text field: a label coming back from
+undo re-mounted the field, the field grabbed focus because it had been told to on mount,
+and the next Ctrl+Y went to the field instead of the history. Drak's pass found a bug that
+was a hidden layer, which is the feature working and the interface not saying so loudly
+enough; noted, not built. Twelve rotations. Four cuts in one session, three of them today.
