@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r032) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -63,3 +63,15 @@ rotation's last check, the rebuild hashing to the file he passed, held.
 The probe found one thing the build sheet got wrong, which is the right number for a first
 cut: the migration cannot know an image's size, so the rule that says it does belongs in the
 renderer. Recorded for cut 2, not patched into cut 1.
+
+Cut 2 went the next morning, after the tag landed on the wrong commit and had to move. The
+renderer is one tree and two serializers, which is the kind of sentence that sounds like a
+slogan until you write the export path and realize the alternative is two drawings of the
+same map that agree by luck. The probe this time had fifty assertions and the one I cared
+about was dull: every pin's anchor point, measured against the svg's rectangle, within a
+percent of the stored fraction, in the app and in the export. The map moved from an img to
+an svg and nothing a user placed moved with it. Drak's note on the pass was that there was
+nothing to test but pins, new maps, and the zoom, and that is exactly right; a renderer with
+no tools is a change you prove by showing nothing changed, and the parchment map with every
+shape type exists only because a fixture can carry shapes the editor cannot yet make. Cut
+3 is where the map stops being a thing you look at.
