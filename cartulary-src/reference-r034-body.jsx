@@ -21888,7 +21888,9 @@ function useImageNaturalSize(url, onError) {
 // a second svg the editor owns, over the canvas, with no pointer events, so
 // the one tree stays the drawing and the export cannot pick an overlay up.
 // Coordinates convert the way pins do: a fraction of the svg's rect times the
-// viewBox, so a pin and a vertex placed at the same cursor agree.
+// viewBox, so a pin and a vertex placed at the same cursor agree. Since r034
+// every write goes through the editor's history (useMapHistory), one step
+// per completed gesture, and shapes go to an explicit active layer.
 
 const MAP_TOOLS = [
   { id: "pin",     label: "Pin",     hint: "Click on map to add pin · Click pin to edit · Drag pin to move" },
@@ -21897,6 +21899,7 @@ const MAP_TOOLS = [
   { id: "ellipse", label: "Ellipse", hint: "Drag on the map to draw an ellipse · Right-click when done" },
   { id: "polygon", label: "Polygon", hint: "Click to place the corners of a closed, filled area · First corner, double-click, Enter, or right-click closes it · Esc discards" },
   { id: "stroke",  label: "Line",    hint: "Click to place the points of an open line · Double-click, Enter, or right-click finishes it · Esc discards" },
+  { id: "text",    label: "Text",    hint: "Click on the map to place a label · Edit it, its size, and its angle in the strip · Right-click when done" },
 ];
 
 // Canvas sizes offered on image-less maps (an image map's canvas is the image).
@@ -21915,10 +21918,11 @@ function translateMapShape(s, dx, dy) {
 }
 
 // All of the tool interaction, as a hook so MapEditor's render stays readable.
-// Takes the normalized mapData and the editor's onChange, the svg ref (the
-// canvas, for coordinates and hit tests), the canvas div ref (focused on
-// mousedown so the browser's own keyboard scrolling stays on the canvas), and
-// the canvas size the tree rendered at.
+// Takes the normalized mapData and the editor's commit (useMapHistory's, which
+// takes an options object after the record), the svg ref (the canvas, for
+// coordinates and hit tests), the canvas div ref (focused on mousedown so the
+// browser's own keyboard scrolling stays on the canvas), and the canvas size
+// the tree rendered at.
 function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   const [tool, setToolState] = useState("pin");
   // Defaults for the first shape: stone fill, sepia stroke. Stone because a
@@ -21931,10 +21935,17 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   const [moving, setMoving] = useState(null);   // {id, startX, startY, origin} while Select drags a whole shape
   const [vertexDrag, setVertexDrag] = useState(null); // {id, index} while Select drags one point of a polygon or line
   const [selBox, setSelBox] = useState(null);   // selection box in viewBox units, measured from the DOM
+  const [activeLayerId, setActiveLayerId] = useState(null); // explicit; falls back to the first visible unlocked layer
+  const [focusTextId, setFocusTextId] = useState(null); // a label just placed: the strip's field takes focus once, then forgets
 
   const drawing = data.drawing;
   const layers = drawing.layers;
-  const targetLayer = layers.find(l => l.visible && !l.locked) || null;
+  // The active layer is the one picked in the panel (or the strip's Layer
+  // select); until one is picked, or if it was deleted, the first visible
+  // unlocked layer. A hidden or locked active layer refuses drawing, and the
+  // hint says which, rather than quietly drawing somewhere else.
+  const activeLayer = layers.find(l => l.id === activeLayerId) || layers.find(l => l.visible && !l.locked) || layers[0] || null;
+  const targetLayer = activeLayer && activeLayer.visible && !activeLayer.locked ? activeLayer : null;
   const allShapes = layers.flatMap(l => l.shapes);
   const selectable = layers.filter(l => l.visible && !l.locked).flatMap(l => l.shapes);
   const selectedShape = selectedShapeId ? (allShapes.find(s => s.id === selectedShapeId) || null) : null;
@@ -21956,7 +21967,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
     return rect && rect.width ? width / rect.width : 1;
   };
 
-  const setLayers = (next) => onChange({ ...data, drawing: { ...drawing, layers: next } });
+  // Every write: one new mapData through the history. opts.coalesce names a
+  // gesture so its many commits are one undo step.
+  const setLayers = (next, opts) => onChange({ ...data, drawing: { ...drawing, layers: next } }, opts);
   const addShape = (raw) => {
     if (!targetLayer) return null;
     const shape = ensureMapShape({ id: `shape-${genId().slice(-6)}`, ...raw });
@@ -21964,12 +21977,57 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
     setLayers(layers.map(l => l.id === targetLayer.id ? { ...l, shapes: [...l.shapes, shape] } : l));
     return shape.id;
   };
-  const updateShape = (id, patch) => {
-    setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === id ? (ensureMapShape({ ...s, ...patch }) || s) : s) })));
+  const updateShape = (id, patch, opts) => {
+    setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === id ? (ensureMapShape({ ...s, ...patch }) || s) : s) })), opts);
   };
   const deleteShape = (id) => {
     setLayers(layers.map(l => ({ ...l, shapes: l.shapes.filter(s => s.id !== id) })));
     if (selectedShapeId === id) setSelectedShapeId(null);
+  };
+
+  // Layer operations. Layers draw in array order, so "up" is toward the end.
+  const addLayer = () => {
+    const layer = makeDefaultMapLayer(`Layer ${layers.length + 1}`);
+    setLayers([...layers, layer]);
+    setActiveLayerId(layer.id);
+  };
+  const renameLayer = (id, name) => setLayers(layers.map(l => l.id === id ? { ...l, name } : l), { coalesce: `rename-${id}` });
+  const toggleLayerVisible = (id) => {
+    setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
+    if (selectedShape && layers.some(l => l.id === id && l.visible && l.shapes.some(s => s.id === selectedShape.id))) setSelectedShapeId(null);
+  };
+  const toggleLayerLocked = (id) => {
+    setLayers(layers.map(l => l.id === id ? { ...l, locked: !l.locked } : l));
+    if (selectedShape && layers.some(l => l.id === id && !l.locked && l.shapes.some(s => s.id === selectedShape.id))) setSelectedShapeId(null);
+  };
+  const moveLayer = (id, dir) => {
+    const i = layers.findIndex(l => l.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= layers.length) return;
+    const next = layers.slice();
+    const [l] = next.splice(i, 1);
+    next.splice(j, 0, l);
+    setLayers(next);
+  };
+  const deleteLayer = (id) => {
+    if (layers.length <= 1) return;
+    const l = layers.find(x => x.id === id);
+    if (!l) return;
+    if (l.shapes.length > 0 && !confirm(`Delete layer "${l.name}" and its ${l.shapes.length} ${l.shapes.length === 1 ? "shape" : "shapes"}? Undo brings it back.`)) return;
+    setLayers(layers.filter(x => x.id !== id));
+    if (selectedShape && l.shapes.some(s => s.id === selectedShape.id)) setSelectedShapeId(null);
+  };
+  const moveShapeToLayer = (shapeId, layerId) => {
+    const from = layers.find(l => l.shapes.some(s => s.id === shapeId));
+    const shape = from ? from.shapes.find(s => s.id === shapeId) : null;
+    if (!shape || !layers.some(l => l.id === layerId) || from.id === layerId) return;
+    setLayers(layers.map(l => {
+      if (l.id === from.id) return { ...l, shapes: l.shapes.filter(s => s.id !== shapeId) };
+      if (l.id === layerId) return { ...l, shapes: [...l.shapes, shape] };
+      return l;
+    }));
+    const to = layers.find(l => l.id === layerId);
+    if (selectedShapeId === shapeId && to && (!to.visible || to.locked)) setSelectedShapeId(null);
   };
 
   const setTool = (t) => {
@@ -21989,6 +22047,12 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   const applyStyle = (patch) => {
     setStyle(st => ({ ...st, ...patch }));
     if (selectedShape) updateShape(selectedShape.id, patch);
+  };
+  // Text content, size, and angle edit the selected shape only, never the
+  // defaults; typing coalesces into one undo step per field.
+  const editSelected = (patch, coalesceKey) => {
+    if (!selectedShape) return;
+    updateShape(selectedShape.id, patch, coalesceKey ? { coalesce: `${coalesceKey}-${selectedShape.id}` } : undefined);
   };
 
   // Commits the polygon or line in progress (a rect or ellipse commits on
@@ -22025,7 +22089,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
       const vertex = e.target && e.target.closest ? e.target.closest("[data-vertex]") : null;
       if (vertex && selectedShape) {
         e.preventDefault();
-        setVertexDrag({ id: selectedShape.id, index: parseInt(vertex.getAttribute("data-vertex"), 10) });
+        setVertexDrag({ id: selectedShape.id, index: parseInt(vertex.getAttribute("data-vertex"), 10), seq: Date.now() });
         return;
       }
       const hit = e.target && e.target.closest ? e.target.closest("[data-shape]") : null;
@@ -22034,7 +22098,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
       if (!shape) { setSelectedShapeId(null); return; }
       e.preventDefault();
       setSelectedShapeId(shape.id);
-      setMoving({ id: shape.id, startX: p[0], startY: p[1], origin: shape });
+      setMoving({ id: shape.id, startX: p[0], startY: p[1], origin: shape, seq: Date.now() });
     }
   };
   // Right-click: in a drawing tool, finish what is in progress and go to Select
@@ -22047,9 +22111,18 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
     setToolState("select");
     setMoving(null);
     setVertexDrag(null);
-    setSelectedShapeId(id);
+    setSelectedShapeId(id || (tool === "text" ? selectedShapeId : null));
   };
   const onSvgClick = (e) => {
+    if (tool === "text") {
+      // A label at the click, in ink, selected so the strip's field takes it.
+      if (!targetLayer) return;
+      const p = toPoint(e);
+      if (!p) return;
+      const id = addShape({ type: "text", x: p[0], y: p[1], text: "Label", fontSize: style.fontSize || 36, rotation: 0, fill: MAP_PALETTE[0].hex, stroke: null, strokeWidth: style.strokeWidth });
+      if (id) { setSelectedShapeId(id); setFocusTextId(id); }
+      return;
+    }
     if (tool !== "polygon" && tool !== "stroke") return;
     if (!targetLayer) return;
     const p = toPoint(e);
@@ -22099,7 +22172,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
         finishDraft();
         return;
       }
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedShape && tool === "select") {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedShape && (tool === "select" || tool === "text")) {
         e.preventDefault();
         deleteShape(selectedShape.id);
       }
@@ -22136,7 +22209,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
       const p = toPoint(e);
       if (!p) return;
       const dx = p[0] - moving.startX, dy = p[1] - moving.startY;
-      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === moving.id ? translateMapShape(moving.origin, dx, dy) : s) })));
+      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === moving.id ? translateMapShape(moving.origin, dx, dy) : s) })), { coalesce: `move-${moving.id}-${moving.seq}` });
     };
     const up = () => setMoving(null);
     window.addEventListener("mousemove", move);
@@ -22152,7 +22225,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
       if (!p) return;
       setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => (s.id === vertexDrag.id && Array.isArray(s.points))
         ? { ...s, points: s.points.map((q, i) => (i === vertexDrag.index ? p : q)) }
-        : s) })));
+        : s) })), { coalesce: `vertex-${vertexDrag.id}-${vertexDrag.index}-${vertexDrag.seq}` });
     };
     const up = () => setVertexDrag(null);
     window.addEventListener("mousemove", move);
@@ -22177,25 +22250,109 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   }, [selectedShape, data]);
 
   const toolDef = MAP_TOOLS.find(t => t.id === tool) || MAP_TOOLS[0];
-  const hint = (tool !== "pin" && !targetLayer) ? "No visible, unlocked layer to draw on" : toolDef.hint;
+  let hint = toolDef.hint;
+  if (tool !== "pin" && !targetLayer) {
+    hint = activeLayer
+      ? `The active layer "${activeLayer.name}" is ${activeLayer.visible ? "locked" : "hidden"}; pick another in Layers, or ${activeLayer.visible ? "unlock" : "show"} it`
+      : "No layer to draw on; add one in Layers";
+  }
 
   return {
-    tool, setTool, hint, current, applyStyle,
+    tool, setTool, hint, current, applyStyle, editSelected,
     selectedShape, deleteSelected: () => { if (selectedShape) deleteShape(selectedShape.id); },
     draft, cursor, selBox, style, selectable,
+    layers, activeLayerId: activeLayer ? activeLayer.id : null, setActiveLayerId,
+    focusTextId, consumeFocusText: () => setFocusTextId(null),
+    addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer,
     onSvgMouseDown, onSvgClick, onSvgDoubleClick, onSvgMouseMove, onSvgContextMenu,
   };
 }
+// Undo/redo over the whole mapData, pins included: one history of snapshots,
+// editor-local, gone when the editor closes. commit(next, opts) is what every
+// write goes through; a snapshot of the current record is pushed before each
+// step. opts.coalesce names a gesture (a drag, a run of typing in one field):
+// consecutive commits under the same name are one step, so a drag of any
+// length undoes in one go and the first keystroke's snapshot is the one that
+// comes back. opts.silent writes through with no step (the image-size heal).
+// Keys are document-wide while the editor is mounted, typing fields excluded,
+// so a text field keeps the browser's own undo.
+function useMapHistory(data, onChange, limit) {
+  const pastRef = useRef([]);
+  const futureRef = useRef([]);
+  const keyRef = useRef(null);
+  const [, bump] = useState(0);
+  const max = limit || 50;
+  const commit = (next, opts) => {
+    const o = opts || {};
+    if (!o.silent) {
+      const key = o.coalesce || null;
+      if (!(key && keyRef.current === key)) {
+        pastRef.current.push(data);
+        if (pastRef.current.length > max) pastRef.current.shift();
+      }
+      futureRef.current = [];
+      keyRef.current = key;
+      bump(n => n + 1);
+    }
+    onChange(next);
+  };
+  const undo = () => {
+    if (pastRef.current.length === 0) return;
+    const prev = pastRef.current.pop();
+    futureRef.current.push(data);
+    keyRef.current = null;
+    bump(n => n + 1);
+    onChange(prev);
+  };
+  const redo = () => {
+    if (futureRef.current.length === 0) return;
+    const next = futureRef.current.pop();
+    pastRef.current.push(data);
+    keyRef.current = null;
+    bump(n => n + 1);
+    onChange(next);
+  };
+  useEffect(() => {
+    const handler = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const t = e.target;
+      const tag = t && t.tagName ? t.tagName.toUpperCase() : "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+      const k = typeof e.key === "string" ? e.key.toLowerCase() : "";
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [data]);
+  return { commit, undo, redo, canUndo: pastRef.current.length > 0, canRedo: futureRef.current.length > 0 };
+}
+
 
 // The strip under the editor toolbar: tools, the size presets on an image-less
-// map, and (for the drawing tools, or while a shape is selected) the fill and
-// stroke swatches, the width, Smooth, and Delete.
-function MapToolStrip({ drawing, showPresets, presetValue, onPreset }) {
-  const { tool, setTool, current, applyStyle, selectedShape, deleteSelected } = drawing;
+// map, Undo and Redo, the Layers toggle and the active layer, and (for the
+// drawing tools, or while a shape is selected) the fill and stroke swatches,
+// the width, Smooth, the text controls for a label, the shape's layer, and
+// Delete.
+function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, layersOpen, onToggleLayers }) {
+  const { tool, setTool, current, applyStyle, editSelected, selectedShape, deleteSelected, layers, activeLayerId, setActiveLayerId, moveShapeToLayer, focusTextId, consumeFocusText } = drawing;
   const kind = selectedShape ? selectedShape.type : tool;
+  // The text field takes focus once, for the label that was just placed, so
+  // typing replaces "Label". Not on any other mount: a label reselected or
+  // brought back by undo would otherwise steal the next keyboard shortcut.
+  const textRef = useRef(null);
+  useEffect(() => {
+    if (focusTextId && selectedShape && selectedShape.id === focusTextId && textRef.current) {
+      textRef.current.focus();
+      textRef.current.select();
+      consumeFocusText();
+    }
+  }, [focusTextId, selectedShape]);
   const showStyle = tool !== "pin" && (tool !== "select" || !!selectedShape);
   const showFill = kind !== "stroke";
   const showSmooth = kind === "rect" || kind === "polygon" || kind === "stroke";
+  const isText = !!selectedShape && selectedShape.type === "text";
+  const shapeLayer = selectedShape ? layers.find(l => l.shapes.some(s => s.id === selectedShape.id)) : null;
   const swatches = (value, onPick) => (
     <span className="map-swatches">
       {MAP_PALETTE.map(c => (
@@ -22227,6 +22384,15 @@ function MapToolStrip({ drawing, showPresets, presetValue, onPreset }) {
             </select>
           </>
         )}
+        <span className="map-tools-sep" />
+        <button type="button" className="btn btn-small btn-ghost" disabled={!history.canUndo} onClick={history.undo} title="Undo (Ctrl+Z)">Undo</button>
+        <button type="button" className="btn btn-small btn-ghost" disabled={!history.canRedo} onClick={history.redo} title="Redo (Ctrl+Shift+Z or Ctrl+Y)">Redo</button>
+        <span className="map-tools-sep" />
+        <button type="button" className={`btn btn-small ${layersOpen ? "btn-accent" : "btn-ghost"}`} onClick={onToggleLayers} title="Show or hide the layer list">Layers</button>
+        <span className="map-tools-label">Layer</span>
+        <select className="input map-tools-select" value={activeLayerId || ""} onChange={e => setActiveLayerId(e.target.value)} title="The layer new shapes go to">
+          {layers.map(l => <option key={l.id} value={l.id}>{l.name}{l.visible ? "" : " (hidden)"}{l.locked ? " (locked)" : ""}</option>)}
+        </select>
       </div>
       {showStyle && (
         <div className="map-tools-row">
@@ -22239,12 +22405,89 @@ function MapToolStrip({ drawing, showPresets, presetValue, onPreset }) {
           {showSmooth && (
             <button type="button" className={`btn btn-small ${current.smooth ? "btn-accent" : "btn-ghost"}`} onClick={() => applyStyle({ smooth: !current.smooth })} title="Round the corners and curve the path through its points">Smooth</button>
           )}
+          {isText && (
+            <>
+              <span className="map-tools-label">Text</span>
+              <input
+                ref={textRef}
+                className="input map-tools-text"
+                value={selectedShape.text}
+                onChange={e => editSelected({ text: e.target.value }, "text")}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+                placeholder="Label"
+              />
+              <span className="map-tools-label">Size</span>
+              {MAP_TEXT_SIZES.map(sz => (
+                <button key={sz} type="button" className={`btn btn-small ${selectedShape.fontSize === sz ? "btn-accent" : "btn-ghost"}`} onClick={() => editSelected({ fontSize: sz })}>{sz}</button>
+              ))}
+              <span className="map-tools-label">Angle</span>
+              <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) - 15) * 100) / 100 })} title="Rotate 15 degrees counter-clockwise">−15</button>
+              <input
+                className="input map-tools-num"
+                type="number"
+                step="1"
+                value={Math.round((selectedShape.rotation || 0) * 100) / 100}
+                onChange={e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) editSelected({ rotation: v }, "rotation"); }}
+                title="Angle in degrees"
+              />
+              <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) + 15) * 100) / 100 })} title="Rotate 15 degrees clockwise">+15</button>
+            </>
+          )}
+          {selectedShape && layers.length > 1 && (
+            <>
+              <span className="map-tools-label">Layer</span>
+              <select className="input map-tools-select" value={shapeLayer ? shapeLayer.id : ""} onChange={e => moveShapeToLayer(selectedShape.id, e.target.value)} title="Move this shape to another layer">
+                {layers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </>
+          )}
           {selectedShape && <button type="button" className="btn btn-small btn-danger" onClick={deleteSelected}>Delete shape</button>}
         </div>
       )}
     </div>
   );
 }
+// The layer panel under the strip: one row per layer, top-most first (the
+// last layer in the array draws on top). Pick the active layer, rename it in
+// place, show or hide, lock or unlock, move it up or down the stack, delete
+// it (asks when it has shapes; undo brings it back), or add one on top.
+function MapLayerPanel({ drawing }) {
+  const { layers, activeLayerId, setActiveLayerId, addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer } = drawing;
+  const rows = [...layers].reverse();
+  return (
+    <div className="map-layers">
+      <div className="map-layers-head">
+        <span className="map-tools-label">Layers</span>
+        <span className="map-layers-note">Top of the stack first. Shapes go to the active layer.</span>
+        <span style={{ flex: 1 }} />
+        <button type="button" className="btn btn-small btn-ghost" onClick={addLayer}>+ Add layer</button>
+      </div>
+      {rows.map((l, i) => {
+        const idx = layers.length - 1 - i;
+        const active = l.id === activeLayerId;
+        return (
+          <div key={l.id} className={`map-layer-row ${active ? "active" : ""} ${l.visible ? "" : "hidden-layer"}`}>
+            <button type="button" className={`map-layer-pick ${active ? "active" : ""}`} title={active ? "Active layer" : "Make this the active layer"} onClick={() => setActiveLayerId(l.id)}>{active ? "◉" : "○"}</button>
+            <input
+              className="input map-layer-name"
+              value={l.name}
+              onChange={e => renameLayer(l.id, e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+              title="Layer name"
+            />
+            <span className="map-layer-count">{l.shapes.length} {l.shapes.length === 1 ? "shape" : "shapes"}</span>
+            <button type="button" className={`btn btn-small ${l.visible ? "btn-ghost" : "btn-accent"}`} onClick={() => toggleLayerVisible(l.id)} title={l.visible ? "Hide this layer (it stays out of the export too)" : "Show this layer"}>{l.visible ? "Hide" : "Hidden"}</button>
+            <button type="button" className={`btn btn-small ${l.locked ? "btn-accent" : "btn-ghost"}`} onClick={() => toggleLayerLocked(l.id)} title={l.locked ? "Unlock this layer" : "Lock this layer (nothing on it can be selected or drawn)"}>{l.locked ? "Locked" : "Lock"}</button>
+            <button type="button" className="btn btn-small btn-ghost" disabled={idx === layers.length - 1} onClick={() => moveLayer(l.id, 1)} title="Move up the stack">↑</button>
+            <button type="button" className="btn btn-small btn-ghost" disabled={idx === 0} onClick={() => moveLayer(l.id, -1)} title="Move down the stack">↓</button>
+            <button type="button" className="btn btn-small btn-danger" disabled={layers.length === 1} onClick={() => deleteLayer(l.id)} title={layers.length === 1 ? "The last layer stays" : "Delete this layer"}>×</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 // The editor's overlay svg, same viewBox as the canvas. In the drawing tools
 // it has no pointer events and draws the shape in progress in the current
@@ -22712,7 +22955,12 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     imageWidth: imageSize ? imageSize.width : null,
     imageHeight: imageSize ? imageSize.height : null,
   }), [data, imageUrl, imageSize]);
-  const drawing = useMapDrawing({ data, onChange, svgRef: imgRef, canvasRef, width: canvasTree.width, height: canvasTree.height });
+  // Every write to the record goes through the history (one step per gesture;
+  // pins included, by decision at session 19). The hook writes through it too.
+  const history = useMapHistory(data, onChange);
+  const commit = history.commit;
+  const [layersOpen, setLayersOpen] = useState(false);
+  const drawing = useMapDrawing({ data, onChange: commit, svgRef: imgRef, canvasRef, width: canvasTree.width, height: canvasTree.height });
   // Canvas size presets for image-less maps. With shapes or pins on the map
   // the switch warns first, because nothing is transformed: shapes keep their
   // coordinates (anything beyond the new edges is cut off) and pins keep their
@@ -22724,8 +22972,8 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     const p = MAP_CANVAS_PRESETS.find(x => x.id === id);
     if (!p || (p.width === data.drawing.width && p.height === data.drawing.height)) return;
     const hasWork = pins.length > 0 || mapDrawingHasContent(data.drawing);
-    if (hasWork && !confirm(`Change the canvas to ${p.label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing. There is no undo yet.`)) return;
-    onChange({ ...data, drawing: { ...data.drawing, width: p.width, height: p.height } });
+    if (hasWork && !confirm(`Change the canvas to ${p.label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing. Undo restores it.`)) return;
+    commit({ ...data, drawing: { ...data.drawing, width: p.width, height: p.height } });
   };
 
   // Size heal, once: the first time an image loads while the drawing is still
@@ -22737,7 +22985,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     const d = data.drawing;
     if (mapDrawingHasContent(d)) return;
     if (d.width === imageSize.width && d.height === imageSize.height) return;
-    onChange({ ...data, drawing: { ...d, width: imageSize.width, height: imageSize.height } });
+    commit({ ...data, drawing: { ...d, width: imageSize.width, height: imageSize.height } }, { silent: true });
   }, [data, imageSize, onChange]);
 
   // Ctrl+scroll zoom, mirroring MapView. Wrapper-width approach keeps the
@@ -22783,7 +23031,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
             const writable = await fh.createWritable();
             await writable.write(file);
             await writable.close();
-            onChange({ ...data, image: filename });
+            commit({ ...data, image: filename });
             return;
           } catch (err) {
             console.error("FSAA write failed", err);
@@ -22798,7 +23046,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
       }
       try {
         const dataUrl = await fileToDataUrl(file);
-        onChange({ ...data, image: dataUrl });
+        commit({ ...data, image: dataUrl });
       } catch (err) {
         flash && flash("Failed to read image", "error");
       }
@@ -22808,7 +23056,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
 
   const removeImage = () => {
     if (!confirm("Remove the map image? The drawing and the pins stay on the canvas.")) return;
-    onChange({ ...data, image: null });
+    commit({ ...data, image: null });
   };
 
   const handleCanvasClick = (e) => {
@@ -22827,12 +23075,14 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
       id: `pin-${genId().slice(0, 6)}`,
       x, y, label: "", entryId: null, color: null, notes: "",
     };
-    onChange({ ...data, pins: [...pins, newPin] });
+    commit({ ...data, pins: [...pins, newPin] });
     setSelectedPinId(newPin.id);
   };
 
+  const pinDragSeq = useRef(0);
   const handlePinMouseDown = (e, pinId) => {
     e.stopPropagation();
+    pinDragSeq.current += 1;
     setDraggingPinId(pinId);
     setDragMoved(false);
   };
@@ -22852,7 +23102,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
       if (Math.abs(x - startX) > 0.002 || Math.abs(y - startY) > 0.002) {
         moved = true;
       }
-      onChange({ ...data, pins: pins.map(p => p.id === draggingPinId ? { ...p, x, y } : p) });
+      commit({ ...data, pins: pins.map(p => p.id === draggingPinId ? { ...p, x, y } : p) }, { coalesce: `pin-drag-${draggingPinId}-${pinDragSeq.current}` });
     };
     const handleUp = () => {
       if (!moved) {
@@ -22871,11 +23121,14 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     };
   }, [draggingPinId, data, pins, onChange]);
 
+  // Pin field edits coalesce per field, so a label typed in one go is one
+  // undo step; a different field, or a drag in between, starts a new one.
   const updatePin = (pinId, patch) => {
-    onChange({ ...data, pins: pins.map(p => p.id === pinId ? { ...p, ...patch } : p) });
+    const field = Object.keys(patch)[0] || "field";
+    commit({ ...data, pins: pins.map(p => p.id === pinId ? { ...p, ...patch } : p) }, { coalesce: `pin-${pinId}-${field}` });
   };
   const deletePin = (pinId) => {
-    onChange({ ...data, pins: pins.filter(p => p.id !== pinId) });
+    commit({ ...data, pins: pins.filter(p => p.id !== pinId) });
     setSelectedPinId(null);
   };
 
@@ -22895,7 +23148,8 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
         <span style={{ flex: 1 }} />
         <span className="map-editor-hint">{drawing.hint}</span>
       </div>
-      <MapToolStrip drawing={drawing} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} />
+      <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} />
+      {layersOpen && <MapLayerPanel drawing={drawing} />}
 
       {data.image && errored ? (
         <div className="map-empty" style={{ borderTop: "none", borderRadius: "0 0 3px 3px" }}>
