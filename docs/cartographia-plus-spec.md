@@ -115,3 +115,4 @@ Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with
 - Default canvas size presets beyond 1600 x 1000 (portrait, square) and whether the creation flow asks.
 - Selection handles for scale and rotate on stamps and text: corner handles versus a numeric panel. Cut 5.
 - Whether PNG export rasterizes at 2x or lets the user choose. Cut 7.
+- Canvas size for image maps. Section 2 says width and height equal the image's natural pixels when an image exists, but `migrate` cannot decode an image (it may live behind a folder handle), so r031 backfills 1600 x 1000 on every record, image or not. Cut 2 takes the viewBox from the loaded image's natural size when an image exists and treats the stored size as the no-image size; whether `setImage` and `removeImage` also write the natural size into `drawing`, so shapes keep their units if the image is later removed, is cut 2's call. Found at r031 by the fixture probe.

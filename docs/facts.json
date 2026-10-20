@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 38,
-    "total_lines": 39337,
-    "raw_body_lines": 39337,
-    "canonical_lines": 37303,
-    "decl_count": 419,
+    "total_lines": 39513,
+    "raw_body_lines": 39513,
+    "canonical_lines": 37469,
+    "decl_count": 432,
     "no_trailing_newline": 30,
-    "active_anchor": "reference-r026-body.jsx"
+    "active_anchor": "reference-r031-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 39337,
+      "value": 39513,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 38 files have no trailing newline"
     },
     "decl_count": {
-      "value": 419,
+      "value": 432,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 37303,
+      "value": 37469,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 39337,
+      "value": 39513,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 74,
+      "value": 75,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,27 +81,35 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2008051,
+      "value": 2016635,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "eight",
-        8
+        "nine",
+        9
       ],
-      "pattern": "(?i)rotated (eight|\\d+) times"
+      "pattern": "(?i)rotated ([a-z]+|\\d+) times"
     },
     "trunk16_lines": {
-      "value": 2051,
+      "value": 2211,
       "pattern": "`16_trunk` \\((\\d+)\\)"
     },
     "trunk16_tiling": {
-      "value": "2051",
-      "pattern": "265 \\+ 1028 \\+ 758 = (\\d+)"
+      "value": "2211",
+      "pattern": "265 \\+ 1028 \\+ 918 = (\\d+)"
     },
     "repo": {
       "value": "Drakhanas/Cartulary",
       "pattern": "github\\.com/(Drakhanas/Cartulary)"
+    },
+    "cartographia_lines": {
+      "value": 918,
+      "pattern": "cartographia[^|\\n]*\\((\\d+) lines"
+    },
+    "working_hash_r031": {
+      "value": "3604074d447fcc41",
+      "pattern": "working[^\\n]{0,40}at r031 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -223,26 +231,36 @@
     {
       "file": "16_trunk.jsx",
       "line": 1295,
+      "contains": "Map drawing model (v1.6 pillar 3)"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1306,
+      "contains": "const MAP_PALETTE"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1455,
       "contains": "Map view"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1297,
+      "line": 1457,
       "contains": "function useMapImageUrl"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1932,
+      "line": 2092,
       "contains": "Cartographia"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1940,
+      "line": 2100,
       "contains": "function CartographiaIndexView"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2051,
+      "line": 2211,
       "contains": "}"
     },
     {
@@ -301,18 +319,18 @@
       "contains": "function ResetTemplateModal"
     },
     {
-      "file": "09_trunk.jsx",
-      "line": 172,
-      "contains": "Initial state"
-    },
-    {
       "file": "12_trunk.jsx",
       "line": 2,
       "contains": "App"
     },
     {
+      "file": "09_trunk.jsx",
+      "line": 174,
+      "contains": "Initial state"
+    },
+    {
       "file": "10_migrate.jsx",
-      "line": 5805,
+      "line": 5816,
       "contains": "marked.use({"
     }
   ],
@@ -330,7 +348,7 @@
       ],
       [
         1294,
-        2051,
+        2211,
         "cartographia"
       ]
     ],
@@ -366,7 +384,6 @@
   "required_strings": {
     "handoff.md": [
       "r030",
-      "reference-r026-body.jsx",
       "2facf10cea574525",
       "header placement",
       "prove_gate_teeth.py",
@@ -378,19 +395,26 @@
       "Drakhanas/Cartulary",
       "build_inline.py edit",
       "freeze r###",
-      "reference-r026-layout.json",
       "tools/turnover/check_docs.py",
       "eighteen mutation probes",
-      "cartographia-plus-spec.md"
+      "cartographia-plus-spec.md",
+      "r031",
+      "reference-r031-body.jsx",
+      "3604074d447fcc41",
+      "reference-r031-layout.json",
+      "r031_drawing_model.py",
+      "ensureMapData"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
       "r030",
       "23_kalendarium",
-      "reference-r026-body.jsx",
       "2facf10cea574525",
-      "reference-r026-layout.json",
-      "Eighteen probes"
+      "Eighteen probes",
+      "r031",
+      "reference-r031-body.jsx",
+      "3604074d447fcc41",
+      "reference-r031-layout.json"
     ],
     "changelog.md": [
       "r026",
@@ -402,12 +426,16 @@
       "session 19",
       "Drakhanas/Cartulary",
       "eighteen mutation probes",
-      "cartographia-plus-spec.md"
+      "cartographia-plus-spec.md",
+      "r031",
+      "3604074d447fcc41",
+      "r031_drawing_model.py"
     ],
     "roadmap.md": [
       "r030",
       "Drakhanas/Cartulary",
-      "cartographia-plus-spec.md"
+      "cartographia-plus-spec.md",
+      "r031"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -416,7 +444,8 @@
     ],
     "journal-entry.txt": [
       "r030",
-      "session 19"
+      "session 19",
+      "r031"
     ]
   }
 }

@@ -6,13 +6,13 @@ end-step confirm (reconstitution-parity). It is updated in the same pass as ever
 split or combine, never out of band.
 
 Line-number source of record: `Cartulary_v1.6_Working_r001_(maps-promotion).html`, the
-babel block (39,336-line total at r001; the L-numbers in sections 1-9 are relative to it). That r001 figure is NOT the current body length and should not be used as a sanity check: the current assembled body is **39,337 lines** (r026 anchor). Gathers and pure carves preserve line count; the delta against r001 is one line of r001-vs-r003 accounting (the r002/r003 gathers predate the anchor) and the two comment lines r026 added. When checking a fresh unzip, compare against the ACTIVE anchor's length, not this number, and count with Python `splitlines()` rather than `wc -l`: as of r030 the tree is **38 module files** and **30 of them have no trailing newline**, so `wc -l` under-reports the total by exactly 30. That figure moves with every carve; re-derive it from the tree rather than quoting it.
+babel block (39,336-line total at r001; the L-numbers in sections 1-9 are relative to it). That r001 figure is NOT the current body length and should not be used as a sanity check: the current assembled body is **39,513 lines** (r031 anchor). Gathers and pure carves preserve line count; the delta against r001 is one line of r001-vs-r003 accounting (the r002/r003 gathers predate the anchor), the two comment lines r026 added, and the 176 lines r031 added. When checking a fresh clone, compare against the ACTIVE anchor's length, not this number, and count with Python `splitlines()` rather than `wc -l`: as of r031 the tree is **38 module files** and **30 of them have no trailing newline**, so `wc -l` under-reports the total by exactly 30. That figure moves with every carve; re-derive it from the tree rather than quoting it.
 Those line numbers are ADVISORY: find code by NAME, never by line number, and do not trust
 them against the current tree. The build source of record is no longer this HTML; it is the
 module tree. **Section 10 is the live source layout, carve status, and r-policy, and
 supersedes any pre-carve framing above it.**
 
-Status (session 19, r030): the source lives in `github.com/Drakhanas/Cartulary` (private)
+Status (session 19, r031): the source lives in `github.com/Drakhanas/Cartulary` (private)
 as of session 19, with CI running every gate on every push. The pipeline assembles the babel
 body from a module tree and is DIRECTORY-AWARE; the reconstitution gate scores five conditions
 on a pure split, four on a gather, and seven on a scoped content edit (`edit` mode, session
@@ -27,14 +27,15 @@ in total** (r002, r003, r013, r016, r018, r020, r021, r022, r025); the first two
 reconstitution gate and were verified by multiset against the r001 body, so **seven are
 anchor-rotating gathers**. Quote the count as "seven anchor-rotating gathers" or "nine
 gather cuts"; bare "seven gathers" contradicts the session-11 record. The anchor has
-rotated eight times, because r026 (one header replaced by two, a comment edit) rotated it
-as well; the active anchor is `reference-r026-body.jsx`. **Header integrity is CLOSED**
+rotated nine times, because r026 (one header replaced by two, a comment edit) and r031 (the
+first pillar-3 content cut) rotated it as well; the active anchor is `reference-r031-body.jsx`. **Header integrity is CLOSED**
 (section 11): r025 swept eleven shears, r026 replaced the one held back, and zero sheared
 headers remain. **Pillar 2 is parked behind pillar 3**: only `concordance` and
 `cartographia` remain, both in `16_trunk`, both held by decision until the drawing editor
-has landed so they carve against their final shapes. Sections 1-9 are the ownership map,
+has landed so they carve against their final shapes. Pillar 3 is under way: cut 1 of 8, the
+drawing data model, landed at r031 and grew the cartographia run by 160 lines. Sections 1-9 are the ownership map,
 still authoritative for what-goes-where. Section 8 is the historical gather record
-(r002/r003); section 10 carries the r013 through r030 record. Line numbers in sections 1-9
+(r002/r003); section 10 carries the r013 through r031 record. Line numbers in sections 1-9
 are pre-r002 and advisory.
 
 ---
@@ -247,7 +248,7 @@ RESOLVED at r003 (the micro-gather the persistence move surfaced):
 
 ---
 
-## 10. Source layout and carve status (session 19, r030)
+## 10. Source layout and carve status (session 19, r031)
 
 **The source is a module tree, not the monolith.** The line ranges in sections 1-9 above stay babel-body-relative to the r001/pre-r002 numbering and are advisory (find by NAME, never line number). What is authoritative for the build is the module tree below.
 
@@ -257,8 +258,8 @@ RESOLVED at r003 (the micro-gather the persistence move surfaced):
 - `cartulary-src/modules/NN_name.jsx` : a flat module. `NN` is a two-digit assembly-order prefix; `name` is the module/carve name.
 - `cartulary-src/modules/NN_name/NN_part.jsx` : a DIRECTORY module (as of r023). The directory carries the outer assembly-order prefix; each part inside carries its own `00`-based prefix. Two exist: `21_glossopoeia/` and `22_ephemeris/` (they were `17_` and `18_` until the r027-r029 carves inserted three modules and a residue arc ahead of them).
 - Concatenated in that order, flat files and directory parts interleaved, they reconstitute the body exactly.
-- `cartulary-src/reference-r0NN-body.jsx` : the frozen parity anchor, **currently `reference-r026-body.jsx`**, found by glob (exactly one may exist; the gate refuses on zero or two) rather than named in code since session 19. Every PURE carve must reassemble to the ACTIVE anchor byte-for-byte; the reconstitution gate checks against it.
-- `cartulary-src/reference-r0NN-layout.json` : the anchor's companion since session 19, **currently `reference-r026-layout.json`**: the per-file line counts that segment the anchor, the anchor's sha256, and the shell's text and sha256. `edit` mode locates each file's anchor segment through it and refuses one written for another anchor; `freeze` writes it. The anchor ROTATES on every cut that changes assembled bytes: every gather (seven so far: r013, r016, r018, r020, r021, r022, r025) and r026, a comment edit, which makes eight rotations; always after the browser pass, never before. It does not rotate on a pure split. Retired anchors are not shipped in the bundle, so a reference to any earlier anchor filename is stale by definition. See the Anchor history block below.
+- `cartulary-src/reference-r0NN-body.jsx` : the frozen parity anchor, **currently `reference-r031-body.jsx`**, found by glob (exactly one may exist; the gate refuses on zero or two) rather than named in code since session 19. Every PURE carve must reassemble to the ACTIVE anchor byte-for-byte; the reconstitution gate checks against it.
+- `cartulary-src/reference-r0NN-layout.json` : the anchor's companion since session 19, **currently `reference-r031-layout.json`**: the per-file line counts that segment the anchor, the anchor's sha256, and the shell's text and sha256. `edit` mode locates each file's anchor segment through it and refuses one written for another anchor; `freeze` writes it. The anchor ROTATES on every cut that changes assembled bytes: every gather (seven so far: r013, r016, r018, r020, r021, r022, r025), r026, a comment edit, and r031, the first content cut, which makes nine rotations; always after the browser pass, never before. It does not rotate on a pure split. Retired anchors are deleted at rotation, so a reference to any earlier anchor filename is stale by definition. See the Anchor history block below.
 
 ### Build
 
@@ -287,7 +288,7 @@ Nothing slipped through: byte-identity printed `exact` on every pure split from 
 
 ### r-counter policy (changed session 12)
 
-One r-bump per FULL carve OR gather OR other byte-changing cut, not per HTML edit. A pure carve produces byte-identical assembled output, so the old "increments only on HTML changes" rule would never advance through modularization. The pipeline rework itself carried no bump (infra); it rode into r004 with the first carve. The r023 assembler change and gate-verdict fix rode into r023 the same way, and the r025 gate additions rode into the header sweep. r026, which was neither a carve nor a gather, took a bump of its own because it changed bytes and rotated the anchor. The session-19 edit mode and the move into the repository changed no bytes and took none.
+One r-bump per FULL carve OR gather OR other byte-changing cut, not per HTML edit. A pure carve produces byte-identical assembled output, so the old "increments only on HTML changes" rule would never advance through modularization. The pipeline rework itself carried no bump (infra); it rode into r004 with the first carve. The r023 assembler change and gate-verdict fix rode into r023 the same way, and the r025 gate additions rode into the header sweep. r026, which was neither a carve nor a gather, took a bump of its own because it changed bytes and rotated the anchor. The session-19 edit mode and the move into the repository changed no bytes and took none; r031, the first content cut, took one.
 
 ### Carve status
 
@@ -317,29 +318,32 @@ Residue arcs are all named bare `trunk` (distinguished by `NN` prefix); carved m
 | glossopoeia (directory, 5 parts) | r023 | `21_glossopoeia/` | DONE; assembler made directory-aware and gate-verdict bug fixed in the same bump |
 | ephemeris (directory, 7 parts) | r024 | `22_ephemeris/` | DONE |
 | *(gather: header-integrity sweep)* | r025 | *(relocation only, 11 headers)* | DONE, browser-verified; `header pairs` + `header placement` + `gather` mode landed in the same bump; anchor rotated to `reference-r025-body.jsx` |
-| *(edit: one sheared header replaced by two)* | r026 | *(comment edit, +2 lines)* | DONE, browser-verified; gated on a written delta table; anchor rotated to `reference-r026-body.jsx` (ACTIVE) |
+| *(edit: one sheared header replaced by two)* | r026 | *(comment edit, +2 lines)* | DONE, browser-verified; gated on a written delta table; anchor rotated to `reference-r026-body.jsx` |
 | stemma | r027 | `19_stemma.jsx` | DONE; pure split, byte-identical to the r026 artifact |
 | linea | r028 | `18_linea.jsx` | DONE; pure split, byte-identical to the r026 artifact |
 | chronometric | r029 | `17_chronometric.jsx` | DONE; pure split, byte-identical to the r026 artifact |
 | kalendarium | r030 | `23_kalendarium.jsx` | DONE; whole-arc rename, byte-identical to the r026 artifact |
+| *(pillar 3 cut 1: map drawing data model)* | r031 | *(content edit, +176 lines, 13 declarations; `16_trunk`, `10_migrate`, `12_trunk`, `09_trunk`)* | DONE, browser-verified; gated by `edit` mode; anchor rotated to `reference-r031-body.jsx` (ACTIVE) |
 
 **On r023/r024 verification.** Both are pure splits: byte-identity against the r022 anchor is exact and the assembled HTML is byte-identical (sha256 `0379036386496acb`) to the r022 build Drak browser-passed. There is nothing new for a browser to see, and the gate proves the directory enumeration ordered correctly, which is the only thing that could have gone wrong. Same relationship as r003 through r012, ten r-numbers with one output artifact. Do NOT read this as a relaxation of the browser-pass rule: it applies because the product bytes provably did not change, and it does not apply to any gather.
 
 **On r027-r030 verification.** The same relationship a third time: four pure splits against the r026 anchor, byte-identity exact on each, and the `working` rebuild after each one hashing to sha256 `2facf10cea574525`, the r026 artifact Drak browser-passed. Five r-numbers, one artifact. The three `16_trunk` carves ran back to front (stemma, then linea, then chronometric) so that each remaining published span stayed numerically valid as the runs after it left the arc; nothing was re-derived between cuts and every seam was read before slicing.
 
-Note: the `NN` prefixes of previously-carved modules shift as new modules are inserted upstream. The filenames above are as of r030; every prefix from `17` onward changed in session 18. Find a module by NAME, never by its prefix or a remembered path.
+**On r031 verification.** The first cut gated by `edit` rather than `verify` or `gather`: four declared files, thirteen declared additions, every other file held byte-identical to its r026 anchor segment through the layout, raw 39,337 → 39,513, canonical 37,303 → 37,469, one header pair added, shell unchanged. PARSE OK, a Node harness over the normalizers, a before/after fixture probe in headless Chromium against the r030 and r031 builds (identical rendering, the r031 export carrying the new keys), then Drak's browser pass, then `freeze r031` and the `working` rebuild hashing to sha256 `3604074d447fcc41`, the file he passed. The pattern every later pillar-3 cut follows.
 
-**Current tree (r030), assembly order, with line counts:**
+Note: the `NN` prefixes of previously-carved modules shift as new modules are inserted upstream. The filenames above are as of r031; every prefix from `17` onward changed in session 18, and session 19 moved none. Find a module by NAME, never by its prefix or a remembered path.
 
-`00_trunk` (134) / `01_builtin-templates` (942) / `02_trunk` (43) / `03_persistence` (592) / `04_trunk` (25) / `05_field-system` (774) / `06_calendar-engine` (1291) / `07_temporal` (249) / `08_export-layer` (1520) / `09_trunk` (216) / `10_migrate` (5839) / `11_io-utils` (42) / `12_trunk` (4938) / `13_form-engine-display` (658) / `14_form-engine-edit` (1777) / `15_template-builder` (1111) / `16_trunk` (2051) / `17_chronometric` (1528) / `18_linea` (646) / `19_stemma` (1410) / `20_trunk` (354) / **`21_glossopoeia/`** `00_schemas` (476) + `01_substrate` (1025) + `02_grammar` (380) + `03_components` (393) + `04_view` (845) / **`22_ephemeris/`** `00_body-kinds` (187) + `01_shell` (722) + `02_asbo` (1459) + `03_observe` (1937) + `04_forcealign` (585) + `05_compute` (1177) + `06_orbital-math` (1266) / `23_kalendarium` (876) / `24_home-data` (1330) / `25_trunk` (248) / `26_modals` (286) / `27_trunk` (5). Session 18 added two lines at r026 (`13_form-engine-display` 656 → 658) and four arcs at r027-r029 (`16_trunk` 5,989 → 2,051, with stemma, linea, chronometric, and the registry tail becoming arcs of their own); r030 renamed an arc in place.
+**Current tree (r031), assembly order, with line counts:**
 
-**38 files, 39,337 lines.** Nineteen named modules (seventeen flat + two directories), **nine** trunk arcs (`00`, `02`, `04`, `09`, `12`, `16`, `20`, `25`, `27`), of which `16` still holds the two uncarved views and is therefore not residue. The `NN` prefix is assembly order and is decoupled from the r-number (carve order): `01_builtin-templates` was carved at r017, `17_chronometric` at r029.
+`00_trunk` (134) / `01_builtin-templates` (942) / `02_trunk` (43) / `03_persistence` (592) / `04_trunk` (25) / `05_field-system` (774) / `06_calendar-engine` (1291) / `07_temporal` (249) / `08_export-layer` (1520) / `09_trunk` (221) / `10_migrate` (5850) / `11_io-utils` (42) / `12_trunk` (4938) / `13_form-engine-display` (658) / `14_form-engine-edit` (1777) / `15_template-builder` (1111) / `16_trunk` (2211) / `17_chronometric` (1528) / `18_linea` (646) / `19_stemma` (1410) / `20_trunk` (354) / **`21_glossopoeia/`** `00_schemas` (476) + `01_substrate` (1025) + `02_grammar` (380) + `03_components` (393) + `04_view` (845) / **`22_ephemeris/`** `00_body-kinds` (187) + `01_shell` (722) + `02_asbo` (1459) + `03_observe` (1937) + `04_forcealign` (585) + `05_compute` (1177) + `06_orbital-math` (1266) / `23_kalendarium` (876) / `24_home-data` (1330) / `25_trunk` (248) / `26_modals` (286) / `27_trunk` (5). Session 18 added two lines at r026 (`13_form-engine-display` 656 → 658) and four arcs at r027-r029 (`16_trunk` 5,989 → 2,051, with stemma, linea, chronometric, and the registry tail becoming arcs of their own); r030 renamed an arc in place. Session 19's r031 added 176 lines in three files (`16_trunk` 2,051 → 2,211, `10_migrate` 5,839 → 5,850, `09_trunk` 216 → 221) and rewrote two lines of `12_trunk` in place.
 
-**What is left in the trunk arcs.** `16_trunk` (2,051) holds `SettingsView`, concordance, and cartographia, in that order, three contiguous runs tiling the arc (table under Remaining-carve readiness, below). `20_trunk` (354) is the node-source registry, spine-owned, split off when r027 took stemma from the middle of the old `16_trunk`. The other seven are ordinary residue.
+**38 files, 39,513 lines.** Nineteen named modules (seventeen flat + two directories), **nine** trunk arcs (`00`, `02`, `04`, `09`, `12`, `16`, `20`, `25`, `27`), of which `16` still holds the two uncarved views and is therefore not residue. The `NN` prefix is assembly order and is decoupled from the r-number (carve order): `01_builtin-templates` was carved at r017, `17_chronometric` at r029.
 
-**Line-count convention.** Every per-arc and per-module line count in this document is a Python `splitlines()` count, consistent with the 39,337 total. As of r030, 30 of the 38 files have no trailing newline, so `wc -l` under-reports the total by exactly 30. That figure changed twice in session 16 (13 → 19 → 26), held at r025 and r026 because neither added a file, rose by two at r027 (stemma and the registry tail were both new files) and by one each at r028 and r029 (the new files carry none, matching `16_trunk` and every file the r023/r024 carves wrote); r030 renamed a file and changed nothing. It will change again on every carve, so re-derive it from the tree rather than quoting a remembered number. Where a prose figure and the tree list disagree for the same file, the tree list is correct.
+**What is left in the trunk arcs.** `16_trunk` (2,211) holds `SettingsView`, concordance, and cartographia, in that order, three contiguous runs tiling the arc (table under Remaining-carve readiness, below). `20_trunk` (354) is the node-source registry, spine-owned, split off when r027 took stemma from the middle of the old `16_trunk`. The other seven are ordinary residue.
 
-**Anchor history.** Pure carves reassemble to the ACTIVE anchor byte-for-byte; gathers move lines on purpose, are gated by multiset instead, and rotate the anchor once browser-verified. The full chain: r003 anchored r004 through r012, nine r-numbers, across which r003 through r012 shared one output artifact. r013 rotated to `reference-r013-body.jsx` (anchored r014-r015). r016 rotated to `reference-r016-body.jsx` (anchored r017). r018 rotated to `reference-r018-body.jsx` (anchored r019). r020 rotated to `reference-r020-body.jsx`. r021 rotated to `reference-r021-body.jsx`. r022 rotated to `reference-r022-body.jsx` (anchored r023-r024). r025 rotated to `reference-r025-body.jsx` (2,007,848 bytes, the same size as r022, because relocating comment lines moves bytes without adding or removing any; no pure split was ever gated against it). r026 rotated to `reference-r026-body.jsx`, **the active anchor**, which anchors r027 onward; it is 2,008,051 bytes, 203 more than r025: one 82-character header with its blank (184 bytes) and one 81-character header rewritten at 82 (19 bytes), the dash character being three bytes in UTF-8. Retired anchors (r003, r013, r016, r018, r020, r021, r022, r025) are not shipped in the bundle. A freeze always waits for the browser pass: never anchor an unverified body, or the gate loses its ability to tell you the body is wrong.
+**Line-count convention.** Every per-arc and per-module line count in this document is a Python `splitlines()` count, consistent with the 39,513 total. As of r031, 30 of the 38 files have no trailing newline, so `wc -l` under-reports the total by exactly 30. That figure changed twice in session 16 (13 → 19 → 26), held at r025 and r026 because neither added a file, rose by two at r027 (stemma and the registry tail were both new files) and by one each at r028 and r029 (the new files carry none, matching `16_trunk` and every file the r023/r024 carves wrote); r030 renamed a file and changed nothing; r031 edited four files in place and changed nothing. It will change again on every carve, so re-derive it from the tree rather than quoting a remembered number. Where a prose figure and the tree list disagree for the same file, the tree list is correct.
+
+**Anchor history.** Pure carves reassemble to the ACTIVE anchor byte-for-byte; gathers move lines on purpose, are gated by multiset instead, and rotate the anchor once browser-verified. The full chain: r003 anchored r004 through r012, nine r-numbers, across which r003 through r012 shared one output artifact. r013 rotated to `reference-r013-body.jsx` (anchored r014-r015). r016 rotated to `reference-r016-body.jsx` (anchored r017). r018 rotated to `reference-r018-body.jsx` (anchored r019). r020 rotated to `reference-r020-body.jsx`. r021 rotated to `reference-r021-body.jsx`. r022 rotated to `reference-r022-body.jsx` (anchored r023-r024). r025 rotated to `reference-r025-body.jsx` (2,007,848 bytes, the same size as r022, because relocating comment lines moves bytes without adding or removing any; no pure split was ever gated against it). r026 rotated to `reference-r026-body.jsx` (anchored r027 through r030); it was 2,008,051 bytes, 203 more than r025: one 82-character header with its blank (184 bytes) and one 81-character header rewritten at 82 (19 bytes), the dash character being three bytes in UTF-8. r031 rotated to `reference-r031-body.jsx`, **the active anchor**, 2,016,635 bytes, 8,584 more than r026 (the 176 lines cut 1 added, net of two rewritten in place), sha256 beginning `d068ba88cf127c05`. Retired anchors (r003, r013, r016, r018, r020, r021, r022, r025, r026) are deleted at rotation; r026 is in git history, the earlier ones predate the repository and are gone. A freeze always waits for the browser pass: never anchor an unverified body, or the gate loses its ability to tell you the body is wrong.
 
 **Rotation procedure, mechanised at session 19.** After the browser pass on any byte-changing cut: `python3 inlining/build_inline.py freeze r###` freezes the assembled body as the new anchor with its layout, confirms frozen-equals-assembled, and deletes the retired pair (there is no `REFERENCE_BODY` to repoint; the anchor is found by glob); then re-run `verify` (expect green with byte-identity exact), then rebuild `working` and confirm the rebuild is byte-identical to the artifact that was actually browser-passed. That last step is what catches a rotation that accidentally froze the wrong body, and it is also the recovery check after an environment loss: session 18's sandbox was wiped between turns, r026 was replayed from the r025 bundle with its own script, and the replay was known to be right when its rebuild hashed to the artifact that had passed.
 
@@ -348,7 +352,7 @@ Note: the `NN` prefixes of previously-carved modules shift as new modules are in
 1. modularization infra (pipeline rework + this manifest + gate tooling) : **DONE.**
 2. carve map-independent shared modules + `migrate` companion + `home-data` : **DONE** (r004-r019; all 13 modules, including the three that needed gathers first).
 3. carve map-independent views : **DONE** (r023-r030; `glossopoeia/` r023, `ephemeris/` r024, header integrity r025-r026, `stemma` r027, `linea` r028, `chronometric` r029, `kalendarium` r030).
-4. (pillar 3 drawing editor) : **NEXT.** The open tooling question is the verification mode for content edits (roadmap, session-18 block).
+4. (pillar 3 drawing editor) : **IN PROGRESS.** Cut 1 of 8 (the drawing data model) landed at r031; the verification mode is `edit`, built at session 19; the build sheet is `docs/cartographia-plus-spec.md`.
 5. carve `concordance` + `cartographia` last : pending, held until pillar 3 lands.
 
 Not built: the first-step context-completeness gate (its design is in the frozen plan, not this manifest's §6; lower-priority until editing goes module-scoped). Deferred: `App` hooks-extraction (section 6).
@@ -361,19 +365,19 @@ The manifest's L-ranges are r001-relative and do NOT tell you current contiguity
 
 **The map-independent phase is carved (r023-r030).** The four flat views went as pure splits at session 18 against the spans section 11 published after r025, every seam read before slicing and every one matching the published span line for line. Order mattered: the three in `16_trunk` were cut back to front so each remaining span stayed numerically valid as the runs after it left the arc.
 
-**What `16_trunk` holds at r030.** Nine declarations in three contiguous runs tiling the arc; each span leads with its boundary blank and ends on code, per rule 1. These are the starting point for the two carves held until after pillar 3, not a carve order; the editor lands in cartographia and will change its figures, and may change the seam.
+**What `16_trunk` holds at r031.** Twenty-two declarations in three contiguous runs tiling the arc; each span leads with its boundary blank and ends on code, per rule 1. These are the starting point for the two carves held until after pillar 3, not a carve order; the editor lands in cartographia and will change its figures, and may change the seam.
 
 | Run | Members | Span | Lines |
 |---|---|---|---|
 | *(spine residue)* | `SettingsView` | 1-265 | 265 |
 | `concordance` | `VAGUE_EDGE_LABELS`, `GraphView` | 266-1293 | 1,028 |
-| `cartographia` | `useMapImageUrl`, `useResizeHandler`, `MapPin`, `MapView`, `MapEditor`, `CartographiaIndexView` | 1294-2051 | 758 |
+| `cartographia` | the thirteen r031 drawing-model declarations (`MAP_PALETTE` through `ensureMapStamps`), then `useMapImageUrl`, `useResizeHandler`, `MapPin`, `MapView`, `MapEditor`, `CartographiaIndexView` | 1294-2211 | 918 |
 
-`265 + 1028 + 758 = 2051`. The earlier approximations ("~1,018" and "~780") are superseded by these counts. Cartographia carries two section headers, `Map view` at 1295 and `Cartographia` at 1932, and both travel with it.
+`265 + 1028 + 918 = 2211`. The earlier approximations ("~1,018" and "~780") are superseded by these counts, and the 758 published at r030 by r031's 918. Cartographia carries three section headers, `Map drawing model (v1.6 pillar 3)` at 1295, `Map view` at 1455, and `Cartographia` at 2092, and all three travel with it.
 
 **Held for last (after pillar 3).**
 - `concordance` (`GraphView`, `VAGUE_EDGE_LABELS`, 1,028 lines). Carve last with cartographia: pillar 3's pin-edge rewire lands on this seam.
-- `cartographia` (canvas + index, 758 lines, gathered r002). Contiguity held through every cut since. Carves LAST regardless.
+- `cartographia` (drawing model + canvas + index, 918 lines; gathered r002, grown at r031). Contiguity held through every cut since. Carves LAST regardless.
 
 **Residue-arc candidate (optional, not scheduled).** The r017 carve left `02_trunk` as a 43-line arc holding only the util wedge (`genId`, `fmtDate`, `isoNow`, `slugify`, `formatSnapshotTimestamp`, `formatSnapshotSize`). It is correct as anonymous residue, but it is a clean pure split if a named `utils` module is ever wanted. Drak's call; no need.
 
@@ -391,13 +395,13 @@ The manifest's L-ranges are r001-relative and do NOT tell you current contiguity
 
 ## 11. Header integrity (opened session 16 post-turnover audit; CLOSED at r025; r026 landed at session 18)
 
-**Status: closed.** r025 relocated **eleven sheared section headers** to the blocks they name, and added the two checks that stop the next one accumulating. r026 replaced the twelfth, held back by decision, with two correct headers at session 18; **zero sheared headers remain**, and the tree holds **74 column-0 section headers** at r030. This section is kept because the mechanism that produced the twelve is still live and every future relocation has to handle it consciously.
+**Status: closed.** r025 relocated **eleven sheared section headers** to the blocks they name, and added the two checks that stop the next one accumulating. r026 replaced the twelfth, held back by decision, with two correct headers at session 18; **zero sheared headers remain**, and the tree holds **75 column-0 section headers** at r031. This section is kept because the mechanism that produced the twelve is still live and every future relocation has to handle it consciously.
 
 ### The header rule (one rule, stated once, implemented in code)
 
 A SECTION HEADER is a **column-0** `//` comment whose text is set off by a LEADING run of two or more dash characters (`─` U+2500 or ASCII `-`), **or** by a trailing-only run of eight or more. Both floors are earned. Two rather than three, because a three-dash minimum drops `16_trunk`'s `// ── Node-source registry ──`, a real column-0 header one line past the stemma boundary blank, which is exactly a seam a carve reads for evidence. Eight rather than fewer, because below that nine prose lines in `21_glossopoeia/` that terminate blocks with ` ---` get swept in.
 
-Under that rule the tree held 73 at r025, plus 35 indented dash-set comments that the rule also matches; r026 added one, so there are **74 column-0 section headers** at r030. **The invariant covers column 0 only.** Pairing an indented header with the next TOP-LEVEL declaration says nothing, by construction: an indented header sits inside a function body, so its "next declaration" is whatever follows the enclosing function, often hundreds of lines downstream. That pair is wrong from the start and churns whenever the enclosing function moves. Including them buys nothing on a pure split, where byte-identity already sees any header that moved, and costs 35 permanently-wrong rows in the one list the check exists to keep readable.
+Under that rule the tree held 73 at r025, plus 35 indented dash-set comments that the rule also matches; r026 added one and r031 added one (`Map drawing model (v1.6 pillar 3)`, heading its own block), so there are **75 column-0 section headers** at r031. **The invariant covers column 0 only.** Pairing an indented header with the next TOP-LEVEL declaration says nothing, by construction: an indented header sits inside a function body, so its "next declaration" is whatever follows the enclosing function, often hundreds of lines downstream. That pair is wrong from the start and churns whenever the enclosing function moves. Including them buys nothing on a pure split, where byte-identity already sees any header that moved, and costs 35 permanently-wrong rows in the one list the check exists to keep readable.
 
 The rule now lives in `canonicalize.py`, not here. If this section and the code disagree, the code is right.
 
@@ -405,7 +409,7 @@ The rule now lives in `canonicalize.py`, not here. If this section and the code 
 
 **`header_pairs(text)`** returns the ordered list of (header title, next top-level declaration OR column-0 call block). It is the only thing that can see a SHEARED header: a header left behind when its block moved. A shear passes canonical sequence (the line is still there), passes multiset (same line, different position), and passes byte-identity on a gather (bytes are supposed to move). Twelve accumulated before anything was watching. Scanning does not stop at an intervening header, so two stacked headers pair with the same target and a repeated target is how a bare orphan shows up. The title is dash-stripped, so a change in fill width is not a diff.
 
-Call blocks are RECOGNISED, not allowlisted. `10_migrate` "Marked configuration" correctly heads a live `marked.use({...})` at `10_migrate:5805`; a declaration-only pair function reports it as a shear forever, in a module the header does not belong to. An allowlist would go stale the moment the block moves. This one was the thirteenth item on the original census and was struck: it only looked sheared because the census tool paired headers with declarations and a call expression is not one. **A sweep's tool defines what it can see, and everything outside that definition reads as a defect.** The remedy offered at the time included deleting a header that heads nothing, which would have destroyed a correct one.
+Call blocks are RECOGNISED, not allowlisted. `10_migrate` "Marked configuration" correctly heads a live `marked.use({...})` at `10_migrate:5816`; a declaration-only pair function reports it as a shear forever, in a module the header does not belong to. An allowlist would go stale the moment the block moves. This one was the thirteenth item on the original census and was struck: it only looked sheared because the census tool paired headers with declarations and a call expression is not one. **A sweep's tool defines what it can see, and everything outside that definition reads as a defect.** The remedy offered at the time included deleting a header that heads nothing, which would have destroyed a correct one.
 
 **`header_placement()`** reads each file on its own and fails any section header with no declaration after it IN THAT FILE. It exists because `header_pairs()` runs on the ASSEMBLED body, where file boundaries do not exist, so a header at the tail of one module labelling the head of the next pairs CORRECTLY and the invariant is structurally blind to it. The kalendarium arc's tail was exactly that shape before r025 (line 878 of the arc then numbered 19). This is not theory: the misfile probe in `prove_gate_teeth.py` moves a header to the previous file's tail, the assembled body comes out BYTE-IDENTICAL because the file join reproduces the same line sequence either way, and five checks see nothing while placement is the only one that fires.
 
@@ -415,13 +419,13 @@ Both are scored in `verify` and `gather`. Placement was a REPORT through the swe
 
 Eleven relocations, 50 lines, comment-only, one r-bump. Each is line-neutral by construction: block plus one adjacent blank leaves the source, block plus one blank arrives at the destination. At a file tail the PRECEDING blank travels so the vacated file ends on code; everywhere else the FOLLOWING blank travels so the preceding blank stays as the separator.
 
-| Header | Was (r024 numbering, module:line) | Now (r030 path:line) |
+| Header | Was (r024 numbering, module:line) | Now (r031 path:line) |
 |---|---|---|
 | Relation value helpers (7-line block) | persistence:143 | `05_field-system:167`, above `getRelationValues` |
 | Reset Template confirmation modal | trunk arc 04:2 | `26_modals:98` |
 | v1.3 select / cascade / required helpers | field-system:409 | `05_field-system:552`, above `formatSelectDisplay`'s doc comment |
 | App | field-system:546 | `12_trunk:2` |
-| Initial state | export-layer:1441 | `09_trunk:172`, above `makeInitialState` |
+| Initial state | export-layer:1441 | `09_trunk:174`, above `makeInitialState` |
 | Destructive Op confirmation modal | trunk arc 09:2 | `26_modals:2` |
 | Timeline view | trunk arc 16:1932 | `17_chronometric:2`, above `TimelineView` (it was `16_trunk:2053` until the r029 carve took it along) |
 | Ephemeris view (v1.5) (25-line block) | trunk arc 16:2055 | `22_ephemeris/01_shell:10` |
@@ -443,17 +447,17 @@ Gate result at r025 [stale: r025 gather report; the body was 39,335 lines then]:
 
 **What landed (r026, 2026-10-19).** The strings were locked as proposed and written at 82 characters, the local convention at both sites (the earlier figure of 81 was the width of the header being retired). `14_form-engine-edit:1223` was rewritten in place to `Longform + rich text editor`, net zero lines; `Longform + markdown display` was inserted with its following blank above `LongformDisplay` in `13_form-engine-display`, which now sits at line 264 with the declaration at 266. Both edits were string-anchored, so neither file's trailing-newline state changed. The cut script is `r026_longform_headers.py` in the bundle.
 
-**The written delta held line for line.** Predicted before the cut and read off the `gather` report after it: raw line count 39,335 → 39,337; multiset RED, missing one and extra two; canonical 37,303 against 37,302; byte-identity differs; decl-set PASS at 419; header placement PASS at 0; header pairs 74 with exactly three changes, `Markdown display + rich text editor -> LongformEditor` removed, `Longform + rich text editor -> LongformEditor` and `Longform + markdown display -> LongformDisplay` added. Parse OK. Browser-passed by Drak on the Longform Note field type in both directions. Then the anchor rotated to `reference-r026-body.jsx`, by the gather procedure, with the post-rotation rebuild hashing to the artifact passed; the r025 edition of this section specced every signal and omitted the rotation, which was its one real gap.
+**The written delta held line for line.** Predicted before the cut and read off the `gather` report after it: raw line count 39,335 → 39,337; multiset RED, missing one and extra two; canonical 37,303 against 37,302; byte-identity differs; the declaration set held at 419; header placement PASS at 0; header pairs 74 with exactly three changes, `Markdown display + rich text editor -> LongformEditor` removed, `Longform + rich text editor -> LongformEditor` and `Longform + markdown display -> LongformDisplay` added. Parse OK. Browser-passed by Drak on the Longform Note field type in both directions. Then the anchor rotated to `reference-r026-body.jsx`, by the gather procedure, with the post-rotation rebuild hashing to the artifact passed; the r025 edition of this section specced every signal and omitted the rotation, which was its one real gap.
 
 **That was the weakest gate anything has run under since r004**, a written table plus parse plus a browser pass, and it worked for an edit of three lines. Pillar 3 is entirely content edits and will not fit that shape; whether a third mode earns its keep is the first pillar-3 decision (roadmap, session-18 block).
 
 ### Carve spans, re-derived after r025 (carved against at session 18)
 
-The sweep relocated lines, so every span published before it went stale the moment it landed; these were re-derived from the r025 tree and r027-r030 carved exactly them, every seam read before slicing. Kept as the record. `16_trunk` was 5,989 lines when these were measured and is 2,051 now; the kalendarium arc, numbered 19 then, is `23_kalendarium` now.
+The sweep relocated lines, so every span published before it went stale the moment it landed; these were re-derived from the r025 tree and r027-r030 carved exactly them, every seam read before slicing. Kept as the record. `16_trunk` was 5,989 lines when these were measured, 2,051 after the carves, and 2,211 now that r031 has added to it; the kalendarium arc, numbered 19 then, is `23_kalendarium` now.
 
 | Module | Was | Became |
 |---|---|---|
-| *(trunk head)* | `16_trunk` 1-2051, 2,051 lines | `16_trunk` (2051), unchanged in content |
+| *(trunk head)* | `16_trunk` 1-2051, 2,051 lines | `16_trunk` (2211) at r031; the carves left its 2,051 lines unchanged in content and r031 added 160 |
 | `chronometric` | `16_trunk` 2052-3579, 1,528 lines | `17_chronometric` (1528) at r029 |
 | `linea` | `16_trunk` 3580-4225, 646 lines | `18_linea` (646) at r028 |
 | `stemma` | `16_trunk` 4226-5635, 1,410 lines | `19_stemma` (1410) at r027 |

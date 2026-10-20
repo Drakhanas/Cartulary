@@ -1,6 +1,7 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031) ===
 
-No cut tonight, and the session still changed more than most sessions with five.
+One cut tonight, late, and before it the session had already changed more than most
+sessions with five.
 
 It opened with the wrong file. The upload named cartulary-modular-src_r030.zip was the
 turnover doc set, and the real bundle was nowhere on Drak's disk because it had only ever
@@ -44,6 +45,21 @@ doctrine entry about it. Copies were the mechanism. There is one copy now, and a
 checks it on every push. The doctrine entries I did write are about why that is true, not
 about being more careful.
 
-Next is pillar 3. The first thing it needs is a build order for the editor, stated as cuts
-with their declared scope, for Drak to reorder. Then the first content cut in this project's
-history goes through a gate built for it instead of a table written by hand.
+Then pillar 3. The build order went to Drak as eight cuts with their declared scope, SVG
+and layers and a parchment background already decided by him in one line, and he locked it
+in one line. Cut 1 was the data model, which is the dullest possible first cut and the
+right one: thirteen declarations, a migration that touches every map record, and nothing on
+the screen to show for it. That last part is the problem with a data-model cut. The checklist
+says "existing maps unchanged" and a person cannot see an absence. So I built a world in the
+old shape and loaded it into both builds in a headless browser, with the libraries served
+from the tarballs we had kept for the finals, and diffed the two: pins, labels, scrubber,
+screenshots, exports. Identical except the two new keys. Drak asked, reasonably, how he was
+supposed to open an existing map when there has never been a way to import one; the answer
+is that there never will be, a map is a record in the world file, and the fixture was the
+answer to his question before he asked it. He passed it. The anchor rotated for the ninth
+time, the first time through the gate I built this session instead of a table, and the
+rotation's last check, the rebuild hashing to the file he passed, held.
+
+The probe found one thing the build sheet got wrong, which is the right number for a first
+cut: the migration cannot know an image's size, so the rule that says it does belongs in the
+renderer. Recorded for cut 2, not patched into cut 1.
