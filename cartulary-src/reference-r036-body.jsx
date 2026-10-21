@@ -4997,13 +4997,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageHref: imageDataUrl,
       imageWidth: imageSize ? imageSize.width : null,
       imageHeight: imageSize ? imageSize.height : null,
+      stamps: state.mapStamps,
     }));
   } else if (mapData.image) {
     imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>`;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name }));
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps }));
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /
@@ -13847,6 +13848,10 @@ function App() {
         flash("That's a language file — import it from Glossopoeia's Import button, not as a world.", "error");
         return;
       }
+      if (parsed && parsed.cartulary_mapstamp_pack === 1) {
+        flash("That's a stamp pack. Import it from the Stamps panel at the top of Cartographia, not as a world.", "error");
+        return;
+      }
       // Shape pre-check: a Cartulary world has at least one of these top-level
       // keys. Migrate fills in missing structure with defaults, so without this
       // check, ANY valid JSON would silently load as an empty world.
@@ -15443,6 +15448,8 @@ function App() {
               onOpen={openMap}
               onCreate={createMap}
               onDelete={deleteMap}
+              onStampsChange={(next) => updateState(s => ({ ...s, mapStamps: next }))}
+              flash={flash}
             />
           )}
           {view === "cartographia" && mapDraft && (
@@ -15472,6 +15479,7 @@ function App() {
                   entries={state.entries}
                   bodies={state.celestialBodies}
                   flash={flash}
+                  stamps={state.mapStamps}
                 />
               }
             />
@@ -21644,19 +21652,201 @@ function makeDefaultMapData() {
   return ensureMapData(null);
 }
 
-// state.mapStamps: stamps imported from stamp packs, world-scoped. Shape-checked
-// here; the import sanitizer (allowlisted elements and attributes) arrives with
-// stamp packs (cut 6) and runs on import and on load. Until then nothing renders
-// a stamp, so an unsanitized body cannot reach a page.
+// state.mapStamps: stamps imported from stamp packs, world-scoped, each
+// `{ id, name, viewBox, body, packId, pack }` with the id namespaced by its
+// pack (`forest__pine`). Rebuilt here on every load: ids normalized and
+// deduplicated, the viewBox validated, and every body put through the
+// sanitizer again, so a hand-edited or foreign world file cannot carry markup
+// the import would have refused. A stamp with nothing left after cleaning is
+// dropped. Built-in stamps are never stored.
 function ensureMapStamps(list) {
-  return (Array.isArray(list) ? list : [])
-    .filter(s => s && typeof s === "object" && typeof s.id === "string" && s.id)
-    .map(s => ({
-      id: s.id,
-      name: (typeof s.name === "string" && s.name.trim()) ? s.name : s.id,
-      viewBox: typeof s.viewBox === "string" ? s.viewBox : "0 0 64 64",
-      body: typeof s.body === "string" ? s.body : "",
+  const seen = new Set();
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach(s => {
+    if (!s || typeof s !== "object") return;
+    const id = mapStampSlug(s.id);
+    if (!id || seen.has(id)) return;
+    const clean = sanitizeMapStampBody(s.body);
+    if (!clean.body) return;
+    seen.add(id);
+    out.push({
+      id,
+      name: (typeof s.name === "string" && s.name.trim()) ? s.name.trim().slice(0, 60) : id,
+      viewBox: mapStampViewBox(s.viewBox) || "0 0 64 64",
+      body: clean.body,
+      packId: (typeof s.packId === "string" && s.packId) ? mapStampSlug(s.packId) : "",
+      pack: (typeof s.pack === "string" && s.pack.trim()) ? s.pack.trim().slice(0, 80) : "",
+    });
+  });
+  return out;
+}
+
+// What a stamp body may contain. A stamp pack is the first third-party markup
+// Cartulary renders in-app and writes into exported pages other people open,
+// so the body is not trusted as text: it is parsed and rebuilt from this list,
+// elements and attributes alike, with every attribute value held to a plain
+// charset (numbers, path data, transforms, colors) and `url(` refused outright.
+// No text, no href, no style, no use, no script, no handlers, and nothing in a
+// namespace. Values that pass cannot run or fetch anything.
+const MAP_STAMP_ALLOWLIST = {
+  elements: ["g", "path", "circle", "ellipse", "rect", "polygon", "polyline", "line"],
+  attrs: ["d", "points", "cx", "cy", "r", "rx", "ry", "x", "y", "x1", "y1", "x2", "y2", "width", "height",
+    "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+    "stroke-dasharray", "stroke-opacity", "stroke-miterlimit", "opacity", "transform"],
+  value: /^[A-Za-z0-9 .,#()%+\-]*$/,
+};
+
+// A stamp or pack id: lower-case letters, digits, underscore, dash; anything
+// else becomes a dash; at most forty characters. Empty when nothing survives.
+function mapStampSlug(v) {
+  return String(v == null ? "" : v).trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+}
+
+// "minx miny width height", four finite numbers with a positive size, as a
+// normalized string; null for anything else.
+function mapStampViewBox(v) {
+  if (typeof v !== "string") return null;
+  const parts = v.trim().split(/[\s,]+/).map(Number);
+  if (parts.length !== 4 || !parts.every(Number.isFinite) || parts[2] <= 0 || parts[3] <= 0) return null;
+  return parts.map(n => String(Math.round(n * 1000) / 1000)).join(" ");
+}
+
+// The sanitizer. Returns the rebuilt body and the list of what it removed,
+// each entry readable ("<script>", "onclick on <path>", a refused value).
+// The body is parsed with the HTML parser, as inline svg inside a page,
+// because that is how the app (innerHTML) and an exported page render it:
+// what the sanitizer sees is what would have rendered, unbound prefixes and
+// unclosed tags included, where the XML parser would refuse a body a browser
+// draws without complaint. An unparseable body comes back empty.
+function sanitizeMapStampBody(body) {
+  const dropped = [];
+  if (typeof body !== "string" || !body.trim()) return { body: "", dropped };
+  let doc;
+  try {
+    doc = new DOMParser().parseFromString(`<!DOCTYPE html><html><body><svg xmlns="http://www.w3.org/2000/svg">${body}</svg></body></html>`, "text/html");
+  } catch (err) {
+    return { body: "", dropped: ["markup that could not be parsed"] };
+  }
+  const root = doc && doc.body ? doc.body.querySelector("svg") : null;
+  if (!root) return { body: "", dropped: ["markup that could not be parsed"] };
+  if (Array.from(doc.body.childNodes).some(n => n !== root && !(n.nodeType === 3 && !n.textContent.trim()))) dropped.push("content outside the drawing (after a stray closing tag)");
+  const allowedEl = new Set(MAP_STAMP_ALLOWLIST.elements);
+  const allowedAttr = new Set(MAP_STAMP_ALLOWLIST.attrs);
+  const build = (el) => {
+    const tag = el.localName;
+    if (el.namespaceURI !== "http://www.w3.org/2000/svg" || !allowedEl.has(tag)) { dropped.push(`<${tag}>`); return ""; }
+    const attrs = [];
+    Array.from(el.attributes).forEach(a => {
+      const name = a.name;
+      if (!allowedAttr.has(name)) { dropped.push(`${name} on <${tag}>`); return; }
+      const v = a.value.trim();
+      if (!MAP_STAMP_ALLOWLIST.value.test(v) || /url\s*\(/i.test(v)) { dropped.push(`${name}="${v.slice(0, 24)}${v.length > 24 ? "\u2026" : ""}" on <${tag}>`); return; }
+      attrs.push(` ${name}="${v}"`);
+    });
+    const kids = Array.from(el.children).map(build).join("");
+    return kids ? `<${tag}${attrs.join("")}>${kids}</${tag}>` : `<${tag}${attrs.join("")}/>`;
+  };
+  const out = Array.from(root.children).map(build).join("");
+  return { body: out, dropped };
+}
+
+// A pack file, parsed and sanitized but not yet applied. ok:false carries an
+// error for the flash; ok:true carries the pack ({id, name}), the stamps as
+// they will be stored (ids namespaced), and a report: what the sanitizer
+// removed per stamp, which stamps were dropped and why, and how many of the
+// survivors replace a stamp already in the world (same pack, re-imported).
+function parseMapStampPack(text, existing) {
+  let parsed;
+  try { parsed = JSON.parse(text); } catch (err) { return { ok: false, error: "Couldn't parse that file as JSON." }; }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || parsed.cartulary_mapstamp_pack !== 1 || !Array.isArray(parsed.stamps)) {
+    return { ok: false, error: "That doesn't look like a Cartulary stamp pack." };
+  }
+  if (parsed.stamps.length > 500) return { ok: false, error: "A stamp pack holds at most 500 stamps." };
+  const name = (typeof parsed.name === "string" && parsed.name.trim()) ? parsed.name.trim().slice(0, 80) : "Imported stamps";
+  const packId = mapStampSlug((typeof parsed.id === "string" && parsed.id.trim()) ? parsed.id : name) || "pack";
+  const seen = new Set();
+  const stamps = [];
+  const removed = [];
+  const droppedStamps = [];
+  parsed.stamps.forEach((s, i) => {
+    const rawId = (s && typeof s.id === "string") ? s.id : "";
+    const label = rawId || `stamp #${i + 1}`;
+    const sid = mapStampSlug(rawId);
+    if (!s || typeof s !== "object" || !sid) { droppedStamps.push({ id: label, reason: "no usable id" }); return; }
+    if (seen.has(sid)) { droppedStamps.push({ id: label, reason: "duplicate id" }); return; }
+    if (typeof s.body !== "string") { droppedStamps.push({ id: label, reason: "no body" }); return; }
+    if (s.body.length > 200000) { droppedStamps.push({ id: label, reason: "body over 200 KB" }); return; }
+    const clean = sanitizeMapStampBody(s.body);
+    const items = clean.dropped.slice();
+    const vb = mapStampViewBox(s.viewBox);
+    if (s.viewBox != null && !vb) items.push(`viewBox "${String(s.viewBox).slice(0, 24)}" replaced by 0 0 64 64`);
+    if (items.length) removed.push({ id: sid, items });
+    if (!clean.body) { droppedStamps.push({ id: label, reason: "nothing left after cleaning" }); return; }
+    seen.add(sid);
+    stamps.push({
+      id: `${packId}__${sid}`,
+      name: (typeof s.name === "string" && s.name.trim()) ? s.name.trim().slice(0, 60) : sid,
+      viewBox: vb || "0 0 64 64",
+      body: clean.body,
+      packId,
+      pack: name,
+    });
+  });
+  const existingIds = new Set((Array.isArray(existing) ? existing : []).map(s => s.id));
+  const updated = stamps.filter(s => existingIds.has(s.id)).length;
+  return { ok: true, pack: { id: packId, name }, stamps, report: { removed, dropped: droppedStamps, updated, added: stamps.length - updated } };
+}
+
+// A pack file for export: the pack's own ids (the namespace stripped), so a
+// re-import lands on the same world ids and replaces its own.
+function buildMapStampPackFile(id, name, stamps) {
+  const prefix = `${id}__`;
+  return {
+    cartulary_mapstamp_pack: 1,
+    id,
+    name,
+    exported_at: new Date().toISOString(),
+    stamps: (stamps || []).map(s => ({
+      id: s.id.startsWith(prefix) ? s.id.slice(prefix.length) : s.id,
+      name: s.name,
+      viewBox: s.viewBox,
+      body: s.body,
+    })),
+  };
+}
+
+// How many placed stamps reference each stamp id, and on how many maps.
+function mapStampUsage(state) {
+  const out = {};
+  (state && Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
+    const d = rec && rec.mapData && rec.mapData.drawing;
+    const onThisMap = new Set();
+    (d && Array.isArray(d.layers) ? d.layers : []).forEach(l => (Array.isArray(l.shapes) ? l.shapes : []).forEach(s => {
+      if (!s || s.type !== "stamp" || typeof s.stampId !== "string") return;
+      const u = out[s.stampId] || (out[s.stampId] = { shapes: 0, maps: 0 });
+      u.shapes += 1;
+      if (!onThisMap.has(s.stampId)) { onThisMap.add(s.stampId); u.maps += 1; }
     }));
+  });
+  return out;
+}
+
+// Imported stamps grouped by pack, in first-seen order; stamps with no pack
+// (a hand-edited world) group under "Ungrouped".
+function mapStampGroups(stamps) {
+  const groups = [];
+  const byId = new Map();
+  (Array.isArray(stamps) ? stamps : []).forEach(s => {
+    const id = (typeof s.packId === "string" && s.packId) ? s.packId : "stamps";
+    let g = byId.get(id);
+    if (!g) {
+      g = { id, name: (typeof s.pack === "string" && s.pack) ? s.pack : (id === "stamps" ? "Ungrouped" : id), stamps: [] };
+      byId.set(id, g);
+      groups.push(g);
+    }
+    g.stamps.push(s);
+  });
+  return groups;
 }
 
 // ─── Map drawing renderer (v1.6 pillar 3) ──────────────────────────────────────
@@ -21744,9 +21934,9 @@ function mapGrainFilterNode(id, grain) {
 // stroke of their own so they inherit the shape's from the <use>; parts that
 // must stay hollow say fill="none". Line weight is the symbol's own and scales
 // with the stamp. Bodies are markup written as markup (the `raw` node below);
-// these are code, so nothing unsanitized reaches a page. Imported stamps
-// (state.mapStamps) have the same shape and render once the sanitizer lands
-// (cut 6); until then mapStampDef knows only these.
+// these are code. Imported stamps (state.mapStamps) have the same shape and
+// reach the renderer only through ensureMapStamps, which sanitizes every body
+// on load, so nothing unsanitized reaches a page either way.
 const MAP_BUILTIN_STAMPS = [
   { id: "mountain", name: "Mountain", viewBox: "0 0 64 64",
     body: '<path d="M3 56 L23 18 L33 34 L41 24 L61 56 Z" stroke-width="3" stroke-linejoin="round"/><path d="M23 18 L27 28 L22 33 L27 39 L21 45" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M41 24 L44 31 L40 35 L44 40" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' },
@@ -21758,8 +21948,9 @@ const MAP_BUILTIN_STAMPS = [
     body: '<circle cx="32" cy="32" r="25" fill="none" stroke-width="2.5"/><path d="M32 3 L37 32 L32 61 L27 32 Z" stroke-width="2.5" stroke-linejoin="round"/><path d="M9 32 L32 27 L55 32 L32 37 Z" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 12 L32 28 L52 12" fill="none" stroke-width="1.5"/><path d="M12 52 L32 36 L52 52" fill="none" stroke-width="1.5"/><circle cx="32" cy="32" r="3" fill="none" stroke-width="2"/>' },
 ];
 
-function mapStampDef(id) {
-  return MAP_BUILTIN_STAMPS.find(s => s.id === id) || null;
+// A stamp by id: the built-ins first, then the world's imported stamps.
+function mapStampDef(id, stamps) {
+  return MAP_BUILTIN_STAMPS.find(s => s.id === id) || (Array.isArray(stamps) ? stamps.find(s => s && s.id === id) : null) || null;
 }
 
 // A label's width, estimated from its characters: the renderer has no DOM to
@@ -21810,10 +22001,13 @@ function mapTextArcPath(s) {
 }
 
 // One normalized shape to one node, or null for a stamp whose symbol is not
-// known. ctx ({idBase, defs, stampsUsed}) comes from buildMapDrawingTree: a
-// bent label's path goes into the defs, and a stamp's symbol is recorded so
-// the tree can emit it once. Without ctx a bent label renders straight and a
-// stamp renders nothing.
+// known. ctx ({idBase, defs, stampsUsed, stamps, placeholder}) comes from
+// buildMapDrawingTree: a bent label's path goes into the defs, a stamp's
+// symbol (built in or from ctx.stamps) is recorded so the tree can emit it
+// once, and with ctx.placeholder (the editor) a stamp whose symbol is missing
+// draws as a dashed box with a question mark so it can be found, re-pointed,
+// or deleted; the view and the export draw nothing for it. Without ctx a bent
+// label renders straight and a stamp renders nothing.
 function mapShapeNode(s, ctx) {
   const f = mapNum;
   const paint = { fill: s.fill || "none", stroke: s.stroke || "none" };
@@ -21872,8 +22066,16 @@ function mapShapeNode(s, ctx) {
     }
     case "stamp": {
       if (!ctx) return null;
-      const def = mapStampDef(s.stampId);
-      if (!def) return null;
+      const def = mapStampDef(s.stampId, ctx.stamps);
+      if (!def) {
+        if (!ctx.placeholder) return null;
+        const g = { ...common, "data-missing-stamp": s.stampId };
+        if (s.rotation) g.transform = `rotate(${f(s.rotation)} ${f(s.x + s.w / 2)} ${f(s.y + s.h / 2)})`;
+        return { tag: "g", attrs: g, children: [
+          { tag: "rect", attrs: { x: f(s.x), y: f(s.y), width: f(s.w), height: f(s.h), fill: "none", stroke: MAP_PALETTE[6].hex, "stroke-width": "2", "stroke-dasharray": "6 4", "vector-effect": "non-scaling-stroke" } },
+          { tag: "text", attrs: { x: f(s.x + s.w / 2), y: f(s.y + s.h / 2), "text-anchor": "middle", "dominant-baseline": "central", "font-family": "'DM Sans', sans-serif", "font-size": f(Math.max(8, Math.min(s.w, s.h) * 0.5)), fill: MAP_PALETTE[6].hex }, children: ["?"] },
+        ] };
+      }
       ctx.stampsUsed.set(def.id, def);
       const attrs = { ...common, href: `#${ctx.idBase}-stamp-${String(def.id).replace(/[^A-Za-z0-9_-]/g, "")}`, x: f(s.x), y: f(s.y), width: f(s.w), height: f(s.h), fill: s.fill || "none", stroke: s.stroke || "none" };
       if (s.rotation) attrs.transform = `rotate(${f(s.rotation)} ${f(s.x + s.w / 2)} ${f(s.y + s.h / 2)})`;
@@ -21884,8 +22086,10 @@ function mapShapeNode(s, ctx) {
   }
 }
 
-// opts: { id, className, label, imageHref, imageWidth, imageHeight }. With an
-// image the canvas is the image's natural size and the background is not
+// opts: { id, className, label, imageHref, imageWidth, imageHeight, stamps,
+// placeholder }. stamps is the world's imported stamps (state.mapStamps), which
+// the built-ins come before; placeholder is the editor's, see mapShapeNode.
+// With an image the canvas is the image's natural size and the background is not
 // drawn; without one the background rect (and its grain) comes first. Then one
 // <g> per visible layer, in order. <defs> carries the grain filter, the path
 // of every bent label, and a <symbol> for every stamp the map uses, all with
@@ -21912,7 +22116,7 @@ function buildMapDrawingTree(drawing, opts) {
       children.push({ tag: "rect", attrs: { "data-role": "grain", x: "0", y: "0", width: f(width), height: f(height), filter: `url(#${fid})` } });
     }
   }
-  const ctx = { idBase, defs, stampsUsed: new Map() };
+  const ctx = { idBase, defs, stampsUsed: new Map(), stamps: Array.isArray(o.stamps) ? o.stamps : [], placeholder: !!o.placeholder };
   d.layers.forEach(layer => {
     if (!layer.visible) return;
     children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s, ctx)).filter(Boolean) });
@@ -22538,8 +22742,10 @@ function useMapHistory(data, onChange, limit) {
 // drawing tools, or while a shape is selected) the fill and stroke swatches,
 // the width, Smooth, the text controls for a label, the shape's layer, and
 // Delete.
-function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, canvasSize, onCustomSize, layersOpen, onToggleLayers }) {
+function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, canvasSize, onCustomSize, layersOpen, onToggleLayers, stamps }) {
   const { tool, setTool, current, applyStyle, editSelected, selectedShape, deleteSelected, layers, activeLayerId, setActiveLayerId, moveShapeToLayer, focusTextId, consumeFocusText } = drawing;
+  const worldStamps = Array.isArray(stamps) ? stamps : [];
+  const [pickerOpen, setPickerOpen] = useState(false);
   const kind = selectedShape ? selectedShape.type : tool;
   // The Custom canvas size fields: seeded from the canvas whenever Custom
   // opens or the size changes under them, applied by Set or Enter.
@@ -22621,22 +22827,37 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
       </div>
       {showStyle && (
         <div className="map-tools-row">
-          {tool === "stamp" && (
-            <>
-              <span className="map-tools-label">Stamp</span>
-              {MAP_BUILTIN_STAMPS.map(st => (
-                <button
-                  key={st.id}
-                  type="button"
-                  className={`map-stamp-pick ${stampId === st.id ? "active" : ""}`}
-                  title={st.name}
-                  onClick={() => { setStampId(st.id); if (selectedShape && selectedShape.type === "stamp") editSelected({ stampId: st.id }); }}
-                >
-                  <svg viewBox={st.viewBox} width="22" height="22" fill={current.fill || "none"} stroke={current.stroke || "none"} aria-hidden="true" dangerouslySetInnerHTML={{ __html: st.body }} />
-                </button>
-              ))}
-            </>
-          )}
+          {(tool === "stamp" || (selectedShape && selectedShape.type === "stamp")) && (() => {
+            // Pick arms the stamp for the next placement and swaps the selected
+            // stamp's symbol, which is also how a missing stamp is re-pointed.
+            const pick = (id) => { setStampId(id); if (selectedShape && selectedShape.type === "stamp") editSelected({ stampId: id }); };
+            const armed = worldStamps.find(s => s.id === stampId) || null;
+            const missing = selectedShape && selectedShape.type === "stamp" && !mapStampDef(selectedShape.stampId, worldStamps) ? selectedShape.stampId : null;
+            return (
+              <>
+                <span className="map-tools-label">Stamp</span>
+                {armed && (
+                  <button type="button" className="map-stamp-pick active" title={`${armed.name} (${armed.pack || "imported"})`} onClick={() => setPickerOpen(true)}>
+                    <svg viewBox={armed.viewBox} width="22" height="22" fill={current.fill || "none"} stroke={current.stroke || "none"} aria-hidden="true" dangerouslySetInnerHTML={{ __html: armed.body }} />
+                  </button>
+                )}
+                {MAP_BUILTIN_STAMPS.map(st => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    className={`map-stamp-pick ${stampId === st.id ? "active" : ""}`}
+                    title={st.name}
+                    onClick={() => pick(st.id)}
+                  >
+                    <svg viewBox={st.viewBox} width="22" height="22" fill={current.fill || "none"} stroke={current.stroke || "none"} aria-hidden="true" dangerouslySetInnerHTML={{ __html: st.body }} />
+                  </button>
+                ))}
+                {worldStamps.length > 0 && <button type="button" className="btn btn-small btn-ghost" onClick={() => setPickerOpen(true)} title="Every stamp, built in and imported">More{"\u2026"}</button>}
+                {missing && <span className="map-tools-missing" title="This stamp's pack is not in the world; pick another symbol or delete the shape">missing: {missing}</span>}
+                {pickerOpen && <MapStampPicker stamps={worldStamps} current={stampId} fill={current.fill} stroke={current.stroke} onPick={(id) => { pick(id); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />}
+              </>
+            );
+          })()}
           {showFill && <><span className="map-tools-label">Fill</span>{swatches(current.fill, v => applyStyle({ fill: v }))}</>}
           <span className="map-tools-label">Stroke</span>{swatches(current.stroke, v => applyStyle({ stroke: v }))}
           {showWidth && <><span className="map-tools-label">Width</span>
@@ -22703,6 +22924,44 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
     </div>
   );
 }
+
+// The grid the strip's More... button opens: every stamp, built in and
+// imported, grouped by pack; a click arms it (and swaps the selected stamp's
+// symbol, as the inline buttons do) and closes.
+function MapStampPicker({ stamps, current, fill, stroke, onPick, onClose }) {
+  const groups = [{ id: "builtin", name: "Built in", stamps: MAP_BUILTIN_STAMPS }, ...mapStampGroups(stamps)];
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Choose a stamp</div>
+        <div className="modal-body">
+          {groups.map(g => (
+            <div key={g.id} className="modal-section">
+              <div className="modal-section-hdr">{g.name}</div>
+              <div className="map-stamp-grid">
+                {g.stamps.map(s => (
+                  <button key={s.id} type="button" className={`map-stamp-tile ${current === s.id ? "active" : ""}`} title={s.id} onClick={() => onPick(s.id)}>
+                    <svg viewBox={s.viewBox} width="40" height="40" fill={fill || "none"} stroke={stroke || "none"} aria-hidden="true" dangerouslySetInnerHTML={{ __html: s.body }} />
+                    <span className="map-stamp-tile-name">{s.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // The layer panel under the strip: one row per layer, top-most first (the
 // last layer in the array draws on top). Pick the active layer, rename it in
 // place, show or hide, lock or unlock, move it up or down the stack, delete
@@ -22990,7 +23249,8 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
     imageHref: mapData.image ? imageUrl : null,
     imageWidth: imageSize ? imageSize.width : null,
     imageHeight: imageSize ? imageSize.height : null,
-  }), [mapData, entry.id, entry.name, imageUrl, imageSize]);
+    stamps: state ? state.mapStamps : [],
+  }), [mapData, entry.id, entry.name, imageUrl, imageSize, state ? state.mapStamps : null]);
   const pins = mapData.pins || [];
   const canvasRef = useRef(null);
   const [sizePct, setSizePct] = useState(100);
@@ -23244,7 +23504,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
   );
 }
 
-function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash }) {
+function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash, stamps }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const [selectedPinId, setSelectedPinId] = useState(null);
@@ -23262,7 +23522,9 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     imageHref: data.image ? imageUrl : null,
     imageWidth: imageSize ? imageSize.width : null,
     imageHeight: imageSize ? imageSize.height : null,
-  }), [data, imageUrl, imageSize]);
+    stamps,
+    placeholder: true,
+  }), [data, imageUrl, imageSize, stamps]);
   // Every write to the record goes through the history (one step per gesture;
   // pins included, by decision at session 19). The hook writes through it too.
   const history = useMapHistory(data, onChange);
@@ -23470,7 +23732,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
         <span style={{ flex: 1 }} />
         <span className="map-editor-hint">{drawing.hint}</span>
       </div>
-      <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} canvasSize={{ width: data.drawing.width, height: data.drawing.height }} onCustomSize={applyCustomSize} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} />
+      <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} canvasSize={{ width: data.drawing.width, height: data.drawing.height }} onCustomSize={applyCustomSize} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} stamps={stamps} />
       {layersOpen && <MapLayerPanel drawing={drawing} />}
 
       {data.image && errored ? (
@@ -23589,7 +23851,154 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
 // (image + pins). The index is a flat list; opening a record routes to the
 // per-map view (canvas above the schema fields). No template picker: there is
 // no map-kind template anymore.
-function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete }) {
+
+// The Stamps panel at the head of the Cartographia index (above the map list;
+// a world has far fewer stamps than maps, by Drak's call): every imported stamp
+// grouped by pack with a preview, Delete per stamp and per pack (warning with
+// the count of placed stamps that will go missing), Export per pack (its own
+// ids, so a re-import replaces its own), Import pack, and Export built-ins as
+// a pack, which is a correct file to start a new pack from. An import that
+// has nothing to report lands at once with a flash; one where the sanitizer
+// removed something, or dropped a stamp, shows the report first, with Cancel.
+function MapStampsPanel({ state, isLocked, onChange, flash }) {
+  const stamps = Array.isArray(state.mapStamps) ? state.mapStamps : [];
+  const [pending, setPending] = useState(null); // a parsed pack waiting on the report modal
+  const usage = useMemo(() => mapStampUsage(state), [state.cartographia]);
+  const groups = mapStampGroups(stamps);
+  const say = (text, type) => { if (flash) flash(text, type); };
+  const download = (filename, obj) => {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const applyPack = (parsed) => {
+    const incoming = new Map(parsed.stamps.map(s => [s.id, s]));
+    const next = stamps.map(s => (incoming.has(s.id) ? incoming.get(s.id) : s));
+    parsed.stamps.forEach(s => { if (!stamps.some(e => e.id === s.id)) next.push(s); });
+    onChange(next);
+    const r = parsed.report;
+    say(`Imported "${parsed.pack.name}": ${plural(r.added, "new stamp", "new stamps")}, ${r.updated} updated${r.dropped.length ? `, ${r.dropped.length} dropped` : ""}.`);
+  };
+  const importPack = () => {
+    if (isLocked) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+    input.onchange = (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const parsed = parseMapStampPack(String(reader.result || ""), stamps);
+        if (!parsed.ok) { say(parsed.error, "error"); return; }
+        if (parsed.report.removed.length || parsed.report.dropped.length || parsed.stamps.length === 0) { setPending(parsed); return; }
+        applyPack(parsed);
+      };
+      reader.onerror = () => say("Couldn't read that file.", "error");
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+  const exportGroup = (g) => {
+    download(`${g.id}.cartulary-stamps.json`, buildMapStampPackFile(g.id, g.name, g.stamps));
+    say(`Exported "${g.name}" (${plural(g.stamps.length, "stamp", "stamps")}).`);
+  };
+  const exportBuiltins = () => {
+    download("cartulary-builtins.cartulary-stamps.json", buildMapStampPackFile("cartulary-builtins", "Cartulary built-in stamps", MAP_BUILTIN_STAMPS));
+    say("Exported the four built-in stamps as a pack. Edit it, rename it, and import it to make your own.");
+  };
+  const usageNote = (ids) => {
+    let shapes = 0;
+    const maps = new Set();
+    ids.forEach(id => { const u = usage[id]; if (u) { shapes += u.shapes; } });
+    (Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
+      const d = rec && rec.mapData && rec.mapData.drawing;
+      if ((d && Array.isArray(d.layers) ? d.layers : []).some(l => (Array.isArray(l.shapes) ? l.shapes : []).some(s => s && s.type === "stamp" && ids.includes(s.stampId)))) maps.add(rec.id);
+    });
+    return shapes > 0 ? ` It is placed ${plural(shapes, "time", "times")} on ${plural(maps.size, "map", "maps")}; those will show as missing until a pack with it is imported again.` : "";
+  };
+  const removeStamp = (s) => {
+    if (isLocked) return;
+    if (!confirm(`Delete the stamp "${s.name}"?${usageNote([s.id])}`)) return;
+    onChange(stamps.filter(x => x.id !== s.id));
+  };
+  const removeGroup = (g) => {
+    if (isLocked) return;
+    if (!confirm(`Delete the pack "${g.name}" and its ${plural(g.stamps.length, "stamp", "stamps")}?${usageNote(g.stamps.map(s => s.id))}`)) return;
+    const ids = new Set(g.stamps.map(s => s.id));
+    onChange(stamps.filter(x => !ids.has(x.id)));
+  };
+  const listMore = (items, max) => (items.length > max ? [...items.slice(0, max), `and ${items.length - max} more`] : items);
+  return (
+    <div className="map-stamps">
+      <div className="map-stamps-head">
+        <span className="map-stamps-title">Stamps</span>
+        {!isLocked && <button type="button" className="btn btn-small btn-accent" onClick={importPack} title="Import a stamp pack (.json)">+ Import pack</button>}
+        <button type="button" className="btn btn-small btn-ghost" onClick={exportBuiltins} title="A correct pack file with the four built-in stamps, to start your own from">Export built-ins as a pack</button>
+      </div>
+      {groups.length === 0 ? (
+        <div className="map-stamps-empty">No imported stamps. The map editor's Stamp tool has four built in; a stamp pack adds more.</div>
+      ) : groups.map(g => (
+        <div key={g.id} className="map-stamp-group">
+          <div className="map-stamp-group-head">
+            <span className="map-stamp-group-name">{g.name}</span>
+            <span>{plural(g.stamps.length, "stamp", "stamps")}</span>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => exportGroup(g)} title="Write this pack back out as a file">Export</button>
+            {!isLocked && <button type="button" className="btn btn-small btn-danger" onClick={() => removeGroup(g)} title="Delete this pack and every stamp in it">Delete pack</button>}
+          </div>
+          <div className="map-stamp-grid">
+            {g.stamps.map(s => (
+              <div key={s.id} className="map-stamp-tile" title={`${s.name} (${s.id})`}>
+                <svg viewBox={s.viewBox} width="40" height="40" fill={MAP_PALETTE[5].hex} stroke={MAP_PALETTE[0].hex} aria-hidden="true" dangerouslySetInnerHTML={{ __html: s.body }} />
+                <span className="map-stamp-tile-name">{s.name}</span>
+                {!isLocked && <button type="button" className="map-stamp-tile-x" title="Delete this stamp" onClick={() => removeStamp(s)}>{"\u00d7"}</button>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {pending && (
+        <div className="modal-backdrop" onClick={() => setPending(null)}>
+          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+            <div className="modal-hdr">Import stamp pack "{pending.pack.name}"</div>
+            <div className="modal-body">
+              <p>
+                {pending.stamps.length === 0
+                  ? "Nothing in this pack can be imported."
+                  : `${plural(pending.stamps.length, "stamp", "stamps")} will import: ${pending.report.added} new${pending.report.updated ? `, ${pending.report.updated} replacing ${pending.report.updated === 1 ? "a stamp" : "stamps"} this pack imported before` : ""}.`}
+              </p>
+              {pending.report.removed.length > 0 && (
+                <div className="modal-notice modal-notice-warning">
+                  <strong>The sanitizer removed:</strong>
+                  <ul>{listMore(pending.report.removed, 12).map((r, i) => (typeof r === "string" ? <li key={i}>{r}</li> : <li key={i}><code>{r.id}</code>: {r.items.join(", ")}</li>))}</ul>
+                </div>
+              )}
+              {pending.report.dropped.length > 0 && (
+                <div className="modal-notice modal-notice-warning">
+                  <strong>Dropped:</strong>
+                  <ul>{listMore(pending.report.dropped, 12).map((r, i) => (typeof r === "string" ? <li key={i}>{r}</li> : <li key={i}><code>{r.id}</code>: {r.reason}</li>))}</ul>
+                </div>
+              )}
+              <p className="map-stamps-note">A stamp body may hold only g, path, circle, ellipse, rect, polygon, polyline, and line, with geometry, paint, opacity, and transform attributes. Everything else is removed on import and again whenever the world loads.</p>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={() => setPending(null)}>Cancel</button>
+              <button type="button" className="btn btn-accent" disabled={pending.stamps.length === 0} onClick={() => { applyPack(pending); setPending(null); }}>Import {plural(pending.stamps.length, "stamp", "stamps")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, onStampsChange, flash }) {
   const maps = (Array.isArray(state.cartographia) ? state.cartographia : [])
     .slice()
     .sort((a, b) => {
@@ -23627,6 +24036,8 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete }) 
           </div>
         )}
       </div>
+
+      <MapStampsPanel state={state} isLocked={isLocked} onChange={onStampsChange || (() => {})} flash={flash} />
 
       {maps.length === 0 ? (
         <div style={{
@@ -39310,6 +39721,29 @@ The rules:
 
 If no pins on the map have temporal data (no ranges anywhere), the Time button doesn't appear — the feature stays out of the way for non-historical maps. Permanent flags alone don't make the button appear, since there's nothing to scrub through.
 
+**Stamps and stamp packs (v1.6).** The map editor's Stamp tool places symbols. Four are built in (mountain, tree, settlement, compass rose); more come from stamp packs, JSON files you import from the Stamps panel at the top of the Cartographia index. A pack looks like this:
+
+\`\`\`
+{
+  "cartulary_mapstamp_pack": 1,
+  "id":     "forest",                   // optional; lower-case letters, digits, underscore, dash. Defaults to a slug of the name
+  "name":   "Forest",
+  "stamps": [
+    {
+      "id":      "pine",                // required; same characters as the pack id
+      "name":    "Pine",
+      "viewBox": "0 0 64 64",           // the box the body is drawn in
+      "body":    "<path d=\\"M32 4 L19 26 L45 26 Z\\" stroke-width=\\"3\\"/><path d=\\"M29 58 V63 H35 V58\\" fill=\\"none\\"/>"
+    },
+    ...
+  ]
+}
+\`\`\`
+
+The \`body\` is SVG inner markup. Parts with no \`fill\` or \`stroke\` of their own take the colors the map gives the stamp, so leave those off wherever the stamp should follow the palette, and put \`fill="none"\` on parts that must stay hollow. Line weight is the stamp's own and scales with it.
+
+Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. Deleting a stamp that is placed on a map leaves a dashed box in the editor until a pack with it is imported again. **Export built-ins as a pack** in the Stamps panel writes a correct file to start from; **Export** on a pack writes it back out in this shape.
+
 **Limitations.** No layers, no fog of war, no measurement tools. Cartulary's map support is reference-grade, not VTT-grade. If you need a virtual tabletop experience, this isn't that.` },
 
   { id: "views-pages", title: "Views & Pages", content: `The sidebar Views section holds these entries (drag-reorderable except Home and Project):
@@ -39796,13 +40230,14 @@ These aren't oversights. Most are direct consequences of the single-file local-f
   "ephemeris":    { ...Ephemeris view UI state },     // v1.5 — per-mode UI substate; rebuilt to default if absent
   "glossopoeia":  { ...Glossopoeia view data + UI state },  // v1.5 — the conlang core view; empty default if absent
   "packs":        [ ...template packs ],              // v1.5 — named reference-sets over templates; empty array if none
+  "mapStamps":    [ ...imported map stamps ],         // v1.6, stamps imported from stamp packs; empty array if none
   "viewPrefs":    { ...per-view preferences }         // various per-view UI state
 }
 \`\`\`
 
 \`schemaVersion\` is currently always \`1\`. A higher number means the file was written by a newer build than the one trying to load it; loading is refused with a recovery prompt. A lower or missing number is treated as 1.
 
-\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
+\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, \`mapStamps\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
 
 Version-history snapshots are **not** part of the JSON save file. They live in a separate IndexedDB store inside the browser and don't survive clearing browser storage or transferring the world to another machine. The exported \`.world.json\` is the canonical save; snapshots are a session safety net only.
 
@@ -40108,11 +40543,40 @@ A pack groups templates by id for display and sharing — it never owns or copie
       "permanent": boolean                     // optional; default false. true = always visible in time mode
     },
     ...
-  ]
+  ],
+  "drawing": {                                 // v1.6, the vector layer under the pins
+    "width":  number,                          // canvas units; with an image, its natural pixel size
+    "height": number,
+    "background": { "fill": hex, "grain": number },   // grain 0..1; not drawn under an image
+    "layers": [
+      { "id": string, "name": string, "visible": boolean, "locked": boolean, "shapes": [ ...shapes ] },
+      ...
+    ]
+  }
 }
 \`\`\`
 
+Each shape carries \`id\`, \`type\` (\`rect\`, \`ellipse\`, \`polygon\`, \`stroke\`, \`text\`, or \`stamp\`), \`fill\` and \`stroke\` (hex or null), and \`strokeWidth\` (2, 4, or 8), then by type: \`x\`, \`y\`, \`w\`, \`h\` for rect, ellipse, and stamp; \`points\` ([[x, y], ...]) for polygon and stroke; \`smooth\` for rect, polygon, and stroke; \`text\`, \`fontSize\` (24, 36, or 56), \`rotation\`, and \`arc\` (degrees, -180..180) for text; \`stampId\` and \`rotation\` for stamp.
+
 The canvas size shown in the UI (\`sizePct\`) is per-session UI state and **not** persisted in the save file.
+
+**\`mapStamps\` array (v1.6), stamps imported from stamp packs, world-scoped:**
+
+\`\`\`
+[
+  {
+    "id":      string,                         // namespaced by pack: "<packId>__<stamp id>"
+    "name":    string,
+    "viewBox": string,                         // "minx miny width height"
+    "body":    string,                         // sanitized SVG inner markup; see Cartographia, stamp packs
+    "packId":  string,                         // the pack's slug; "" for a stamp from no pack
+    "pack":    string                          // the pack's display name
+  },
+  ...
+]
+\`\`\`
+
+Built-in stamps are never stored; a map's stamp shape references them by id (\`mountain\`, \`tree\`, \`settlement\`, \`compass\`). Every body is run through the sanitizer again on load, so editing this array by hand cannot bring in markup the import would have refused.
 
 ---
 
@@ -40459,7 +40923,7 @@ function ProjectView({ state, onOpenEntry, dirHandle, onSelectTemplate, onChange
         </div>
       )}
 
-      {entries.length === 0 ? (
+      {entries.length === 0 && (Array.isArray(state.cartographia) ? state.cartographia : []).length === 0 ? (
         <div className="landing-empty-cta">
           <div className="landing-empty-cta-hdr">Your world is empty.</div>
           <div className="landing-empty-cta-body">
