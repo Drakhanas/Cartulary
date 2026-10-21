@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r034) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r035) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -100,3 +100,16 @@ undo re-mounted the field, the field grabbed focus because it had been told to o
 and the next Ctrl+Y went to the field instead of the history. Drak's pass found a bug that
 was a hidden layer, which is the feature working and the interface not saying so loudly
 enough; noted, not built. Twelve rotations. Four cuts in one session, three of them today.
+
+Cut 5, r035, was two jobs wearing one number. The feature went in clean: four stamps I drew
+as path data, a frame that turns with its shape, corners and a knob, and the arc Drak asked
+for when I showed him the forks, which turned out to be the most interesting problem of the
+cut because the export has no DOM and the editor does, and a label that sits in one place
+in the app and another on the page is worse than a label that is slightly off in both. So
+nobody measures; everyone estimates, the same way. The second job was the room. His pass
+never touched a stamp. It found the resize grip stopping at 100%, which it had always done;
+a click on the grip that placed a pin, which it had always done; a square canvas at 150%
+that scrolled inside its box, which the 75vh cap had always done to anything tall; and a
+size picker with no way to type a number. Four stagings, three of them for the chrome, and
+none of it was pillar 3's fault except that pillar 3 made the canvas worth looking at.
+Thirteen rotations. Five cuts in one session.
