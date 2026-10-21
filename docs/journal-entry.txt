@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r035) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r036) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -113,3 +113,20 @@ that scrolled inside its box, which the 75vh cap had always done to anything tal
 size picker with no way to type a number. Four stagings, three of them for the chrome, and
 none of it was pillar 3's fault except that pillar 3 made the canvas worth looking at.
 Thirteen rotations. Five cuts in one session.
+
+Cut 6, r036, stamp packs, the first time Cartulary takes markup from a stranger and draws
+it. I offered six forks and Drak took five and turned the sixth, and the one he turned was
+the right one to turn: I had proposed the collision modal the sheet asked for, Skip,
+Replace, Rename, and he said nobody has seen these ids yet, namespace them by pack, because
+a Replace that puts a pack's tree where the built-in tree stands is a Replace that, once the
+pack is deleted, leaves no tree anywhere on any map. A modal is a user interface for a
+collision; a namespace is the absence of one. The sanitizer taught me the other lesson of
+the cut. My first one parsed as XML and refused the first realistic test body because it
+carried an xlink prefix with no declaration, which is what every Inkscape file carries and
+what every browser draws anyway. The app renders a stamp through innerHTML; the exported
+page renders it through the HTML parser; a sanitizer that sees a different tree from the
+renderer is wrong in both directions. So it parses as inline svg in a page, the way it will
+be drawn, and then rebuilds from the allowlist. His pass found the panel in the wrong place
+(bottom; there will be fewer stamps than maps) and a Project view that called a world with
+maps and no entries empty and hid the export button, which had been true since r001 and
+nobody had a map-only world until now. Fourteen rotations. Six cuts in one session.
