@@ -341,6 +341,29 @@ The rules:
 
 If no pins on the map have temporal data (no ranges anywhere), the Time button doesn't appear — the feature stays out of the way for non-historical maps. Permanent flags alone don't make the button appear, since there's nothing to scrub through.
 
+**Stamps and stamp packs (v1.6).** The map editor's Stamp tool places symbols. Four are built in (mountain, tree, settlement, compass rose); more come from stamp packs, JSON files you import from the Stamps panel at the top of the Cartographia index. A pack looks like this:
+
+\`\`\`
+{
+  "cartulary_mapstamp_pack": 1,
+  "id":     "forest",                   // optional; lower-case letters, digits, underscore, dash. Defaults to a slug of the name
+  "name":   "Forest",
+  "stamps": [
+    {
+      "id":      "pine",                // required; same characters as the pack id
+      "name":    "Pine",
+      "viewBox": "0 0 64 64",           // the box the body is drawn in
+      "body":    "<path d=\\"M32 4 L19 26 L45 26 Z\\" stroke-width=\\"3\\"/><path d=\\"M29 58 V63 H35 V58\\" fill=\\"none\\"/>"
+    },
+    ...
+  ]
+}
+\`\`\`
+
+The \`body\` is SVG inner markup. Parts with no \`fill\` or \`stroke\` of their own take the colors the map gives the stamp, so leave those off wherever the stamp should follow the palette, and put \`fill="none"\` on parts that must stay hollow. Line weight is the stamp's own and scales with it.
+
+Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. Deleting a stamp that is placed on a map leaves a dashed box in the editor until a pack with it is imported again. **Export built-ins as a pack** in the Stamps panel writes a correct file to start from; **Export** on a pack writes it back out in this shape.
+
 **Limitations.** No layers, no fog of war, no measurement tools. Cartulary's map support is reference-grade, not VTT-grade. If you need a virtual tabletop experience, this isn't that.` },
 
   { id: "views-pages", title: "Views & Pages", content: `The sidebar Views section holds these entries (drag-reorderable except Home and Project):
@@ -827,13 +850,14 @@ These aren't oversights. Most are direct consequences of the single-file local-f
   "ephemeris":    { ...Ephemeris view UI state },     // v1.5 — per-mode UI substate; rebuilt to default if absent
   "glossopoeia":  { ...Glossopoeia view data + UI state },  // v1.5 — the conlang core view; empty default if absent
   "packs":        [ ...template packs ],              // v1.5 — named reference-sets over templates; empty array if none
+  "mapStamps":    [ ...imported map stamps ],         // v1.6, stamps imported from stamp packs; empty array if none
   "viewPrefs":    { ...per-view preferences }         // various per-view UI state
 }
 \`\`\`
 
 \`schemaVersion\` is currently always \`1\`. A higher number means the file was written by a newer build than the one trying to load it; loading is refused with a recovery prompt. A lower or missing number is treated as 1.
 
-\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
+\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, \`mapStamps\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
 
 Version-history snapshots are **not** part of the JSON save file. They live in a separate IndexedDB store inside the browser and don't survive clearing browser storage or transferring the world to another machine. The exported \`.world.json\` is the canonical save; snapshots are a session safety net only.
 
@@ -1139,11 +1163,40 @@ A pack groups templates by id for display and sharing — it never owns or copie
       "permanent": boolean                     // optional; default false. true = always visible in time mode
     },
     ...
-  ]
+  ],
+  "drawing": {                                 // v1.6, the vector layer under the pins
+    "width":  number,                          // canvas units; with an image, its natural pixel size
+    "height": number,
+    "background": { "fill": hex, "grain": number },   // grain 0..1; not drawn under an image
+    "layers": [
+      { "id": string, "name": string, "visible": boolean, "locked": boolean, "shapes": [ ...shapes ] },
+      ...
+    ]
+  }
 }
 \`\`\`
 
+Each shape carries \`id\`, \`type\` (\`rect\`, \`ellipse\`, \`polygon\`, \`stroke\`, \`text\`, or \`stamp\`), \`fill\` and \`stroke\` (hex or null), and \`strokeWidth\` (2, 4, or 8), then by type: \`x\`, \`y\`, \`w\`, \`h\` for rect, ellipse, and stamp; \`points\` ([[x, y], ...]) for polygon and stroke; \`smooth\` for rect, polygon, and stroke; \`text\`, \`fontSize\` (24, 36, or 56), \`rotation\`, and \`arc\` (degrees, -180..180) for text; \`stampId\` and \`rotation\` for stamp.
+
 The canvas size shown in the UI (\`sizePct\`) is per-session UI state and **not** persisted in the save file.
+
+**\`mapStamps\` array (v1.6), stamps imported from stamp packs, world-scoped:**
+
+\`\`\`
+[
+  {
+    "id":      string,                         // namespaced by pack: "<packId>__<stamp id>"
+    "name":    string,
+    "viewBox": string,                         // "minx miny width height"
+    "body":    string,                         // sanitized SVG inner markup; see Cartographia, stamp packs
+    "packId":  string,                         // the pack's slug; "" for a stamp from no pack
+    "pack":    string                          // the pack's display name
+  },
+  ...
+]
+\`\`\`
+
+Built-in stamps are never stored; a map's stamp shape references them by id (\`mountain\`, \`tree\`, \`settlement\`, \`compass\`). Every body is run through the sanitizer again on load, so editing this array by hand cannot bring in markup the import would have refused.
 
 ---
 

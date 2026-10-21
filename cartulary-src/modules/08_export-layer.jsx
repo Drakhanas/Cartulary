@@ -947,13 +947,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageHref: imageDataUrl,
       imageWidth: imageSize ? imageSize.width : null,
       imageHeight: imageSize ? imageSize.height : null,
+      stamps: state.mapStamps,
     }));
   } else if (mapData.image) {
     imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>`;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name }));
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps }));
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /

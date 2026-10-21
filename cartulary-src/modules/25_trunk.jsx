@@ -160,7 +160,7 @@ function ProjectView({ state, onOpenEntry, dirHandle, onSelectTemplate, onChange
         </div>
       )}
 
-      {entries.length === 0 ? (
+      {entries.length === 0 && (Array.isArray(state.cartographia) ? state.cartographia : []).length === 0 ? (
         <div className="landing-empty-cta">
           <div className="landing-empty-cta-hdr">Your world is empty.</div>
           <div className="landing-empty-cta-body">

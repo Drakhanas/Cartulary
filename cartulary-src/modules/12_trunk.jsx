@@ -2125,6 +2125,10 @@ function App() {
         flash("That's a language file — import it from Glossopoeia's Import button, not as a world.", "error");
         return;
       }
+      if (parsed && parsed.cartulary_mapstamp_pack === 1) {
+        flash("That's a stamp pack. Import it from the Stamps panel at the top of Cartographia, not as a world.", "error");
+        return;
+      }
       // Shape pre-check: a Cartulary world has at least one of these top-level
       // keys. Migrate fills in missing structure with defaults, so without this
       // check, ANY valid JSON would silently load as an empty world.
@@ -3721,6 +3725,8 @@ function App() {
               onOpen={openMap}
               onCreate={createMap}
               onDelete={deleteMap}
+              onStampsChange={(next) => updateState(s => ({ ...s, mapStamps: next }))}
+              flash={flash}
             />
           )}
           {view === "cartographia" && mapDraft && (
@@ -3750,6 +3756,7 @@ function App() {
                   entries={state.entries}
                   bodies={state.celestialBodies}
                   flash={flash}
+                  stamps={state.mapStamps}
                 />
               }
             />
