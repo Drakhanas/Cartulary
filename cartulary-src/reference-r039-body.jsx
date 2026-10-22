@@ -21535,7 +21535,7 @@ const MAP_BACKGROUND_PRESETS = [
   { id: "vellum",    label: "Vellum",    fill: "#f1e9d6", grain: 0.25 },
   { id: "parchment", label: "Parchment", fill: "#e8dcc0", grain: 0.45 },
 ];
-const MAP_STROKE_WIDTHS = [2, 4, 8];        // viewBox units
+const MAP_STROKE_WIDTH_RANGE = { min: 1, max: 32, limit: 64 };   // viewBox units; the slider's range, and the widest the data accepts
 const MAP_TEXT_SIZES = [24, 36, 56];        // viewBox units, Cormorant Garamond
 const MAP_SHAPE_TYPES = ["rect", "ellipse", "polygon", "stroke", "text", "stamp"];
 // Default canvas for a map with no image. With an image, the renderer sets the
@@ -21574,7 +21574,7 @@ function ensureMapShape(s) {
     type,
     fill: hex(s.fill),
     stroke: hex(s.stroke),
-    strokeWidth: pick(s.strokeWidth, MAP_STROKE_WIDTHS, 4),
+    strokeWidth: Math.max(MAP_STROKE_WIDTH_RANGE.min, Math.min(MAP_STROKE_WIDTH_RANGE.limit, Math.round(num(s.strokeWidth, 4)))),
   };
   if (type === "rect" || type === "ellipse" || type === "text" || type === "stamp") {
     out.x = num(s.x, 0);
@@ -22208,6 +22208,7 @@ const MAP_TOOLS = [
   { id: "ellipse", label: "Ellipse", hint: "Drag on the map to draw an ellipse · Right-click when done" },
   { id: "polygon", label: "Polygon", hint: "Click to place the corners of a closed, filled area · First corner, double-click, Enter, or right-click closes it · Esc discards" },
   { id: "stroke",  label: "Line",    hint: "Click to place the points of an open line · Double-click, Enter, or right-click finishes it · Esc discards" },
+  { id: "freehand", label: "Freehand", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Right-click when done" },
   { id: "text",    label: "Text",    hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
   { id: "stamp",   label: "Stamp",   hint: "Pick a stamp in the strip, then click to place it or drag to size it · Right-click when done" },
 ];
@@ -22218,6 +22219,49 @@ const MAP_CANVAS_PRESETS = [
   { id: "portrait",  label: "Portrait 1000 × 1600",  width: 1000, height: 1600 },
   { id: "square",    label: "Square 1200 × 1200",    width: 1200, height: 1200 },
 ];
+
+// Freehand: a new point every `spacing` of the canvas width while dragging
+// (4 units at 1600 wide), Douglas-Peucker on release at `tolerance` of the
+// width (4 units at 1600, about two screen pixels at the default width, which
+// is where hand jitter lives), the tolerance raised by half until the stroke is
+// under `maxPoints`; a polygon or line with more than `handleCap` points has
+// no per-point handles in Select. All in canvas units, so the result does not
+// depend on zoom.
+const MAP_FREEHAND = { spacing: 1 / 400, tolerance: 1 / 400, maxPoints: 400, handleCap: 40 };
+
+// Douglas-Peucker, iterative. Consecutive duplicates are dropped first; the
+// ends always survive. Points are [x, y] pairs in canvas units.
+function mapSimplifyPoints(points, tolerance) {
+  const pts = [];
+  points.forEach(p => { const last = pts[pts.length - 1]; if (!last || last[0] !== p[0] || last[1] !== p[1]) pts.push(p); });
+  if (pts.length <= 2) return pts;
+  const keep = new Array(pts.length).fill(false);
+  keep[0] = true; keep[pts.length - 1] = true;
+  const stack = [[0, pts.length - 1]];
+  const tol2 = tolerance * tolerance;
+  while (stack.length) {
+    const [a, b] = stack.pop();
+    if (b - a < 2) continue;
+    const [ax, ay] = pts[a], [bx, by] = pts[b];
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let best = -1, bestD = 0;
+    for (let i = a + 1; i < b; i++) {
+      const [px, py] = pts[i];
+      let d2;
+      if (len2 === 0) {
+        d2 = (px - ax) * (px - ax) + (py - ay) * (py - ay);
+      } else {
+        const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+        const qx = ax + t * dx, qy = ay + t * dy;
+        d2 = (px - qx) * (px - qx) + (py - qy) * (py - qy);
+      }
+      if (d2 > bestD) { bestD = d2; best = i; }
+    }
+    if (best >= 0 && bestD > tol2) { keep[best] = true; stack.push([a, best], [best, b]); }
+  }
+  return pts.filter((p, i) => keep[i]);
+}
 
 // Shift a normalized shape by (dx, dy) viewBox units, rounded to two decimals
 // so stored coordinates stay short.
@@ -22377,9 +22421,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   const current = selectedShape
     ? { fill: selectedShape.fill, stroke: selectedShape.stroke, strokeWidth: selectedShape.strokeWidth, smooth: !!selectedShape.smooth }
     : style;
-  const applyStyle = (patch) => {
+  const applyStyle = (patch, coalesceKey) => {
     setStyle(st => ({ ...st, ...patch }));
-    if (selectedShape) updateShape(selectedShape.id, patch);
+    if (selectedShape) updateShape(selectedShape.id, patch, coalesceKey ? { coalesce: `${coalesceKey}-${selectedShape.id}` } : undefined);
   };
   // Text content, size, and angle edit the selected shape only, never the
   // defaults; typing coalesces into one undo step per field.
@@ -22393,6 +22437,17 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
   const finishDraft = (pointsOverride) => {
     if (!draft) return null;
     let id = null;
+    if (draft.type === "freehand") {
+      let tol = MAP_FREEHAND.tolerance * width;
+      let pts = mapSimplifyPoints(draft.points, tol);
+      while (pts.length > MAP_FREEHAND.maxPoints) { tol *= 1.5; pts = mapSimplifyPoints(draft.points, tol); }
+      if (pts.length >= 2) {
+        id = addShape({ type: "stroke", points: pts.map(p => [r2(p[0]), r2(p[1])]), fill: null, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: true });
+      }
+      setDraft(null);
+      setCursor(null);
+      return id;
+    }
     if (draft.type === "polygon" || draft.type === "stroke") {
       const pts = pointsOverride || draft.points;
       if (pts.length >= (draft.type === "polygon" ? 3 : 2)) {
@@ -22414,6 +22469,12 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
       if (!targetLayer) return;
       e.preventDefault();
       setDraft({ type: tool, x0: p[0], y0: p[1], x1: p[0], y1: p[1] });
+      return;
+    }
+    if (tool === "freehand") {
+      if (!targetLayer) return;
+      e.preventDefault();
+      setDraft({ type: "freehand", points: [p] });
       return;
     }
     if (tool === "select") {
@@ -22522,6 +22583,29 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height }) {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [tool, draft, selectedShapeId, layers]);
+
+  // Freehand: window listeners so a drag that leaves the canvas still ends
+  // cleanly (toPoint clamps to the edge). A point is taken when the cursor
+  // has moved `spacing` of the width since the last one; release commits the
+  // simplified stroke through finishDraft and the tool stays Freehand.
+  useEffect(() => {
+    if (!draft || draft.type !== "freehand") return;
+    const minGap = MAP_FREEHAND.spacing * width;
+    const move = (e) => {
+      const p = toPoint(e);
+      if (!p) return;
+      setDraft(d => {
+        if (!d || d.type !== "freehand") return d;
+        const last = d.points[d.points.length - 1];
+        if (Math.hypot(p[0] - last[0], p[1] - last[1]) < minGap) return d;
+        return { ...d, points: [...d.points, p] };
+      });
+    };
+    const up = () => { finishDraft(); };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+  }, [draft]);
 
   // Press-drag-release for rect, ellipse, and stamp: window listeners so a
   // drag that leaves the canvas still ends cleanly. For a rect or ellipse a
@@ -22769,8 +22853,8 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
     }
   }, [focusTextId, selectedShape]);
   const showStyle = tool !== "pin" && (tool !== "select" || !!selectedShape);
-  const showFill = kind !== "stroke";
-  const showSmooth = kind === "rect" || kind === "polygon" || kind === "stroke";
+  const showFill = kind !== "stroke" && kind !== "freehand";
+  const showSmooth = kind === "rect" || kind === "polygon" || kind === "stroke" || kind === "freehand";
   const isText = !!selectedShape && selectedShape.type === "text";
   const hasAngle = !!selectedShape && (selectedShape.type === "text" || selectedShape.type === "stamp");
   const showWidth = kind !== "stamp"; // a stamp's line weight is the symbol's own
@@ -22860,10 +22944,28 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
           })()}
           {showFill && <><span className="map-tools-label">Fill</span>{swatches(current.fill, v => applyStyle({ fill: v }))}</>}
           <span className="map-tools-label">Stroke</span>{swatches(current.stroke, v => applyStyle({ stroke: v }))}
-          {showWidth && <><span className="map-tools-label">Width</span>
-          {MAP_STROKE_WIDTHS.map(w => (
-            <button key={w} type="button" className={`btn btn-small ${current.strokeWidth === w ? "btn-accent" : "btn-ghost"}`} onClick={() => applyStyle({ strokeWidth: w })}>{w}</button>
-          ))}</>}
+          {showWidth && (
+            <>
+              <span className="map-tools-label">Width</span>
+              <input
+                className="map-tools-range"
+                type="range"
+                min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.max} step="1"
+                value={Math.min(MAP_STROKE_WIDTH_RANGE.max, current.strokeWidth)}
+                onChange={e => applyStyle({ strokeWidth: parseInt(e.target.value, 10) || MAP_STROKE_WIDTH_RANGE.min }, "width")}
+                title="Line width, in drawing units"
+              />
+              <input
+                className="input map-tools-num"
+                type="number"
+                min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.limit} step="1"
+                value={current.strokeWidth}
+                onChange={e => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) applyStyle({ strokeWidth: Math.max(MAP_STROKE_WIDTH_RANGE.min, Math.min(MAP_STROKE_WIDTH_RANGE.limit, v)) }, "width"); }}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+                title="Line width, 1 to 64"
+              />
+            </>
+          )}
           {showSmooth && (
             <button type="button" className={`btn btn-small ${current.smooth ? "btn-accent" : "btn-ghost"}`} onClick={() => applyStyle({ smooth: !current.smooth })} title="Round the corners and curve the path through its points">Smooth</button>
           )}
@@ -23053,6 +23155,8 @@ function MapEditorOverlay({ width, height, drawing }) {
     } else {
       items.push(<ellipse key="draft" cx={f(x + w / 2)} cy={f(y + h / 2)} rx={f(w / 2)} ry={f(h / 2)} {...paint} />);
     }
+  } else if (draft && draft.type === "freehand") {
+    items.push(<polyline key="draft" points={draft.points.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
   } else if (draft) {
     const pts = draft.points;
     const trail = cursor ? [...pts, cursor] : pts;
@@ -23091,7 +23195,7 @@ function MapEditorOverlay({ width, height, drawing }) {
   } else if (selBox) {
     items.push(<rect key="sel" x={f(selBox.x)} y={f(selBox.y)} width={f(selBox.w)} height={f(selBox.h)} fill="none" stroke="#c8a96e" strokeWidth={1} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" pointerEvents="none" />);
   }
-  if (selectMode && selectedShape && Array.isArray(selectedShape.points)) {
+  if (selectMode && selectedShape && Array.isArray(selectedShape.points) && selectedShape.points.length <= MAP_FREEHAND.handleCap) {
     // A visible dot, then its hit target on top: a transparent disk (the
     // stroke ring alone leaves the centre of a small circle unhittable in
     // Chromium) plus a transparent 16-pixel non-scaling stroke around it.
