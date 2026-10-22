@@ -631,11 +631,16 @@ const collectImageRefsForHtmlExport = (state) => {
     if (!tpl) return;
     walk(tpl.fields || [], entry.fields || {});
   });
-  // Map canvas backgrounds now live in the cartographia slice, not on entries.
+  // Map canvas backgrounds now live in the cartographia slice, not on entries;
+  // raster layers' images (r043) sit beside them in the drawing.
   (Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
     if (rec && rec.mapData && typeof rec.mapData.image === "string" && rec.mapData.image) {
       refs.add(rec.mapData.image);
     }
+    const layers = rec && rec.mapData && rec.mapData.drawing && Array.isArray(rec.mapData.drawing.layers) ? rec.mapData.drawing.layers : [];
+    layers.forEach(l => {
+      if (l && l.kind === "raster" && typeof l.image === "string" && l.image) refs.add(l.image);
+    });
   });
   return refs;
 };
@@ -937,6 +942,16 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
   // size through the sizes map; the canvas is drawn at that size.
   const imageDataUrl = (mapData.image && ctx.imageManifest) ? ctx.imageManifest.get(mapData.image) : null;
   const imageSize = (imageDataUrl && ctx.imageSizes) ? ctx.imageSizes.get(mapData.image) : null;
+  // Raster layers (r043) resolve through the same manifest; one the manifest
+  // could not read is left out of the drawing and named under it.
+  const layerImages = {};
+  const layersMissing = [];
+  ensureDrawingShape(mapData.drawing).layers.forEach(l => {
+    if (l.kind !== "raster" || !l.image || !l.visible) return;
+    const v = l.image.startsWith("data:") ? l.image : (ctx.imageManifest ? ctx.imageManifest.get(l.image) : null);
+    if (v) layerImages[l.image] = v; else layersMissing.push(l);
+  });
+  const layerNotes = layersMissing.map(l => `<div class="map-image-placeholder">(raster layer "${htmlEscape(l.name)}" not embedded: ${htmlEscape(l.image)})</div>`).join("");
 
   let imgHtml;
   if (imageDataUrl) {
@@ -948,13 +963,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageWidth: imageSize ? imageSize.width : null,
       imageHeight: imageSize ? imageSize.height : null,
       stamps: state.mapStamps,
-    }));
+      layerImages,
+    })) + layerNotes;
   } else if (mapData.image) {
-    imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>`;
+    imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>` + layerNotes;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps }));
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages })) + layerNotes;
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /

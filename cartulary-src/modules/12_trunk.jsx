@@ -3759,6 +3759,7 @@ function App() {
                 <MapEditor
                   mapData={mapDraft.mapData || { image: null, pins: [] }}
                   onChange={(md) => setMapDraft(d => ({ ...d, mapData: md }))}
+                  recordId={mapDraft.id}
                   dirHandle={dirHandle}
                   imageFolder={state.world.imageFolder}
                   entries={state.entries}
