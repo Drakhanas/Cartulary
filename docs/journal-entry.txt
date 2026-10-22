@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r043) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r044) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -220,3 +220,17 @@ all of that was Drak's, and he asked for the tests as a list because his focus w
 going. Fourteen numbered lines, the inline ones first as a baseline, then the folder
 ones, then one optional. All passed, the optional included. Twenty-one rotations.
 Thirteen cuts in one session.
+
+r044 was the one the whole amendment was for: a brush. Dabs of a tip along the
+pointer's path, spaced by the tip, carried over from one sample to the next so a
+fast drag has no gaps; composited at the stroke's opacity on release so a stroke
+is uniform where it crosses itself. The forks had the Paint layer made at the press.
+The probe, run with the Layers panel open, found the new row pushing the canvas
+down under a pointer that had not moved, and the stroke jumped. So the layer lands
+with its first stroke, on release, and nothing moves under the pen. Folder mode had
+a quieter hole: the record names the same file before and after a stroke, so
+undo restored nothing; the history now carries what each file held at each step and
+rewrites it. Mouse events became pointer events everywhere, proven by the probes
+already written, because the automation emits pointer events too. Drak passed it
+on a Surface, pen and finger, and asked for the pen's eraser end to reach the
+Eraser tool. Cut 16. Twenty-two rotations. Fourteen cuts in one session.
