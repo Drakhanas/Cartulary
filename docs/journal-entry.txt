@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r037) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r038) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -141,3 +141,23 @@ written in as a data URL, and the PNG is drawn from that file, so both of them l
 the app. The headless probe cannot see a real font (it stubs Google), so the thing I most
 wanted to know was the one thing only his pass could tell me, and it told me. Fifteen
 rotations. Seven cuts in one session; one left, and it is prose.
+
+Cut 8, r038, was the prose, and prose turned out to need the same discipline as code,
+which I should have expected and did not quite. I read every component before writing a
+word, per the site doctrine, and still wrote a fork claiming a right-click returns to
+Pin, because the hint strings say "right-click when done" and I filled in what "done"
+meant. The handler switches to Select. Drak picked his options over that sentence. The
+cross-check script caught other things: two buttons the help described without naming,
+an option whose label ends in an ellipsis the help had dropped. And the help's own
+negations were the casualties nobody looks for: "no undo" in three places, "no version
+history" since v1.5, a backlinks panel that the help and the site both described and the
+component has never had. The site part was the strangest write, documentation for a
+version nobody can download yet, committed to sit in the repository until the launch;
+the cheap moment to write it was now, with the hook open, so I wrote it now.
+
+Then Drak read the Limitations paragraph I had just rewritten, saw "no freehand brush",
+and said freehand with brushes would be massively wanted. I laid out the two halves and
+what each costs; he said no pressure, raster is fine, losing the SVG download is fine,
+1.9. Then: 1.9 was a typo, he meant 1.6. So the eight cuts are done and the line is not,
+and the first thing I will do with the help I just finished is amend it. Sixteen
+rotations. Eight cuts in one session, and a ninth on the way.

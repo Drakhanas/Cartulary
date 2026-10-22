@@ -96,13 +96,15 @@ Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with
 | 5 | Built-in stamps: place, scale, rotate | `16_trunk` | Stamp a mountain range |
 | 6 | Stamp packs: envelope, sanitizer, collision modal, export; json-schema help | `16_trunk`, `12_trunk`, `10_migrate`, `24_home-data` | Import a pack, collide on a name, each option behaves; a pack with a script tag imports without it and says so |
 | 7 | Per-map SVG and PNG download | `16_trunk`, `12_trunk` | Files open in a browser and an image viewer |
-| 8 | Help text and the cartulary.world Cartographia page (site, no r-bump) | `24_home-data`, `site/` | Reads true |
+| 8 | Help text and the cartulary.world Cartographia page (site, no r-bump) | `24_home-data`, `site/` (as built at r038: plus one string in `16_trunk`, the index's lead sentence) | Reads true |
 
 ---
 
 ## 7. Won't-have (v1, unchanged from the roadmap except layers)
 
-- Freehand brush tools
+*(Amended 2026-10-22, after cut 8: Drak decided that raster brushes go into v1.6, no pressure support, tip-level import of existing packs with `.abr` primary and PNG native, the SVG download becoming a mixed file. The first line below is therefore struck for v1.6; the amendment with its cut table is written once his two scope answers are in, both halves or stamps-and-import first, and whether a vector freehand line rides along.)*
+
+- ~~Freehand brush tools~~ (struck 2026-10-22; see above)
 - Custom color picker
 - Layer opacity, blend modes, per-layer export (the layer list itself is in, by the session-19 decision)
 - Procedural generation
@@ -128,5 +130,7 @@ Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with
 - Decided at cut 6 (r036): the Stamps panel lives at the head of the Cartographia index, above the map list; a missing stamp (its pack deleted, or a map from another world) draws in the editor as a dashed box with a question mark, is named in the strip when selected, and is re-pointed from the picker, while the view and the export draw nothing for it; deleting a stamp or a pack warns with how many placed stamps go missing; the picker is the four built-ins inline plus More..., a modal grid grouped by pack. Found at the pass: the Project view read a world with maps and no entries as empty and hid Export as HTML (`25_trunk`, fixed in the cut).
 - Cut 7 should pass the world's stamps into the svg it serializes, as the view and `renderMapHtml` do, or an imported stamp will be missing from the download. Done at r037.
 - Decided at cut 7 (r037): the buttons above the canvas in the map view rather than the page header, so the scope stayed in `16_trunk`; pins stay out of the files (two pin renderers to keep in step otherwise); the font is fetched from Google Fonts once per session and embedded, which needs the network once; a sealed svg cannot see the page's fonts, so without the embedding both files would fall back to the viewer's serif.
-- Cut 8 is help and the site: the Cartographia help section still describes the pre-pillar-3 map (an image with pins) and ends with "no layers"; r036 added the pack format and the save-file shapes, nothing else.
+- Cut 8 is help and the site: the Cartographia help section still describes the pre-pillar-3 map (an image with pins) and ends with "no layers"; r036 added the pack format and the save-file shapes, nothing else. Done at r038.
+- Decided at cut 8 (r038): the help is quick-help depth and the site is the full guide (the roadmap's split); the section was rewritten rather than appended to, with time mode and the pack block kept; lines elsewhere in the help that the editor had made false were fixed in the same pass (no-undo in three places, no-version-history, the HTML-export line, the Templates map kind, the schema's missing `cartographia` slice), and one claim false in both the help and the site (a pin's link on a backlinks panel that does not exist) was corrected to what the component does; the index's lead sentence in `16_trunk` was one string and went in with a scope widening; the site content was written now and committed under `site/`, ahead of the live v1.5 site, to deploy with the v1.6 launch; the pass is "reads true", backed by a mechanical cross-check of every control name against the component in both directions and a headless probe of the rendered help and the routed site panels.
+- Found at cut 8: a right-click in a drawing tool finishes the shape and switches to Select, and only Select's right-click returns to Pin; the forks had said "returns to Pin" from the hint strings. The help and the site say what the hook does.
 - `shell.html` was declared on cut 2 and not touched; declare what changed, not what the sheet guessed. The `.map-image` rule already sized the svg. Cut 3 did change it (36 lines) and declared it.
