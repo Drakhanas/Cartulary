@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r042) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r043) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -209,3 +209,14 @@ readers were fine. The door was wrong, and the sign on it was missing. A zip is 
 container now, the button says brushes, and the doctrine entry is about the
 difference between a format and the file people actually download. Twenty rotations.
 Twelve cuts in one session.
+
+The thirteenth, r043, was the quiet one: a layer that is a bitmap. It went in the
+way the map image went in two years ago, as one <image> in the tree, and everything
+downstream, the export, the downloads, the fill's trace, took it with a line or two
+each because they already knew how to carry an image. The part no probe could touch
+was the folder: the File System Access API does not run headless, so the file written
+beside the map, read back after a reload, named as missing when the folder is gone,
+all of that was Drak's, and he asked for the tests as a list because his focus was
+going. Fourteen numbered lines, the inline ones first as a baseline, then the folder
+ones, then one optional. All passed, the optional included. Twenty-one rotations.
+Thirteen cuts in one session.
