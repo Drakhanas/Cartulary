@@ -3972,7 +3972,7 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, on
     <div style={{ padding: "20px 24px", maxWidth: 900 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 24 }}>
         <div style={{ color: "var(--text-dim)", fontSize: 14, lineHeight: 1.5, maxWidth: 560 }}>
-          The bound collection of maps. Each map is a clickable image canvas with time-aware pin filtering and cross-references to other entries through its pins. Open a map to add or edit pins.
+          The bound collection of maps. Each map is a canvas, an image or a blank sheet, with a drawing on it and time-aware pins over it that cross-reference other entries. Open a map to draw on it or place pins.
         </div>
         {!isLocked && (
           <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
