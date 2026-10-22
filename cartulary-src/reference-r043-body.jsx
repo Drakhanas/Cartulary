@@ -4681,11 +4681,16 @@ const collectImageRefsForHtmlExport = (state) => {
     if (!tpl) return;
     walk(tpl.fields || [], entry.fields || {});
   });
-  // Map canvas backgrounds now live in the cartographia slice, not on entries.
+  // Map canvas backgrounds now live in the cartographia slice, not on entries;
+  // raster layers' images (r043) sit beside them in the drawing.
   (Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
     if (rec && rec.mapData && typeof rec.mapData.image === "string" && rec.mapData.image) {
       refs.add(rec.mapData.image);
     }
+    const layers = rec && rec.mapData && rec.mapData.drawing && Array.isArray(rec.mapData.drawing.layers) ? rec.mapData.drawing.layers : [];
+    layers.forEach(l => {
+      if (l && l.kind === "raster" && typeof l.image === "string" && l.image) refs.add(l.image);
+    });
   });
   return refs;
 };
@@ -4987,6 +4992,16 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
   // size through the sizes map; the canvas is drawn at that size.
   const imageDataUrl = (mapData.image && ctx.imageManifest) ? ctx.imageManifest.get(mapData.image) : null;
   const imageSize = (imageDataUrl && ctx.imageSizes) ? ctx.imageSizes.get(mapData.image) : null;
+  // Raster layers (r043) resolve through the same manifest; one the manifest
+  // could not read is left out of the drawing and named under it.
+  const layerImages = {};
+  const layersMissing = [];
+  ensureDrawingShape(mapData.drawing).layers.forEach(l => {
+    if (l.kind !== "raster" || !l.image || !l.visible) return;
+    const v = l.image.startsWith("data:") ? l.image : (ctx.imageManifest ? ctx.imageManifest.get(l.image) : null);
+    if (v) layerImages[l.image] = v; else layersMissing.push(l);
+  });
+  const layerNotes = layersMissing.map(l => `<div class="map-image-placeholder">(raster layer "${htmlEscape(l.name)}" not embedded: ${htmlEscape(l.image)})</div>`).join("");
 
   let imgHtml;
   if (imageDataUrl) {
@@ -4998,13 +5013,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageWidth: imageSize ? imageSize.width : null,
       imageHeight: imageSize ? imageSize.height : null,
       stamps: state.mapStamps,
-    }));
+      layerImages,
+    })) + layerNotes;
   } else if (mapData.image) {
-    imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>`;
+    imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>` + layerNotes;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps }));
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages })) + layerNotes;
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /
@@ -15482,6 +15498,7 @@ function App() {
                 <MapEditor
                   mapData={mapDraft.mapData || { image: null, pins: [] }}
                   onChange={(md) => setMapDraft(d => ({ ...d, mapData: md }))}
+                  recordId={mapDraft.id}
                   dirHandle={dirHandle}
                   imageFolder={state.world.imageFolder}
                   entries={state.entries}
@@ -21552,8 +21569,41 @@ const MAP_SHAPE_TYPES = ["rect", "ellipse", "polygon", "stroke", "text", "stamp"
 // because pins are normalized to the canvas rect and would move otherwise.
 const MAP_DRAWING_DEFAULT_SIZE = { width: 1600, height: 1000 };
 
-function makeDefaultMapLayer(name) {
-  return { id: `layer-${genId().slice(-6)}`, name: name || "Drawing", visible: true, locked: false, shapes: [] };
+function makeDefaultMapLayer(name, kind, width, height) {
+  const base = { id: `layer-${genId().slice(-6)}`, name: name || "Drawing", visible: true, locked: false, shapes: [] };
+  if (kind === "raster") {
+    const pos = (v, d) => (Number.isFinite(v) && v > 0 ? Math.round(v) : d);
+    return { ...base, kind: "raster", image: null, width: pos(width, MAP_DRAWING_DEFAULT_SIZE.width), height: pos(height, MAP_DRAWING_DEFAULT_SIZE.height) };
+  }
+  return { ...base, kind: "vector" };
+}
+
+// Raster layers (r043): a layer may hold one bitmap instead of shapes. The
+// bitmap is capped at 4096 on the long side; inline (no image folder) it is
+// a data URL of a PNG, JPEG, or WebP under the byte cap, with a warning past
+// one megabyte as Set Image gives.
+const MAP_RASTER_LAYER = { maxSide: 4096, maxBytes: 50331648, inlineWarn: 1048576 };
+
+// The load-time check of an inline raster layer image: a PNG, JPEG, or WebP
+// data URL, plain base64, under the byte cap. A filename is checked for shape
+// too: no path separators, no scheme.
+function mapRasterLayerCheck(v) {
+  if (typeof v !== "string" || !v) return false;
+  if (v.startsWith("data:")) return v.length <= MAP_RASTER_LAYER.maxBytes * 4 / 3 + 64 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(v);
+  return v.length <= 255 && !/[\/\\:]/.test(v);
+}
+
+// A File, Blob, or URL decoded into an HTMLImageElement, for its size and
+// for drawing it to a canvas. Rejects when the browser will not decode it.
+function mapDecodeImage(src) {
+  return new Promise((resolve, reject) => {
+    const url = typeof src === "string" ? src : URL.createObjectURL(src);
+    const done = (fn, v) => { if (typeof src !== "string") URL.revokeObjectURL(url); fn(v); };
+    const img = new Image();
+    img.onload = () => done(resolve, img);
+    img.onerror = () => done(reject, new Error("the image would not decode"));
+    img.src = url;
+  });
 }
 
 function makeDefaultDrawing(width, height) {
@@ -21633,18 +21683,27 @@ function ensureDrawingShape(drawing) {
   const hex = (v) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : null);
   const preset = MAP_BACKGROUND_PRESETS[1];
   const bg = (src.background && typeof src.background === "object") ? src.background : {};
+  const width = Math.max(1, Math.round(num(src.width, MAP_DRAWING_DEFAULT_SIZE.width)));
+  const height = Math.max(1, Math.round(num(src.height, MAP_DRAWING_DEFAULT_SIZE.height)));
   const layersSrc = (Array.isArray(src.layers) ? src.layers : []).filter(l => l && typeof l === "object");
-  const layers = layersSrc.map((l, i) => ({
-    id: (typeof l.id === "string" && l.id) ? l.id : `layer-${genId().slice(-6)}`,
-    name: (typeof l.name === "string" && l.name.trim()) ? l.name : `Layer ${i + 1}`,
-    visible: l.visible !== false,
-    locked: l.locked === true,
-    shapes: (Array.isArray(l.shapes) ? l.shapes : []).map(ensureMapShape).filter(Boolean),
-  }));
+  const layers = layersSrc.map((l, i) => {
+    const base = {
+      id: (typeof l.id === "string" && l.id) ? l.id : `layer-${genId().slice(-6)}`,
+      name: (typeof l.name === "string" && l.name.trim()) ? l.name : `Layer ${i + 1}`,
+      visible: l.visible !== false,
+      locked: l.locked === true,
+    };
+    if (l.kind === "raster") {
+      // one bitmap, no shapes (r043); a bad image reference loads as an empty layer
+      const pos = (v, d) => (Number.isFinite(v) && v > 0 ? Math.round(v) : d);
+      return { ...base, kind: "raster", image: mapRasterLayerCheck(l.image) ? l.image : null, width: pos(l.width, width), height: pos(l.height, height), shapes: [] };
+    }
+    return { ...base, kind: "vector", shapes: (Array.isArray(l.shapes) ? l.shapes : []).map(ensureMapShape).filter(Boolean) };
+  });
   if (layers.length === 0) layers.push(makeDefaultMapLayer("Drawing"));
   return {
-    width: Math.max(1, Math.round(num(src.width, MAP_DRAWING_DEFAULT_SIZE.width))),
-    height: Math.max(1, Math.round(num(src.height, MAP_DRAWING_DEFAULT_SIZE.height))),
+    width,
+    height,
     background: {
       fill: hex(bg.fill) || preset.fill,
       grain: Math.max(0, Math.min(1, num(bg.grain, preset.grain))),
@@ -22600,7 +22659,7 @@ function mapEscapeXml(s) {
 // while this is false.
 function mapDrawingHasContent(drawing) {
   const d = ensureDrawingShape(drawing);
-  return d.layers.some(l => l.shapes.length > 0);
+  return d.layers.some(l => (l.kind === "raster" ? !!l.image : l.shapes.length > 0));
 }
 
 // Quadratic path through the midpoints of consecutive segments, with the
@@ -22825,8 +22884,11 @@ function mapShapeNode(s, ctx) {
 }
 
 // opts: { id, className, label, imageHref, imageWidth, imageHeight, stamps,
-// placeholder }. stamps is the world's imported stamps (state.mapStamps), which
-// the built-ins come before; placeholder is the editor's, see mapShapeNode.
+// placeholder, layerImages }. stamps is the world's imported stamps
+// (state.mapStamps), which the built-ins come before; placeholder is the
+// editor's, see mapShapeNode; layerImages maps a raster layer's filename to
+// the url that draws it (a data URL draws as it is), and a raster layer with
+// no url is left out (r043).
 // With an image the canvas is the image's natural size and the background is not
 // drawn; without one the background rect (and its grain) comes first. Then one
 // <g> per visible layer, in order. <defs> carries the grain filter, the path
@@ -22855,8 +22917,21 @@ function buildMapDrawingTree(drawing, opts) {
     }
   }
   const ctx = { idBase, defs, stampsUsed: new Map(), tints: new Map(), stamps: Array.isArray(o.stamps) ? o.stamps : [], placeholder: !!o.placeholder };
+  const layerHref = (layer) => {
+    if (!layer.image) return null;
+    if (layer.image.startsWith("data:")) return layer.image;
+    const m = o.layerImages;
+    const v = m ? (m instanceof Map ? m.get(layer.image) : m[layer.image]) : null;
+    return typeof v === "string" && v ? v : null;
+  };
   d.layers.forEach(layer => {
     if (!layer.visible) return;
+    if (layer.kind === "raster") {
+      // the bitmap stretched to the units it covers; past the canvas it is clipped
+      const href = layerHref(layer);
+      if (href) children.push({ tag: "image", attrs: { "data-layer": layer.id, "data-kind": "raster", href, x: "0", y: "0", width: f(layer.width), height: f(layer.height), preserveAspectRatio: "none" } });
+      return;
+    }
     children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s, ctx)).filter(Boolean) });
   });
   ctx.stampsUsed.forEach(def => {
@@ -23208,10 +23283,10 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   // select); until one is picked, or if it was deleted, the first visible
   // unlocked layer. A hidden or locked active layer refuses drawing, and the
   // hint says which, rather than quietly drawing somewhere else.
-  const activeLayer = layers.find(l => l.id === activeLayerId) || layers.find(l => l.visible && !l.locked) || layers[0] || null;
-  const targetLayer = activeLayer && activeLayer.visible && !activeLayer.locked ? activeLayer : null;
+  const activeLayer = layers.find(l => l.id === activeLayerId) || layers.find(l => l.visible && !l.locked && l.kind !== "raster") || layers[0] || null;
+  const targetLayer = activeLayer && activeLayer.visible && !activeLayer.locked && activeLayer.kind !== "raster" ? activeLayer : null;
   const allShapes = layers.flatMap(l => l.shapes);
-  const selectable = layers.filter(l => l.visible && !l.locked).flatMap(l => l.shapes);
+  const selectable = layers.filter(l => l.visible && !l.locked && l.kind !== "raster").flatMap(l => l.shapes);
   const selectedShape = selectedShapeId ? (allShapes.find(s => s.id === selectedShapeId) || null) : null;
 
   const r2 = (v) => Math.round(v * 100) / 100;
@@ -23250,11 +23325,17 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   };
 
   // Layer operations. Layers draw in array order, so "up" is toward the end.
-  const addLayer = () => {
-    const layer = makeDefaultMapLayer(`Layer ${layers.length + 1}`);
+  const addLayer = (kind) => {
+    const raster = kind === "raster";
+    const name = raster ? `Raster ${layers.filter(l => l.kind === "raster").length + 1}` : `Layer ${layers.length + 1}`;
+    const layer = makeDefaultMapLayer(name, raster ? "raster" : "vector", drawing.width, drawing.height);
     setLayers([...layers, layer]);
     setActiveLayerId(layer.id);
   };
+  // A raster layer's bitmap (r043): the image reference with the canvas units
+  // it covers, one history step; Clear keeps the layer and its units.
+  const setLayerImage = (id, image, w, h) => setLayers(layers.map(l => (l.id === id && l.kind === "raster" ? { ...l, image, width: Math.max(1, Math.round(w)), height: Math.max(1, Math.round(h)) } : l)));
+  const clearLayerImage = (id) => setLayers(layers.map(l => (l.id === id && l.kind === "raster" ? { ...l, image: null } : l)));
   const renameLayer = (id, name) => setLayers(layers.map(l => l.id === id ? { ...l, name } : l), { coalesce: `rename-${id}` });
   const toggleLayerVisible = (id) => {
     setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
@@ -23277,6 +23358,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (layers.length <= 1) return;
     const l = layers.find(x => x.id === id);
     if (!l) return;
+    if (l.kind === "raster" && l.image && !confirm(`Delete the raster layer "${l.name}" and its image? Undo brings it back.`)) return;
     if (l.shapes.length > 0 && !confirm(`Delete layer "${l.name}" and its ${l.shapes.length} ${l.shapes.length === 1 ? "shape" : "shapes"}? Undo brings it back.`)) return;
     setLayers(layers.filter(x => x.id !== id));
     if (selectedShape && l.shapes.some(s => s.id === selectedShape.id)) setSelectedShapeId(null);
@@ -23284,7 +23366,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const moveShapeToLayer = (shapeId, layerId) => {
     const from = layers.find(l => l.shapes.some(s => s.id === shapeId));
     const shape = from ? from.shapes.find(s => s.id === shapeId) : null;
-    if (!shape || !layers.some(l => l.id === layerId) || from.id === layerId) return;
+    if (!shape || !layers.some(l => l.id === layerId && l.kind !== "raster") || from.id === layerId) return;
     setLayers(layers.map(l => {
       if (l.id === from.id) return { ...l, shapes: l.shapes.filter(s => s.id !== shapeId) };
       if (l.id === layerId) return { ...l, shapes: [...l.shapes, shape] };
@@ -23448,7 +23530,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     try {
       const fc = await fillContext();
       const tree = buildMapDrawingTree({ ...drawing, background: { ...drawing.background, grain: 0 } }, {
-        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps,
+        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps, layerImages: fc.layerImages,
       });
       // The trace svg is loaded as an image: it needs its size on the root (an
       // svg with only a viewBox draws nothing to a canvas in Firefox, and a
@@ -23764,7 +23846,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   if (filling) hint = "Filling\u2026";
   if (tool !== "pin" && !targetLayer) {
     hint = activeLayer
-      ? `The active layer "${activeLayer.name}" is ${activeLayer.visible ? "locked" : "hidden"}; pick another in Layers, or ${activeLayer.visible ? "unlock" : "show"} it`
+      ? (activeLayer.kind === "raster"
+        ? `"${activeLayer.name}" is a raster layer; paint tools come with the next cut. Pick a vector layer in Layers to draw shapes`
+        : `The active layer "${activeLayer.name}" is ${activeLayer.visible ? "locked" : "hidden"}; pick another in Layers, or ${activeLayer.visible ? "unlock" : "show"} it`)
       : "No layer to draw on; add one in Layers";
   }
 
@@ -23775,7 +23859,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     draft, cursor, selBox, style, selectable,
     layers, activeLayerId: activeLayer ? activeLayer.id : null, setActiveLayerId,
     focusTextId, consumeFocusText: () => setFocusTextId(null),
-    addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer,
+    addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer, setLayerImage, clearLayerImage,
     onSvgMouseDown, onSvgClick, onSvgDoubleClick, onSvgMouseMove, onSvgContextMenu,
   };
 }
@@ -23927,7 +24011,7 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
         <button type="button" className={`btn btn-small ${layersOpen ? "btn-accent" : "btn-ghost"}`} onClick={onToggleLayers} title="Show or hide the layer list">Layers</button>
         <span className="map-tools-label">Layer</span>
         <select className="input map-tools-select" value={activeLayerId || ""} onChange={e => setActiveLayerId(e.target.value)} title="The layer new shapes go to">
-          {layers.map(l => <option key={l.id} value={l.id}>{l.name}{l.visible ? "" : " (hidden)"}{l.locked ? " (locked)" : ""}</option>)}
+          {layers.map(l => <option key={l.id} value={l.id}>{l.name}{l.kind === "raster" ? " (raster)" : ""}{l.visible ? "" : " (hidden)"}{l.locked ? " (locked)" : ""}</option>)}
         </select>
       </div>
       {showStyle && (
@@ -24033,11 +24117,11 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
               <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) + 15) * 100) / 100 })} title="Rotate 15 degrees clockwise">+15</button>
             </>
           )}
-          {selectedShape && layers.length > 1 && (
+          {selectedShape && layers.filter(l => l.kind !== "raster").length > 1 && (
             <>
               <span className="map-tools-label">Layer</span>
-              <select className="input map-tools-select" value={shapeLayer ? shapeLayer.id : ""} onChange={e => moveShapeToLayer(selectedShape.id, e.target.value)} title="Move this shape to another layer">
-                {layers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              <select className="input map-tools-select" value={shapeLayer ? shapeLayer.id : ""} onChange={e => moveShapeToLayer(selectedShape.id, e.target.value)} title="Move this shape to another vector layer">
+                {layers.filter(l => l.kind !== "raster").map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </>
           )}
@@ -24090,20 +24174,26 @@ function MapStampPicker({ stamps, current, fill, stroke, onPick, onClose }) {
 // last layer in the array draws on top). Pick the active layer, rename it in
 // place, show or hide, lock or unlock, move it up or down the stack, delete
 // it (asks when it has shapes; undo brings it back), or add one on top.
-function MapLayerPanel({ drawing }) {
-  const { layers, activeLayerId, setActiveLayerId, addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer } = drawing;
+function MapLayerPanel({ drawing, onLoadImage, missing }) {
+  const { layers, activeLayerId, setActiveLayerId, addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, clearLayerImage } = drawing;
   const rows = [...layers].reverse();
+  const lost = Array.isArray(missing) ? missing : [];
   return (
     <div className="map-layers">
       <div className="map-layers-head">
         <span className="map-tools-label">Layers</span>
         <span className="map-layers-note">Top of the stack first. Shapes go to the active layer.</span>
         <span style={{ flex: 1 }} />
-        <button type="button" className="btn btn-small btn-ghost" onClick={addLayer}>+ Add layer</button>
+        <button type="button" className="btn btn-small btn-ghost" onClick={() => addLayer("vector")}>+ Add layer</button>
+        <button type="button" className="btn btn-small btn-ghost" onClick={() => addLayer("raster")} title="A layer that holds one bitmap: load a scan or a painting into it">+ Add raster layer</button>
       </div>
       {rows.map((l, i) => {
         const idx = layers.length - 1 - i;
         const active = l.id === activeLayerId;
+        const raster = l.kind === "raster";
+        const count = raster
+          ? (l.image ? (lost.includes(l.image) ? "file missing" : "image") : "empty")
+          : `${l.shapes.length} ${l.shapes.length === 1 ? "shape" : "shapes"}`;
         return (
           <div key={l.id} className={`map-layer-row ${active ? "active" : ""} ${l.visible ? "" : "hidden-layer"}`}>
             <button type="button" className={`map-layer-pick ${active ? "active" : ""}`} title={active ? "Active layer" : "Make this the active layer"} onClick={() => setActiveLayerId(l.id)}>{active ? "◉" : "○"}</button>
@@ -24114,7 +24204,10 @@ function MapLayerPanel({ drawing }) {
               onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
               title="Layer name"
             />
-            <span className="map-layer-count">{l.shapes.length} {l.shapes.length === 1 ? "shape" : "shapes"}</span>
+            {raster && <span className="map-layer-kind" title="A raster layer holds one bitmap; the shape tools draw on vector layers">raster</span>}
+            <span className="map-layer-count" title={raster && l.image && !l.image.startsWith("data:") ? l.image : undefined}>{count}</span>
+            {raster && <button type="button" className="btn btn-small btn-ghost" onClick={() => onLoadImage && onLoadImage(l.id)} title="Load a PNG, JPEG, or WebP into this layer, scaled to the canvas width">Load image…</button>}
+            {raster && <button type="button" className="btn btn-small btn-ghost" disabled={!l.image} onClick={() => clearLayerImage(l.id)} title="Empty this layer (undo brings the image back)">Clear</button>}
             <button type="button" className={`btn btn-small ${l.visible ? "btn-ghost" : "btn-accent"}`} onClick={() => toggleLayerVisible(l.id)} title={l.visible ? "Hide this layer (it stays out of the export too)" : "Show this layer"}>{l.visible ? "Hide" : "Hidden"}</button>
             <button type="button" className={`btn btn-small ${l.locked ? "btn-accent" : "btn-ghost"}`} onClick={() => toggleLayerLocked(l.id)} title={l.locked ? "Unlock this layer" : "Lock this layer (nothing on it can be selected or drawn)"}>{l.locked ? "Locked" : "Lock"}</button>
             <button type="button" className="btn btn-small btn-ghost" disabled={idx === layers.length - 1} onClick={() => moveLayer(l.id, 1)} title="Move up the stack">↑</button>
@@ -24279,6 +24372,46 @@ function useMapImageUrl(filename, dirHandle, imageFolder) {
   return { url, errored, setErrored };
 }
 
+// The urls of a drawing's raster layers whose image is a file in the image
+// folder, keyed by filename: a blob url through the folder handle, or the
+// relative path when no folder is connected (as useMapImageUrl does for the
+// map image); a data URL needs no lookup and is not here. `missing` lists the
+// filenames the handle could not open. Re-resolved when the set of files
+// changes, the blob urls revoked then.
+function useMapLayerImages(layers, dirHandle, imageFolder) {
+  const refs = (Array.isArray(layers) ? layers : []).filter(l => l && l.kind === "raster" && typeof l.image === "string" && l.image && !l.image.startsWith("data:")).map(l => l.image);
+  const key = refs.join("\n");
+  const [state, setState] = useState({ urls: {}, missing: [] });
+  useEffect(() => {
+    let cancelled = false;
+    const made = [];
+    if (refs.length === 0) { setState({ urls: {}, missing: [] }); return undefined; }
+    if (!dirHandle) {
+      const urls = {};
+      refs.forEach(r => { urls[r] = `${imageFolder || "world-images"}/${r}`; });
+      setState({ urls, missing: [] });
+      return undefined;
+    }
+    (async () => {
+      const urls = {}, missing = [];
+      for (const r of refs) {
+        try {
+          const fh = await dirHandle.getFileHandle(r);
+          const file = await fh.getFile();
+          const u = URL.createObjectURL(file);
+          made.push(u);
+          urls[r] = u;
+        } catch (err) {
+          missing.push(r);
+        }
+      }
+      if (!cancelled) setState({ urls, missing });
+    })();
+    return () => { cancelled = true; made.forEach(u => URL.revokeObjectURL(u)); };
+  }, [key, dirHandle, imageFolder]);
+  return state;
+}
+
 // The map font for a downloaded file. An svg opened on its own, or loaded as
 // an image to be drawn to a canvas, is a sealed document: it cannot see the
 // page's web fonts, so a label would fall back to the viewer's serif. The
@@ -24318,8 +24451,9 @@ function mapFontFaceCss() {
 // data with their own renderer), the map font embedded when it can be
 // fetched, href doubled as xlink:href on image, use, and textPath so older
 // viewers open it, and width and height on the root so a viewer, and Firefox
-// drawing it to a canvas, know its size. Returns { svg, width, height,
-// imageMissing }.
+// drawing it to a canvas, know its size. Raster layers are read the same way
+// (r043); one that cannot be read is left out and named in layersMissing.
+// Returns { svg, width, height, imageMissing, layersMissing }.
 async function buildMapDownloadSvg(rec, state, dirHandle) {
   const mapData = ensureMapData(rec.mapData);
   let imageHref = null;
@@ -24340,6 +24474,22 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
   }
   const size = imageHref ? await loadImageNaturalSizeForExport(imageHref) : null;
   if (imageHref && !size) { imageHref = null; imageMissing = true; }
+  const layerImages = {};
+  const layersMissing = [];
+  for (const l of mapData.drawing.layers) {
+    if (l.kind !== "raster" || !l.image || !l.visible || l.image.startsWith("data:")) continue;
+    let got = false;
+    if (dirHandle) {
+      try {
+        const fh = await dirHandle.getFileHandle(l.image);
+        layerImages[l.image] = await fileToDataUrl(await fh.getFile());
+        got = true;
+      } catch (err) {
+        got = false;
+      }
+    }
+    if (!got) layersMissing.push(l.name);
+  }
   const tree = buildMapDrawingTree(mapData.drawing, {
     id: rec.id,
     label: rec.name,
@@ -24347,6 +24497,7 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
     imageWidth: size ? size.width : null,
     imageHeight: size ? size.height : null,
     stamps: state ? state.mapStamps : [],
+    layerImages,
   });
   const double = (node) => {
     if (!node || typeof node !== "object") return;
@@ -24359,7 +24510,7 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
   const attrs = { ...tree.attrs, "xmlns:xlink": "http://www.w3.org/1999/xlink", width: mapNum(tree.width), height: mapNum(tree.height) };
   delete attrs.class;
   tree.attrs = attrs;
-  return { svg: `<?xml version="1.0" encoding="UTF-8"?>\n${mapTreeToString(tree)}`, width: tree.width, height: tree.height, imageMissing };
+  return { svg: `<?xml version="1.0" encoding="UTF-8"?>\n${mapTreeToString(tree)}`, width: tree.width, height: tree.height, imageMissing, layersMissing };
 }
 
 // The svg drawn to a canvas: a PNG blob at `scale` times the canvas size.
@@ -24462,6 +24613,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
   // The canvas renders once the image, if there is one, has loaded with a
   // known natural size; an image-less map renders at once on its background.
   const canvasReady = !mapData.image || (!errored && !!imageUrl && !!imageSize);
+  const layerImages = useMapLayerImages(mapData.drawing.layers, dirHandle, imageFolder);
   const canvasTree = useMemo(() => buildMapDrawingTree(mapData.drawing, {
     id: entry.id,
     className: "map-image",
@@ -24470,7 +24622,8 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
     imageWidth: imageSize ? imageSize.width : null,
     imageHeight: imageSize ? imageSize.height : null,
     stamps: state ? state.mapStamps : [],
-  }), [mapData, entry.id, entry.name, imageUrl, imageSize, state ? state.mapStamps : null]);
+    layerImages: layerImages.urls,
+  }), [mapData, entry.id, entry.name, imageUrl, imageSize, state ? state.mapStamps : null, layerImages]);
   // Download the saved map as a file: an svg, or a png at twice the canvas
   // size, capped at sixteen million pixels (Safari's canvas limit) so a huge
   // canvas writes a smaller file rather than a blank one. The note beside the
@@ -24495,6 +24648,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
         note = `Wrote ${base}.png (${Math.round(built.width * scale)} \u00d7 ${Math.round(built.height * scale)}, ${scale < 2 ? "scaled to fit sixteen million pixels" : "at 2x"}).`;
       }
       if (built.imageMissing) note += " The image could not be read, so the file has the drawing only.";
+      if (built.layersMissing && built.layersMissing.length) note += ` The raster ${built.layersMissing.length === 1 ? "layer" : "layers"} ${built.layersMissing.map(n => `"${n}"`).join(", ")} could not be read and ${built.layersMissing.length === 1 ? "is" : "are"} left out.`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -24773,7 +24927,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
   );
 }
 
-function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash, stamps }) {
+function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash, stamps, recordId }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const [selectedPinId, setSelectedPinId] = useState(null);
@@ -24785,6 +24939,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
   const { url: imageUrl, errored, setErrored } = useMapImageUrl(data.image, dirHandle, imageFolder);
   const imageSize = useImageNaturalSize(data.image ? imageUrl : null, () => setErrored(true));
   const canvasReady = !data.image || (!errored && !!imageUrl && !!imageSize);
+  const layerImages = useMapLayerImages(data.drawing.layers, dirHandle, imageFolder);
   const canvasTree = useMemo(() => buildMapDrawingTree(data.drawing, {
     id: "editor",
     className: "map-image",
@@ -24793,33 +24948,99 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     imageHeight: imageSize ? imageSize.height : null,
     stamps,
     placeholder: true,
-  }), [data, imageUrl, imageSize, stamps]);
+    layerImages: layerImages.urls,
+  }), [data, imageUrl, imageSize, stamps, layerImages]);
   // Every write to the record goes through the history (one step per gesture;
   // pins included, by decision at session 19). The hook writes through it too.
   const history = useMapHistory(data, onChange);
   const commit = history.commit;
   const [layersOpen, setLayersOpen] = useState(false);
-  // What the bucket fill rasterizes besides the drawing: the image as a data
-  // URL (a folder image's blob URL cannot be loaded inside a sealed svg, so it
-  // is read once per image and kept), its natural size, and the stamps.
-  const fillImageRef = useRef({ url: null, data: null });
+  // What the bucket fill rasterizes besides the drawing: the image and every
+  // raster layer as data URLs (a folder file's blob URL cannot be loaded
+  // inside a sealed svg, so each is read once and kept by its url), the
+  // image's natural size, and the stamps.
+  const fillImageRef = useRef(new Map());
+  const inlineUrl = async (url) => {
+    if (!url) return null;
+    if (url.startsWith("data:")) return url;
+    const cache = fillImageRef.current;
+    if (!cache.has(url)) {
+      try { cache.set(url, await fileToDataUrl(await (await fetch(url)).blob())); } catch (err) { cache.set(url, null); }
+    }
+    return cache.get(url);
+  };
   const fillContext = async () => {
     let imageHref = null;
-    if (data.image && imageUrl && imageSize) {
-      if (imageUrl.startsWith("data:")) {
-        imageHref = imageUrl;
-      } else {
-        if (fillImageRef.current.url !== imageUrl) {
+    if (data.image && imageUrl && imageSize) imageHref = await inlineUrl(imageUrl);
+    const inlined = {};
+    for (const l of data.drawing.layers) {
+      if (l.kind !== "raster" || !l.image || l.image.startsWith("data:")) continue;
+      const v = await inlineUrl(layerImages.urls[l.image]);
+      if (v) inlined[l.image] = v;
+    }
+    return { imageHref, imageWidth: imageSize ? imageSize.width : null, imageHeight: imageSize ? imageSize.height : null, stamps, layerImages: inlined };
+  };
+  // Load a bitmap into a raster layer (r043): decoded for its size, scaled to
+  // cover the canvas width with its aspect kept (what runs past the bottom is
+  // clipped), the bitmap capped at 4096 on the long side and re-encoded as a
+  // PNG only then (a JPEG scan stays a JPEG otherwise), written to the image
+  // folder as <map id>-<layer id>.<ext> when one is connected, inline
+  // otherwise with the same warning Set Image gives.
+  const loadLayerImage = (layerId) => {
+    const layer = data.drawing.layers.find(l => l.id === layerId && l.kind === "raster");
+    if (!layer) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp,image/*";
+    input.onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      let img;
+      try { img = await mapDecodeImage(file); } catch (err) { flash && flash("That image could not be decoded", "error"); return; }
+      const w0 = img.naturalWidth, h0 = img.naturalHeight;
+      if (!(w0 > 0 && h0 > 0)) { flash && flash("That image is empty", "error"); return; }
+      const k = Math.min(1, MAP_RASTER_LAYER.maxSide / Math.max(w0, h0));
+      let blob = file;
+      let ext = file.type === "image/jpeg" ? "jpg" : file.type === "image/webp" ? "webp" : "png";
+      if (k < 1 || !/^image\/(png|jpeg|webp)$/.test(file.type)) {
+        const bw = Math.max(1, Math.round(w0 * k)), bh = Math.max(1, Math.round(h0 * k));
+        const canvas = document.createElement("canvas");
+        canvas.width = bw; canvas.height = bh;
+        canvas.getContext("2d").drawImage(img, 0, 0, bw, bh);
+        blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) { flash && flash("That image could not be re-encoded", "error"); return; }
+        ext = "png";
+      }
+      const units = { width: data.drawing.width, height: Math.max(1, Math.round(h0 * data.drawing.width / w0)) };
+      if (dirHandle) {
+        const ok = await verifyHandlePermission(dirHandle);
+        if (ok) {
           try {
-            fillImageRef.current = { url: imageUrl, data: await fileToDataUrl(await (await fetch(imageUrl)).blob()) };
+            const filename = `${recordId || "map"}-${layerId}.${ext}`;
+            const fh = await dirHandle.getFileHandle(filename, { create: true });
+            const writable = await fh.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            drawing.setLayerImage(layerId, filename, units.width, units.height);
+            return;
           } catch (err) {
-            fillImageRef.current = { url: imageUrl, data: null };
+            console.error("FSAA write failed", err);
           }
         }
-        imageHref = fillImageRef.current.data;
       }
-    }
-    return { imageHref, imageWidth: imageSize ? imageSize.width : null, imageHeight: imageSize ? imageSize.height : null, stamps };
+      if (blob.size > MAP_RASTER_LAYER.inlineWarn) {
+        const proceed = confirm(`This image is ${(blob.size / 1024 / 1024).toFixed(1)} MB. Without an image folder set up, it will be embedded directly in your save file. Continue?\n\nTip: cancel and connect an image folder in Settings to keep saves small.`);
+        if (!proceed) return;
+      }
+      try {
+        const dataUrl = await fileToDataUrl(blob);
+        if (!mapRasterLayerCheck(dataUrl)) { flash && flash("That image is too large to embed; connect an image folder in Settings", "error"); return; }
+        drawing.setLayerImage(layerId, dataUrl, units.width, units.height);
+      } catch (err) {
+        flash && flash("Failed to read image", "error");
+      }
+    };
+    input.click();
   };
   const drawing = useMapDrawing({ data, onChange: commit, svgRef: imgRef, canvasRef, width: canvasTree.width, height: canvasTree.height, fillContext, stamps });
   // Canvas size presets for image-less maps. With shapes or pins on the map
@@ -25024,7 +25245,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
         <span className="map-editor-hint">{drawing.hint}</span>
       </div>
       <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} canvasSize={{ width: data.drawing.width, height: data.drawing.height }} onCustomSize={applyCustomSize} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} stamps={stamps} />
-      {layersOpen && <MapLayerPanel drawing={drawing} />}
+      {layersOpen && <MapLayerPanel drawing={drawing} onLoadImage={loadLayerImage} missing={layerImages.missing} />}
 
       {data.image && errored ? (
         <div className="map-empty" style={{ borderTop: "none", borderRadius: "0 0 3px 3px" }}>
