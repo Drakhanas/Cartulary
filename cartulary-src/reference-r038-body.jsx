@@ -24186,7 +24186,7 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, on
     <div style={{ padding: "20px 24px", maxWidth: 900 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 24 }}>
         <div style={{ color: "var(--text-dim)", fontSize: 14, lineHeight: 1.5, maxWidth: 560 }}>
-          The bound collection of maps. Each map is a clickable image canvas with time-aware pin filtering and cross-references to other entries through its pins. Open a map to add or edit pins.
+          The bound collection of maps. Each map is a canvas, an image or a blank sheet, with a drawing on it and time-aware pins over it that cross-reference other entries. Open a map to draw on it or place pins.
         </div>
         {!isLocked && (
           <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
@@ -39557,7 +39557,7 @@ A few basics worth knowing up front:
 
 - **Search.** The entry list for any template has a search bar at the top that filters by name and content as you type.
 - **Delete.** Open any entry and click **Delete** in the editor toolbar to remove it. Templates can be deleted from the template editor (this also removes all entries that use the template — there's a confirmation step).
-- **No undo.** Cartulary doesn't have undo/redo. If you delete an entry or a template, it's gone from the working save. The only recovery path is importing a recent .json backup, which is why backups matter — see Back Up Your World.
+- **No undo, except in the map editor.** Cartulary doesn't have undo/redo outside the map editor's own Undo and Redo. If you delete an entry or a template, it's gone from the working save. The recovery paths are a restore point in Version History (Settings) or a recent .json backup, which is why backups matter (see Back Up Your World).
 - **Auto-save.** Edits are persisted to your browser's storage shortly after each change (debounced). You don't need to "save" manually. Auto-save is for not losing your in-progress work between sessions; it isn't a backup against data loss.` },
 
   { id: "save-share", title: "Save & Share", content: `Your world auto-saves to your browser's local storage as you work — both committed changes (every edit you've saved) and in-progress drafts in the entry editor or template builder. If you close the tab mid-edit, your draft is restored when you reopen Cartulary, with a notice telling you so.
@@ -39571,7 +39571,7 @@ To make a portable copy, click your world's name at the top-left of the sidebar 
 - **Export .zip** downloads a Markdown bundle with all referenced images in an \`images/\` subfolder. Same content as .md but self-contained. **Cannot be re-imported.**
 - **Import .json** loads a JSON save back. JSON only.
 
-**Shareable HTML.** A fourth export format lives on the **Project** view (not in Settings): a single self-contained \`.html\` file with the world's content rendered as a static reference. Cross-references between entries become anchor links, maps render as static images with pin overlays, and dates resolve through your calendar system. Read-only — for sharing with people who don't have Cartulary. Configurable per-export: include secret fields, pick which calendar to render dates in (when you have additional calendars). **Cannot be re-imported.** JSON remains your canonical save format.
+**Shareable HTML.** A fourth export format lives on the **Project** view (not in Settings): a single self-contained \`.html\` file with the world's content rendered as a static reference. Cross-references between entries become anchor links, maps render as they do in the app (image, drawing, and pins), and dates resolve through your calendar system. Read-only — for sharing with people who don't have Cartulary. Configurable per-export: include secret fields, pick which calendar to render dates in (when you have additional calendars). **Cannot be re-imported.** JSON remains your canonical save format.
 
 **Per-entry markdown export.** Each entry's view has an **Export ↓** button next to the title that downloads just that one entry as Markdown. Filename is the entry's slug, e.g. \`aria.md\`. Useful when you want to share a single character or location without dumping the whole world. Whether secret fields are included follows the current state of the secrets visibility toggle in the top right: if it's on (◉), secrets are in the export.
 
@@ -39606,7 +39606,7 @@ Your appearance preferences (theme, font size) are stored separately and don't t
 - **Vehicle** — ships, aircraft, mounts, mecha, spacecraft
 - **Weapon / Armor** — combat equipment with damage, reach, weight, and handedness
 
-**Creating a new template.** Click **+ New Template** in the sidebar. Pick a name, an icon glyph, an accent color, and a "kind" (regular or map). Then add fields via the Template Builder.
+**Creating a new template.** Click **+ New Template** in the sidebar. Pick a name, an icon glyph, and an accent color. Then add fields via the Template Builder.
 
 **Editing an existing template.** Pick the template in the sidebar and click **Edit Template** at the top right of its entry list. The Template Builder opens in place of the entry list.
 
@@ -39845,15 +39845,21 @@ If you don't know which to pick, pick PNG.
 - The export shows what's visible. Lanes you've turned off don't appear, and dates outside the visible range get cropped.
 - Very long timelines at high zoom can produce huge files. If a PNG export silently fails to download, try the SVG export instead — SVG handles large dimensions better — or zoom out before exporting.` },
 
-  { id: "cartographia", title: "Cartographia", content: `Maps in Cartulary pair an image with clickable pins — useful for regional maps, dungeon layouts, star charts, floor plans, anything where points of interest cross-reference other entries. **Cartographia** is the sidebar view that indexes every map in the world.
+  { id: "cartographia", title: "Cartographia", content: `Maps in Cartulary are canvases: an image you bring, a blank sheet you draw on, or both, with a vector drawing (shapes, labels, stamps, on layers) and clickable pins over it. Pins tie places to entries; the drawing is the map itself. Regional maps, dungeon layouts, star charts, floor plans, anything where points of interest cross-reference other entries. **Cartographia** is the sidebar view that indexes every map in the world, with the world's stamp packs in a panel above the list.
 
-**Creating a map.** Open Cartographia from the sidebar and click **+ New Map**. The editor shows a map canvas above the Description, Scope / Region, and Notes fields. Click **Set Image** to upload one — large images go through folder mode if you have a folder connected, otherwise they embed inline (you'll get a confirmation prompt for files over 1MB to warn you about save bloat). The canvas can be resized by dragging the bottom-right corner.
+**Creating a map.** Open Cartographia from the sidebar and click **+ New Map**. The editor shows the canvas above the Description, Scope / Region, and Notes fields; Save needs a name, and **Edit** on a saved map brings the editor back. Click **Set Image** to bring an image in: with an image folder connected the file stays on disk and only its name is saved, otherwise it embeds in the save file, with a confirmation for anything over 1 MB. **Change Image** swaps the image and keeps the drawing and the pins; **Remove Image** clears it and leaves them on the canvas. Without an image the canvas is a blank vellum sheet, and a **Canvas** picker in the strip offers Landscape 1600 × 1000, Portrait 1000 × 1600, Square 1200 × 1200, or **Custom…** (whole units, 100 to 10000 a side; type the size, then **Set** or Enter). An image map's canvas is the image's own size and has no picker. Changing the size of a map that already has work on it asks first, because nothing is transformed: shapes keep their coordinates and anything past the new edges is cut off, pins keep their relative positions and shift against the drawing. Undo restores it.
 
-**Adding pins.** Click anywhere on the map image. A pin drops at that location. Selected pins show editing controls below the canvas: a label, a target entry (any entry in the world), and a remove button. Drag any pin to reposition it. Click outside any pin to deselect.
+**The tools.** The strip above the canvas holds eight tools, and the line above the strip says what the active one does. **Pin** is the default: click the map to add a pin, click a pin to edit it, drag a pin to move it. The rest draw. **Rect** and **Ellipse**: drag. **Polygon**: click the corners of a closed, filled area; the first corner, a double-click, Enter, or a right-click closes it. **Line**: click the points of an open line; a double-click, Enter, or a right-click finishes it. **Text**: click to place a label, then edit its words, size, angle, and arc in the strip. **Stamp**: pick a symbol in the strip, then click to place it at 120 units or drag to size it. **Select**: click a shape to select it, drag it to move it, drag a point (polygon, line) or a corner (rectangle, ellipse, stamp) to reshape it, drag the knob above a label or a stamp to turn it (Shift snaps to 15°); Delete or Backspace removes it. In any drawing tool, Esc discards the shape in progress and a right-click finishes it and switches to Select; in Select, a right-click returns to Pin.
 
-**Pin storage.** Pins are stored as percentages, not absolute pixels — they stay anchored to the same point on the image even if the canvas is resized in display. Each pin can link to another entry; the link surfaces in the Concordance and on the linked entry's "Mentioned by" panel.
+**Style.** Fill and Stroke come from a fixed palette of eight (Ink, Sepia, Parchment, Forest, Water, Stone, Blood, Chalk) plus None; Width is 2, 4, or 8 units; **Smooth** rounds a rectangle's corners and curves a polygon or line through its points. With nothing selected the swatches set the style for the next shape; with a shape selected they restyle it. A label has a **Size** of 24, 36, or 56, an **Arc** slider from −180° to 180° (right arches it up, left bends it down; **Straight** flattens it), and an **Angle** field with −15 and +15 buttons; a stamp has the angle controls and takes its line weight from the symbol. When the map has more than one layer, the strip also shows the selected shape's layer and lets you move it to another. **Delete shape** removes it.
 
-**Ctrl+scroll to zoom** the map canvas (range 0.5–4×, factor 1.15). Works in both the viewer and the editor. Pin positions stay anchored — zooming moves the image and pins together. At zoomed levels the canvas scrolls in place via the browser scrollbars on its wrapper. Ephemeral; reload resets to 1×.
+**Layers.** **Layers** in the strip opens the layer list, top of the stack first, one row per layer with its shape count. Pick the active layer (new shapes go there; the strip's **Layer** select does the same), rename it in place, **Hide** it (a hidden layer stays out of the HTML export and the downloads too), **Lock** it (nothing on it can be selected or drawn), move it up or down, delete it (asks when it has shapes; undo brings it back; the last layer stays), or **+ Add layer** on top. Every map starts with one layer named Drawing. A hidden or locked active layer refuses to draw, and the hint says so rather than drawing somewhere else.
+
+**Undo and redo.** **Undo** and **Redo** in the strip, or Ctrl+Z and Ctrl+Shift+Z (Ctrl+Y also redoes), step through the last fifty changes, one step per gesture: a drag of any length or a run of typing in one field undoes in one go. Pins are included. The history belongs to the editing session and is gone once you Save or Cancel. The rest of Cartulary still has no undo.
+
+**Pins.** A selected pin shows its editor below the canvas: Label (its first letter is the marker), Linked Entry (any entry in the world, or an Astronomical Body), Always visible (for time mode), Color, Notes, and Delete Pin; Done closes it. Pins are stored as fractions of the canvas, not pixels, so they stay on the same spot at any display size. A linked pin is an edge in Concordance, from the map to the entry; in the map's view, clicking a linked pin opens the entry, and a pin whose entry was deleted says so.
+
+**Zoom and size.** Ctrl+scroll (Cmd+scroll on a Mac) zooms the canvas from half size to four times, in the viewer and the editor; the drawing and the pins move together, and a zoomed canvas scrolls in place. Drag the canvas's bottom-right corner to resize it on the page, from 25% to 150% of the column (past 100% it grows from the center); double-click the corner to snap back. Neither persists: reload resets both.
 
 **Map fields.** Every map carries the same three fields (Description, Scope / Region, Notes) above its canvas. Custom per-map field sets are not part of v1.6; maps are a uniform record type.
 
@@ -39879,7 +39885,7 @@ The rules:
 
 If no pins on the map have temporal data (no ranges anywhere), the Time button doesn't appear — the feature stays out of the way for non-historical maps. Permanent flags alone don't make the button appear, since there's nothing to scrub through.
 
-**Stamps and stamp packs (v1.6).** The map editor's Stamp tool places symbols. Four are built in (mountain, tree, settlement, compass rose); more come from stamp packs, JSON files you import from the Stamps panel at the top of the Cartographia index. A pack looks like this:
+**Stamps and stamp packs.** The map editor's Stamp tool places symbols. Four are built in (mountain, tree, settlement, compass rose); more come from stamp packs, JSON files you bring in with **+ Import pack** in the Stamps panel at the top of the Cartographia index. A pack looks like this:
 
 \`\`\`
 {
@@ -39900,9 +39906,11 @@ If no pins on the map have temporal data (no ranges anywhere), the Time button d
 
 The \`body\` is SVG inner markup. Parts with no \`fill\` or \`stroke\` of their own take the colors the map gives the stamp, so leave those off wherever the stamp should follow the palette, and put \`fill="none"\` on parts that must stay hollow. Line weight is the stamp's own and scales with it.
 
-Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. Deleting a stamp that is placed on a map leaves a dashed box in the editor until a pack with it is imported again. **Export built-ins as a pack** in the Stamps panel writes a correct file to start from; **Export** on a pack writes it back out in this shape.
+Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. **Delete pack**, or × on a stamp, removes them; deleting a stamp that is placed on a map leaves a dashed box in the editor until a pack with it is imported again. **Export built-ins as a pack** in the Stamps panel writes a correct file to start from; **Export** on a pack writes it back out in this shape.
 
-**Limitations.** No layers, no fog of war, no measurement tools. Cartulary's map support is reference-grade, not VTT-grade. If you need a virtual tabletop experience, this isn't that.` },
+**Downloading a map.** In a map's view (not the editor), a **Download** row above the canvas writes the saved map as a file. **SVG** is the map as a standalone file: the drawing with the image inlined when it can be read, the stamps resolved, hidden layers left out, the map font embedded when it can be fetched, and no pins (pins are app data with their own renderer). **PNG** is the same drawn at twice the canvas size, scaled down to fit sixteen million pixels when the canvas is huge. A note beside the buttons says what was written, and says so when the image could not be read (a folder image with no folder connected): the file then has the drawing only. The world's HTML export draws every map through the same renderer, image, drawing, and pins together.
+
+**Limitations.** No freehand brush: lines go down point by point. No colors beyond the palette in the editor (a stamp pack can carry its own). No grid or snapping (the rotation knob's Shift snap aside), no fog of war, no measurement or scale tools, no per-layer opacity or blend modes. Cartulary's map support is reference-grade, not VTT-grade. If you need a virtual tabletop experience, this isn't that.` },
 
   { id: "views-pages", title: "Views & Pages", content: `The sidebar Views section holds these entries (drag-reorderable except Home and Project):
 
@@ -39914,7 +39922,7 @@ Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`
 - **Linea** — pedigree view (parents → children with junction descent for shared parents, spouses adjacent on the focal row). Sosa-Stradonitz layout for ancestors, lifespan dates on each node, configurable depth up and down. **Markdown export** of the focused person's tree from the Focal selector control panel.
 - **Stemma** — radial mind-map view for tree-shaped content that doesn't fit into a single entry: plot threads, theme webs, organizational hierarchies, decision branches. Freeform or entry-linked nodes; click any child to drill in. Each stemma is a portable document, with single-file JSON import/export.
 - **Kalendarium** — the bound collection of calendars. Edit primary and additional calendars side by side, pin a calendar to drive the comparison strip, set the world's current moment for auto-age on living characters.
-- **Cartographia** — the bound collection of maps. Indexes every map in the world. Click a map to open it (canvas, pins, time-mode chronicle filtering); use + New Map to create one.
+- **Cartographia** — the bound collection of maps. Indexes every map in the world. Click a map to open it (canvas, drawing, pins, time-mode chronicle filtering); use + New Map to create one.
 - **Ephemeris** — the celestial-mechanics view. Define a world's stars, planets, and moons, compute their positions on any date, search for alignments, and turn sky events into entries. See Ephemeris.
 - **Glossopoeia** — the constructed-language view. Eleven workspaces per language covering phonology, grammar, the dictionary, the writing system, and glossed texts. See Glossopoeia.
 
@@ -39973,7 +39981,7 @@ A stemma has one **focal node** at the center, surrounded by 16 fixed slots arra
 
 - **Sibling reordering** — slot is fixed at the moment of creation; no drag-between-slots
 - **Maximum depth cap** — deep trees just keep working, no enforced ceiling
-- **Undo / redo** — consistent with the rest of Cartulary
+- **Undo / redo**: Stemma has none (the map editor has its own)
 - **Markdown export** — JSON only for now
 - **World-tag pool integration** — stemma tags display on the index but don't auto-merge into the world's tag autocomplete
 - **Mobile UX** — desktop-first; the radial canvas isn't tuned for narrow viewports yet` },
@@ -40343,9 +40351,9 @@ If you want a SaaS worldbuilding tool with collaboration, sync, and a mobile app
 
   { id: "non-features", title: "Things That Aren't Features", content: `Some things you might expect from worldbuilding software that Cartulary deliberately doesn't have. Listed here so you don't waste time hunting for them.
 
-**No undo.** Already covered in Getting Started. There's no Ctrl+Z. JSON exports are your safety net.
+**No undo outside the map editor.** Already covered in Getting Started. The map editor has Undo and Redo while you're in it; nothing else has Ctrl+Z. Restore points and JSON exports are your safety net.
 
-**No version history.** Cartulary doesn't snapshot your world over time. Whatever's in IndexedDB is your one working copy until you export. Dated JSON files are your version history — make them.
+**No version history beyond the browser.** Settings → Version History keeps recent snapshots and your restore points, but they live in the same browser storage as the world and go with it. Dated JSON files are your real version history: make them.
 
 **No PDF export.** Markdown export exists; PDFs do not. Pipe the markdown through Pandoc or your text editor's export if you need PDF.
 
@@ -40388,6 +40396,7 @@ These aren't oversights. Most are direct consequences of the single-file local-f
   "ephemeris":    { ...Ephemeris view UI state },     // v1.5 — per-mode UI substate; rebuilt to default if absent
   "glossopoeia":  { ...Glossopoeia view data + UI state },  // v1.5 — the conlang core view; empty default if absent
   "packs":        [ ...template packs ],              // v1.5 — named reference-sets over templates; empty array if none
+  "cartographia": [ ...map records ],                 // v1.6, maps as their own records (see below); empty array if none
   "mapStamps":    [ ...imported map stamps ],         // v1.6, stamps imported from stamp packs; empty array if none
   "viewPrefs":    { ...per-view preferences }         // various per-view UI state
 }
@@ -40395,7 +40404,7 @@ These aren't oversights. Most are direct consequences of the single-file local-f
 
 \`schemaVersion\` is currently always \`1\`. A higher number means the file was written by a newer build than the one trying to load it; loading is refused with a recovery prompt. A lower or missing number is treated as 1.
 
-\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, \`mapStamps\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
+\`stemmas\`, \`concordance\`, \`calendars\`, \`celestialBodies\`, \`ephemeris\`, \`glossopoeia\`, \`packs\`, \`cartographia\`, \`mapStamps\`, and \`viewPrefs\` are all optional — older worlds without them load fine; the migration step initializes each to its empty default shape. New exports always include them.
 
 Version-history snapshots are **not** part of the JSON save file. They live in a separate IndexedDB store inside the browser and don't survive clearing browser storage or transferring the world to another machine. The exported \`.world.json\` is the canonical save; snapshots are a session safety net only.
 
@@ -40648,7 +40657,6 @@ A pack groups templates by id for display and sharing — it never owns or copie
   "name":       string,
   "tags":       [ string, ... ],
   "fields":     { [fieldId]: value, ... },     // value shape depends on field type
-  "mapData":    { ...map data },               // ONLY for entries whose template kind is "map"
   "calendarId": string | null,                 // v1.4 — bind this entry's date fields to a non-primary calendar; null/missing = primary
   "createdAt":  ISO-8601 timestamp,
   "updatedAt":  ISO-8601 timestamp
@@ -40683,6 +40691,28 @@ A pack groups templates by id for display and sharing — it never owns or copie
 \`status\`, \`marriedOn\`, and \`endedOn\` only apply to \`relationKind: "spouse"\`. \`label\` is the user-typed override (per-side, not mirrored). \`status\`, \`marriedOn\`, and \`endedOn\` mirror to the partner on save.
 
 ---
+
+**\`cartographia\` array (v1.6), one record per map:**
+
+\`\`\`
+[
+  {
+    "id":        string,                       // e.g. "map-a3f2c1"
+    "name":      string,
+    "tags":      [ string, ... ],
+    "fields":    {                             // the three fixed fields, by id
+      "cart-fld-description":  string,
+      "cart-fld-scope-region": string,
+      "cart-fld-notes":        string
+    },
+    "mapData":   { ...map data, below },
+    "updatedAt": ISO-8601 timestamp
+  },
+  ...
+]
+\`\`\`
+
+Maps were template entries (\`kind: "map"\`) through v1.5; a world saved by v1.5 is migrated on load: each map entry becomes a record here, its map-kind template is dropped, and any extra fields a custom map template had are kept in \`fields\` under their old ids (not shown in the app) with a line in Notes naming them.
 
 **\`mapData\` (on cartographia map records):**
 
