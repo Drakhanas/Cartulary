@@ -2099,6 +2099,14 @@ function App() {
 
   // Import (Bug 9 + 10: distinguish version-too-new from shape-invalid; validate)
   const importWorld = (file) => {
+    // A brush or image file is for the Stamps panel (r042), as a pack file
+    // is since r036; say so before reading it as JSON.
+    const brushExt = /\.(abr|gbr|gih|brush|brushset|png|zip)$/i.exec(file && file.name ? file.name : "");
+    if (brushExt) {
+      const e = brushExt[1].toLowerCase();
+      flash(e === "zip" || e === "png" ? `That's a .${e}, not a world file. Stamp images import from the Stamps panel at the top of Cartographia.` : `That's a brush file (.${e}). Import it from the Stamps panel at the top of Cartographia, not as a world.`, "error");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       let parsed;
