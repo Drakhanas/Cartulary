@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r038) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r040) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -161,3 +161,27 @@ what each costs; he said no pressure, raster is fine, losing the SVG download is
 1.9. Then: 1.9 was a typo, he meant 1.6. So the eight cuts are done and the line is not,
 and the first thing I will do with the help I just finished is amend it. Sixteen
 rotations. Eight cuts in one session, and a ninth on the way.
+
+The ninth, r039, was Freehand, and it was the easy one: a drag becomes a stroke, the
+simplifier throws away the jitter, the renderer never finds out. The one number I had
+to change was the tolerance, which the fork had set at two units because two sounded
+careful, and which the probe's hand-like coastline showed was under a screen pixel.
+Drak's pass asked for a fourth width or a slider; the slider was the right one and it
+went in the same cut.
+
+The tenth was not in the plan. He drew a loop and asked for a fill tool, and a bucket
+fill in a vector drawing is a trace: rasterize, flood, follow the edge back into
+points. I built it in an afternoon and it passed every probe I wrote, and then his pass
+found four things in a row. The empty canvas filled as an oval, because I had handed a
+traced rectangle to the smoothing that makes hand-drawn polygons look good. A fill
+near a river went under the land polygon, because the thing under the pointer was the
+river. A loop he drew leaked across the whole map, because a hand never closes a loop
+and every loop my probe drew closed exactly. And then a closed polygon, with no gap
+possible, leaked too, in Brave, in no headless Chromium I could run; that one was the
+svg's missing size on the root, the same fact the download had taught me three cuts
+earlier, which I had put in the download instead of in the thing that draws svgs to
+canvases. The halo I found myself, by looking at a screenshot: the gap-closing window
+was one-sided for one build and no probe noticed, because no probe looks.
+
+Four revisions, four new probe cases, and a doctrine entry that just says look at the
+picture. Eighteen rotations. Ten cuts in one session.
