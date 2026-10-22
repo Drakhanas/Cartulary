@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r041) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r042) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -197,3 +197,15 @@ forty on its own name and every stamp in it became the same stamp. Every probe s
 r036 had called its packs forest and towns. The fix is two lines. The probe's zip now
 has the official pack's shape, versioned name and long folders and all, and the pack
 lands 484 of 484. Nineteen rotations. Eleven cuts in one session.
+
+The twelfth, r042, was the one I had been reading format notes for since the
+amendment: Photoshop's .abr, GIMP's .gbr and .gih, Procreate's zipped plists. Four
+hundred lines of readers, every one proved against a file the probe wrote from the same
+notes, forty-five green assertions, and Drak's first words were that he could not see
+where brushes upload, and that he could not get Alexander's sets in. Both true. The
+only place the word brush appeared was a tooltip, and the sets download as a zip with
+the .abr inside it, which my zip route opened looking for PNGs and closed again. The
+readers were fine. The door was wrong, and the sign on it was missing. A zip is a
+container now, the button says brushes, and the doctrine entry is about the
+difference between a format and the file people actually download. Twenty rotations.
+Twelve cuts in one session.
