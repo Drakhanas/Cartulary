@@ -1,6 +1,6 @@
 # Cartographia+ build sheet (v1.6 pillar 3, the drawing editor)
 
-> **FROZEN BUILD SHEET.** Locked 2026-10-20 (session 19) after proposal-review. The scope and won't-have list come from `roadmap.md`'s v1.6 Cartographia+ section, with one recorded change (layers, section 1). The cut order in section 6 is the plan; the declared scope on each cut is what `build_inline.py edit` holds the tree to. Find code by NAME, never line number.
+> **FROZEN BUILD SHEET.** Locked 2026-10-20 (session 19) after proposal-review. The scope and won't-have list come from `roadmap.md`'s v1.6 Cartographia+ section, with one recorded change (layers, section 1) and, since 2026-10-22, a second: raster brushes, section 9, six more cuts. The cut order in section 6 is the plan; the declared scope on each cut is what `build_inline.py edit` holds the tree to. Find code by NAME, never line number.
 
 ---
 
@@ -16,12 +16,12 @@ Nothing here changes how pins, time mode, exports of pins, or the three schema f
 
 - **Rendering is SVG.** One renderer turns `mapData.drawing` into a node tree; the editor turns the tree into React elements, the HTML export turns it into a string. Two renderers would drift, so there is one tree and two serializers.
 - **Layers, narrowly.** The roadmap's v1 won't-have list said no layers. Drak overrode it at session 19: layers are named, ordered, show/hide, lock. No opacity, no blend modes, no per-layer export. The roadmap line is corrected where it lives.
-- **Drawing over an existing raster image is allowed.** The image renders as the bottom `<image>` in the SVG and the layers sit above it. The won't-have "image import as drawable surface" forbids painting into pixels, which this does not do.
+- **Drawing over an existing raster image is allowed.** The image renders as the bottom `<image>` in the SVG and the layers sit above it. The won't-have "image import as drawable surface" forbids painting into pixels, which this does not do. *(Amended 2026-10-22, section 9: a raster layer is painted into, but it is the map's own layer, never the imported image, which stays untouched under the drawing.)*
 - **Background for image-less maps** is a fill with an optional grain: presets White, Vellum, Parchment. Under an image the background is not drawn.
 - **Pins stay 0-1 normalized** to the canvas rect, as they are today. Consequence: a drawn map's canvas size is fixed once any shape or pin exists, editable while the map is empty. Pins in absolute drawing units would be the alternative and is not v1.
 - **Undo/redo covers the drawing only**, not pins and not the schema fields. Local to the editor session, not persisted. *(Overridden at cut 4, r034, by decision at the fork: the history is a snapshot of the whole `mapData`, so pins are in it; schema fields still are not, and it is still local to the editor session.)*
 - **Palette, eight colors, stored as hex** so stamp packs can carry their own: ink `#2b2420`, sepia `#6b4e2e`, parchment `#e8dcc0`, forest `#4f6b3a`, water `#5b7f99`, stone `#8a8378`, blood `#8c3b2e`, chalk `#f4efe4`. The editor offers only these; the data does not constrain.
-- **Stamps are SVG symbols.** Four built in (mountain, tree, settlement marker, compass rose), defined in code; imported stamps live in `state.mapStamps` and travel in the world JSON. Imported SVG passes a whitelist sanitizer (section 4).
+- **Stamps are SVG symbols.** Four built in (mountain, tree, settlement marker, compass rose), defined in code; imported stamps live in `state.mapStamps` and travel in the world JSON. Imported SVG passes a whitelist sanitizer (section 4). *(Amended 2026-10-22, section 9: a stamp may also be a raster tip, `alpha` or `color`, rendered as an `<image>`.)*
 - **No new module files.** Every cut edits existing files, because cartographia carves last against its final shape and the edit gate refuses a changed file set. The editor code lands in the cartographia run of `16_trunk`.
 
 ---
@@ -79,7 +79,7 @@ Envelope `{ "cartulary_mapstamp_pack": 1, "name": ..., "stamps": [{ id, name, vi
 
 - **HTML export:** `renderMapHtml` emits the drawing SVG (string serializer) in place of, or under, the image; pin overlay and legend unchanged. Hidden layers are omitted.
 - **Markdown export:** unchanged; markdown never embedded the canvas.
-- **Per-map download:** SVG (the serialized drawing with the image inlined when present) and PNG (the SVG drawn to a canvas at 2x). These are the only image exports; nothing beyond SVG/PNG, per the won't-have list. *(As built at r037: Download SVG and PNG above the canvas in the map view, view only; no pins in either file; the map font embedded in the svg as a data-URL `@font-face` when Google Fonts can be fetched, with a silent fallback; `href` doubled as `xlink:href` for older viewers; the png's 2x capped at sixteen million pixels; an image that cannot be read writes the drawing alone and the note says so.)*
+- **Per-map download:** SVG (the serialized drawing with the image inlined when present) and PNG (the SVG drawn to a canvas at 2x). These are the only image exports; nothing beyond SVG/PNG, per the won't-have list. *(Amended 2026-10-22, section 9: the SVG becomes a mixed file once raster layers and tips exist, carrying them as `<image>` data URLs.)* *(As built at r037: Download SVG and PNG above the canvas in the map view, view only; no pins in either file; the map font embedded in the svg as a data-URL `@font-face` when Google Fonts can be fetched, with a silent fallback; `href` doubled as `xlink:href` for older viewers; the png's 2x capped at sixteen million pixels; an image that cannot be read writes the drawing alone and the note says so.)*
 
 ---
 
@@ -102,9 +102,9 @@ Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with
 
 ## 7. Won't-have (v1, unchanged from the roadmap except layers)
 
-*(Amended 2026-10-22, after cut 8: Drak decided that raster brushes go into v1.6, no pressure support, tip-level import of existing packs with `.abr` primary and PNG native, the SVG download becoming a mixed file. The first line below is therefore struck for v1.6; the amendment with its cut table is written once his two scope answers are in, both halves or stamps-and-import first, and whether a vector freehand line rides along.)*
+*(Amended 2026-10-22, after cut 8: Drak decided that raster brushes go into v1.6, no pressure support, tip-level import of existing packs with `.abr` primary and PNG native, the SVG download becoming a mixed file. The first line below is struck for v1.6; the amendment with its decisions and cut table is section 9.)*
 
-- ~~Freehand brush tools~~ (struck 2026-10-22; see above)
+- ~~Freehand brush tools~~ (struck 2026-10-22; section 9)
 - Custom color picker
 - Layer opacity, blend modes, per-layer export (the layer list itself is in, by the session-19 decision)
 - Procedural generation
@@ -134,3 +134,54 @@ Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with
 - Decided at cut 8 (r038): the help is quick-help depth and the site is the full guide (the roadmap's split); the section was rewritten rather than appended to, with time mode and the pack block kept; lines elsewhere in the help that the editor had made false were fixed in the same pass (no-undo in three places, no-version-history, the HTML-export line, the Templates map kind, the schema's missing `cartographia` slice), and one claim false in both the help and the site (a pin's link on a backlinks panel that does not exist) was corrected to what the component does; the index's lead sentence in `16_trunk` was one string and went in with a scope widening; the site content was written now and committed under `site/`, ahead of the live v1.5 site, to deploy with the v1.6 launch; the pass is "reads true", backed by a mechanical cross-check of every control name against the component in both directions and a headless probe of the rendered help and the routed site panels.
 - Found at cut 8: a right-click in a drawing tool finishes the shape and switches to Select, and only Select's right-click returns to Pin; the forks had said "returns to Pin" from the hint strings. The help and the site say what the hook does.
 - `shell.html` was declared on cut 2 and not touched; declare what changed, not what the sheet guessed. The `.map-image` rule already sized the svg. Cut 3 did change it (36 lines) and declared it.
+
+---
+
+## 9. Amendment: raster brushes (decided 2026-10-22, after cut 8)
+
+**Why.** Reading the cut-8 Limitations paragraph ("no freehand brush"), Drak judged freehand with brush support "massively wanted" and, after the costs were laid out, put raster brushes into v1.6 (he wrote 1.9 first and corrected it to 1.6). The won't-have list's first line is struck (section 7). This is the second recorded scope change on the sheet, after layers.
+
+**Decisions (Drak, 2026-10-22; every recommendation taken, item 4 by research):**
+
+1. **Both halves in v1.6**, built stamps-and-import first: the tip model and importers with raster stamps (cuts 10-11), then raster layers and the paint engine (cuts 12-13). Committing both now lets the layer kind be designed for paint rather than retrofitted.
+2. **Vector freehand is in** (cut 9): a Line drawn by dragging, sampled at a minimum spacing in canvas units, simplified on release (Douglas-Peucker), no per-point handles above a point count. A freehand coastline you can reshape later is what the vector side does and paint cannot.
+3. **Two raster tip kinds**, detected on import: `alpha` (grayscale or white-on-transparent, what `.abr`, `.gbr`, and Procreate shapes are), rendered as an `<image>` tinted by the shape's Fill through an SVG filter so the palette still applies; and `color` (an RGBA PNG with color in it, what Wonderdraft-style asset packs are), shown as is. Neither takes Stroke or Width.
+4. **Interoperability, by research** (what the tools accept today). Map tools take PNG and nothing else: Wonderdraft wants PNG sprites under `assets/<pack>/sprites/{symbols,mountains,trees}/<set>/` with an optional `.wonderdraft_symbols` JSON (name, pivot, radius, draw mode); Inkarnate takes PNG only, uploaded as Stamp, Texture, or Stroke Asset, Pro only, 500 cap; Dungeondraft packs are built from PNG folders. Art apps converge on `.abr`: Photoshop, Procreate, Clip Studio Paint 1.10.5+, Affinity, Fresco, Artstudio Pro, GIMP, and Krita import it, and all of the non-Adobe ones import tips only (Krita's docs: "only import a brush texture from abr file"); newer Photoshop versions' files fail silently in GIMP. Every other format is one app's own. **So: import** PNG (single files, a zip of PNGs, and a Wonderdraft asset folder zipped as is, reading its `.wonderdraft_symbols` for names), `.abr` v1/v2/v6 clean-room (tips and spacing; v7/v10 files from current Photoshop are tried, and refused with a pointer to a PNG export from the source app), `.gbr`/`.gih`, and Procreate `.brush`/`.brushset` (a zip whose `Shape.png` is the tip; JSZip is already vendored). Skip `.sut`, `.kpp`, `.afbrushes`, `.myb`. **Export** the Cartulary pack (the envelope with `image` stamps) plus a PNG zip in the Wonderdraft folder layout with its JSON, which also serves Inkarnate and Dungeondraft. Cartulary is the converter in the middle: anything in, PNG out. Writing `.abr` is possible later and unscheduled.
+5. **Raster layers:** a layer gains `kind`, `vector` (the default, backfilled) or `raster`; a raster layer is one PNG at the canvas size, carried through the tree as an `<image>` so the renderer, the HTML export, and the download keep their shape. Stored like map images: a file in the image folder when one is connected, inline with the 1 MB warning otherwise. A canvas resize clips a raster layer, as shapes keep their coordinates.
+6. **Paint resolution:** drawing units are the paint pixels, with raster layers capped at 4096 on the long side and scaled up to the canvas when it is bigger.
+7. **Brush controls:** Brush tool with a tip (the imported alpha tips plus a built-in round and soft round), size and opacity as sliders, spacing from the tip, color from Fill; Eraser is the same with destination-out.
+8. **Undo:** the one history, raster steps included (a step holds the changed layer's new PNG; unchanged layers share strings), capped by total bytes rather than by fifty steps.
+9. **No pressure support** (not within any scope Drak will support currently; potentially in the future). **The SVG download becomes a mixed file** (raster layers and raster tips as `<image>` data URLs) rather than going away; he was willing to lose it and does not have to. The PNG download rasterizes everything as before.
+
+**Data model deltas** (the rest of section 2 stands):
+
+```
+state.mapStamps[i]   kind          "svg" | "alpha" | "color"; absent means "svg" (the r036 body stamps)
+                     image         PNG data URL, alpha and color kinds only; body absent
+                     width, height tip pixel size, for the placement box's aspect
+                     spacing       percent of width, from .abr / .gbr; default 25
+layers[i]            kind          "vector" | "raster"; backfilled "vector"
+                     image         raster only: a filename in folder mode, a data URL otherwise
+shape (stamp)        stampId       may name an alpha or color tip; rendered as <image>, tinted when alpha
+```
+
+Pack envelope: a stamp entry carries `image` (PNG data URL), `kind`, and `spacing` in place of `body`. The raster sanitizer decodes the PNG through an `Image` (anything that will not decode is dropped and reported), re-encodes it through a canvas to strip metadata, and caps the tip at 1024 on the long side; on load as on import, as `ensureMapStamps` does for bodies. The tint is a `<filter>` per color in `<defs>` (`feFlood` the fill, `feComposite in2="SourceAlpha" operator="in"`), which rasterizes correctly in the download's canvas and in exported pages.
+
+**Cuts** (one script each in `inlining/cuts/`, the same gate and replay procedure; the r-counter continues from r039):
+
+| # | Cut | Declared scope | Browser check |
+|---|---|---|---|
+| 9 | Vector freehand: Line by drag, minimum sample spacing, Douglas-Peucker on release, no point handles above a count | `16_trunk`, `shell.html` if a cursor rule | Draw a coastline in one drag; move it; a short one still reshapes by its points |
+| 10 | Raster tips: `kind`, `image`, `spacing` on stamps; PNG import (single, zip, Wonderdraft folder with its JSON); raster stamps as `<image>` with the tint filter; the panel and picker showing them; the raster sanitizer | `16_trunk`, `shell.html` | Import a PNG pack; stamp a color symbol and a tintable one; the view, the HTML export, and both downloads show both |
+| 11 | Importers: `.abr` v1/v2/v6, `.gbr`/`.gih`, Procreate `.brush`/`.brushset`; export a pack as a PNG zip in the Wonderdraft layout | `16_trunk`, `12_trunk` (the world importer's redirect) | Import a real fantasy-map ABR and a Procreate brushset; export the pack as PNGs and drop them into Wonderdraft |
+| 12 | Raster layers: `kind`, storage (folder file or inline), `migrate` backfill, the tree's `<image>`, the HTML export and the downloads carrying it, the size cap | `16_trunk`, `10_migrate`, `08_export-layer`, `12_trunk` | An old world loads with every layer `vector`; a raster layer survives save, reload, HTML export, SVG and PNG download |
+| 13 | Paint engine: Brush and Eraser, tip choice, size and opacity sliders, spacing, dabs on the active raster layer (auto-created), snapshot undo with the byte cap | `16_trunk`, `shell.html` | Paint a coastline with a textured tip, erase part of it, undo past it, save, reload |
+| 14 | Help and the site, again | `24_home-data`, `site/` | Reads true |
+
+**Open at the amendment, decided at the cut:**
+
+- Cut 9: the sample spacing and the simplification tolerance in units (a drag should land at thirty to sixty points, not hundreds); the point count above which a stroke has no per-point handles; whether freehand is its own button or Line's drag.
+- Cut 10: the exact `alpha`/`color` detection (any non-gray pixel with alpha above a threshold means color); the placement box of a non-square tip (follows the tip's aspect at 120 units on the long side); whether an alpha tip with Fill None draws untinted or not at all.
+- Cut 11: the Procreate brush name (a minimal binary-plist string lookup in `Brush.archive`, or the folder name); what an `.abr` v7/v10 file says when refused; the headless probe writes its own `.abr` v1/v2/v6 files, and a real pack (CC0 or CC BY) is Drak's check.
+- Cut 12: the raster file's name in folder mode (`<map id>-<layer id>.png`); what the HTML export does with a folder raster file it cannot read (the drawing without it, as the download does for an image).
+- Cut 13: the paint surface during a stroke (an offscreen canvas, the `<image>` updated per stroke); the snapshot's form in the history (the data URL string, shared by reference when unchanged); the byte cap (64 MB to start); the built-in round and soft round tips as code, not stored.
