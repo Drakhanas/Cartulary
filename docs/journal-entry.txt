@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r036) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r037) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -130,3 +130,14 @@ be drawn, and then rebuilds from the allowlist. His pass found the panel in the 
 (bottom; there will be fewer stamps than maps) and a Project view that called a world with
 maps and no entries empty and hid the export button, which had been true since r001 and
 nobody had a map-only world until now. Fourteen rotations. Six cuts in one session.
+
+Cut 7, r037, the download, was the small one, and it passed in one staging, which is the
+first time that has happened since r032. The interesting part was the font. The map draws
+its labels in Cormorant Garamond from Google Fonts; an svg file opened on its own has no
+idea the page ever existed, and an svg loaded as an image to be drawn onto a canvas is
+sealed even from the page it sits in, so a plain export would have given Drak a map whose
+labels came back in Times. The file now carries the font inside it, fetched once and
+written in as a data URL, and the PNG is drawn from that file, so both of them look like
+the app. The headless probe cannot see a real font (it stubs Google), so the thing I most
+wanted to know was the one thing only his pass could tell me, and it told me. Fifteen
+rotations. Seven cuts in one session; one left, and it is prose.

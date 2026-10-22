@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 38,
-    "total_lines": 41302,
-    "raw_body_lines": 41302,
-    "canonical_lines": 39192,
-    "decl_count": 468,
+    "total_lines": 41460,
+    "raw_body_lines": 41460,
+    "canonical_lines": 39347,
+    "decl_count": 471,
     "no_trailing_newline": 30,
-    "active_anchor": "reference-r036-body.jsx"
+    "active_anchor": "reference-r037-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 41302,
+      "value": 41460,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 38 files have no trailing newline"
     },
     "decl_count": {
-      "value": 468,
+      "value": 471,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 39192,
+      "value": 39347,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 41302,
+      "value": 41460,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,35 +81,35 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2119487,
+      "value": 2127336,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "fourteen",
-        14
+        "fifteen",
+        15
       ],
       "pattern": "(?i)rotated ([a-z]+|\\d+) times"
     },
     "trunk16_lines": {
-      "value": 3900,
+      "value": 4058,
       "pattern": "`16_trunk` \\((\\d+)\\)"
     },
     "trunk16_tiling": {
-      "value": "3900",
-      "pattern": "265 \\+ 1028 \\+ 2607 = (\\d+)"
+      "value": "4058",
+      "pattern": "265 \\+ 1028 \\+ 2765 = (\\d+)"
     },
     "repo": {
       "value": "Drakhanas/Cartulary",
       "pattern": "github\\.com/(Drakhanas/Cartulary)"
     },
     "cartographia_lines": {
-      "value": 2607,
+      "value": 2765,
       "pattern": "cartographia[^|\\n]*\\(([\\d,]+) lines"
     },
-    "working_hash_r036": {
-      "value": "1543145c4ce2e5b9",
-      "pattern": "working[^\\n]{0,40}at r036 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r037": {
+      "value": "4b3b7eee4cc16920",
+      "pattern": "working[^\\n]{0,40}at r037 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -315,22 +315,37 @@
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3632,
+      "line": 2948,
+      "contains": "function mapFontFaceCss"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 2982,
+      "contains": "function buildMapDownloadSvg"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 3028,
+      "contains": "function rasterizeMapSvg"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 3790,
       "contains": "Cartographia"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3649,
+      "line": 3807,
       "contains": "function MapStampsPanel"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3787,
+      "line": 3945,
       "contains": "function CartographiaIndexView"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3900,
+      "line": 4058,
       "contains": "}"
     },
     {
@@ -423,7 +438,7 @@
       ],
       [
         1294,
-        3900,
+        4058,
         "cartographia"
       ]
     ],
@@ -494,11 +509,15 @@
       "r035_stamps_handles.py",
       "MAP_BUILTIN_STAMPS",
       "r036",
-      "reference-r036-body.jsx",
       "1543145c4ce2e5b9",
-      "reference-r036-layout.json",
       "r036_stamp_packs.py",
-      "sanitizeMapStampBody"
+      "sanitizeMapStampBody",
+      "r037",
+      "reference-r037-body.jsx",
+      "4b3b7eee4cc16920",
+      "reference-r037-layout.json",
+      "r037_map_download.py",
+      "buildMapDownloadSvg"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -517,9 +536,11 @@
       "r035",
       "9c0bbfe453e80668",
       "r036",
-      "reference-r036-body.jsx",
       "1543145c4ce2e5b9",
-      "reference-r036-layout.json"
+      "r037",
+      "reference-r037-body.jsx",
+      "4b3b7eee4cc16920",
+      "reference-r037-layout.json"
     ],
     "changelog.md": [
       "r026",
@@ -549,7 +570,10 @@
       "r035_stamps_handles.py",
       "r036",
       "1543145c4ce2e5b9",
-      "r036_stamp_packs.py"
+      "r036_stamp_packs.py",
+      "r037",
+      "4b3b7eee4cc16920",
+      "r037_map_download.py"
     ],
     "roadmap.md": [
       "r030",
@@ -560,7 +584,8 @@
       "r033",
       "r034",
       "r035",
-      "r036"
+      "r036",
+      "r037"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -569,7 +594,8 @@
       "r033",
       "r034",
       "r035",
-      "r036"
+      "r036",
+      "r037"
     ],
     "journal-entry.txt": [
       "r030",
@@ -577,7 +603,8 @@
       "r031",
       "r032",
       "r035",
-      "r036"
+      "r036",
+      "r037"
     ]
   }
 }
