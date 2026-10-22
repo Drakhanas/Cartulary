@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 38,
-    "total_lines": 41880,
-    "raw_body_lines": 41880,
-    "canonical_lines": 39750,
-    "decl_count": 479,
+    "total_lines": 42182,
+    "raw_body_lines": 42182,
+    "canonical_lines": 40046,
+    "decl_count": 485,
     "no_trailing_newline": 30,
-    "active_anchor": "reference-r040-body.jsx"
+    "active_anchor": "reference-r041-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 41880,
+      "value": 42182,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 38 files have no trailing newline"
     },
     "decl_count": {
-      "value": 479,
+      "value": 485,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 39750,
+      "value": 40046,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 41880,
+      "value": 42182,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,35 +81,35 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2152690,
+      "value": 2171890,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "eighteen",
-        18
+        "nineteen",
+        19
       ],
       "pattern": "(?i)rotated ([a-z]+|\\d+) times"
     },
     "trunk16_lines": {
-      "value": 4448,
+      "value": 4750,
       "pattern": "`16_trunk` \\((\\d+)\\)"
     },
     "trunk16_tiling": {
-      "value": "4448",
-      "pattern": "265 \\+ 1028 \\+ 3155 = (\\d+)"
+      "value": "4750",
+      "pattern": "265 \\+ 1028 \\+ 3457 = (\\d+)"
     },
     "repo": {
       "value": "Drakhanas/Cartulary",
       "pattern": "github\\.com/(Drakhanas/Cartulary)"
     },
     "cartographia_lines": {
-      "value": 3155,
+      "value": 3457,
       "pattern": "cartographia[^|\\n]*\\(([\\d,]+) lines"
     },
-    "working_hash_r040": {
-      "value": "ab06b96df79cd7f7",
-      "pattern": "working[^\\n]{0,40}at r040 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r041": {
+      "value": "d83664af97b38bfe",
+      "pattern": "working[^\\n]{0,40}at r041 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -245,122 +245,142 @@
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1485,
+      "line": 1504,
       "contains": "const MAP_STAMP_ALLOWLIST"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1515,
+      "line": 1526,
+      "contains": "const MAP_RASTER_TIP"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1533,
+      "contains": "const MAP_STAMP_ID_MAX"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1620,
       "contains": "function sanitizeMapStampBody"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1646,
+      "line": 1765,
+      "contains": "async function mapReadStampFiles"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1857,
+      "contains": "function MapStampGlyph"
+    },
+    {
+      "file": "16_trunk.jsx",
+      "line": 1874,
       "contains": "Map drawing renderer (v1.6 pillar 3)"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1664,
+      "line": 1892,
       "contains": "function mapNum"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1734,
+      "line": 1962,
       "contains": "const MAP_BUILTIN_STAMPS"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1778,
+      "line": 2006,
       "contains": "function mapTextArcPath"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 1988,
+      "line": 2238,
       "contains": "Map drawing tools (v1.6 pillar 3)"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2002,
+      "line": 2252,
       "contains": "const MAP_TOOLS"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2029,
+      "line": 2279,
       "contains": "const MAP_FREEHAND"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2073,
+      "line": 2323,
       "contains": "const MAP_FILL"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2182,
+      "line": 2432,
       "contains": "function mapSvgToCanvas"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2219,
+      "line": 2469,
       "contains": "function mapShapeFrame"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 2836,
+      "line": 3094,
       "contains": "function useMapHistory"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3099,
+      "line": 3357,
       "contains": "function MapStampPicker"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3137,
+      "line": 3395,
       "contains": "function MapLayerPanel"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3287,
+      "line": 3546,
       "contains": "Map view"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3289,
+      "line": 3548,
       "contains": "function useMapImageUrl"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3332,
+      "line": 3591,
       "contains": "function mapFontFaceCss"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3366,
+      "line": 3625,
       "contains": "function buildMapDownloadSvg"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 3412,
+      "line": 3671,
       "contains": "function rasterizeMapSvg"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 4180,
+      "line": 4439,
       "contains": "Cartographia"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 4197,
+      "line": 4456,
       "contains": "function MapStampsPanel"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 4335,
+      "line": 4637,
       "contains": "function CartographiaIndexView"
     },
     {
       "file": "16_trunk.jsx",
-      "line": 4448,
+      "line": 4750,
       "contains": "}"
     },
     {
@@ -453,7 +473,7 @@
       ],
       [
         1294,
-        4448,
+        4750,
         "cartographia"
       ]
     ],
@@ -537,13 +557,19 @@
       "raster brushes",
       "r039",
       "r040",
-      "reference-r040-body.jsx",
       "ab06b96df79cd7f7",
-      "reference-r040-layout.json",
       "r039_freehand.py",
       "r040_bucket_fill.py",
       "mapSimplifyPoints",
-      "mapTraceMask"
+      "mapTraceMask",
+      "r041",
+      "reference-r041-body.jsx",
+      "d83664af97b38bfe",
+      "reference-r041-layout.json",
+      "r041_raster_tips.py",
+      "mapPrepareRasterTip",
+      "mapReadStampFiles",
+      "MAP_STAMP_ID_MAX"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -569,9 +595,11 @@
       "02757469587b7ba5",
       "r039",
       "r040",
-      "reference-r040-body.jsx",
       "ab06b96df79cd7f7",
-      "reference-r040-layout.json"
+      "r041",
+      "reference-r041-body.jsx",
+      "d83664af97b38bfe",
+      "reference-r041-layout.json"
     ],
     "changelog.md": [
       "r026",
@@ -613,7 +641,10 @@
       "ffa4547c3687478a",
       "ab06b96df79cd7f7",
       "r039_freehand.py",
-      "r040_bucket_fill.py"
+      "r040_bucket_fill.py",
+      "r041",
+      "d83664af97b38bfe",
+      "r041_raster_tips.py"
     ],
     "roadmap.md": [
       "r030",
@@ -629,7 +660,8 @@
       "r038",
       "raster brushes",
       "r039",
-      "r040"
+      "r040",
+      "r041"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -642,7 +674,8 @@
       "r037",
       "r038",
       "r039",
-      "r040"
+      "r040",
+      "r041"
     ],
     "journal-entry.txt": [
       "r030",
@@ -654,7 +687,8 @@
       "r037",
       "r038",
       "r039",
-      "r040"
+      "r040",
+      "r041"
     ]
   }
 }

@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r040) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r041) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -169,7 +169,7 @@ careful, and which the probe's hand-like coastline showed was under a screen pix
 Drak's pass asked for a fourth width or a slider; the slider was the right one and it
 went in the same cut.
 
-The tenth was not in the plan. He drew a loop and asked for a fill tool, and a bucket
+The tenth, r040, was not in the plan. He drew a loop and asked for a fill tool, and a bucket
 fill in a vector drawing is a trace: rasterize, flood, follow the edge back into
 points. I built it in an afternoon and it passed every probe I wrote, and then his pass
 found four things in a row. The empty canvas filled as an oval, because I had handed a
@@ -185,3 +185,15 @@ was one-sided for one build and no probe noticed, because no probe looks.
 
 Four revisions, four new probe cases, and a doctrine entry that just says look at the
 picture. Eighteen rotations. Ten cuts in one session.
+
+The eleventh, r041, was the first of the brush cuts proper: a stamp that is a PNG. The
+classifier, the tint filter, the zip reader, the symbol-and-use rendering, all of it
+passed a probe of sixty assertions, and then Drak dropped an official Wonderdraft pack
+on it, 484 symbols in twenty folders, and got two packs of one stamp each. The zip was
+read whole. The loss was at the last step, in code from five cuts ago: r036 had capped
+stamp ids at forty characters and then stored the pack id and the stamp id joined,
+through the same cap, so a pack called Wonderdraft-Premium_Pirates_1.0 used the whole
+forty on its own name and every stamp in it became the same stamp. Every probe since
+r036 had called its packs forest and towns. The fix is two lines. The probe's zip now
+has the official pack's shape, versioned name and long folders and all, and the pack
+lands 484 of 484. Nineteen rotations. Eleven cuts in one session.
