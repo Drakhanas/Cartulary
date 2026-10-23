@@ -5621,7 +5621,15 @@ const migrate = (state) => {
   // the target's filter-field value is in allowedValues. Invalid refs are
   // silently dropped. Defensive against hand-edited JSON, deleted target
   // entries, and version-skewed worlds.
+  //
+  // v1.6.1 r052: astronomical bodies and Glossopoeia records are valid targets
+  // that aren't entries. Until this cut the entry lookup missed them, so every
+  // reference to one was dropped here on each load, import, and restore (v1.5
+  // and v1.6). A registered record now counts when its source is among the
+  // field's targets, the rule the picker offers it by; refFilters don't apply
+  // to it, as in the picker. Entry references are judged as before.
   const entryById = Object.fromEntries(state.entries.map(e => [e.id, e]));
+  const registeredSourceById = new Map(getRegisteredGraphNodes(state).map(n => [n.id, n.templateId]));
   state.entries.forEach(e => {
     const tpl = tplById[e.templateId];
     if (!tpl || !e.fields) return;
@@ -5633,7 +5641,14 @@ const migrate = (state) => {
       const isValid = (refId) => {
         if (!refId) return false;
         const target = entryById[refId];
-        if (!target) return false;
+        if (!target) {
+          const sourceId = registeredSourceById.get(refId);
+          if (!sourceId) return false;
+          const allowed = (Array.isArray(f.refTemplatesId) && f.refTemplatesId.length > 0)
+            ? f.refTemplatesId
+            : (f.refTemplateId ? [f.refTemplateId] : []);
+          return allowed.includes(sourceId);
+        }
         if (Array.isArray(f.refTemplatesId) && f.refTemplatesId.length > 0) {
           if (!f.refTemplatesId.includes(target.templateId)) return false;
         }
