@@ -1,0 +1,147 @@
+=================================
+Cartulary v1.4 — May 18, 2026
+=================================
+
+
+NEW FEATURES
+============
+
+Kalendarium (new top-level view)
+--------------------------------
+Define multiple calendars per world. Each additional calendar
+anchors to your primary calendar via a single absolute-day
+reference. Bind individual entries to whichever calendar fits
+the culture they belong to. Cross-entry views (Chronometric,
+Vertical Timeline, Linea, Cartographia) carry per-view calendar
+selectors so you can compare the same data through whichever
+frame fits the moment. Single-calendar worlds see no change.
+
+Each calendar gets a grid view inline below its row in the
+Kalendarium index, with:
+  - Continuous-week math across month boundaries
+  - Seasonal color bands (you define them, with wraparound support)
+  - Moon phases per day cell for any moons you define
+    (cycle lengths accept tenths precision, so 29.5-day synodic
+    and 27.3-day sidereal cycles work)
+  - A marker on the world's current moment
+  - Ctrl+scroll zoom
+  - Click any day to see entries with date-bearing fields landing
+    on that absolute day across every calendar at once
+
+Calendars also gain a per-calendar JSON export/import flow with
+Skip/Replace/Rename collision handling, matching how templates and
+stemmas already work.
+
+
+HTML export
+-----------
+Generate a single self-contained .html file per world for sharing
+with readers who don't have Cartulary. Inlined CSS, base64 images,
+pre-rendered Markdown, working cross-references between entries
+via in-document anchor links. Theme inheritance — the export
+matches the theme you're using in-app at export time. Two-column
+ToC, per-entry sections with title, template badge, tags, inline
+fields, and block sections for prose. Map entries render with
+the image plus a numbered pin overlay and a numbered legend below
+for print and accessibility. Current-moment-aware pin filtering
+carries through. Export button on the Project page.
+
+
+Version history
+---------------
+Snapshot-based undo for catastrophic state changes. Auto-snapshots
+fire on content change throttled to one per five minutes, capped
+at ten in FIFO order. Manual snapshots are pinned by default and
+don't auto-evict, so significant milestones stay around as long
+as you want. Reset, Import, and Restore each pin a safety snapshot
+first ("Before reset", "Before import", "Before restore from
+[timestamp]") so an accidental wipe is recoverable. Restore UI
+on the Project page.
+
+Version history lives in browser storage and doesn't survive
+clearing it. JSON export is still your canonical save path; treat
+version history as a session safety net, not a backup strategy.
+
+
+Cartographia (Maps view promoted)
+---------------------------------
+The Maps view promoted to its own top-level sidebar entry,
+parallel to Linea and Stemma. Index of every map in the world;
+time-aware pin filtering that consumes the world's current moment;
+ctrl+scroll zoom on the canvas; richer hover behavior on pins.
+The Map template is hidden from the Templates sidebar — map
+creation flows through Cartographia's "+ New Map" instead.
+
+
+IMPROVEMENTS
+============
+
+* Auto-age on character lifespans. Living characters show age
+  inline on the Lifespan field ("age 47"); deceased characters
+  get an obituary line under the entry badge ("Died at age 63").
+  Both surfaces respect secret-field marking on the Lifespan field.
+
+* Vertical Timeline gains three-level zoom (year / month / day)
+  on ctrl+scroll. Preference persists per world.
+
+* Chronometric zoom extended from 50x to 1000x. Tick generation
+  is now calendar-aware: year ticks zoomed out, month ticks at
+  calendar boundaries, day ticks at extreme zoom.
+
+* Image fields accept drag-and-drop, clipboard paste, and the
+  file picker. Files route to your linked images folder when
+  connected; fall back to inline base64 otherwise.
+
+* Visual design pass across the application: token system for
+  radii, spacing, shadows, and timings; scriptorium accents on
+  modal headers and sidebar section dividers; input focus
+  indicators improved for accessibility; high-contrast theme
+  stays flat by design.
+
+* Home Usage/Workflow documentation refreshed for the v1.4
+  feature surface (HTML export, version history, Kalendarium,
+  Cartographia, template builder).
+
+* In-app JSON Save File Schema documentation rewritten to cover
+  the full v1.4 schema surface (multi-calendar Kalendarium,
+  current-moment, calendar week/celestials/seasons/anchor,
+  per-entry calendar binding) plus deferred v1.3 detail for
+  stemmas, concordance, and viewPrefs. Useful if you script
+  imports or run bulk transformations on world files.
+
+
+BUG FIXES
+=========
+
+* Deceased characters now render correctly in Linea (dimmed
+  opacity) and Concordance (hover state). They had been
+  rendering as living since v1.3 due to a regression in the
+  detection helper.
+
+* Vertical Timeline now shows entries with calendar-date-range
+  fields (Lifespan, etc.) as two separate start/end events.
+  Previously the timeline silently dropped these fields, making
+  every lifespan-bound entry invisible.
+
+* Customizations to built-in templates in fresh worlds (renamed
+  fields, deleted fields, edited options) now survive the first
+  export/import cycle. Previously they could be silently
+  reverted because fresh worlds shipped with empty migration
+  trackers.
+
+
+DISTRIBUTION
+============
+
+Cartulary_v1.4.zip contains:
+  Cartulary_v1.4.html          The build to run (~2 MB)
+  Cartulary_v1.4_Readable.html The canonical source build (~5 MB)
+  README.md                    Getting-started
+
+The full usage guide is inside the application. Click "Home" in
+the sidebar after opening.
+
+Back up your worlds via Settings -> Export .json. The browser-stored
+copy is a working copy; the .json file is your canonical save.
+v1.4 migrates older save files forward automatically, but a clean
+backup before upgrading is the safest path.

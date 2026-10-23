@@ -1,0 +1,134 @@
+CARTULARY v1.2 — RELEASE NOTES
+==============================
+
+
+MARRIAGES NOW HAVE DATES
+------------------------
+
+You can record when a marriage began and (if applicable) when it ended on
+any spouse declaration. Date pickers appear next to the existing label
+override and status select. The dates show in entry view, in markdown
+export, and on the Chronometric timeline. Same-day annulments are allowed;
+an end date earlier than the start date is rejected at save.
+
+Declarations stay in sync automatically. When you set A's spouse as B and
+save, B gets a matching declaration of A — same status and dates, both
+sides updated. Editing or removing on one side propagates to the other.
+Old one-sided declarations from earlier worlds get reconciled the next
+time either side is saved.
+
+The override label ("Husband" / "Wife" / "Partner" / etc.) is still
+per-side — your perspective on the relationship can differ from your
+partner's, and both are preserved.
+
+
+MARRIAGES ON THE CHRONOMETRIC TIMELINE
+--------------------------------------
+
+Marriage spans no longer pile onto the Character lane. They route to a
+dedicated Marriages lane below the template lanes. Each logical marriage
+renders as a single bar (deduplicated across both spouses' declarations)
+labeled with both names — "Aria of Eastwatch & Caelan of Goldhall". Click
+the bar to jump to one of the spouses. Read-only on the timeline; date
+edits happen in the entry editor.
+
+
+LANES RESIZE TO FIT THEIR CONTENTS
+----------------------------------
+
+Every lane on the Chronometric timeline now grows vertically when
+overlapping events need more room. Sparse lanes stay compact; dense lanes
+expand so every event gets its own visible row instead of disappearing
+into the pile. Applies to all template lanes, not just the new Marriages
+lane.
+
+
+LINEA OVERHAUL
+--------------
+
+Several coordinated changes make Linea read more like a genealogy tool
+than an abstract graph.
+
+Parent grouping with shared descent. When a child has two or more visible
+parents, the descent line branches from a shared junction between the
+parent row and the child row, rather than drawing one independent line
+per parent. Siblings of the same parents share the descent.
+
+Lifespan dates under each node. The line under each entry's name now
+shows lifespan dates pulled from the first calendar-date-range field on
+the entry's template: 1903–2003, 1980–Living, 1980–? (deceased without a
+death year), ~1742–1751 (approximate). Falls back to the template name
+when no lifespan is populated.
+
+Long names truncate cleanly. Names that don't fit show "..." in the box;
+hover any node to see the full name.
+
+Depth is now configurable. Two number inputs in the focal toolbar —
+Generations up and Generations down — let you pick how many generations
+to show in each direction. 1–10 each, default 5.
+
+Mother / Father per-parent labels removed. With the new grouped descent,
+the role distinction reads from the geometry. The label data is still on
+the entry and still surfaces in entry view and markdown export.
+
+Spouse line removed. Pairs sharing children are visually grouped via the
+descent geometry; childless adjacent spouses sit side-by-side without an
+explicit connector. Spouse status (active / former / estranged) and label
+overrides remain on the data and surface in the entry view.
+
+
+CONCORDANCE POLISH
+------------------
+
+Focus depth is now a number input, 1–15. Was three preset buttons (1, 2,
+3); now you can walk further if your data calls for it.
+
+Edge labels rotate to follow the line and stay right-side-up regardless
+of orientation. When two entries have multiple relationships in the same
+direction, the labels concatenate ("Members // Council Members"). When
+relationships are reciprocal, each direction gets its own label
+positioned near the entry it describes — no more midpoint pile-ups.
+
+Description and Notes edge labels are suppressed. Those weren't carrying
+meaningful relationship information; just visual noise.
+
+Nodes stay pinned after drag. Once the initial layout settles, every node
+holds position. Dragging one node moves only that node — no more
+graph-wide ripple.
+
+
+SMARTER BACK BUTTON
+-------------------
+
+The back button on entry view now follows browser-history semantics. It
+remembers each step in your navigation and unwinds them one at a time.
+Open from Concordance → back goes to Concordance. Open from Linea → back
+goes to Linea. Walking through wiki-link or spouse-chip chains (entry →
+entry → entry) takes you back through each prior entry one click at a
+time, then to the original source view.
+
+
+SMALLER FIXES
+-------------
+
+- Chronometric events no longer bleed into the lane-label gutter when you
+  pan the timeline far left.
+
+- The cosmetic horizontal scrollbar on the Chronometric timeline (always
+  present, never functional) is gone.
+
+- Linea's generation depth controls now affect the visual layout, not
+  just the data backing it.
+
+- Linea's parent-child connecting lines render correctly. They had been
+  faintly visible only as small arrow tips since v1.0 due to a missing
+  color variable.
+
+
+UPDATED DOCUMENTATION
+---------------------
+
+The in-app Home pages for Linea, Concordance, the Chronometric timeline,
+and the JSON save schema have been updated to reflect all of the above.
+If you want a tour of the new behavior, the Home content is the first
+place to look.
