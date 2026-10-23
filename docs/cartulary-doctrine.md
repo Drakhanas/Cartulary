@@ -156,7 +156,7 @@ The two surfaces reinforce rather than duplicate: the suffix is on the data (her
 
 **Multi-line tooltip composition for cell-level affordances.** *(v1.4 post-Kalendarium.)* Browser `title` attributes render `\n` as line breaks. Calendar grid cells compose tooltips by joining ordered lines: base info (Day N, or "N dated entries"), optional season name, optional per-moon "Name: Phase" lines. Each feature contributes a line only when relevant, so the tooltip self-adapts to which features the calendar has configured. Pattern extends to any cell-dense view that wants hover-revealed detail without committing to a dedicated tooltip/popover component.
 
-**Working-copy file versioning with `r###` snapshots.** *(v1.5.)* Staged working copies follow the format `Cartulary_v{VERSION}_Working_r###_(description).html` where `v{VERSION}` keeps the dot (e.g. `v1.5`, never `v1_5`), `r###` is a zero-padded revision counter, and `(description)` is a 2-3 word lower-case **hyphenated** label in parentheses naming the change (e.g. `(syllabifier-engine-and-lexeme-readout)`). The `v1_5` underscore form is only what Drak's pipeline produces on a round-trip upload; stage with the dot. Smoketest branch uses `_Smoketest_r###_` instead. Counter persists across sessions within a release and resets to `r001` when VERSION bumps on release ship. Current counter value tracked in `handoff.md` so each new session knows where to continue. Convention exists because every staged build archives to Drak's 38TB NAS — granular snapshots enable step-by-step recovery from any breaking change. The pre-v1.5 convention overwrote `Cartulary_v#.#_Working.html` each stage, losing the snapshot trail; the new convention preserves it. Full operational details in `cartulary-build.md`.
+**Working-copy file versioning with `r###` snapshots.** *(v1.5.)* Staged working copies follow the format `Cartulary_v{VERSION}_Working_r###_(description).html` where `v{VERSION}` keeps the dot (e.g. `v1.5`, never `v1_5`), `r###` is a zero-padded revision counter, and `(description)` is a 2-3 word lower-case **hyphenated** label in parentheses naming the change (e.g. `(syllabifier-engine-and-lexeme-readout)`). The `v1_5` underscore form is only what Drak's pipeline produces on a round-trip upload; stage with the dot. Smoketest branch uses `_Smoketest_r###_` instead. Counter persists across sessions within a release and resets to `r001` when VERSION bumps on release ship. Current counter value tracked in `handoff.md` so each new session knows where to continue. Convention exists because every staged build archives to Drak's 38TB NAS — granular snapshots enable step-by-step recovery from any breaking change. The pre-v1.5 convention overwrote `Cartulary_v#.#_Working.html` each stage, losing the snapshot trail; the new convention preserves it. Full operational details: the cut procedure in `handoff.md` and the docstring of `inlining/build_inline.py` (`cartulary-build.md`, which carried them before modularization, was deleted 2026-10-23).
 
 **System templates can be hidden from the sidebar template list while their data is exposed through a workspace UI.** *(v1.5.)* The `kind:celestial-body` template (introduced for Ephemeris) is a system template — its existence is necessary for the data model, but exposing it as a normal template in the sidebar would route worldbuilders through the entry-creation flow instead of the purpose-built Astronomical Body workspace inside Ephemeris. The pattern: system templates with kind-specific values (parallel to the existing `kind:map` system template pattern) are filtered out of the standard template list rendering. The user manages bodies through the Ephemeris view's Astronomical Body workspace, which uses the underlying template for storage but presents a custom UI (orbital element widgets, kind-aware defaults, body tree navigation, derived value displays) that fits the data better than a generic entry editor. Edit Template access remains available via the workspace's overflow menu for advanced customization. The pattern generalizes to any future system-template-backed view that wants tailored UX without exposing the template itself as a primary navigation surface.
 
@@ -426,57 +426,16 @@ Don't suggest alternative names. The name is locked.
 
 **Direct-collision variant — worse than Tiffany.** *(v1.5.)* A naming failure mode worse than the Tiffany issue: when a term is already the name of an established software product in the *exact adjacent domain*. Stellarium considered and rejected for the celestial-mechanics view because stellarium.org is well-known open-source planetarium software in the precise adjacent domain Cartulary would be building in. Anyone familiar with the existing Stellarium would expect Cartulary's feature to behave similarly, and the comparison wouldn't flatter Cartulary (the real Stellarium has 25 years of development, full sky rendering, real catalogs). Direct collisions like this make Cartulary look like it's name-jacking. Stronger filter than Tiffany: ask not only "is the term diluted by modern usage" but "is there already a software product with this name in or adjacent to the domain I'm building in." If yes, eliminate it. Astrarium considered as a real-Latin alternative (Giovanni de' Dondi's 14th-century mechanical astronomical clock) but rejected for phonetic awkwardness — the `astr-AR-i-um` consonant cluster doesn't flow even though it matches the `-arium` suffix of Kalendarium. Ephemeris won on phonetic flow and semantic accuracy (the view's output IS an ephemeris in the technical sense).
 
-## Feature surface (current as of v1.4)
+## Feature surface
 
-### Templates and entries
-- 20 user-facing built-in templates with sensible default fields (Character, Location, Faction, Religion, Magic System, Calendar, etc.). The Map system template still exists internally but is hidden from the Templates sidebar — map creation flows through Cartographia.
-- Custom template builder with arbitrary field types: text, long-text-markdown, tags, dropdowns, numbers, dates, calendar dates, ranges, URLs, colors, images, entry refs, name histories, nestable repeating groups
-- Per-template custom fields, custom icons, drag-reordering
-- **Template engine** *(v1.3)*: cascade-select with `optionsByParent` matrix, showWhen conditional visibility, multi-template entry-ref (`refTemplatesId` array), refFilters per-template field+value filters, otherTextField auto-injects Other + reveals customText input
-- **Half-width fields** *(v1.3)*: adjacent half-eligible fields auto-pair into side-by-side rows. Eligibility is type-based (text, number, date, calendar-date, color, url, tags, select, single entry-ref); lone half-eligibles auto-expand to full. Universal across built-in and user templates; no flag required. Legacy `halfWidth: true` markers on built-in fields are now inert metadata. Pairing is visibility-aware — hidden, empty, and secret-gated fields are filtered before pairing, so a visible field whose declared partner is hidden re-pairs with the next visible neighbor or expands to full. Layout reflows as values change rather than leaving blank slots.
-- **Template origin** *(v1.3)*: `origin: "builtin" | "user"` field distinguishes canonical templates from user-created/imported. Migration framework, dedup, Reset, and Restore all origin-aware.
-- **Template Preview popup** *(v1.3)*: 👁 button in the template builder opens a separate browser window with a live-render of the in-progress template as an entry form. Ephemeral popup-local state (nothing saves to the world), auto-closes on builder exit / page reload / parent tab close. Tests cascade-select, showWhen, otherTextField, half-width auto-pair behavior. Cross-window React root via `ReactDOM.createRoot` into the popup document's mount point. Tested in Chrome / Edge / Firefox / Brave; Safari untested.
+*(Replaced 2026-10-23. This section was a hand-kept list "current as of v1.4", two releases stale by the v1.6 ship: no Glossopoeia, no Ephemeris, no Packs, and maps still described as Map-template entries. A second copy of the feature surface goes stale the way a backlog row does, so this section now points at the two copies that are kept true. The v1.4 text is in git history before this change.)*
 
-### Tags and references
-- Tag pool with autocomplete and color coding
-- Wiki-link syntax (`[[Entry Name]]`) with autocomplete, broken-link detection, and former-name resolution
+The current feature surface lives in two places:
 
-### Calendar system
-- Custom calendar with user-defined months (any name, any day count) and eras (with short codes like AD/BC)
-- Calendar dates throughout the application validate against calendar definition
-- Time-aware features: pin filtering by year, name history contextual rendering
+- the itch page's "What it does" section, `docs/release-notes/v1.6/itch-page.html`, written sentence by sentence against the r050 build and corrected at r051;
+- the in-app help (Home), whose Views & Pages topic lists every view; the map topics were rewritten against the editor at r047, and eight more topics were read against the application at r050.
 
-### Views
-Sidebar order: Home, Project, Linea, Stemma, Concordance, Timeline; Vertical, Timeline; Chronometric. Maps are entry-attached (opened from Map-template entries), not a separate sidebar view.
-
-- **Linea** — Sosa-Stradonitz family tree with junction-style descent geometry, lifespan dates on each node, user-selectable depth limits, hover-tooltip on truncated long names. ✝ marker on deceased nodes renders independently of relationship-status styling.
-- **Stemma** — radial canvas, 16 fixed slots clockwise from 12 o'clock around the focal node, drillable focal-and-children, freeform/linked nodes, smart input on `+` slots, JSON import/export with Skip/Replace/Rename collision modal, Ctrl+scroll zoom.
-- **Concordance** — force-directed cross-reference graph. Template-filterable sidebar. Edges labeled with relationship type or field source; labels rotate to follow lines, concatenate by direction. User-configurable focus depth. **Node positions persist** *(v1.3)* to the world JSON — drag-to-position survives reload, export / import, device transfer. Filter toggles preserve positions and viewport zoom. Focus combobox autocomplete filtered by visible templates. New entries auto-place around pinned majority via single-pass force layout; settle positions get saved. Defensive position-strip for deleted entries on load.
-- **Timeline; Vertical** — chronological browser, top-to-bottom by calendar date.
-- **Timeline; Chronometric** — horizontal timeline with eras, span events, parallel template lanes, pan/zoom (Ctrl+scroll). Lanes resize vertically to fit overlapping events. Marriages render on a dedicated synthetic Marriages lane below template lanes.
-- **Interactive maps** — accessed via Map-template entries. Clickable pins, time-aware filtering by year, name-history-aware pin labels.
-
-### Navigation
-- **Entry-view back button** uses browser-history semantics via `entryNavStack`. Walking through wiki-link or spouse-chip chains takes you back through each prior entry one click at a time.
-
-### Exports
-- Markdown export: per entry, per Linea family tree, or whole world
-- ZIP exports with embedded images
-- JSON canonical save format (importable, scriptable)
-- Per-template export (`cartulary_template_export: 1` envelope) with Skip/Replace/Rename collision modal on import
-- Per-Stemma JSON export
-
-### Workspace features
-- Multiple themes including high-contrast accessibility
-- Font scaling
-- Lock mode (read-only sharing for collaborators)
-- Focus mode
-
-### Field types worth knowing
-- Markdown rich text with rendering, autocomplete, formatting toolbar
-- Name history as first-class field type — former names with date ranges, time-aware contextual rendering
-- **Entry-ref relations carry structured metadata.** Relation-typed entry-refs (`relationKind: "parent"` / `"spouse"`) store `{id, label?, status?, marriedOn?, endedOn?}`. `label` is per-side speaker-relative (not mirrored). `status` / `marriedOn` / `endedOn` are facts about the relationship (mirrored).
-- **Marriage reciprocity** is automatic: declaring A's spouse as B and saving causes B's record to gain a matching declaration. Reconcile-on-every-save, idempotent.
+When the application changes, both follow in the same pass. Neither is restated here.
 
 ## What Cartulary isn't (don't drift)
 
