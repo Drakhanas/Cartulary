@@ -142,4 +142,5 @@ tree the single file is built from, the build, the gates that check
 it, and the project's own documentation.
 
 Questions or bug reports: drakhanas.itch.io/cartulary (page comments)
-or the Discord at discord.gg/zWMKXfZtcC.
+or the Discord at discord.gg/zWMKXfZtcC. Bug reports can also be filed
+as issues at github.com/Drakhanas/Cartulary.
