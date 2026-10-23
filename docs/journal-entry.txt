@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r044) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r045) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -234,3 +234,12 @@ rewrites it. Mouse events became pointer events everywhere, proven by the probes
 already written, because the automation emits pointer events too. Drak passed it
 on a Surface, pen and finger, and asked for the pen's eraser end to reach the
 Eraser tool. Cut 16. Twenty-two rotations. Fourteen cuts in one session.
+
+r045 replaced the zoom that scaled a wrapper and scrolled a box with a camera: the
+box stays put and the viewBox says what it shows. Pins, both overlays, and the pointer
+math each became one formula through the view, which is the whole argument for a
+camera. The two hooks needed each other and one had to render first, so they read
+each other at the event instead, as functions. The wheel and the keys wait while a
+pointer is down; a second finger is the one thing that does not, because a pinch
+has no other way to begin. Drak passed it on the Surface in the same evening.
+Twenty-three rotations. Fifteen cuts in one session.
