@@ -39,24 +39,40 @@ alone: a fresh chat reads it top to bottom and can work. Order matters, because 
 goes top-down and stops when they think they have enough.
 
 1. Version-line banner, then the NEXT banner. What to do next, with expected signals stated
-   in advance where a cut cannot return a clean verdict.
-2. Cold-start prerequisites. Verify commands, not claims about state.
-3. The tree, the gate, the anchor.
-4. What is done, then the current session in detail.
-5. Architecture, build setup, carry-forward facts, preferences, doc layout, backlog.
+   in advance where a cut cannot return a clean verdict. Then one line saying where the
+   history is.
+2. Cold start. Verify commands, not claims about state.
+3. The tree and the anchor, then the gates.
+4. The procedures, each stated once.
+5. Architecture, carry-forward facts, the site and the release artifacts, working with Drak,
+   the documents.
+
+It carries current state only. The per-cut record belongs in the changelog, each cut its own
+entry with its gate figures and hashes; the backlog belongs in the roadmap. Neither is copied
+here. *(Amended 2026-10-23: the v1.6 handoff had grown to 177 KB, 101 KB of it a session's
+cut-by-cut detail that the changelog already carried, and a cold start read all of it first.)*
 
 State a fact in exactly ONE place. A superseding section elsewhere does not retire a stale
 note; strike stale text at its source. An earlier edition carried the `/mnt/project` sync
 status in two sections two hundred lines apart, and a top-down reader got both.
 
 **`changelog.md`** is append-only. The active file holds the open version only; closed
-versions are frozen in their own files. History is preserved verbatim, including its errors:
+versions are frozen in their own files. Between lines (a version shipped, the next not yet
+opened), it holds the gap's sessions, which stay as the first entries of the next line. History is preserved verbatim, including its errors:
 older session blocks fall out of the checker's live region on purpose. If a superseded block
 contains a wrong figure, say so at delivery rather than editing it. Use `[stale: reason]`
 inline when a live block deliberately quotes something retired.
 
-**`roadmap.md`** appends a dated `=== ADDED ... ===` block per session. Everything above the
-newest block is superseded and unchecked.
+**`roadmap.md`** is the standing backlog (features, engineering, housekeeping, what is tolerated,
+what is decided no, what is deferred), edited in place as items move, followed by a dated
+`=== ADDED ... ===` block per session. The newest block is the current status and the only part
+the checker reads; the standing sections are kept true by hand, and a row struck there is
+recorded, with its evidence, in that session's block.
+
+**At a version's close** (the upload, not the build), the changelog freezes verbatim to
+`changelog-v<version>.md`, the handoff to `handoff-v<version>.md`, and the version's plan and
+session blocks move verbatim from the roadmap to `roadmap-archive.md`. The archives sit outside
+the gate and are never edited; the live files start over as current state.
 
 **`cartulary-doctrine.md`** appends dated entries. One lesson per bullet, each naming the
 defect that produced it in parentheses. A doctrine entry with no incident behind it is an

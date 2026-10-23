@@ -93,8 +93,8 @@ The GitHub Actions workflow in `.github/workflows/` runs all of this on every pu
 
 `docs/` is the project's own record, written for the next working session rather than for a reader, and kept honest by the doc gate.
 
-- `handoff.md`: where the project stands, cut by cut, with the verification each one had.
-- `changelog.md` and the per-version changelogs: what changed and why.
+- `handoff.md`: where the project stands and how work is done in it: the cold start, the gates, the procedures. A version's handoff is frozen at its close as `handoff-v<version>.md`.
+- `changelog.md` and the per-version changelogs: what changed and why, cut by cut, with the verification each change had.
 - `roadmap.md`, `roadmap-principles.md`, `roadmap-archive.md`: what is planned, the rules for planning it, and the plans of the versions that shipped.
 - `cartulary-doctrine.md`, `doctrine-code-watch.md`, `doctrine-site.md`: standing rules learned from mistakes, each with the mistake that taught it.
 - `cartulary-spine-manifest.md`: the module tree with line counts and what each module holds.

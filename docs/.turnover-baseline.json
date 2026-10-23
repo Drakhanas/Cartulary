@@ -1,20 +1,16 @@
 {
   "em_dash": {
-    "handoff.md": 4,
-    "changelog.md": 2,
-    "roadmap.md": 135,
-    "cartulary-doctrine.md": 205,
+    "handoff.md": 3,
+    "changelog.md": 0,
+    "roadmap.md": 0,
+    "cartulary-doctrine.md": 194,
     "cartulary-spine-manifest.md": 0,
     "journal-entry.txt": 0
   },
   "banned": {
     "handoff.md": {},
-    "changelog.md": {
-      "that said": 1
-    },
-    "roadmap.md": {
-      "load-bearing": 3
-    },
+    "changelog.md": {},
+    "roadmap.md": {},
     "cartulary-doctrine.md": {
       "meaningful": 2,
       "load-bearing": 1,
