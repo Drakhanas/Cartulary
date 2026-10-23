@@ -1,0 +1,145 @@
+CARTULARY v1.6 - PATCH NOTES
+============================
+
+THE MAP EDITOR (Cartographia+)
+------------------------------
+
+A map is no longer an image with pins on it. It is a canvas: an image
+you bring, a blank sheet, or both, and you draw and paint on it inside
+Cartulary. Everything below happens in the map editor, which opens from
++ New Map or Edit on any map in Cartographia.
+
+Drawing
+  - Tools: Rect, Ellipse, Polygon, Line, Freehand (drag a line in one
+    motion; it is simplified on release), Fill (click inside an
+    enclosed area to flood it; small gaps in the outline close on their
+    own), Text, Stamp, Brush, Eraser, Pan. Pin stays the default.
+  - Style: a palette of eight (Ink, Sepia, Parchment, Forest, Water,
+    Stone, Blood, Chalk) plus None for fill and stroke; line width from
+    1 to 32 units with a field to 64; Smooth, which rounds a
+    rectangle's corners and curves a polygon or line through its
+    points.
+  - Labels: three sizes, an angle, and an arc from -180 to 180 degrees,
+    so a label can follow a coastline or ring a city.
+  - Select: move a shape, reshape it by its points or corners, turn a
+    label or stamp with the knob above it (Shift snaps to 15 degrees),
+    nudge it with the arrow keys, remove it with Delete.
+  - Layers: a named, ordered stack with show/hide and lock. A hidden
+    layer stays out of the exports and downloads too.
+  - Undo and redo, fifty steps, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, one
+    step per gesture, pins included. This is the first undo in
+    Cartulary; it covers the map editor while you are in it.
+  - Blank canvases: Landscape 1600 x 1000, Portrait 1000 x 1600, Square
+    1200 x 1200, or a custom size, on a vellum sheet. An image map's
+    canvas is the image's own size.
+
+Painting
+  - Brush and Eraser paint on raster layers. With a drawing layer
+    active, the first stroke makes a Paint layer just above it.
+  - Tips: a hard round and a soft round are built in, and any tintable
+    tip a brush pack brings in works too. Size runs from 4 to 256 units
+    (type up to 1024); opacity from 5% to 100%.
+  - Load image fills a raster layer with a PNG, JPEG, or WebP (a scan,
+    a painting made elsewhere), scaled to the canvas width.
+  - With an image folder connected, each painted layer is a file in the
+    folder; without one, it embeds in the save file, with the same
+    warning Set Image gives for large files.
+  - Mouse, pen, or finger. A pen's eraser end erases. Pressure is not
+    read; a stroke is the size you set.
+
+Stamps and brush packs
+  - Four symbols are built in (mountain, tree, settlement, compass
+    rose). More come from stamp packs, imported from the Stamps panel
+    at the top of Cartographia or from the picker inside the editor.
+  - A Cartulary pack is a .json of SVG symbols, PNG tips, or both.
+    Every SVG body is sanitized on import and again on every load, and
+    the import shows what it removed before anything lands.
+  - Brushes you already own import as tips: PNG files or a zip of them
+    (a Wonderdraft folder's names and tint modes are read), Photoshop
+    .abr files, GIMP .gbr and .gih files, and Procreate .brush and
+    .brushset files. A tip with no color is tinted by the map's Fill;
+    one with color is placed as it is.
+  - Export a pack as JSON, or as PNGs in the Wonderdraft folder layout
+    that Inkarnate and Dungeondraft also take.
+  - The picker filters by name or pack name, so a 500-stamp pack is
+    searchable.
+
+Zoom and pan
+  - Ctrl+scroll (Cmd+scroll on a Mac) zooms about the pointer, a pinch
+    does the same, and the bar in the canvas's corner has - and +
+    buttons and Fit. The keys + - 0 do the same. The range is Fit to
+    8x.
+  - Pan with the Pan tool, with Space held, with the middle button, or
+    with two fingers. The map's read-only view pans by dragging.
+
+Getting a map out
+  - Download SVG or PNG from a map's view: the drawing with the image
+    and the painted layers inlined, stamps resolved, hidden layers out,
+    the map font embedded. PNG is drawn at twice the canvas size.
+  - The world's HTML export renders every map through the same
+    renderer, drawing and painted layers included.
+
+The strip and the keyboard
+  - The tool strip is built from groups in rows, and the groups that do
+    not apply to the current tool dim rather than disappear, so nothing
+    moves under the pointer. Arrange lets you reorder the groups and
+    the tools and break them into rows however you like; the layout is
+    remembered in your browser.
+  - One letter per tool (V Select, N Pin, R Rect, E Ellipse, P Polygon,
+    L Line, F Freehand, G Fill, T Text, S Stamp, B Brush, X Eraser,
+    H Pan), shown in each button's tooltip. Done and Cancel for an
+    open polygon or line sit in the strip.
+  - Every color swatch carries its name for a screen reader, and a live
+    region announces the tool and the selected shape.
+
+
+MAPS ARE THEIR OWN RECORDS
+--------------------------
+
+Maps are no longer entries of a Map template. Each map is a record in
+Cartographia with the same three fields (Description, Scope / Region,
+Notes), its canvas, and its pins.
+
+  - There is no Map template in the sidebar and no map kind in the
+    Template Builder.
+  - Cartographia indexes every map in the world, most recently updated
+    first, with the world's stamp packs in a panel above the list.
+  - Maps appear in Concordance as their own toggleable type, and a pin
+    that links to an entry is an edge from the map to it, as before.
+  - The world's Markdown and HTML exports carry a Maps section. The
+    per-map Markdown Export button is gone with the map entries it
+    exported; the world export covers maps.
+
+Worlds saved by v1.5 are migrated when you load them. Each map entry
+becomes a map record, the Map template and any custom map template are
+removed from the sidebar, and any extra field a custom map template had
+is kept in the record with a line in Notes naming it. Every existing map
+opens with its image and its pins exactly where they were; the drawing
+starts empty. Nothing is lost, and the save file remains a plain .json
+you can read.
+
+
+SMALLER CHANGES
+---------------
+
+- The in-app help has three map topics now (Cartographia; Map Editor;
+  Stamps & Brushes) and a corrected JSON schema for the new record
+  shapes, and eight other topics were read against the application and
+  corrected where they had drifted.
+- Painted layers join map images in the Markdown + images zip export.
+- cartulary.world's Cartographia page is a hub with two sub-pages, The
+  editor and Stamps and brushes, matching the help.
+
+
+WHERE TO FIND HELP
+------------------
+
+The full usage guide is inside the application: click the Home icon
+in the sidebar. Full documentation is also at cartulary.world.
+
+The source is public at github.com/Drakhanas/Cartulary: the module
+tree the single file is built from, the build, the gates that check
+it, and the project's own documentation.
+
+Questions or bug reports: drakhanas.itch.io/cartulary (page comments)
+or the Discord at discord.gg/zWMKXfZtcC.
