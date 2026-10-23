@@ -33,7 +33,7 @@ To make a portable copy, click your world's name at the top-left of the sidebar 
 - **Export .zip** downloads a Markdown bundle with all referenced images in an \`images/\` subfolder. Same content as .md but self-contained. **Cannot be re-imported.**
 - **Import .json** loads a JSON save back. JSON only.
 
-**Shareable HTML.** A fourth export format lives on the **Project** view (not in Settings): a single self-contained \`.html\` file with the world's content rendered as a static reference. Cross-references between entries become anchor links, maps render as they do in the app (image, drawing, and pins), and dates resolve through your calendar system. Read-only — for sharing with people who don't have Cartulary. Configurable per-export: include secret fields, pick which calendar to render dates in (when you have additional calendars). **Cannot be re-imported.** JSON remains your canonical save format.
+**Shareable HTML.** A fourth export format lives on the **Project** view (not in Settings): a single self-contained \`.html\` file with the world's content rendered as a static reference. Cross-references between entries become anchor links, maps render as they do in the app (image, drawing, painted layers, and pins), and dates resolve through your calendar system. Read-only — for sharing with people who don't have Cartulary. Configurable per-export: include secret fields, pick which calendar to render dates in (when you have additional calendars). **Cannot be re-imported.** JSON remains your canonical save format.
 
 **Per-entry markdown export.** Each entry's view has an **Export ↓** button next to the title that downloads just that one entry as Markdown. Filename is the entry's slug, e.g. \`aria.md\`. Useful when you want to share a single character or location without dumping the whole world. Whether secret fields are included follows the current state of the secrets visibility toggle in the top right: if it's on (◉), secrets are in the export.
 
@@ -307,21 +307,15 @@ If you don't know which to pick, pick PNG.
 - The export shows what's visible. Lanes you've turned off don't appear, and dates outside the visible range get cropped.
 - Very long timelines at high zoom can produce huge files. If a PNG export silently fails to download, try the SVG export instead — SVG handles large dimensions better — or zoom out before exporting.` },
 
-  { id: "cartographia", title: "Cartographia", content: `Maps in Cartulary are canvases: an image you bring, a blank sheet you draw on, or both, with a vector drawing (shapes, labels, stamps, on layers) and clickable pins over it. Pins tie places to entries; the drawing is the map itself. Regional maps, dungeon layouts, star charts, floor plans, anything where points of interest cross-reference other entries. **Cartographia** is the sidebar view that indexes every map in the world, with the world's stamp packs in a panel above the list.
+  { id: "cartographia", title: "Cartographia", content: `Maps in Cartulary are canvases: an image you bring, a blank sheet, or both, with a drawing on it (shapes, labels, stamps, and painted layers, in a layer stack) and clickable pins over it. Pins tie places to entries; the drawing is the map itself. Regional maps, dungeon layouts, star charts, floor plans, anything where points of interest cross-reference other entries. **Cartographia** is the sidebar view that indexes every map in the world, with the world's stamps and brushes in a panel above the list. This topic covers maps, pins, time mode, and the downloads; the drawing and painting tools are under **Map Editor**, and stamp packs and brush imports under **Stamps & Brushes**.
 
-**Creating a map.** Open Cartographia from the sidebar and click **+ New Map**. The editor shows the canvas above the Description, Scope / Region, and Notes fields; Save needs a name, and **Edit** on a saved map brings the editor back. Click **Set Image** to bring an image in: with an image folder connected the file stays on disk and only its name is saved, otherwise it embeds in the save file, with a confirmation for anything over 1 MB. **Change Image** swaps the image and keeps the drawing and the pins; **Remove Image** clears it and leaves them on the canvas. Without an image the canvas is a blank vellum sheet, and a **Canvas** picker in the strip offers Landscape 1600 × 1000, Portrait 1000 × 1600, Square 1200 × 1200, or **Custom…** (whole units, 100 to 10000 a side; type the size, then **Set** or Enter). An image map's canvas is the image's own size and has no picker. Changing the size of a map that already has work on it asks first, because nothing is transformed: shapes keep their coordinates and anything past the new edges is cut off, pins keep their relative positions and shift against the drawing. Undo restores it.
+**The index.** Click Cartographia in the sidebar for the map list, most recently updated first: the name, the pin count, "no image" for a blank canvas, the last update, a preview of the Description, and the tags. Click a row to open the map; Delete on the row removes the map with its drawing and its pins (the entries the pins linked to are untouched). Maps are their own records, not template entries: there is no map template and no map kind in the Template Builder, and every map carries the same three fields, Description, Scope / Region, and Notes. A world saved by v1.5 is migrated on load: each map entry becomes a map record, the map-kind templates are dropped, and any extra fields a custom map template had are kept in the record (not shown) with a line in Notes naming them.
 
-**The tools.** The strip above the canvas holds eight tools, and the line above the strip says what the active one does. **Pin** is the default: click the map to add a pin, click a pin to edit it, drag a pin to move it. The rest draw. **Rect** and **Ellipse**: drag. **Polygon**: click the corners of a closed, filled area; the first corner, a double-click, Enter, or a right-click closes it. **Line**: click the points of an open line; a double-click, Enter, or a right-click finishes it. **Text**: click to place a label, then edit its words, size, angle, and arc in the strip. **Stamp**: pick a symbol in the strip, then click to place it at 120 units or drag to size it. **Select**: click a shape to select it, drag it to move it, drag a point (polygon, line) or a corner (rectangle, ellipse, stamp) to reshape it, drag the knob above a label or a stamp to turn it (Shift snaps to 15°); Delete or Backspace removes it. In any drawing tool, Esc discards the shape in progress and a right-click finishes it and switches to Select; in Select, a right-click returns to Pin.
+**Creating a map.** Click **+ New Map**. The editor shows the name and tags, the canvas, then the three fields; **Save** needs a name, and **Cancel** discards the draft (in folder mode it also puts back any layer files the session wrote). **Edit** on a saved map brings the editor back. **Set Image** brings an image in: with an image folder connected the file stays on disk and only its name is saved, otherwise it embeds in the save file, with a confirmation for anything over 1 MB. **Change Image** swaps the image and keeps the drawing and the pins; **Remove Image** clears it and leaves them on the canvas. An image map's canvas is the image's own size. Without an image the canvas is a blank vellum sheet, and a **Canvas** picker in the strip offers Landscape 1600 × 1000, Portrait 1000 × 1600, Square 1200 × 1200, or **Custom…** (whole units, 100 to 10000 a side; type the size, then **Set** or Enter). Changing the size of a map that already has work on it asks first, because nothing is transformed: shapes keep their coordinates and anything past the new edges is cut off, a painted layer is clipped, and pins keep their relative positions and shift against the drawing. Undo restores it. Sizes are drawing units, not screen pixels.
 
-**Style.** Fill and Stroke come from a fixed palette of eight (Ink, Sepia, Parchment, Forest, Water, Stone, Blood, Chalk) plus None; Width is 2, 4, or 8 units; **Smooth** rounds a rectangle's corners and curves a polygon or line through its points. With nothing selected the swatches set the style for the next shape; with a shape selected they restyle it. A label has a **Size** of 24, 36, or 56, an **Arc** slider from −180° to 180° (right arches it up, left bends it down; **Straight** flattens it), and an **Angle** field with −15 and +15 buttons; a stamp has the angle controls and takes its line weight from the symbol. When the map has more than one layer, the strip also shows the selected shape's layer and lets you move it to another. **Delete shape** removes it.
+**Pins.** Pin is the editor's default tool: click the map to add a pin, click a pin to edit it, drag a pin to move it, with a mouse, a pen, or a finger. A selected pin shows its editor below the canvas: Label (its first letter is the marker), Linked Entry (any entry in the world, or an Astronomical Body), Always visible (for time mode), Color, Notes, and Delete Pin; Done closes it. Pins are stored as fractions of the canvas, not pixels, so they stay on the same spot at any size and zoom. A linked pin is an edge in Concordance, from the map to the entry; in the map's view, clicking a linked pin opens the entry (a drag pans the map instead), and a pin whose entry was deleted says so. Pins go through undo like everything else and are left out of the SVG and PNG downloads.
 
-**Layers.** **Layers** in the strip opens the layer list, top of the stack first, one row per layer with its shape count. Pick the active layer (new shapes go there; the strip's **Layer** select does the same), rename it in place, **Hide** it (a hidden layer stays out of the HTML export and the downloads too), **Lock** it (nothing on it can be selected or drawn), move it up or down, delete it (asks when it has shapes; undo brings it back; the last layer stays), or **+ Add layer** on top. Every map starts with one layer named Drawing. A hidden or locked active layer refuses to draw, and the hint says so rather than drawing somewhere else.
-
-**Undo and redo.** **Undo** and **Redo** in the strip, or Ctrl+Z and Ctrl+Shift+Z (Ctrl+Y also redoes), step through the last fifty changes, one step per gesture: a drag of any length or a run of typing in one field undoes in one go. Pins are included. The history belongs to the editing session and is gone once you Save or Cancel. The rest of Cartulary still has no undo.
-
-**Pins.** A selected pin shows its editor below the canvas: Label (its first letter is the marker), Linked Entry (any entry in the world, or an Astronomical Body), Always visible (for time mode), Color, Notes, and Delete Pin; Done closes it. Pins are stored as fractions of the canvas, not pixels, so they stay on the same spot at any display size. A linked pin is an edge in Concordance, from the map to the entry; in the map's view, clicking a linked pin opens the entry, and a pin whose entry was deleted says so.
-
-**Zoom and size.** Ctrl+scroll (Cmd+scroll on a Mac) zooms the canvas from half size to four times, in the viewer and the editor; the drawing and the pins move together, and a zoomed canvas scrolls in place. Drag the canvas's bottom-right corner to resize it on the page, from 25% to 150% of the column (past 100% it grows from the center); double-click the corner to snap back. Neither persists: reload resets both.
+**Looking at a map.** In a map's view the canvas pans when you drag it, and zooms with Ctrl+scroll (Cmd+scroll on a Mac), a pinch, the − and + buttons in the canvas's corner, or the keys + and −; 0 or the corner's **Fit** shows the whole canvas, which is as far out as it goes, and the range runs to 8x. Drag the canvas's bottom-right corner to resize the box on the page, from 25% to 150% of the column (past 100% it grows from the center); double-click the corner to snap back. Neither the zoom nor the size persists. The editor has the same controls and a Pan tool besides; see Map Editor.
 
 **Map fields.** Every map carries the same three fields (Description, Scope / Region, Notes) above its canvas. Custom per-map field sets are not part of v1.6; maps are a uniform record type.
 
@@ -347,7 +341,73 @@ The rules:
 
 If no pins on the map have temporal data (no ranges anywhere), the Time button doesn't appear — the feature stays out of the way for non-historical maps. Permanent flags alone don't make the button appear, since there's nothing to scrub through.
 
-**Stamps and stamp packs.** The map editor's Stamp tool places symbols. Four are built in (mountain, tree, settlement, compass rose); more come from stamp packs, JSON files you bring in with **+ Import pack** in the Stamps panel at the top of the Cartographia index. A pack looks like this:
+**Downloading a map.** In a map's view (not the editor), a **Download** row above the canvas writes the saved map as a file named after the map. **SVG** is the map as a standalone file: the drawing with the image and every painted layer inlined when they can be read, the stamps and tips it uses resolved into the file (each once), hidden layers left out, the map font embedded when it can be fetched, and no pins (pins are app data with their own renderer). **PNG** is the same drawn at twice the canvas size, scaled down to fit sixteen million pixels when the canvas is huge. A note beside the buttons says what was written, and says so when the image or a painted layer could not be read (a folder file with no folder connected): the file then has the rest of the drawing. The world's HTML export draws every map through the same renderer, image, drawing, painted layers, and pins together.
+
+**Limitations.** No pen pressure: a stroke is the width you set however hard you press. No colors beyond the palette of eight for shapes, labels, and paint (a stamp pack can carry its own colors, and a color tip paints as it is). No grid or snapping beyond the rotation knob's Shift snap, no fog of war, no measurement or scale tools, no layer opacity or blend modes, and no placing a shape or a stroke from the keyboard. Cartulary's map support is reference-grade, not VTT-grade: a drawn, painted, or imported map with clickable, cross-referenced, time-aware pins. If you need a virtual tabletop experience, this isn't that.` },
+
+  { id: "map-editor", title: "Map Editor", content: `The map editor opens from **+ New Map** or **Edit** on a map. Above the canvas sit the image buttons and the hint, a fixed two-line space that says what the active tool does, or why it can't when the active layer is hidden, locked, or the wrong kind; then the strip: the tools, the canvas controls, and the style of the next shape or the selected one. Everything here works with a mouse, a pen, or a finger, and most of it from the keyboard too. Save and Cancel are the map's own buttons; the drawing is saved with the map.
+
+**The strip.** The strip is built from named groups laid out in rows. As shipped: row one, the thirteen **tools**; row two, the **Canvas** picker (image-less maps only), **Undo** and **Redo**, **Layers** with the **Layer** select naming the layer new shapes go to, and **Arrange…**; row three, the **Fill** and **Stroke** swatches, **Width**, **Smooth**, and the active tool's own controls (the point count with **Done** and **Cancel** while a polygon or line is open; tip, size, and opacity for the Brush and Eraser; the stamp picks; a label's text, size, and arc; the angle of a label or stamp; the selected shape's layer; **Delete shape**). Groups that don't apply to the current tool or selection dim rather than disappear, so nothing moves under the pointer when the tool changes. **Arrange…** opens a modal where every group can be moved earlier or later, a "new row" checkbox starts a row before any group but the first, and the tool buttons can be reordered; each change lands in the strip behind the modal at once, **Reset** restores the shipped layout, and the layout is kept in this browser with the theme and the font size, not in the world file.
+
+**The tools.** Each has a letter that selects it when no text field has focus, shown in its button's tooltip with the hint. In the shipped order:
+
+- **Pin (N)**, the default: click the map to add a pin, click a pin to edit it, drag a pin to move it. The drawing is inert under this tool.
+- **Select (V)**: click a shape to select it, drag it to move it, drag a point (polygon, line) or a corner (rectangle, ellipse, stamp) to reshape it, drag the knob above a label or a stamp to turn it (Shift snaps to 15°); the arrow keys nudge it by one unit, ten with Shift; Delete or Backspace removes it; Esc clears the selection; a right-click returns to Pin. A stamp keeps its proportions, nothing goes under 8 units, a line or polygon with more than forty points moves as a whole, and a filled region (from the Fill tool) has no handles. Shapes on hidden or locked layers can't be selected.
+- **Rect (R)** and **Ellipse (E)**: drag. A drag under two units in either direction places nothing.
+- **Polygon (P)**: click the corners of a closed, filled area. The first corner, a double-click, Enter, **Done** in the strip (from three points), or a right-click closes it; Esc or **Cancel** discards it.
+- **Line (L)**: click the points of an open line. A double-click, Enter, **Done** (from two points), or a right-click finishes it; Esc or **Cancel** discards it.
+- **Freehand (F)**: drag to draw a line in one motion. On release the line is simplified to the points it needs (a long coastline lands at a few dozen), it keeps **Smooth** on, and the tool stays so the next drag starts at once. Esc while dragging discards it. A freehand line of forty points or fewer reshapes by its points in Select; a longer one moves as a whole.
+- **Fill (G)**: click inside an enclosed area to fill it with the Fill color. The drawing as it stands is traced, so lines, shapes, the image, and painted layers all bound the fill; small gaps in the outline close on their own, and the fill lands just under the lines around it, above the topmost filled shape under the click in the active layer. A click too close to a line is refused with a note, as is an area too narrow to fill. The result is a region shape: selectable, movable, restyled by the swatches (it lands with no stroke; give it one in Select), with **Smooth** off because a traced edge is already true.
+- **Text (T)**: click to place a label; the strip's text field takes focus so typing replaces "Label", and Enter or Esc leaves the field. Size (24, 36, 56), **Arc** (a slider from −180° to 180°; right arches it up, left bends it down; **Straight** flattens it), and **Angle** (−15 and +15 buttons, or a typed value) are in the strip. A label is Ink until the Fill swatches restyle it.
+- **Stamp (S)**: pick a symbol in the strip (the four built-ins are always there; **More…** opens every stamp in the world, with a filter), then click to place it 120 units across or drag to size it. An svg symbol places square; a raster tip keeps its own proportions. The placed stamp is selected, so the angle controls and the handles apply to it at once.
+- **Brush (B)** and **Eraser (X)**: paint on and erase from a raster layer; see Painting below.
+- **Pan (H)**: drag to move the view; see The view below.
+
+In any drawing tool a right-click finishes the shape in progress and switches to Select with it selected; in Select a right-click returns to Pin. Esc discards a shape or a stroke in progress before it clears a selection.
+
+**Style.** **Fill** and **Stroke** come from a fixed palette of eight (Ink, Sepia, Parchment, Forest, Water, Stone, Blood, Chalk) plus None, each swatch named for a screen reader; **Width** is a slider from 1 to 32 drawing units with a number field that goes to 64; **Smooth** rounds a rectangle's corners and curves a polygon, line, or region through its points. New shapes start with a stone fill, a sepia stroke, width 4, and Smooth on. With nothing selected the controls set the style for the next shape; with a shape selected they restyle it, and that becomes the default too. A line has no fill, a bucket fill has no stroke until you give it one, a stamp has no width (its line weight is the symbol's own), and the Brush's color is the Fill swatch (Ink when Fill is None).
+
+**Painting.** A map's layers are vector (shapes) or raster (one bitmap). **Brush** paints on the active raster layer; with a vector layer active, the first stroke makes a raster layer named Paint just above it, which becomes the active layer. **Eraser** erases from the active raster layer and never makes one. The tool's controls sit in the strip: the **Tip** (the built-in Round and Soft round, plus any tintable tip the world's packs brought in; **More…** opens them all, with Import), the **Size** in drawing units (a slider from 4 to 256, a field to 1024; the ring on the canvas shows it), and the **Opacity** (5% to 100%; one stroke is flat at that strength however many times it crosses itself, and strokes over each other add up). The Brush paints in the Fill color; the Eraser's opacity is how much one stroke takes away. A pen's eraser end erases with the Eraser's settings from any drawing tool, and the tool stays. There is no pressure: a stroke is the tip at the size you set.
+
+A painted layer's bitmap is a PNG at the canvas's size, capped at 4096 pixels on the long side; a loaded image keeps its own format and size under the same cap. Where it lives follows the map image: with an image folder connected, each painted or loaded layer is a file in the folder named after the map and the layer (\`map-a3f2c1-layer-b7c9d2.png\`), rewritten by every stroke and by undo; without one, it embeds in the save file, with a warning past 1 MB when you load an image and a hard stop at 48 MB. Cancel on the map puts the folder back to what it held when the editor opened; Save leaves the files as they are. In **Layers**, **+ Add raster layer** makes an empty one, **Load image…** fills it with a PNG, JPEG, or WebP scaled to cover the canvas width (what runs past the bottom is clipped; a JPEG stays a JPEG unless the cap resizes it), and **Clear** empties it. The shape tools don't draw on a raster layer and the paint tools don't paint on a vector one; the hint says which layer to pick. Painted layers travel with the map into the HTML export and the downloads.
+
+**Layers.** **Layers** in the strip opens the layer list, top of the stack first, one row per layer with its shape count (a raster layer shows "image", "empty", or "file missing" instead). Pick the active layer (new shapes and strokes go there; the strip's **Layer** select does the same, marking raster, hidden, and locked layers), rename it in place, **Hide** it (a hidden layer stays out of the HTML export and the downloads too), **Lock** it (nothing on it can be selected, drawn, or painted), move it up or down, delete it (asks when it has shapes or an image; undo brings it back; the last layer stays), or add one on top with **+ Add layer** or **+ Add raster layer**. Every map starts with one vector layer named Drawing. A hidden or locked active layer refuses to draw, and the hint says so rather than drawing somewhere else. A selected shape can be moved between vector layers from the strip when the map has more than one.
+
+**Undo and redo.** **Undo** and **Redo** in the strip, or Ctrl+Z and Ctrl+Shift+Z (Ctrl+Y also redoes), step through the last fifty changes, one step per gesture: a drag of any length, a run of typing in one field, a run of arrow nudges, or one paint stroke undoes in one go. Pins and layer changes are included. Painted bitmaps are kept for undo up to 64 MB across the history, the oldest steps dropped first when they pass it; in folder mode undo rewrites the layer's file. The history belongs to the editing session and is gone once you Save or Cancel. The rest of Cartulary still has no undo.
+
+**The view.** The canvas is a camera over the drawing. Ctrl+scroll (Cmd+scroll on a Mac) zooms about the pointer, a pinch does the same, the bar in the canvas's corner has − and + buttons, the zoom, and **Fit**, and the keys + and − zoom while 0 fits. The range is Fit (the whole canvas) to 8x, in steps of 1.25; nothing goes below Fit. To pan, use the **Pan** tool, hold Space and drag from any tool, drag with the middle button, or drag with two fingers; two fingers anywhere also pinch, and cancel whatever one finger was doing. The zoom and the keys wait while a stroke, a shape, or a drag is in progress. The grip at the canvas's bottom-right corner sets the box's width on the page, 25% to 150% of the column (past 100% it grows from the center; the bar says "NN% wide" when it isn't 100%); double-click it to snap back. The zoom lives inside the box, handles and pins keep their screen size at any zoom, and nothing here is stored: a map opens at Fit.
+
+**Keys and pointers.** Letters select tools (above) when no field has focus. Otherwise:
+
+- **Arrows** nudge the selected shape by a unit; **Shift+arrows** by ten.
+- **Delete** or **Backspace** removes the selected shape; **Esc** discards a stroke or shape in progress, then clears the selection; **Enter** finishes a polygon or line.
+- **Ctrl+Z**, **Ctrl+Shift+Z**, **Ctrl+Y**: undo and redo.
+- **+**, **−**, **0**: zoom in, zoom out, fit. **Ctrl+scroll** zooms about the pointer. **Space** held turns any drag into a pan; so does the **middle button**.
+- **Right-click**: finishes the shape in progress and goes to Select; in Select, goes to Pin. The browser's menu never opens on the canvas.
+- **Pen**: draws, paints, selects, and drags like a mouse, without pressure; its eraser end erases.
+- **Touch**: one finger does what the tool does (in Pan, it pans); two fingers pinch and pan from any tool and cancel the one-finger gesture they land on; a long press mid-stroke is not a right-click. In a map's view (not the editor), a finger's up-and-down swipe scrolls the page and a sideways drag pans the map.
+- **Screen readers**: every swatch is named ("Fill: Water"), every tool button says its letter and what it does, and a live region names the tool and the selected shape ("Rectangle, 200 by 100"). The canvas itself is a drawing surface and can't be driven from the keyboard.` },
+
+  { id: "map-stamps", title: "Stamps & Brushes", content: `A stamp is a symbol the map editor's **Stamp** tool places and sizes; a tintable stamp is also a tip the **Brush** paints with. Four symbols are built in (mountain, tree, settlement, compass rose) and two tips (Round, Soft round); everything else comes in through the **Stamps** panel at the top of the Cartographia index, or through **Import pack or brushes** inside the editor's stamp and tip pickers. Stamps are world data: they travel in the world's .json and are listed under JSON Save File Schema.
+
+**The panel.** The Stamps panel lists every imported stamp grouped by pack, with a preview (a tip's tooltip gives its kind and pixel size), and offers **+ Import pack or brushes**, **Export built-ins as a pack** (a correct pack file with the four symbols, to start your own from), **Built-ins as PNG zip**, and on each pack **Export**, **PNG zip**, and **Delete pack**, with × on each stamp. Deleting asks first and, when the stamps are placed on maps, says how many placements will go missing.
+
+**What imports.** One button reads them all; pick one file or several of one kind:
+
+- A Cartulary pack, a .json holding svg symbols, PNG tips, or both (the format is below).
+- PNG files, as a pack named Imported stamps (you can rename it in the report). A PNG with any transparency uses its alpha as the shape; a fully opaque one is read as a mask with black as ink. Any colored pixel makes it a color stamp, placed as it is; without one it is a tintable tip, drawn in the map's Fill color.
+- A zip: every folder of PNGs inside becomes a pack named after the folder, and a Wonderdraft \`.wonderdraft_symbols\` file beside them supplies the names and whether each is tinted (\`custom_colors\`) or placed as is (\`normal\`). Every .abr, .brush, and .brushset inside is its own pack, and .gbr and .gih files make a pack per folder, so a brush set's download zip imports as it came.
+- A Photoshop .abr: every sampled tip, with its name and spacing where the file records them. Versions 1, 2, and 6 read whole; 7 and 10 read where their layout matches. A computed brush has no bitmap and is skipped with a note, and a file with no sampled tip is refused with what it found.
+- GIMP brushes: a .gbr is one tip, a .gih is one tip per cell. A color brush imports as a color stamp.
+- Procreate .brush and .brushset files: each brush's Shape.png is the tip, read by brightness (white is the shape), and Grain.png is ignored; the name comes from the brush's own archive, else its folder, and a brushset is named from its plist.
+
+Tips are scaled down to 1024 pixels on the long side (the report says when), capped at 4 MB each, and a pack holds at most 500 stamps. An import with nothing to report lands at once with a flash; otherwise a report shows first, with the pack's name (editable for brush and PNG imports), what will import and what it replaces, what changed, what was dropped and why, and Cancel; a zip of several packs steps through them with Skip. A brush or image file handed to World settings' Import .json is refused with a pointer back here.
+
+**Tips and symbols.** An svg symbol takes the map's Fill and Stroke like any shape. A tintable tip (the pack file calls it \`alpha\`) is drawn in the Fill color, Ink when Fill is None, and is what the Brush paints with; a color stamp (\`color\`) is placed as it is and never paints. A raster stamp's placement box keeps the tip's proportions at 120 units on its long side; an svg symbol's is square. A used tip goes into a map's file once, however many times it is placed.
+
+**The pickers.** **More…** in the strip opens every stamp in the world (or, for the Brush and Eraser, every tip), grouped by pack with the built-ins first: type to filter by name or pack name, with a count; a click arms the stamp (and swaps the selected stamp's symbol, which is also how a missing one is re-pointed); Escape clears the filter, then closes. **Import pack or brushes** at the bottom imports without leaving the editor.
+
+**A pack file.** A pack looks like this:
 
 \`\`\`
 {
@@ -355,24 +415,31 @@ If no pins on the map have temporal data (no ranges anywhere), the Time button d
   "id":     "forest",                   // optional; lower-case letters, digits, underscore, dash. Defaults to a slug of the name
   "name":   "Forest",
   "stamps": [
-    {
+    {                                   // an svg symbol
       "id":      "pine",                // required; same characters as the pack id
       "name":    "Pine",
       "viewBox": "0 0 64 64",           // the box the body is drawn in
       "body":    "<path d=\\"M32 4 L19 26 L45 26 Z\\" stroke-width=\\"3\\"/><path d=\\"M29 58 V63 H35 V58\\" fill=\\"none\\"/>"
+    },
+    {                                   // a raster tip
+      "id":      "moss",
+      "name":    "Moss",
+      "kind":    "alpha",               // alpha: tinted by the map's Fill, and a Brush tip; color: placed as it is
+      "image":   "data:image/png;base64,...",   // a PNG, at most 1024 pixels on the long side and 4 MB
+      "width":   256,                   // pixels
+      "height":  256,
+      "spacing": 25                     // the gap between dabs when it paints, as a percentage of the size
     },
     ...
   ]
 }
 \`\`\`
 
-The \`body\` is SVG inner markup. Parts with no \`fill\` or \`stroke\` of their own take the colors the map gives the stamp, so leave those off wherever the stamp should follow the palette, and put \`fill="none"\` on parts that must stay hollow. Line weight is the stamp's own and scales with it.
+The \`body\` is SVG inner markup. Parts with no \`fill\` or \`stroke\` of their own take the colors the map gives the stamp, so leave those off wherever the stamp should follow the palette, and put \`fill="none"\` on parts that must stay hollow. Line weight is the stamp's own and scales with it. A body holds at most 200 KB. A raster entry's \`image\` is decoded and re-encoded on import (any colored pixel makes it \`color\` whatever \`kind\` says) and only checked for its shape on load, never decoded there.
 
-Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. **Delete pack**, or × on a stamp, removes them; deleting a stamp that is placed on a map leaves a dashed box in the editor until a pack with it is imported again. **Export built-ins as a pack** in the Stamps panel writes a correct file to start from; **Export** on a pack writes it back out in this shape.
+Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`rect\`, \`polygon\`, \`polyline\`, \`line\`. Only these attributes: \`d\`, \`points\`, \`cx\`, \`cy\`, \`r\`, \`rx\`, \`ry\`, \`x\`, \`y\`, \`x1\`, \`y1\`, \`x2\`, \`y2\`, \`width\`, \`height\`, \`fill\`, \`fill-rule\`, \`fill-opacity\`, \`stroke\`, \`stroke-width\`, \`stroke-linecap\`, \`stroke-linejoin\`, \`stroke-dasharray\`, \`stroke-opacity\`, \`stroke-miterlimit\`, \`opacity\`, \`transform\`; values are plain numbers, path data, transforms, and colors, never \`url(...)\`. Everything else (scripts, event handlers, \`style\`, \`href\`, text, images, \`use\`) is removed, on import and again whenever the world loads, and the import shows what it removed before anything lands. Stamp ids are namespaced by the pack (\`forest__pine\`; pack and stamp ids are at most forty characters each), so two packs can each have a \`tree\` and neither touches the built-in one; re-importing a pack replaces its own stamps in place, and every placed stamp keeps pointing at the right symbol. Deleting a stamp that is placed on a map leaves a dashed box in the editor, and the strip names the missing stamp, until a pack with it is imported again or another symbol is picked for it.
 
-**Downloading a map.** In a map's view (not the editor), a **Download** row above the canvas writes the saved map as a file. **SVG** is the map as a standalone file: the drawing with the image inlined when it can be read, the stamps resolved, hidden layers left out, the map font embedded when it can be fetched, and no pins (pins are app data with their own renderer). **PNG** is the same drawn at twice the canvas size, scaled down to fit sixteen million pixels when the canvas is huge. A note beside the buttons says what was written, and says so when the image could not be read (a folder image with no folder connected): the file then has the drawing only. The world's HTML export draws every map through the same renderer, image, drawing, and pins together.
-
-**Limitations.** No freehand brush: lines go down point by point. No colors beyond the palette in the editor (a stamp pack can carry its own). No grid or snapping (the rotation knob's Shift snap aside), no fog of war, no measurement or scale tools, no per-layer opacity or blend modes. Cartulary's map support is reference-grade, not VTT-grade. If you need a virtual tabletop experience, this isn't that.` },
+**Exports.** **Export** on a pack writes it back out as a \`.cartulary-stamps.json\` with its own ids, so a re-import replaces its own stamps. **PNG zip** writes it as PNGs in the Wonderdraft folder layout (\`<pack>/sprites/symbols/<pack>/\` with a \`.wonderdraft_symbols\` beside them), svg symbols rasterized at 512 pixels white on transparent, so the zip unpacks into Wonderdraft's assets folder and Inkarnate and Dungeondraft take the PNGs inside. The built-ins export both ways too.` },
 
   { id: "views-pages", title: "Views & Pages", content: `The sidebar Views section holds these entries (drag-reorderable except Home and Project):
 
@@ -384,7 +451,7 @@ Only these elements survive import: \`g\`, \`path\`, \`circle\`, \`ellipse\`, \`
 - **Linea** — pedigree view (parents → children with junction descent for shared parents, spouses adjacent on the focal row). Sosa-Stradonitz layout for ancestors, lifespan dates on each node, configurable depth up and down. **Markdown export** of the focused person's tree from the Focal selector control panel.
 - **Stemma** — radial mind-map view for tree-shaped content that doesn't fit into a single entry: plot threads, theme webs, organizational hierarchies, decision branches. Freeform or entry-linked nodes; click any child to drill in. Each stemma is a portable document, with single-file JSON import/export.
 - **Kalendarium** — the bound collection of calendars. Edit primary and additional calendars side by side, pin a calendar to drive the comparison strip, set the world's current moment for auto-age on living characters.
-- **Cartographia** — the bound collection of maps. Indexes every map in the world. Click a map to open it (canvas, drawing, pins, time-mode chronicle filtering); use + New Map to create one.
+- **Cartographia** — the bound collection of maps. Indexes every map in the world, with the world's stamps and brushes above the list. Click a map to open it (canvas, drawing and painted layers, pins, time-mode chronicle filtering); use + New Map to create one.
 - **Ephemeris** — the celestial-mechanics view. Define a world's stars, planets, and moons, compute their positions on any date, search for alignments, and turn sky events into entries. See Ephemeris.
 - **Glossopoeia** — the constructed-language view. Eleven workspaces per language covering phonology, grammar, the dictionary, the writing system, and glossed texts. See Glossopoeia.
 
@@ -576,7 +643,9 @@ If you need actual confidentiality (real read-only sharing, encrypted storage, p
 1. **Folder mode** — connect a local folder once, type filenames into image fields. Files stay on disk, the world JSON stays small.
 2. **Inline mode** — images embed as base64 inside the world JSON. Simpler, but the file size balloons quickly: a world that would otherwise be 200KB of JSON can easily reach 50MB once you add a few dozen full-resolution images.
 
-Folder mode requires the File System Access API, which not all browsers expose by default — see Browser Compatibility for the per-browser breakdown. Cartulary detects what your browser supports automatically; if folder mode isn't available, image fields fall back to inline mode without you needing to do anything.` },
+Folder mode requires the File System Access API, which not all browsers expose by default — see Browser Compatibility for the per-browser breakdown. Cartulary detects what your browser supports automatically; if folder mode isn't available, image fields fall back to inline mode without you needing to do anything.
+
+A map's painted or loaded layers follow the same two modes: in folder mode each layer's bitmap is a PNG in the image folder named after the map and the layer, rewritten as you paint; inline, it embeds in the save file. See Map Editor, Painting.` },
 
   // ─── Workflows ───────────────────────────────────────────────────────────────
   { id: "backup-strategy", band: "Workflows", title: "Back Up Your World", content: `Auto-save protects you from accidental data loss within Cartulary — both committed entries and in-progress drafts persist across tab close and refresh. It does **not** protect you from browser-level data loss.
@@ -701,6 +770,8 @@ The general principle: if you're entering the same kind of structured data into 
 
 **Image storage matters.** Inline (base64) images inflate the JSON file and the IndexedDB record substantially. A world with text-only entries might be 200KB of JSON; the same world with a few dozen full-resolution images can easily reach 50MB. Folder mode keeps images on disk and the JSON tiny — strongly recommended for image-heavy worlds.
 
+**Painted map layers weigh more than shapes.** A painted layer is a PNG at the canvas's size, up to 4096 pixels on the long side (a loaded image keeps its own size under the same cap); inline, each one embeds in the save file (a warning past 1 MB on load, a hard stop at 48 MB per layer), and the editor keeps up to 64 MB of them for undo while a map is open. Folder mode keeps them as files beside your images, which is the right place for a map with more than a layer or two of paint.
+
 **JSON file size.** No ceiling imposed by Cartulary, but most browsers struggle to load .json files over 100MB through the import interface.
 
 **Architectural costs at scale:**
@@ -729,6 +800,7 @@ If you need real-time collaboration with multiple editors, use a cloud-based too
 - **Screen reader compatibility has not been audited.** Semantic HTML is used throughout, headings are nested correctly, form labels are associated with inputs, and aria-label attributes exist on icon-only buttons — all of which give screen readers a reasonable starting point. But this hasn't been tested with NVDA, JAWS, or VoiceOver. Don't assume it works until someone tries.
 - **Drag-and-drop reorder is mouse-only.** Templates, fields, calendar months, and the four reorderable views all reorder via mouse drag. There is no keyboard equivalent. This is a regression from the previous ↑↓ button system — the change made the UI better for mouse users at the cost of keyboard users. If keyboard reorder matters to you, reorder operations are currently inaccessible.
 - **Chronometric and Stemma pan/zoom are mouse-only.** Both views use Ctrl+scroll (or Cmd+scroll on Mac) for zoom; Chronometric also uses drag-to-pan. No keyboard equivalents.
+- **A map's drawing needs a pointer.** The map editor's canvas takes a mouse, a pen, or a finger; a shape, a paint stroke, or a pin can't be placed from the keyboard, and the canvas isn't navigable by a screen reader. The controls around it are (see below).
 - **Contrast ratios are eyeballed, not measured.** The High Contrast theme is intended to be high-contrast — bright white text on near-black, bright yellow accents — but no formal WCAG audit has been done. If you need verified WCAG AA or AAA compliance, you'll need to measure it yourself.
 
 **What does work:**
@@ -736,6 +808,7 @@ If you need real-time collaboration with multiple editors, use a cloud-based too
 - **High Contrast theme.** Click your world's name at the top-left of the sidebar to open settings, then go to Appearance → Theme. Switches from the default warm-dark scholarly palette to a high-contrast palette designed for low-vision users and bright-environment readability.
 - **Font size scaling.** Same Appearance section of settings, Font Size control. Four levels: Small, Medium, Large, Extra Large. Scales the entire UI proportionally.
 - **Keyboard navigation** for most operations: Tab moves focus, Enter activates, Escape closes modals. Form fields are reachable.
+- **The map editor from the keyboard.** One letter per tool (each tool button's tooltip shows it), the arrow keys nudge the selected shape, + − 0 zoom and fit, Space turns a drag into a pan, Ctrl+Z undoes, every color swatch carries its name ("Fill: Water"), and a live region names the tool and the selected shape for a screen reader. See Map Editor, Keys and pointers.
 - **No animation or motion-heavy effects.** Transitions are subtle. Should be comfortable for users with vestibular sensitivities.
 
 If you have accessibility needs Cartulary doesn't currently meet, the source file is human-readable and modifiable — that's a fact about the architecture rather than a recommended path. Real fixes belong in the upstream tool, not in user forks.` },
@@ -1184,8 +1257,8 @@ Maps were template entries (\`kind: "map"\`) through v1.5; a world saved by v1.5
   "pins":  [
     {
       "id":        string,                     // e.g. "pin-a3f2c1"
-      "x":         number,                     // 0..1, fraction of image width
-      "y":         number,                     // 0..1, fraction of image height
+      "x":         number,                     // 0..1, fraction of canvas width
+      "y":         number,                     // 0..1, fraction of canvas height
       "label":     string,
       "entryId":   string | null,              // optional cross-reference to another entry
       "color":     string | null,              // hex override, otherwise inherit pin color
@@ -1194,39 +1267,67 @@ Maps were template entries (\`kind: "map"\`) through v1.5; a world saved by v1.5
     },
     ...
   ],
-  "drawing": {                                 // v1.6, the vector layer under the pins
+  "drawing": {                                 // v1.6, the drawing under the pins
     "width":  number,                          // canvas units; with an image, its natural pixel size
     "height": number,
     "background": { "fill": hex, "grain": number },   // grain 0..1; not drawn under an image
     "layers": [
-      { "id": string, "name": string, "visible": boolean, "locked": boolean, "shapes": [ ...shapes ] },
+      { "id": string, "name": string, "visible": boolean, "locked": boolean, "kind": "vector", "shapes": [ ...shapes ] },
       ...
     ]
   }
 }
 \`\`\`
 
-Each shape carries \`id\`, \`type\` (\`rect\`, \`ellipse\`, \`polygon\`, \`stroke\`, \`text\`, or \`stamp\`), \`fill\` and \`stroke\` (hex or null), and \`strokeWidth\` (2, 4, or 8), then by type: \`x\`, \`y\`, \`w\`, \`h\` for rect, ellipse, and stamp; \`points\` ([[x, y], ...]) for polygon and stroke; \`smooth\` for rect, polygon, and stroke; \`text\`, \`fontSize\` (24, 36, or 56), \`rotation\`, and \`arc\` (degrees, -180..180) for text; \`stampId\` and \`rotation\` for stamp.
+A raster layer (v1.6, painted with the Brush or filled by Load image) holds one bitmap instead of shapes:
 
-The canvas size shown in the UI (\`sizePct\`) is per-session UI state and **not** persisted in the save file.
+\`\`\`
+{
+  "id":      string,
+  "name":    string,                           // "Paint" when the Brush made it
+  "visible": boolean,
+  "locked":  boolean,
+  "kind":    "raster",
+  "image":   string | null,                    // a filename in the image folder ("<map id>-<layer id>.png") or a PNG, JPEG, or WebP data URL; null when empty
+  "width":   number,                           // the canvas units the bitmap covers; a canvas resize clips it
+  "height":  number,
+  "shapes":  []
+}
+\`\`\`
 
-**\`mapStamps\` array (v1.6), stamps imported from stamp packs, world-scoped:**
+Each shape carries \`id\`, \`type\` (\`rect\`, \`ellipse\`, \`polygon\`, \`stroke\`, \`region\`, \`text\`, or \`stamp\`), \`fill\` and \`stroke\` (hex or null), and \`strokeWidth\` (1 to 64), then by type: \`x\`, \`y\`, \`w\`, \`h\` for rect, ellipse, and stamp; \`points\` ([[x, y], ...]) for polygon and stroke; \`rings\` ([[[x, y], ...], ...], drawn even-odd, so a ring inside another is a hole) for region, which the Fill tool makes; \`smooth\` for rect, polygon, stroke, and region; \`text\`, \`fontSize\` (24, 36, or 56), \`rotation\`, and \`arc\` (degrees, -180..180) for text; \`stampId\` and \`rotation\` for stamp. Layers draw in array order, so the last one is on top; a layer without \`kind\` is vector. A malformed drawing is coerced on load rather than refused: a shape that can't be rendered is dropped, and a raster layer whose image fails the check loads empty.
+
+The canvas size shown in the UI (\`sizePct\`) and the zoom are session UI state and **not** persisted in the save file.
+
+**\`mapStamps\` array (v1.6), stamps imported from packs and brush files, world-scoped:**
 
 \`\`\`
 [
-  {
+  {                                            // an svg symbol
     "id":      string,                         // namespaced by pack: "<packId>__<stamp id>"
     "name":    string,
+    "kind":    "svg",
     "viewBox": string,                         // "minx miny width height"
-    "body":    string,                         // sanitized SVG inner markup; see Cartographia, stamp packs
+    "body":    string,                         // sanitized SVG inner markup; see Stamps & Brushes
     "packId":  string,                         // the pack's slug; "" for a stamp from no pack
     "pack":    string                          // the pack's display name
+  },
+  {                                            // a raster tip
+    "id":      string,
+    "name":    string,
+    "kind":    "alpha" | "color",              // alpha: tinted by the map's Fill, and a Brush tip; color: placed as it is
+    "image":   string,                         // a PNG data URL, at most 1024 pixels on the long side and 4 MB
+    "width":   number,                         // pixels
+    "height":  number,
+    "spacing": number,                         // the gap between dabs when it paints, percent of the size
+    "packId":  string,
+    "pack":    string
   },
   ...
 ]
 \`\`\`
 
-Built-in stamps are never stored; a map's stamp shape references them by id (\`mountain\`, \`tree\`, \`settlement\`, \`compass\`). Every body is run through the sanitizer again on load, so editing this array by hand cannot bring in markup the import would have refused.
+Built-in stamps and tips are never stored; a map's stamp shape references a built-in by id (\`mountain\`, \`tree\`, \`settlement\`, \`compass\`). Every svg body is run through the sanitizer again on load, and every tip image is checked for its shape (a PNG data URL under the cap) and never decoded there, so editing this array by hand cannot bring in markup the import would have refused.
 
 ---
 
