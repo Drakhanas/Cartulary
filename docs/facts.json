@@ -640,7 +640,9 @@
       "v1.7_r001",
       "is never tagged",
       "`v<version>_Release`",
-      "v1.7_Release"
+      "v1.7_Release",
+      "`inlining/cuts/v<version>_r###_description.py`",
+      "(p / 'cartulary-src').is_dir()"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -733,7 +735,9 @@
       "r051",
       "`v{VERSION}_r###`",
       "v1.7_r001",
-      "`v{VERSION}_Release`"
+      "`v{VERSION}_Release`",
+      "`v{VERSION}_r###_description.py`",
+      "the folder that holds `cartulary-src/`"
     ],
     "journal.txt": [
       "r030",

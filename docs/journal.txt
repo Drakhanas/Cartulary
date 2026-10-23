@@ -408,3 +408,7 @@ starts over with every version, and v1.6 left r030 through r051 on the remote as
 names, so v1.7's thirtieth cut would have asked git for a tag it already had. From here a
 tag carries its version, v1.7_r001, and the v1.6 tree as shipped is v1.7's r000, which
 nobody tags because v1.6 already marks it. The release gets one of its own: v1.7_Release.
+
+Settling where the cut scripts go turned up six that had stopped working when they moved
+into the repository, four days earlier and without a sound, because nothing ever runs an
+old script. The twenty-one after them still replay to the byte.

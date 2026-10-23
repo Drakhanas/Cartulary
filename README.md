@@ -25,7 +25,7 @@ inlining/
   compile_jsx.js                precompiles the JSX for the production build
   validate_html.js              parses every inline script of a built file
   prove_gate_teeth.py           proves the build gates still fail on what they should
-  cuts/                         one script per content change, string-anchored and replayable
+  cuts/                         one script per content change since v1.6's r025, string-anchored
 babelcheck/check.js             the parse gate: the assembled body must parse as JSX
 tools/turnover/                 the documentation gate and its conventions
 docs/                           handoff, changelog, roadmap, doctrine, specs, release notes, journal
@@ -84,6 +84,8 @@ A **content change** edits the modules through a script in `inlining/cuts/` and 
 A **pure reorganization** (carving a module out of a larger one, renumbering) changes no byte of the body. `build_inline.py verify` reassembles the tree, canonicalizes it, and compares it to the anchor; anything but an exact match fails.
 
 Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. `v1.7_r001` is the first change after v1.6 shipped. A release is tagged `v<version>_Release` on the commit that records it as shipped, so v1.7's will be `v1.7_Release`. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
+
+A change's script in `inlining/cuts/` carries the same name, so v1.7's first will be `v1.7_r001_<description>.py`; v1.6's are `r025_sweep.py` through `r051_font_inline.py`. From r031 on, each one run against the tag before it reproduces its change exactly. r025 through r030 came into the repository with the tree already past them, so they're a record of what ran, not something to re-run.
 
 `inlining/prove_gate_teeth.py` and `tools/turnover/prove_teeth.py` inject one defect at a time into a throwaway copy of the tree or the docs and prove each gate still fails on what it should, so a gate that has gone quiet is caught. The project shipped two that had been scoring wrong for twenty revisions before these existed.
 
