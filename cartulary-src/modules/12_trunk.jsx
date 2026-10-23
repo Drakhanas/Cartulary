@@ -27,6 +27,7 @@ function App() {
   // uncommitted map (the entry-new analogue).
   const [activeMapId, setActiveMapId] = useState(null);
   const [mapDraft, setMapDraft] = useState(null);
+  const mapEditorApiRef = useRef(null); // what the open map editor lets this component call (r046: Cancel's restore)
   const initialMapDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
@@ -154,6 +155,7 @@ function App() {
     disableBackupReminder: false,
     templatesCollapsed: false,
     sidebarWidth: 236,
+    mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -205,6 +207,7 @@ function App() {
             sidebarWidth: typeof stored.sidebarWidth === "number"
               ? Math.max(200, Math.min(500, stored.sidebarWidth))
               : 236,
+            mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -539,16 +542,17 @@ function App() {
 
   // Warn before tab close / refresh if a draft is dirty (Bug 3).
   // Auto-save's 500ms debounce means a recent edit may not yet be persisted.
+  const draftDirtyRef = useRef(() => false); // the latest isDraftDirty, declared further down; the loading renders never reach it
   useEffect(() => {
     const handler = (e) => {
-      if (isDraftDirty()) {
+      if (draftDirtyRef.current()) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [entryDraft, tplDraft]);
+  }, []);
 
   // ── Derived data ──────────────────────────────────────────────────────────────
   // Hooks must come BEFORE any early return so the hook count stays stable across renders.
@@ -748,6 +752,7 @@ function App() {
     return false;
   };
 
+  draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
     const which = mapDraft ? "this map" : entryDraft ? "this entry" : "this template";
@@ -1093,6 +1098,8 @@ function App() {
   const cancelMapEdit = () => {
     if (!confirmDiscardDraft()) return;
     const existed = (state.cartographia || []).some(m => m.id === activeMapId);
+    // the folder back to what it held when the draft opened (r046); the editor keeps the originals
+    if (mapEditorApiRef.current && typeof mapEditorApiRef.current.restoreOriginals === "function") mapEditorApiRef.current.restoreOriginals();
     setMapDraft(null); initialMapDraftRef.current = null;
     if (!existed) setActiveMapId(null); // brand-new map, never committed: back to index
   };
@@ -3766,6 +3773,10 @@ function App() {
                   bodies={state.celestialBodies}
                   flash={flash}
                   stamps={state.mapStamps}
+                  onStampsChange={(next) => updateState(s => ({ ...s, mapStamps: next }))}
+                  stripLayout={prefs.mapStrip}
+                  onStripLayout={(v) => setPrefs(p => ({ ...p, mapStrip: v }))}
+                  api={mapEditorApiRef}
                 />
               }
             />
