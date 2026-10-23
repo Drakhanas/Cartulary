@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r047) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r049) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -268,3 +268,12 @@ two wrong claims against the code before the script ran. Time mode's paragraphs 
 lifted by extraction, not retyped. Twenty-five rotations. Seventeen cuts in one
 session. The amendment is done, and with it pillar 3; what is left is the two carves
 that waited for this shape.
+
+They took an hour, r048 and r049. Cartographia first, from the tail, as a directory of five cut at the
+five section headers that had been seams since the day they were written; then
+concordance; then every prefix from 17 on moved twice. The spans the handoff had carried
+and re-derived after sixteen cuts were the seams, line for line, and nothing was measured
+between the two. Byte-identical both times, so no pass to ask for. 16_trunk is SettingsView
+alone, 265 lines, exactly what the session-16 note said would be left and why. Twenty-one
+named modules. Nine trunk arcs, all residue. Three pillars' build work done in one line, and
+the tree a thing a person can open.

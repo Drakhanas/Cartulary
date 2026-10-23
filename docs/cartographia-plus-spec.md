@@ -86,6 +86,8 @@ Envelope `{ "cartulary_mapstamp_pack": 1, "name": ..., "stamps": [{ id, name, vi
 
 ## 6. Cuts
 
+*(Module prefixes in this document are as the cuts found them, r031 through r047. The two carves after pillar 3 (r048, r049) moved every prefix from `17` on by two: `24_home-data` is now `26_home-data`, `12_trunk` and `08_export-layer` and `shell.html` are where they were, and cartographia itself is `18_cartographia/`, five parts, with concordance at `17_concordance`. Find a module by name.)*
+
 Each cut is one script in `inlining/cuts/`, gated by `build_inline.py edit` with the declared scope below, parse-gated, staged for a browser pass, then rotated with `freeze`. One r-bump each; cuts 3 and 4 may split.
 
 | # | Cut | Declared scope | Browser check |

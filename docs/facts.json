@@ -1,16 +1,16 @@
 {
   "derived": {
-    "module_file_count": 38,
+    "module_file_count": 44,
     "total_lines": 44095,
     "raw_body_lines": 44095,
     "canonical_lines": 41912,
     "decl_count": 510,
-    "no_trailing_newline": 30,
+    "no_trailing_newline": 36,
     "active_anchor": "reference-r047-body.jsx"
   },
   "published": {
     "module_file_count": {
-      "value": 38,
+      "value": 44,
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
@@ -18,12 +18,12 @@
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
-      "value": 28,
+      "value": 30,
       "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
     },
     "no_trailing_nl": {
-      "value": 30,
-      "pattern": "(\\d+) of the 38 files have no trailing newline"
+      "value": 36,
+      "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
       "value": 510,
@@ -64,10 +64,10 @@
     },
     "named_modules": {
       "value": [
-        19,
-        "nineteen"
+        "twenty-one",
+        21
       ],
-      "pattern": "(?i)(nineteen|\\d+) named modules"
+      "pattern": "(?i)(twenty-one|\\d+) named modules"
     },
     "trunk_arcs": {
       "value": [
@@ -77,7 +77,7 @@
       "pattern": "(?i)(nine|\\d+) trunk arcs"
     },
     "carves_proven": {
-      "value": 19,
+      "value": 21,
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
@@ -92,7 +92,7 @@
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
     "trunk16_lines": {
-      "value": 6526,
+      "value": 265,
       "pattern": "`16_trunk` \\((\\d+)\\)"
     },
     "trunk16_tiling": {
@@ -105,7 +105,7 @@
     },
     "cartographia_lines": {
       "value": 5233,
-      "pattern": "cartographia[^|\\n]*\\(([\\d,]+) lines"
+      "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "working_hash_r047": {
       "value": "91c36b021ad89d90",
@@ -134,62 +134,62 @@
       "contains": "function LongformDisplay"
     },
     {
-      "file": "17_chronometric.jsx",
+      "file": "19_chronometric.jsx",
       "line": 2,
       "contains": "Timeline view"
     },
     {
-      "file": "17_chronometric.jsx",
+      "file": "19_chronometric.jsx",
       "line": 4,
       "contains": "function TimelineView"
     },
     {
-      "file": "17_chronometric.jsx",
+      "file": "19_chronometric.jsx",
       "line": 1528,
       "contains": "}"
     },
     {
-      "file": "18_linea.jsx",
+      "file": "20_linea.jsx",
       "line": 2,
       "contains": "Family tree view"
     },
     {
-      "file": "18_linea.jsx",
+      "file": "20_linea.jsx",
       "line": 4,
       "contains": "function buildFamilyData"
     },
     {
-      "file": "18_linea.jsx",
+      "file": "20_linea.jsx",
       "line": 646,
       "contains": "}"
     },
     {
-      "file": "19_stemma.jsx",
+      "file": "21_stemma.jsx",
       "line": 2,
       "contains": "Stemma helpers and canvas"
     },
     {
-      "file": "19_stemma.jsx",
+      "file": "21_stemma.jsx",
       "line": 9,
       "contains": "const STEMMA_SLOTS"
     },
     {
-      "file": "19_stemma.jsx",
+      "file": "21_stemma.jsx",
       "line": 1410,
       "contains": "}"
     },
     {
-      "file": "20_trunk.jsx",
+      "file": "22_trunk.jsx",
       "line": 2,
       "contains": "Node-source registry"
     },
     {
-      "file": "23_kalendarium.jsx",
+      "file": "25_kalendarium.jsx",
       "line": 2,
       "contains": "Kalendarium views"
     },
     {
-      "file": "23_kalendarium.jsx",
+      "file": "25_kalendarium.jsx",
       "line": 876,
       "contains": "}"
     },
@@ -209,247 +209,247 @@
       "contains": "}"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 267,
+      "file": "17_concordance.jsx",
+      "line": 2,
       "contains": "Graph view"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 277,
+      "file": "17_concordance.jsx",
+      "line": 12,
       "contains": "const VAGUE_EDGE_LABELS"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 279,
+      "file": "17_concordance.jsx",
+      "line": 14,
       "contains": "function GraphView"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1293,
+      "file": "17_concordance.jsx",
+      "line": 1028,
       "contains": "}"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1295,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 2,
       "contains": "Map drawing model (v1.6 pillar 3)"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1306,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 13,
       "contains": "const MAP_PALETTE"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1346,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 53,
       "contains": "const MAP_RASTER_LAYER"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1498,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 205,
       "contains": "function ensureMapStamps"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1546,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 253,
       "contains": "const MAP_STAMP_ALLOWLIST"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1568,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 275,
       "contains": "const MAP_RASTER_TIP"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1575,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 282,
       "contains": "const MAP_STAMP_ID_MAX"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1673,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 380,
       "contains": "function mapReadAbr"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1879,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 586,
       "contains": "function mapReadBplist"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 1963,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 670,
       "contains": "async function buildMapStampPngZip"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2011,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 718,
       "contains": "function sanitizeMapStampBody"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2160,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 867,
       "contains": "async function mapReadStampFiles"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2374,
+      "file": "18_cartographia/00_model.jsx",
+      "line": 1081,
       "contains": "function MapStampGlyph"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2391,
+      "file": "18_cartographia/01_renderer.jsx",
+      "line": 2,
       "contains": "Map drawing renderer (v1.6 pillar 3)"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2409,
+      "file": "18_cartographia/01_renderer.jsx",
+      "line": 20,
       "contains": "function mapNum"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2479,
+      "file": "18_cartographia/01_renderer.jsx",
+      "line": 90,
       "contains": "const MAP_BUILTIN_STAMPS"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2523,
+      "file": "18_cartographia/01_renderer.jsx",
+      "line": 134,
       "contains": "function mapTextArcPath"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2771,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 2,
       "contains": "Map drawing tools (v1.6 pillar 3)"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2787,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 18,
       "contains": "const MAP_TOOLS"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2808,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 39,
       "contains": "const MAP_STRIP_GROUPS"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2870,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 101,
       "contains": "const MAP_FREEHAND"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2877,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 108,
       "contains": "const MAP_PAINT"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 2977,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 208,
       "contains": "const MAP_FILL"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 3086,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 317,
       "contains": "function mapSvgToCanvas"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 3123,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 354,
       "contains": "function mapShapeFrame"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4171,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 1402,
       "contains": "function mapTrimHistory"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4201,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 1432,
       "contains": "function useMapHistory"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4668,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 1899,
       "contains": "function MapStampPicker"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4724,
+      "file": "18_cartographia/02_tools.jsx",
+      "line": 1955,
       "contains": "function MapLayerPanel"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4892,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 2,
       "contains": "Map view"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4894,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 4,
       "contains": "function useMapImageUrl"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4936,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 46,
       "contains": "function useMapLayerImages"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 4977,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 87,
       "contains": "function mapFontFaceCss"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 5012,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 122,
       "contains": "function buildMapDownloadSvg"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 5075,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 185,
       "contains": "function rasterizeMapSvg"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 5097,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 207,
       "contains": "const MAP_CAMERA"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 5099,
+      "file": "18_cartographia/03_view.jsx",
+      "line": 209,
       "contains": "function useMapCamera"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 6180,
+      "file": "18_cartographia/04_index.jsx",
+      "line": 2,
       "contains": "Cartographia"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 6204,
+      "file": "18_cartographia/04_index.jsx",
+      "line": 26,
       "contains": "function MapStampImportButton"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 6315,
+      "file": "18_cartographia/04_index.jsx",
+      "line": 137,
       "contains": "function MapStampsPanel"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 6413,
+      "file": "18_cartographia/04_index.jsx",
+      "line": 235,
       "contains": "function CartographiaIndexView"
     },
     {
-      "file": "16_trunk.jsx",
-      "line": 6526,
+      "file": "18_cartographia/04_index.jsx",
+      "line": 348,
       "contains": "}"
     },
     {
-      "file": "22_ephemeris/01_shell.jsx",
+      "file": "24_ephemeris/01_shell.jsx",
       "line": 10,
       "contains": "Ephemeris view (v1.5)"
     },
     {
-      "file": "22_ephemeris/01_shell.jsx",
+      "file": "24_ephemeris/01_shell.jsx",
       "line": 36,
       "contains": "function EphemerisView"
     },
     {
-      "file": "24_home-data.jsx",
+      "file": "26_home-data.jsx",
       "line": 2,
       "contains": "Home view (app instructions)"
     },
@@ -469,17 +469,17 @@
       "contains": "Version History panel"
     },
     {
-      "file": "26_modals.jsx",
+      "file": "28_modals.jsx",
       "line": 2,
       "contains": "Destructive Op confirmation modal"
     },
     {
-      "file": "26_modals.jsx",
+      "file": "28_modals.jsx",
       "line": 98,
       "contains": "Reset Template confirmation modal"
     },
     {
-      "file": "26_modals.jsx",
+      "file": "28_modals.jsx",
       "line": 100,
       "contains": "function ResetTemplateModal"
     },
@@ -520,40 +520,72 @@
         1,
         265,
         "head (SettingsView)"
-      ],
-      [
-        266,
-        1293,
-        "concordance"
-      ],
-      [
-        1294,
-        6526,
-        "cartographia"
       ]
     ],
-    "17_chronometric.jsx": [
+    "17_concordance.jsx": [
+      [
+        1,
+        1028,
+        "concordance"
+      ]
+    ],
+    "18_cartographia/00_model.jsx": [
+      [
+        1,
+        1096,
+        "model"
+      ]
+    ],
+    "18_cartographia/01_renderer.jsx": [
+      [
+        1,
+        380,
+        "renderer"
+      ]
+    ],
+    "18_cartographia/02_tools.jsx": [
+      [
+        1,
+        2121,
+        "tools"
+      ]
+    ],
+    "18_cartographia/03_view.jsx": [
+      [
+        1,
+        1288,
+        "view"
+      ]
+    ],
+    "18_cartographia/04_index.jsx": [
+      [
+        1,
+        348,
+        "index"
+      ]
+    ],
+    "19_chronometric.jsx": [
       [
         1,
         1528,
         "chronometric"
       ]
     ],
-    "18_linea.jsx": [
+    "20_linea.jsx": [
       [
         1,
         646,
         "linea"
       ]
     ],
-    "19_stemma.jsx": [
+    "21_stemma.jsx": [
       [
         1,
         1410,
         "stemma"
       ]
     ],
-    "23_kalendarium.jsx": [
+    "25_kalendarium.jsx": [
       [
         1,
         876,
@@ -571,7 +603,7 @@
       "check_docs.py",
       "all five checks green",
       "back to front",
-      "23_kalendarium",
+      "25_kalendarium",
       "Drakhanas/Cartulary",
       "build_inline.py edit",
       "freeze r###",
@@ -657,12 +689,18 @@
       "map-editor",
       "map-stamps",
       "cartographia-editor",
-      "cartographia-stamps"
+      "cartographia-stamps",
+      "r048",
+      "r049",
+      "r048_carve_cartographia.py",
+      "r049_carve_concordance.py",
+      "17_concordance",
+      "18_cartographia"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
       "r030",
-      "23_kalendarium",
+      "25_kalendarium",
       "2facf10cea574525",
       "Eighteen probes",
       "r031",
@@ -699,7 +737,11 @@
       "r047",
       "reference-r047-body.jsx",
       "91c36b021ad89d90",
-      "reference-r047-layout.json"
+      "reference-r047-layout.json",
+      "r048",
+      "r049",
+      "17_concordance",
+      "18_cartographia"
     ],
     "changelog.md": [
       "r026",
@@ -762,7 +804,11 @@
       "r046_editor_polish.py",
       "r047",
       "91c36b021ad89d90",
-      "r047_help_site.py"
+      "r047_help_site.py",
+      "r048",
+      "r049",
+      "r048_carve_cartographia.py",
+      "r049_carve_concordance.py"
     ],
     "roadmap.md": [
       "r030",
@@ -785,7 +831,9 @@
       "r044",
       "r045",
       "r046",
-      "r047"
+      "r047",
+      "r048",
+      "r049"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -805,7 +853,9 @@
       "r044",
       "r045",
       "r046",
-      "r047"
+      "r047",
+      "r048",
+      "r049"
     ],
     "journal-entry.txt": [
       "r030",
@@ -824,7 +874,9 @@
       "r044",
       "r045",
       "r046",
-      "r047"
+      "r047",
+      "r048",
+      "r049"
     ]
   }
 }
