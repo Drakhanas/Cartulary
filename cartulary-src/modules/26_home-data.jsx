@@ -37,7 +37,7 @@ To make a portable copy, click your world's name at the top-left of the sidebar 
 
 **Per-entry markdown export.** Each entry's view has an **Export ↓** button next to the title that downloads just that one entry as Markdown. Filename is the entry's slug, e.g. \`aria.md\`. Useful when you want to share a single character or location without dumping the whole world. Whether secret fields are included follows the current state of the secrets visibility toggle in the top right: if it's on (◉), secrets are in the export.
 
-**Family tree markdown export.** The Family view has an **Export tree as Markdown ↓** button below the Focal selector. Downloads a markdown file representing the focal person's family tree: ancestors numbered by Sosa-Stradonitz (focal=1, parents=2/3, grandparents=4–7, etc.), spouses with status, siblings, and descendants in nested bullets. Filename is the focal person's slug plus \`.family.md\`, e.g. \`aria.family.md\`. The export uses the same parent-side rules as the Family view (label hints first, ID-sort fallback). Descendant depth caps at 6 generations.
+**Family tree markdown export.** Linea has an **Export tree as Markdown ↓** button below the Focal selector. Downloads a markdown file representing the focal person's family tree: ancestors numbered by Sosa-Stradonitz (focal=1, parents=2/3, grandparents=4–7, etc.), spouses with status, siblings, and descendants in nested bullets. Filename is the focal person's slug plus \`.family.md\`, e.g. \`aria.family.md\`. The export uses the same parent-side rules as Linea (label hints first, ID-sort fallback). Descendant depth caps at 6 generations.
 
 If you treat the Markdown export as a backup, you will lose data when you try to restore: there is no .md → world conversion. Markdown is for sharing and reading. JSON is for saving and restoring.
 
@@ -48,16 +48,16 @@ Your appearance preferences (theme, font size) are stored separately and don't t
   { id: "templates", title: "Templates", content: `Templates are blueprints — each one defines the fields that entries of its kind will have. The default set covers common worldbuilding territory:
 
 - **Artifact / Object / Currency** — items of significance, including coinage and currencies
+- **Book / Document / Text / Tome** — books, codices, letters, scrolls, prophecies, inscriptions
 - **Character** — people with personality, history, family
 - **Cosmology / Plane** — planes of existence, dimensions
 - **Creature** — fauna, monsters (non-civilized)
 - **Culture / People** — anthropological: customs, daily life, art, values
 - **Deity / Entity** — gods, primordials, archfiends, spirits
-- **Book / Document / Text / Tome** — books, codices, letters, scrolls, prophecies, inscriptions
 - **Faction / Government / Organization** — organizations, governments, guilds, courts, religious orders
+- **House / Dynasty / Clan / Bloodline**: noble houses, dynasties, clans, bloodlines, and other kin-groups
 - **Festival / Holiday** — recurring observances
 - **Historical Event** — one-time events with causes and consequences
-- **House / Dynasty / Clan / Bloodline**: noble houses, dynasties, clans, bloodlines, and other kin-groups
 - **Location** — places, regions, geography
 - **Magic / Tech System** — rules of magic or technology
 - **Plot Thread** — story arcs with stakes and hooks
@@ -107,7 +107,7 @@ The modal also warns if the reset has no effect (your template already matches t
 
 - **Collapse:** Click the **Templates ▾** header to fold the Templates section to just its title. Useful when you have many templates and want the Tags section below to have more breathing room. Collapse state is remembered between sessions.
 - **Resize:** Drag the sidebar's right edge to widen or narrow it (between 200px and 500px). Double-click the edge to snap back to the default width. Useful when long template names (like "Artifact / Object / Currency") get clipped, or when you want a tighter sidebar to give the main view more room. Width persists between sessions.
-- **Reorder:** Hover any template to see a drag handle (⋮⋮) on the left. Drag to reorder. The default list ships in alphabetical order; whatever order you set is what the sidebar uses. (See also Reordering Templates & Fields.)
+- **Reorder:** Hover any template to see a drag handle (⋮⋮) on the left. Drag to reorder. The default list ships in the order above (alphabetical, except that House follows Faction, where it was added); whatever order you set is what the sidebar uses. (See also Reordering Templates & Fields.)
 
 You're not limited to the built-in set. See **Example Template** for a fully-worked custom template that handles workflows the built-ins don't cover directly.` },
 
@@ -515,13 +515,13 @@ A stemma has one **focal node** at the center, surrounded by 16 fixed slots arra
 - **World-tag pool integration** — stemma tags display on the index but don't auto-merge into the world's tag autocomplete
 - **Mobile UX** — desktop-first; the radial canvas isn't tuned for narrow viewports yet` },
 
-  { id: "concordance", title: "Concordance", content: `Concordance (formerly known as the Relationships graph) renders every entry as a node and every cross-reference as an edge. It's force-directed — nodes find their own positions based on connection density, with related entries clustering together — but those positions stick. Drag nodes around to lay out a star map, a faction-power diagram, a planar cosmology, anything where spatial arrangement encodes meaning.
+  { id: "concordance", title: "Concordance", content: `Concordance (formerly known as the Relationships graph) renders every entry as a node and every cross-reference as an edge, and the world's other node sources beside the entries: Astronomical Bodies (each orbiting its parent along an "orbits" edge), ConLangs with their Lexemes, Phonemes, Grammatical Values, Affixes, Word-Building Processes, Inflection Classes, and Writing Systems, and Maps. Each of those is its own row in the Templates filter, and a reference to one from a field or a wiki-link is an edge like any other. It's force-directed — nodes find their own positions based on connection density, with related entries clustering together — but those positions stick. Drag nodes around to lay out a star map, a faction-power diagram, a planar cosmology, anything where spatial arrangement encodes meaning.
 
 **What feeds the graph:**
 
 - **Entry-ref fields**, including those with relation kinds (parent, spouse). Family-role refs are drawn the same as any other ref, just with the override label if you've set one.
 - **Wiki-links** in long-text fields. Every \`[[Name]]\` becomes an edge from the entry containing the link to the entry it resolves to.
-- **Map pins** that link to other entries. The map entry connects to whatever its pins point at.
+- **Map pins** that link to other entries. The map's node connects to whatever its pins point at, with a 📍 on the edge.
 - **Grid cells** that are entry references. Each ref cell becomes a directed edge labeled by the grid field.
 - **Repeating Group subfields.** The graph walks into every group instance, so entry-ref subfields (and wiki-links in text subfields) inside a repeating group feed edges the same as top-level fields.
 
@@ -559,7 +559,7 @@ Search interacts with the active filters. If you've selected a template or tag i
 **What search doesn't cover:**
 
 - **Template definitions** (template names, field labels). Search operates on entries, not on the templates that describe them.
-- **Map pin labels.** These live on \`mapData\`, not in fields.
+- **Maps.** Maps are records in Cartographia, not entries, so neither a map's fields nor its pin labels are searched here; the Cartographia index lists them by name.
 - **Wiki-link resolution.** A search for "the warden" finds entries containing the literal text "the warden" — it doesn't follow custom-label syntax like \`[[Aria|the warden]]\` to also return Aria's entry.
 - **Former-name resolution.** A search for "New Amsterdam" finds entries with that text in any field (including name-history rows), but doesn't apply the temporal "this entity used to be called X" mapping that the rest of the application uses.
 
@@ -690,7 +690,7 @@ If your IndexedDB ever gets wiped, your .json backup is the only way to get your
 
 **Markdown handout.** Export to .md (without secrets). Send the player the file. They get a readable reference of the public information with no editing surface at all. Best option for genuinely read-only sharing.
 
-**Markdown + images zip.** Same as above but with maps, portraits, and location art included.
+**Markdown + images zip.** Same as above but with map images and painted layers, portraits, and location art included. A map's drawing is not in it; the drawing travels only in the HTML export and the per-map SVG and PNG downloads.
 
 **Split-world approach.** For long campaigns, some GMs maintain two worlds: the GM master world with secrets and the player-facing world with only what players know. Update both as the campaign progresses. More work, but the player's copy literally doesn't contain the GM's secrets — there's nothing to leak.
 
@@ -834,6 +834,8 @@ Cartulary doesn't hardcode browser names — it checks at runtime whether \`wind
 **Template Preview popup** opens a separate browser window via \`window.open\`. Tested in Chrome, Edge, Firefox, and Brave; Safari is currently untested — please report any issues if you use it. Browsers with aggressive popup blockers (or Brave with Shields cranked beyond defaults) may block the popup; allow popups for the page if the toggle button doesn't open a window. Everything else in Cartulary works without the popup; this only affects live template-design preview.
 
 **Mobile.** Cartulary loads on phones and tablets, but the UI is desktop-shaped. On most mobile browsers you'll need to enable desktop-site mode (sometimes called "request desktop site") for menus and controls to behave correctly — and even then, expect a degraded experience compared to a real keyboard and mouse. This is desktop-first by design; mobile is not the target audience.
+
+**The map editor** takes a mouse, a pen, or a finger through pointer events, which every current browser has; a pen's eraser end is read where the browser reports it as such. Painted layers in folder mode follow the File System Access rule above. The PNG download caps itself at sixteen million pixels because Safari draws nothing past that.
 
 **IndexedDB** and **JSZip** (Markdown + images export) are universal across modern browsers.
 
