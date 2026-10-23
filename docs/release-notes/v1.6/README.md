@@ -52,4 +52,4 @@ The source is public at github.com/Drakhanas/Cartulary: the module tree the sing
 
 Cartulary is MIT licensed. The bundled libraries (React, Babel, marked, d3, JSZip) are MIT; the bundled fonts (Cormorant Garamond and DM Sans) are under the SIL Open Font License 1.1. The full license texts are in a comment block at the top of each HTML file.
 
-Cartulary was built with Claude as the implementation partner, under human direction, and is disclosed as REAL Rating Level 4. The application contains no AI features at runtime: it calls no model, generates nothing, and sends nothing about your world anywhere. The long version is on the itch.io page.
+Cartulary was built with Claude as the implementation partner, under human direction, and is disclosed as REAL Rating Level 4. The application contains no AI features at runtime: it calls no model, generates nothing, and makes no network requests at all. The long version is on the itch.io page.
