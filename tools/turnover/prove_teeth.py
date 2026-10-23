@@ -58,7 +58,7 @@ def _drift_published(d):
     key, spec = next(iter(f['published'].items()))
     pat = _re.compile(spec['pattern'], _re.M | _re.I)
     for name in ['handoff.md', 'cartulary-spine-manifest.md', 'changelog.md',
-                 'roadmap.md', 'cartulary-doctrine.md', 'journal-entry.txt']:
+                 'roadmap.md', 'cartulary-doctrine.md', 'journal.txt']:
         text = (d/name).read_text()
         m = pat.search(text)
         if m and m.group(1).replace(',', '').isdigit():

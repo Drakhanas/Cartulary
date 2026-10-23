@@ -83,10 +83,14 @@ opinion.
 carve status, gate design, anchor history. Sections become records rather than plans as work
 lands; when a section closes, rewrite it as history and say what it cost.
 
-**`journal-entry.txt`** is one new entry per session, for Drak to paste into his master
-`journal.txt`; earlier entries live in git history. First person, narrative, no headers, and it is the one place
-that records what went wrong and what it felt like to get it wrong. It is not a status
-report; the changelog already is one.
+**`journal.txt`** keeps every entry, oldest first: one per session that changes the record,
+each opened by a `=== date (session N, ...) ===` line. The checker reads only the newest entry.
+First person, narrative, no headers, and it is the one place that records what went wrong and
+what it felt like to get it wrong. It is not a status report; the changelog already is one.
+*(Amended 2026-10-23: it was `journal-entry.txt`, one entry for Drak to paste into a master
+`journal.txt` that he never kept, because the journal began as a turnover aid against context
+compaction rather than as a document to collect. The repository is the master now, seeded with
+the two entries its history held, sessions 18 and 19.)*
 
 ## Rules that apply to all six
 

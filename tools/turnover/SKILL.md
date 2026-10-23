@@ -2,7 +2,7 @@
 name: cartulary-turnover
 description: >
   Generate and verify a Cartulary session turnover document set (handoff,
-  changelog, roadmap, doctrine, spine manifest, journal entry) that a fresh
+  changelog, roadmap, doctrine, spine manifest, journal) that a fresh
   chat can pick up cold. Use this skill whenever the user asks for turnover,
   a handoff, session close, "wrap up the session," "give me the docs,"
   "update the doc set," or asks to correct or re-verify an existing turnover.

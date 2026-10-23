@@ -33,7 +33,7 @@ Found by the independent read of the rewritten handoff on 2026-10-23. Each is a 
 ## Backlog: documents and housekeeping
 
 - **Entry-ref correctness audit, the semantic half.** The mechanical half was checked 2026-10-23: the 20 built-in templates carry 149 ref targets naming 19 distinct targets, and every one is a built-in template or a registered node source (ConLang, Astronomical Body), so nothing dangles. Whether each field points at the right template is a read nobody has done.
-- **Needs Drak's files:** the master `journal.txt` into `docs/`, with a checker change so only its newest entry is live; the `cartulary-turnover` skill package pointed at `tools/turnover/` with its script copies dropped (its description of the handoff is also behind `conventions.md` since 2026-10-23); the v1.4 patch notes and the v1.5 zip README into `docs/release-notes/`; itch screenshots for v1.6.
+- **Needs Drak's files:** the `cartulary-turnover` skill package pointed at `tools/turnover/` with its script copies dropped (its description of the handoff is also behind `conventions.md` since 2026-10-23); the v1.4 patch notes and the v1.5 zip README into `docs/release-notes/`; itch screenshots for v1.6.
 
 ## Tolerated
 
@@ -69,3 +69,5 @@ Found by the independent read of the rewritten handoff on 2026-10-23. Each is a 
 - **The patch-notes format** was decided on 2026-10-22: one file per version in `docs/release-notes/`.
 
 **Corrected the same night.** An independent read of the rewritten handoff and this file against the tree found the struck data-shapes row, the Concordance edge-label half of the polish row, the Game Mechanics row's "design done", the sector graph as the only headline-sized item, and this file's account of what the doc gate reads all wrong. Each is fixed above, and three product-text defects it found are now on the backlog.
+
+**The journal row is done.** There was never a master `journal.txt` to import: the journal began as a turnover aid against context compaction, and Drak never collected the entries. Drak's call (2026-10-23): the repository is the master. `docs/journal.txt` replaces `journal-entry.txt`, keeps every entry oldest first, starts with the two entries the repository's history held (sessions 18 and 19), and the doc gate reads only its newest entry.

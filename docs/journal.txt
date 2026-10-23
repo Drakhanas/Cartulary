@@ -1,3 +1,75 @@
+Session journal, oldest entry first. It began as a turnover aid, because long sessions kept losing
+things when their context compacted; the repository and the changelog hold the record now, and
+this is the narrative beside them. One entry per session that changes the record. The doc gate
+reads only the newest entry. The repository became the master on 2026-10-23 with the two entries
+it held, sessions 18 and 19; nothing earlier was kept.
+
+=== 2026-10-19 (session 18, v1.6 pillar 2: r026 header split + rotation, r027-r030 the four view carves) ===
+
+Five r-bumps and the map-independent phase is done. The session also lost its working
+directory halfway through and the only reason that cost minutes was a rule written for a
+different failure.
+
+It opened the way the last two did, with the handoff read against the tree before anything
+got cut. The source bundle wasn't in the uploads, only the staged HTML and the docs, so I
+rebuilt the module tree from the babel body and the published per-arc counts, which was a
+hypothesis with 34 file boundaries in it. Everything testable held: counts, census, hash,
+anchor bytes, every relocation destination, every span tiling its arc. When Drak sent the
+bundle the reconstruction matched it file for file, so the audit stood. Three prose defects
+again, and the worst was the small one: "82 characters, not the 81 section 11 states", when
+section 11 already said 82. The correction had been made everywhere and the sentence
+describing the discrepancy had survived it. I went looking for a contradiction, found
+agreement, and briefly distrusted both documents, which is the cost of narrating a fix instead
+of making it.
+
+Drak didn't want the defects fixed before the cut, which was right. r026 went in as specced:
+two strings at 82, one header rewritten in place, one inserted with its blank. Every number
+in the r025 table landed exactly, including the three named pair changes, and that was the
+first time this project gated a cut on a written delta instead of a verdict. It worked. It
+also only worked because the delta was three lines, and the thing the spec had not said was
+that the anchor would need to rotate afterwards. Obvious at the cut, absent from the plan, so
+it went into the doctrine as the kind of gap a fresh chat executes into.
+
+Then the sandbox reset between two turns and took cartulary-src, inlining, and the scratch
+reconstruction with it. The outputs directory still had the browser-passed r026 file. So the
+replay was: unzip the r025 bundle, run the r026 script, rotate, rebuild working, and compare
+the hash to the artifact Drak had passed. Same bytes. The rotation procedure's last step was
+written to catch a freeze of the wrong body, and it turns out to be the exact check you want
+after an environment loss, because the hash is the one thing the sandbox can't have faked. If
+any step in r026 had been a hand edit there would have been nothing to replay.
+
+The carves themselves were the quietest part of the session, and the order was the only
+decision in them. Three of the four shared 16_trunk with their spans published as line
+numbers inside that arc, so cutting front to back would have invalidated the later spans at
+every step, and re-deriving spans is precisely the operation that produced two wrong editions
+last session. Back to front leaves the remaining spans alone. I put that to Drak as a fork,
+he took it, and three carves went through without a single re-measurement. Every seam printed,
+every seam matching, every cut script asserting its members by name and rule 1 at both ends
+before touching the tree. Kalendarium was a rename.
+
+Two things bit, both in the harness, neither in the product. The r027 script aborted before
+writing because its existence check tested rename destinations against the tree as it stood,
+and the trunk arc numbered 23 was both a destination and a source; the reverse-order rename
+handled it at mutation time and the pre-check didn't model that. Then prove_gate_teeth crashed
+on the reflowed tree because its misfile probe hard-coded the kalendarium and home-data paths
+by their old prefixes, 19 and 20, which had become 23 and 24. One session after the doctrine
+entry about filenames decaying in documents, the same decay turned up in a probe. And at
+turnover the doc gate's own probe harness had the same disease worse: prove_teeth hard-codes
+the r025 tree figure, so its published-figure probe stopped proving anything the moment the
+tree changed, and it stopped quietly rather than crashing. A probe whose target is a literal
+from one session proves that session.
+
+Pattern for the session is the same as the last two, and I'm starting to think it's the shape
+of this project rather than a run of luck: the artifact held every time, the documents and
+the harnesses are where the defects live, and the defects are all the same kind. Something
+that was true when written and nobody re-derived. The fix every time has been to make the
+thing executable or to make it derive its target from the facts the gate already checks.
+
+Next is pillar 3, which is the one pillar a user can see, and the first thing it needs is not
+code. r026 showed what a content edit looks like under the current gates, which is a table and
+a browser pass, and a feature cannot be gated that way. Whether a third mode earns its keep is
+Drak's call before the first editor line lands.
+
 === 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r051) ===
 
 One cut tonight, late, and before it the session had already changed more than most
@@ -323,4 +395,7 @@ pure carve skips the browser pass when its bytes match the anchor and its artifa
 to one already passed, and my version kept only the first half, which sounds like enough
 until a changed shell walks through it. One row I had struck as done wasn't. The probe
 harness for the doc gate had never been able to fail. All of it is fixed, and the handoff
-came back five kilobytes longer, which is about what the missing rules weighed.
+came back five kilobytes longer, which is about what the missing rules weighed. In the morning Drak read both and passed them, and pointed out
+that the journal had been addressed all along to a master file he never kept: it started as
+a way to get turnover through context compaction, not as something to collect. So this file
+is the master now, starting from the two entries the repository happened to hold.

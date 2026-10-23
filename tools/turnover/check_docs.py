@@ -29,7 +29,7 @@ DOC_SET = [
     'roadmap.md',
     'cartulary-doctrine.md',
     'cartulary-spine-manifest.md',
-    'journal-entry.txt',
+    'journal.txt',
 ]
 
 EM_FORMS = ['\u2014', '&#8212;', '&mdash;', '&#x2014;']
@@ -118,7 +118,9 @@ def live_lines(name, text):
     (lineno, line) for every line the checker treats as a LIVE claim.
 
     Superseded regions, per the skill: older changelog session blocks, roadmap
-    content above the newest ADDED block, and any line carrying [stale:].
+    content above the newest ADDED block, journal entries before the newest one
+    (since 2026-10-23, when the journal began to accumulate), and any line
+    carrying [stale:].
     """
     lines = text.split('\n')
     start = 0
@@ -128,6 +130,10 @@ def live_lines(name, text):
             start = hdrs[-1]
     elif name == 'roadmap.md':
         hdrs = [i for i, l in enumerate(lines) if l.startswith('=== ADDED')]
+        if hdrs:
+            start = hdrs[-1]
+    elif name == 'journal.txt':
+        hdrs = [i for i, l in enumerate(lines) if l.startswith('=== ')]
         if hdrs:
             start = hdrs[-1]
     return [(i + 1, l) for i, l in enumerate(lines)
