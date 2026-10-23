@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r049) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r050) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -277,3 +277,13 @@ between the two. Byte-identical both times, so no pass to ask for. 16_trunk is S
 alone, 265 lines, exactly what the session-16 note said would be left and why. Twenty-one
 named modules. Nine trunk arcs, all residue. Three pillars' build work done in one line, and
 the tree a thing a person can open.
+
+Release prep opened with a backlog that wasn't. The in-app-help list, twelve items carried
+since v1.5, was checked against the help before anyone wrote a cut, and every item was
+already fixed; nobody had struck the row. The read that replaced it (r050) went through
+the eight topics v1.6 came nearest to and found six things no label check could: a view
+called by a name it lost in 1.2, a template list in an order the sidebar never had, a graph
+described as if only entries were in it, a search caveat too narrow by a whole record type.
+Two lines of net growth, ten rewrites, three sentences on the site. Drak read them in a
+quarter of an hour. Release notes next, one file per version, the format decided after
+being owed through two releases.

@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44095,
-    "raw_body_lines": 44095,
-    "canonical_lines": 41912,
+    "total_lines": 44097,
+    "raw_body_lines": 44097,
+    "canonical_lines": 41913,
     "decl_count": 510,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r047-body.jsx"
+    "active_anchor": "reference-r050-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44095,
+      "value": 44097,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 41912,
+      "value": 41913,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44095,
+      "value": 44097,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2297860,
+      "value": 2298918,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "twenty-five",
-        25
+        "twenty-six",
+        26
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,9 @@
       "value": 5233,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r047": {
-      "value": "91c36b021ad89d90",
-      "pattern": "working[^\\n]{0,40}at r047 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r050": {
+      "value": "e6e610a404924a85",
+      "pattern": "working[^\\n]{0,40}at r050 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -682,9 +682,7 @@
       "mapStripLayout",
       "MapStampImportButton",
       "r047",
-      "reference-r047-body.jsx",
       "91c36b021ad89d90",
-      "reference-r047-layout.json",
       "r047_help_site.py",
       "map-editor",
       "map-stamps",
@@ -695,7 +693,12 @@
       "r048_carve_cartographia.py",
       "r049_carve_concordance.py",
       "17_concordance",
-      "18_cartographia"
+      "18_cartographia",
+      "r050",
+      "reference-r050-body.jsx",
+      "e6e610a404924a85",
+      "reference-r050-layout.json",
+      "r050_help_sweep.py"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -735,13 +738,15 @@
       "r046",
       "b0bb5c39be590495",
       "r047",
-      "reference-r047-body.jsx",
       "91c36b021ad89d90",
-      "reference-r047-layout.json",
       "r048",
       "r049",
       "17_concordance",
-      "18_cartographia"
+      "18_cartographia",
+      "r050",
+      "reference-r050-body.jsx",
+      "e6e610a404924a85",
+      "reference-r050-layout.json"
     ],
     "changelog.md": [
       "r026",
@@ -808,7 +813,10 @@
       "r048",
       "r049",
       "r048_carve_cartographia.py",
-      "r049_carve_concordance.py"
+      "r049_carve_concordance.py",
+      "r050",
+      "e6e610a404924a85",
+      "r050_help_sweep.py"
     ],
     "roadmap.md": [
       "r030",
@@ -833,7 +841,8 @@
       "r046",
       "r047",
       "r048",
-      "r049"
+      "r049",
+      "r050"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -855,7 +864,8 @@
       "r046",
       "r047",
       "r048",
-      "r049"
+      "r049",
+      "r050"
     ],
     "journal-entry.txt": [
       "r030",
@@ -876,7 +886,8 @@
       "r046",
       "r047",
       "r048",
-      "r049"
+      "r049",
+      "r050"
     ]
   }
 }
