@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44097,
-    "raw_body_lines": 44097,
-    "canonical_lines": 41913,
+    "total_lines": 44095,
+    "raw_body_lines": 44095,
+    "canonical_lines": 41911,
     "decl_count": 510,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r050-body.jsx"
+    "active_anchor": "reference-r051-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44097,
+      "value": 44095,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 41913,
+      "value": 41911,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44097,
+      "value": 44095,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2298918,
+      "value": 2298604,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "twenty-six",
-        26
+        "twenty-seven",
+        27
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -104,12 +104,12 @@
       "pattern": "github\\.com/(Drakhanas/Cartulary)"
     },
     "cartographia_lines": {
-      "value": 5233,
+      "value": 5231,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r050": {
-      "value": "e6e610a404924a85",
-      "pattern": "working[^\\n]{0,40}at r050 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r051": {
+      "value": "5be00252d31a679c",
+      "pattern": "working[^\\n]{0,40}at r051 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -390,27 +390,27 @@
     },
     {
       "file": "18_cartographia/03_view.jsx",
-      "line": 87,
+      "line": 90,
       "contains": "function mapFontFaceCss"
     },
     {
       "file": "18_cartographia/03_view.jsx",
-      "line": 122,
+      "line": 120,
       "contains": "function buildMapDownloadSvg"
     },
     {
       "file": "18_cartographia/03_view.jsx",
-      "line": 185,
+      "line": 183,
       "contains": "function rasterizeMapSvg"
     },
     {
       "file": "18_cartographia/03_view.jsx",
-      "line": 207,
+      "line": 205,
       "contains": "const MAP_CAMERA"
     },
     {
       "file": "18_cartographia/03_view.jsx",
-      "line": 209,
+      "line": 207,
       "contains": "function useMapCamera"
     },
     {
@@ -553,7 +553,7 @@
     "18_cartographia/03_view.jsx": [
       [
         1,
-        1288,
+        1286,
         "view"
       ]
     ],
@@ -695,10 +695,15 @@
       "17_concordance",
       "18_cartographia",
       "r050",
-      "reference-r050-body.jsx",
       "e6e610a404924a85",
-      "reference-r050-layout.json",
-      "r050_help_sweep.py"
+      "r050_help_sweep.py",
+      "r051",
+      "reference-r051-body.jsx",
+      "5be00252d31a679c",
+      "reference-r051-layout.json",
+      "r051_font_inline.py",
+      "b99381a041153d9d",
+      "e748142eadb3e1aa"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -744,9 +749,11 @@
       "17_concordance",
       "18_cartographia",
       "r050",
-      "reference-r050-body.jsx",
       "e6e610a404924a85",
-      "reference-r050-layout.json"
+      "r051",
+      "reference-r051-body.jsx",
+      "5be00252d31a679c",
+      "reference-r051-layout.json"
     ],
     "changelog.md": [
       "r026",
@@ -816,7 +823,11 @@
       "r049_carve_concordance.py",
       "r050",
       "e6e610a404924a85",
-      "r050_help_sweep.py"
+      "r050_help_sweep.py",
+      "r051",
+      "5be00252d31a679c",
+      "r051_font_inline.py",
+      "b99381a041153d9d"
     ],
     "roadmap.md": [
       "r030",
@@ -842,7 +853,8 @@
       "r047",
       "r048",
       "r049",
-      "r050"
+      "r050",
+      "r051"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -865,7 +877,8 @@
       "r047",
       "r048",
       "r049",
-      "r050"
+      "r050",
+      "r051"
     ],
     "journal-entry.txt": [
       "r030",
@@ -887,7 +900,8 @@
       "r047",
       "r048",
       "r049",
-      "r050"
+      "r050",
+      "r051"
     ]
   }
 }

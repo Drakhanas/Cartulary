@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r050) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r051) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -287,3 +287,16 @@ described as if only entries were in it, a search caveat too narrow by a whole r
 Two lines of net growth, ten rewrites, three sentences on the site. Drak read them in a
 quarter of an hour. Release notes next, one file per version, the format decided after
 being owed through two releases.
+
+The notes were written and read, the finals built and passed on thirteen items across
+four machines, and the public copy was the last thing, which is where the release stopped
+for a night. Writing the itch page's How it's built against the actual build turned up
+a sentence that had been false since r037: zero network requests after it loads. The
+SVG download asked Google for its font. The honest rewrite said so in two sentences, and
+Drak's answer was that the sentence was the spec. r051 took the fetch out; the font had
+been inside the file since v1.1, in the same stylesheet the page reads for its own
+labels, and the download now copies it from there. Two lines shorter. The probe counts
+every request that leaves file:// and wants zero, and gets it, online and off. Then the
+copy went back into the live pages' own markup, pulled from the pages themselves through
+the browser pane, because a paste had lost it and a page is HTML whether or not anyone
+remembers. What remains is the flip.
