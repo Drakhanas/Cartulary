@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "50480113ab7f5382af4ea5e24191b43c1305a21de504b6bb86d506db79cddc81",
+  "anchor_sha256": "1dbfec5bbafcdaa25f55626ca178f3512146770a281f9ff5aa5f73520b14bef2",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -44,7 +44,7 @@
     ],
     [
       "10_migrate.jsx",
-      5850
+      5865
     ],
     [
       "11_io-utils.jsx",
