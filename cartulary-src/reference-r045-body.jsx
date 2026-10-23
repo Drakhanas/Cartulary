@@ -23034,6 +23034,7 @@ const MAP_TOOLS = [
   { id: "stamp",   label: "Stamp",   hint: "Pick a stamp in the strip, then click to place it or drag to size it · Right-click when done" },
   { id: "brush",   label: "Brush",   hint: "Drag on the map to paint on the active raster layer (with a vector layer active, the stroke lands in a new raster layer named Paint above it) · Tip, size, opacity, and the Fill color are in the strip · Right-click when done" },
   { id: "eraser",  label: "Eraser",  hint: "Drag on the map to erase from the active raster layer · Tip, size, and opacity are in the strip · Right-click when done" },
+  { id: "pan",     label: "Pan",     hint: "Drag to move the view · Ctrl+wheel, a pinch, the corner buttons, or + and - zoom; 0 fits · From any tool, hold Space or drag with the middle button · Right-click when done" },
 ];
 
 // Canvas sizes offered on image-less maps (an image map's canvas is the image).
@@ -23322,10 +23323,13 @@ function mapShapeFrame(s, selBox) {
 // takes an options object after the record), the svg ref (the canvas, for
 // coordinates and hit tests), the canvas div ref (focused on pointerdown so
 // the browser's own keyboard scrolling stays on the canvas), the canvas size
-// the tree rendered at, the raster layers' urls and missing files, and the
+// the tree rendered at, the raster layers' urls and missing files, the
 // editor's painter (r044: the live-stroke overlay, where a layer's bitmap is
-// read from, and where a painted one is stored).
-function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillContext, stamps, layerImages, painter }) {
+// read from, and where a painted one is stored), and getView (r045: the
+// camera's visible rect, read at the event, since the camera renders after
+// this hook).
+function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillContext, stamps, layerImages, painter, getView }) {
+  const getV = () => (typeof getView === "function" && getView()) || { x: 0, y: 0, w: width, h: height };
   const [tool, setToolState] = useState("pin");
   const [filling, setFilling] = useState(false); // a bucket fill in flight; a second click waits
   const [fillNote, setFillNote] = useState(null); // why the last fill did nothing, in the hint until the next click or tool
@@ -23374,20 +23378,23 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const selectedShape = selectedShapeId ? (allShapes.find(s => s.id === selectedShapeId) || null) : null;
 
   const r2 = (v) => Math.round(v * 100) / 100;
+  // The pointer in canvas units, through the camera's view (r045): the
+  // fraction of the svg's rect, then that fraction of the visible rect.
   const toPoint = (e) => {
     const el = svgRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
+    const v = getV();
     const fx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const fy = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-    return [r2(fx * width), r2(fy * height)];
+    return [r2(v.x + fx * v.w), r2(v.y + fy * v.h)];
   };
-  // viewBox units per screen pixel, for click tolerances that should feel the same at any zoom
+  // canvas units per screen pixel, for click tolerances that should feel the same at any zoom
   const unitsPerPx = () => {
     const el = svgRef.current;
     const rect = el ? el.getBoundingClientRect() : null;
-    return rect && rect.width ? width / rect.width : 1;
+    return rect && rect.width ? getV().w / rect.width : 1;
   };
 
   // Every write: one new mapData through the history. opts.coalesce names a
@@ -23494,7 +23501,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!draft) return null;
     let id = null;
     if (draft.type === "freehand") {
-      let tol = MAP_FREEHAND.tolerance * width;
+      let tol = MAP_FREEHAND.tolerance * getV().w; // of the visible width: zoomed in, a finer line
       let pts = mapSimplifyPoints(draft.points, tol);
       while (pts.length > MAP_FREEHAND.maxPoints) { tol *= 1.5; pts = mapSimplifyPoints(draft.points, tol); }
       if (pts.length >= 2) {
@@ -23519,6 +23526,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const onSvgPointerDown = (e) => {
     if (e.button !== 0 || e.isPrimary === false) return;
     if (canvasRef.current && canvasRef.current.focus) canvasRef.current.focus({ preventScroll: true });
+    if (tool === "pan") return; // the camera takes the press in the capture phase
     if (paintTool) {
       e.preventDefault();
       beginStroke(e);
@@ -23777,7 +23785,8 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
-    return [(e.clientX - rect.left) / rect.width * width, (e.clientY - rect.top) / rect.height * height];
+    const v = getV();
+    return [v.x + (e.clientX - rect.left) / rect.width * v.w, v.y + (e.clientY - rect.top) / rect.height * v.h];
   };
   const layerUrl = (layer) => (layer.image ? (layer.image.startsWith("data:") ? layer.image : ((layerImages && layerImages.urls && layerImages.urls[layer.image]) || null)) : null);
   const setLayerImageVisible = (layerId, visible) => {
@@ -23891,9 +23900,13 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
       s.strokeCanvas = strokeCanvas;
       const ov = overlayEl();
       if (ov) {
+        // over the layer's rect, in the camera's view (the camera is locked while the stroke runs)
+        const v = getV();
         ov.width = bw; ov.height = bh;
-        ov.style.width = `${s.units.w / width * 100}%`;
-        ov.style.height = `${s.units.h / height * 100}%`;
+        ov.style.left = `${-v.x / v.w * 100}%`;
+        ov.style.top = `${-v.y / v.h * 100}%`;
+        ov.style.width = `${s.units.w / v.w * 100}%`;
+        ov.style.height = `${s.units.h / v.h * 100}%`;
         ov.style.display = "block";
       }
       s.overlay = ov;
@@ -24056,8 +24069,25 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
       setTimeout(finish, 500);
     });
   };
-  liveRef.current = { data, onChange, painter, strokeMove, strokeUp };
+  liveRef.current = { data, onChange, painter, strokeMove, strokeUp, busy: !!draft || !!moving || !!vertexDrag || !!handleDrag };
   useEffect(() => () => { const s = strokeRef.current; if (s) { s.cancelled = true; strokeRef.current = null; detachStroke(); } }, []);
+  // For the camera (r045): whether a gesture is in progress (the wheel and
+  // the keys wait), and the cancel a second finger brings. A shape mid-drag
+  // goes back where it was when its origin is known.
+  const isBusy = () => !!strokeRef.current || !!liveRef.current.busy;
+  const cancelGesture = () => {
+    if (strokeRef.current) cancelStroke();
+    if (draft) cancelDraft();
+    if (moving) {
+      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => (s.id === moving.id ? moving.origin : s)) })), { coalesce: `move-${moving.id}-${moving.seq}` });
+      setMoving(null);
+    }
+    if (handleDrag) {
+      updateShape(handleDrag.origin.id, handleDrag.origin, { coalesce: `${handleDrag.kind}-${handleDrag.origin.id}-${handleDrag.seq}` });
+      setHandleDrag(null);
+    }
+    if (vertexDrag) setVertexDrag(null);
+  };
 
   // Keys are document-wide while a drawing tool is active, because the strip's
   // buttons take focus when clicked and a Delete that only worked with the
@@ -24097,7 +24127,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   // simplified stroke through finishDraft and the tool stays Freehand.
   useEffect(() => {
     if (!draft || draft.type !== "freehand") return;
-    const minGap = MAP_FREEHAND.spacing * width;
+    const minGap = MAP_FREEHAND.spacing * getV().w;
     const move = (e) => {
       const p = toPoint(e);
       if (!p) return;
@@ -24276,6 +24306,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     focusTextId, consumeFocusText: () => setFocusTextId(null),
     addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer, setLayerImage, clearLayerImage,
     paintSettings, setPaint,
+    isBusy, cancelGesture,
     onSvgPointerDown, onSvgClick, onSvgDoubleClick, onSvgPointerMove, onSvgPointerLeave, onSvgContextMenu,
   };
 }
@@ -24406,7 +24437,7 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
       consumeFocusText();
     }
   }, [focusTextId, selectedShape]);
-  const showStyle = tool !== "pin" && (tool !== "select" || !!selectedShape);
+  const showStyle = tool !== "pin" && tool !== "pan" && (tool !== "select" || !!selectedShape);
   const showFill = kind !== "stroke" && kind !== "freehand" && kind !== "eraser";
   const showStroke = kind !== "fill" && kind !== "brush" && kind !== "eraser"; // a bucket fill lands with no stroke; give it one in Select
   const showSmooth = kind === "rect" || kind === "polygon" || kind === "stroke" || kind === "freehand" || kind === "region";
@@ -24734,11 +24765,13 @@ function MapLayerPanel({ drawing, onLoadImage, missing }) {
 // 14-pixel stroke that does not scale with zoom (a 4-unit line is under two
 // screen pixels wide, and nobody should have to hit that), plus draggable
 // point handles for the selected polygon or line.
-function MapEditorOverlay({ width, height, drawing }) {
+function MapEditorOverlay({ width, height, drawing, view }) {
   const { tool, draft, cursor, selBox, style, selectable, selectedShape, onSvgPointerDown, onSvgContextMenu, paintSettings } = drawing;
   const f = mapNum;
   const items = [];
-  const vertexR = Math.max(3, width / 220);
+  // the visible rect (r045); handle sizes follow it so they keep their screen size at any zoom
+  const v = view || { x: 0, y: 0, w: width, h: height };
+  const vertexR = Math.max(0.5, v.w / 220);
   const selectMode = tool === "select";
   if (selectMode) {
     // A stamp is hit through its whole box, turned with it; a label through a
@@ -24802,7 +24835,7 @@ function MapEditorOverlay({ width, height, drawing }) {
     // knob above the top edge turns it. Each handle is a visible mark with a
     // transparent hit target on top, as the point handles are.
     const rot = selectedShape.rotation || 0;
-    const hr = Math.max(4, width / 130);
+    const hr = Math.max(0.5, v.w / 130);
     const g = [];
     g.push(<rect key="frame" x={f(frame.x)} y={f(frame.y)} width={f(frame.w)} height={f(frame.h)} fill="none" stroke="#c8a96e" strokeWidth={1} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" pointerEvents="none" />);
     if (selectMode && selectedShape.type !== "text") {
@@ -24812,7 +24845,7 @@ function MapEditorOverlay({ width, height, drawing }) {
       });
     }
     if (selectMode && (selectedShape.type === "stamp" || selectedShape.type === "text")) {
-      const kx = frame.x + frame.w / 2, ky = frame.y - Math.max(16, width / 60);
+      const kx = frame.x + frame.w / 2, ky = frame.y - Math.max(1, v.w / 60);
       g.push(<line key="kl" x1={f(kx)} y1={f(frame.y)} x2={f(kx)} y2={f(ky)} stroke="#c8a96e" strokeWidth={1} vectorEffect="non-scaling-stroke" pointerEvents="none" />);
       g.push(<circle key="kc" cx={f(kx)} cy={f(ky)} r={f(hr)} fill="#c8a96e" stroke="#2b2420" strokeWidth={1} vectorEffect="non-scaling-stroke" pointerEvents="none" />);
       g.push(<circle key="kh" cx={f(kx)} cy={f(ky)} r={f(hr)} fill="transparent" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" data-handle="rotate" />);
@@ -24825,7 +24858,7 @@ function MapEditorOverlay({ width, height, drawing }) {
     // A visible dot, then its hit target on top: a transparent disk (the
     // stroke ring alone leaves the centre of a small circle unhittable in
     // Chromium) plus a transparent 16-pixel non-scaling stroke around it.
-    const hr = Math.max(4, width / 130);
+    const hr = Math.max(0.5, v.w / 130);
     selectedShape.points.forEach((p, i) => {
       items.push(<circle key={`h${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="#f4efe4" stroke="#2b2420" strokeWidth={1} vectorEffect="non-scaling-stroke" pointerEvents="none" />);
       items.push(<circle key={`hh${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="transparent" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" data-vertex={i} />);
@@ -24834,7 +24867,7 @@ function MapEditorOverlay({ width, height, drawing }) {
   return (
     <svg
       className="map-overlay"
-      viewBox={`0 0 ${f(width)} ${f(height)}`}
+      viewBox={`${f(v.x)} ${f(v.y)} ${f(v.w)} ${f(v.h)}`}
       aria-hidden="true"
       onPointerDown={selectMode ? onSvgPointerDown : undefined}
       onContextMenu={selectMode ? onSvgContextMenu : undefined}
@@ -25033,6 +25066,192 @@ function rasterizeMapSvg(svg, width, height, scale) {
   }));
 }
 
+
+// The camera (r045): what part of the canvas the box shows. `view` is the
+// visible rect in canvas units, always the canvas's aspect, so the box never
+// changes size; zoom is the canvas width over the view's, 1 (the whole
+// canvas, Fit) to `max`. The svg and the overlay take the view as their
+// viewBox, the pins and the paint overlay are placed in it, and the editor's
+// pointer math maps through it. Inputs: Ctrl+wheel about the pointer (what a
+// trackpad pinch sends), a two-finger pinch, the keys + - 0, the corner
+// buttons; a pan by the middle button or Space held in any tool, by one
+// finger or the left button in pan mode (the Pan tool, or the read-only
+// view), by two fingers anywhere. A second finger cancels the one-finger
+// gesture it lands on through `cancelGesture`; the wheel, the keys, and the
+// buttons are ignored while `locked()` says a gesture is in progress, so
+// nothing shifts under a pointer that is down. `panMode` and `locked` are
+// functions, read at the event, because the editor's tool hook renders
+// after the camera. Resets to Fit when the canvas size changes.
+const MAP_CAMERA = { max: 8, step: 1.25, dragSlop: 3 };
+
+function useMapCamera({ width, height, canvasRef, svgRef, panMode, locked, cancelGesture, enabled }) {
+  const W = Number.isFinite(width) && width > 0 ? width : 1;
+  const H = Number.isFinite(height) && height > 0 ? height : 1;
+  const [view, setViewState] = useState({ x: 0, y: 0, w: W, h: H });
+  const viewRef = useRef(view);
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const spaceRef = useRef(false);
+  const panRef = useRef(null);          // { pointerId, startX, startY, view, moved } while a pan drag runs
+  const pinchRef = useRef(null);        // { dist, zoom, anchor } while two fingers are down
+  const touchRef = useRef(new Map());   // the touch pointers down, id -> [clientX, clientY]
+  const draggedRef = useRef(false);     // the last press moved the view: the click that follows is not a click
+  const attachedRef = useRef(false);
+  const cfg = useRef({});
+  cfg.current = { panMode, locked, cancelGesture, W, H };
+  const setView = (v) => { viewRef.current = v; setViewState(v); };
+  const clampView = (x, y, w, h) => ({ x: Math.max(0, Math.min(W - w, x)), y: Math.max(0, Math.min(H - h, y)), w, h });
+  const rectOf = () => { const el = (svgRef && svgRef.current) || canvasRef.current; return el ? el.getBoundingClientRect() : null; };
+  const fractionOf = (rect, clientX, clientY) => [rect && rect.width ? (clientX - rect.left) / rect.width : 0.5, rect && rect.height ? (clientY - rect.top) / rect.height : 0.5];
+  const zoomOf = (v) => W / v.w;
+  const isLocked = () => (typeof cfg.current.locked === "function" ? !!cfg.current.locked() : false);
+  useEffect(() => { setView({ x: 0, y: 0, w: W, h: H }); }, [W, H]);
+  // a zoom that keeps the canvas point under the pointer where it is
+  const zoomAt = (factor, clientX, clientY) => {
+    const v = viewRef.current;
+    const z = Math.max(1, Math.min(MAP_CAMERA.max, zoomOf(v) * factor));
+    const w = W / z, h = H / z;
+    const [fx, fy] = fractionOf(rectOf(), clientX, clientY);
+    setView(clampView(v.x + fx * v.w - fx * w, v.y + fy * v.h - fy * h, w, h));
+  };
+  const zoomBy = (factor) => { const r = rectOf(); zoomAt(factor, r ? r.left + r.width / 2 : 0, r ? r.top + r.height / 2 : 0); };
+  const fit = () => setView({ x: 0, y: 0, w: W, h: H });
+  const panBy = (dx, dy) => { const v = viewRef.current; setView(clampView(v.x + dx, v.y + dy, v.w, v.h)); };
+  // the window listeners of a drag or a pinch, one stable pair that reads the latest closures
+  const handlersRef = useRef(null);
+  if (!handlersRef.current) handlersRef.current = { move: (e) => cfg.current.onMove(e), up: (e) => cfg.current.onUp(e) };
+  const attach = () => { if (attachedRef.current) return; attachedRef.current = true; const h = handlersRef.current; window.addEventListener("pointermove", h.move); window.addEventListener("pointerup", h.up); window.addEventListener("pointercancel", h.up); };
+  const detach = () => { if (!attachedRef.current) return; attachedRef.current = false; const h = handlersRef.current; window.removeEventListener("pointermove", h.move); window.removeEventListener("pointerup", h.up); window.removeEventListener("pointercancel", h.up); };
+  cfg.current.onMove = (e) => {
+    if (e.pointerType === "touch" && touchRef.current.has(e.pointerId)) touchRef.current.set(e.pointerId, [e.clientX, e.clientY]);
+    const pinch = pinchRef.current;
+    if (pinch) {
+      const pts = Array.from(touchRef.current.values());
+      if (pts.length < 2) return;
+      const [a, b] = pts;
+      const dist = Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1]));
+      const z = Math.max(1, Math.min(MAP_CAMERA.max, pinch.zoom * dist / pinch.dist));
+      const w = W / z, h = H / z;
+      const [fx, fy] = fractionOf(rectOf(), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+      setView(clampView(pinch.anchor[0] - fx * w, pinch.anchor[1] - fy * h, w, h));
+      return;
+    }
+    const pan = panRef.current;
+    if (!pan || e.pointerId !== pan.pointerId) return;
+    const rect = rectOf();
+    if (!rect || !rect.width || !rect.height) return;
+    const dx = e.clientX - pan.startX, dy = e.clientY - pan.startY;
+    if (!pan.moved && Math.hypot(dx, dy) > MAP_CAMERA.dragSlop) pan.moved = true;
+    if (!pan.moved) return;
+    draggedRef.current = true;
+    setView(clampView(pan.view.x - dx * pan.view.w / rect.width, pan.view.y - dy * pan.view.h / rect.height, pan.view.w, pan.view.h));
+  };
+  cfg.current.onUp = (e) => {
+    if (e.pointerType === "touch") {
+      touchRef.current.delete(e.pointerId);
+      if (pinchRef.current && touchRef.current.size < 2) pinchRef.current = null;
+    }
+    if (panRef.current && e.pointerId === panRef.current.pointerId) { panRef.current = null; setDragging(false); }
+    if (!panRef.current && !pinchRef.current && touchRef.current.size === 0) detach();
+  };
+  // The canvas div's capture-phase pointerdown: a pan or a pinch takes the
+  // pointer before the svg, the pins, or the tools see it.
+  const onPointerDownCapture = (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest(".map-zoom, .map-resize-handle")) return;
+    if (e.pointerType === "touch") {
+      touchRef.current.set(e.pointerId, [e.clientX, e.clientY]);
+      attach();
+      if (touchRef.current.size === 2) {
+        if (panRef.current) { panRef.current = null; setDragging(false); }
+        if (typeof cfg.current.cancelGesture === "function") cfg.current.cancelGesture();
+        const [a, b] = Array.from(touchRef.current.values());
+        const v = viewRef.current;
+        const [fx, fy] = fractionOf(rectOf(), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+        pinchRef.current = { dist: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])), zoom: zoomOf(v), anchor: [v.x + fx * v.w, v.y + fy * v.h] };
+        draggedRef.current = true;
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (touchRef.current.size > 2) { e.stopPropagation(); e.preventDefault(); return; }
+    }
+    if (pinchRef.current) { e.stopPropagation(); return; }
+    const mode = typeof cfg.current.panMode === "function" ? !!cfg.current.panMode() : !!cfg.current.panMode;
+    const pan = e.button === 1 || (e.button === 0 && (spaceRef.current || mode));
+    if (!pan) { draggedRef.current = false; return; }
+    e.stopPropagation();
+    e.preventDefault();
+    draggedRef.current = false;
+    panRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, view: viewRef.current, moved: false };
+    setDragging(true);
+    attach();
+  };
+  // Ctrl+wheel on the canvas, bound natively so the page does not zoom
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      if (isLocked() || pinchRef.current || panRef.current) return;
+      zoomAt(e.deltaY < 0 ? MAP_CAMERA.step : 1 / MAP_CAMERA.step, e.clientX, e.clientY);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [enabled, W, H]);
+  // Space held, and the zoom keys, document-wide, typing fields excluded
+  useEffect(() => {
+    const typing = (t) => { const tag = t && t.tagName ? t.tagName.toUpperCase() : ""; return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!(t && t.isContentEditable); };
+    const down = (e) => {
+      if (typing(e.target)) return;
+      if (e.key === " ") {
+        if (!spaceRef.current) { spaceRef.current = true; setSpaceHeld(true); }
+        const el = canvasRef.current;
+        if (el && typeof el.matches === "function" && el.matches(":hover")) e.preventDefault();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "+" || e.key === "=") { e.preventDefault(); if (!isLocked()) zoomBy(MAP_CAMERA.step); }
+      else if (e.key === "-" || e.key === "_") { e.preventDefault(); if (!isLocked()) zoomBy(1 / MAP_CAMERA.step); }
+      else if (e.key === "0") { e.preventDefault(); if (!isLocked()) fit(); }
+    };
+    const up = (e) => { if (e.key === " ") { spaceRef.current = false; setSpaceHeld(false); } };
+    const blur = () => { spaceRef.current = false; setSpaceHeld(false); };
+    document.addEventListener("keydown", down);
+    document.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => { document.removeEventListener("keydown", down); document.removeEventListener("keyup", up); window.removeEventListener("blur", blur); };
+  }, [W, H]);
+  useEffect(() => () => { panRef.current = null; pinchRef.current = null; touchRef.current.clear(); detach(); }, []);
+  const f = mapNum;
+  return {
+    view: { ...view, W, H },
+    viewBox: `${f(view.x)} ${f(view.y)} ${f(view.w)} ${f(view.h)}`,
+    zoom: zoomOf(view),
+    zoomAt, zoomBy, fit, panBy,
+    onPointerDownCapture,
+    dragged: () => draggedRef.current,
+    className: `${spaceHeld ? "pan-ready" : ""} ${dragging ? "pan-active" : ""}`.trim(),
+  };
+}
+
+// The bar in the canvas's corner: zoom out, the zoom, zoom in, Fit, and the
+// box's width when the grip has changed it. Its presses stay its own.
+function MapZoomControls({ camera, sizePct }) {
+  const z = camera.zoom;
+  const stop = (e) => e.stopPropagation();
+  return (
+    <div className="map-zoom" onPointerDown={stop} onClick={stop} onDoubleClick={stop}>
+      <button type="button" className="btn btn-small btn-ghost" disabled={z <= 1.0001} onClick={() => camera.zoomBy(1 / MAP_CAMERA.step)} title="Zoom out (-)">{"−"}</button>
+      <span className="map-zoom-value" title="Zoom; Ctrl+wheel or a pinch zooms about the pointer">{Math.round(z * 100)}%</span>
+      <button type="button" className="btn btn-small btn-ghost" disabled={z >= MAP_CAMERA.max - 0.0001} onClick={() => camera.zoomBy(MAP_CAMERA.step)} title="Zoom in (+)">+</button>
+      <button type="button" className="btn btn-small btn-ghost" disabled={z <= 1.0001} onClick={camera.fit} title="Show the whole canvas (0)">Fit</button>
+      {Number.isFinite(sizePct) && Math.round(sizePct) !== 100 && <span className="map-zoom-value" title="The box's width, from the corner grip">{Math.round(sizePct)}% wide</span>}
+    </div>
+  );
+}
+
 // Shared resize handler for the map canvas. Returns a pointerdown handler that
 // the caller wires onto a resize-handle element. Drags the canvas width as a percentage
 // of its parent, 25% to 150%. Past 100% the canvas grows out of its column on
@@ -25080,7 +25299,10 @@ function useResizeHandler(canvasRef, sizePct, setSizePct) {
   };
 }
 
-function MapPin({ pin, entries, templates, asOfYear, timeMode, isSelected, onClick, onPointerDown, editable }) {
+function MapPin({ pin, entries, templates, asOfYear, timeMode, isSelected, onClick, onPointerDown, editable, view }) {
+  // placed in the camera's view (r045): a pin outside it lands outside the box, which clips it
+  const left = view ? (pin.x * view.W - view.x) / view.w : pin.x;
+  const top = view ? (pin.y * view.H - view.y) / view.h : pin.y;
   const linkedEntry = pin.entryId ? entries.find(e => e.id === pin.entryId) : null;
   const color = pin.color || "#c8a96e";
   const linkBroken = pin.entryId && !linkedEntry;
@@ -25099,7 +25321,7 @@ function MapPin({ pin, entries, templates, asOfYear, timeMode, isSelected, onCli
   return (
     <div
       className={`map-pin ${editable ? "editable" : ""} ${isSelected ? "selected" : ""}`}
-      style={{ left: `${pin.x * 100}%`, top: `${pin.y * 100}%` }}
+      style={{ left: `${left * 100}%`, top: `${top * 100}%` }}
       onClick={onClick}
       onPointerDown={onPointerDown}
     >
@@ -25184,34 +25406,12 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
   );
   const pins = mapData.pins || [];
   const canvasRef = useRef(null);
+  const viewSvgRef = useRef(null);
   const [sizePct, setSizePct] = useState(100);
-
-  // Ctrl+scroll zoom on the map canvas. Simple wrapper-width approach (no
-  // transform): the inner wrapper claims zoom × natural width, the image's
-  // width:100% naturally grows to fill it, and pins keep their percentage
-  // positioning. Range 0.5–4, factor 1.15. Wider upper bound than Stemma
-  // because maps benefit from deep zoom-in. Listener bound natively with
-  // passive:false so Ctrl+wheel doesn't trigger browser page zoom.
-  //
-  // Effect deps include canvasReady because the map-canvas div is gated
-  // behind the early `if (!canvasReady) return <map-empty>` while an image
-  // loads: first mount has no canvas and the ref is null. The effect re-runs
-  // when the canvas mounts and binds to it.
-  const [mapZoom, setMapZoom] = useState(1);
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-    const handler = (e) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      setMapZoom(z => {
-        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-        return Math.max(0.5, Math.min(4, z * factor));
-      });
-    };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
-  }, [canvasReady]);
+  // The camera (r045): in the view every drag pans, so a click on a pin
+  // opens its entry only when the press did not move. `enabled` carries
+  // canvasReady because the box is gated behind it while an image loads.
+  const camera = useMapCamera({ width: canvasTree.width, height: canvasTree.height, canvasRef, svgRef: viewSvgRef, panMode: true, enabled: canvasReady });
 
   // View-level calendar selector. Scrubber bounds, year input, era buttons,
   // and the year label all render in viewCalendar's frame. Internally every
@@ -25400,9 +25600,9 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
         </div>
       )}
       {downloadRow}
-      <div className={`map-canvas view-mode ${mapZoom > 1 ? "zoomed" : ""}`} ref={canvasRef} style={{ width: `${sizePct}%`, marginLeft: sizePct > 100 ? `${(100 - sizePct) / 2}%` : undefined }}>
-        <div style={{ position: "relative", width: `${mapZoom * 100}%`, transition: "width 100ms ease" }}>
-          {mapTreeToReact(canvasTree, "canvas")}
+      <div className={`map-canvas view-mode ${camera.className}`} ref={canvasRef} onPointerDownCapture={camera.onPointerDownCapture} style={{ width: `${sizePct}%`, marginLeft: sizePct > 100 ? `${(100 - sizePct) / 2}%` : undefined }}>
+        <div style={{ position: "relative" }}>
+          {mapTreeToReact(canvasTree, "canvas", { ref: viewSvgRef, viewBox: camera.viewBox })}
           {visiblePins.map(({ pin, state }) => {
             if (state === "hidden") return null;
             return (
@@ -25414,13 +25614,14 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
                   asOfYear={timeMode ? timeYear : null}
                   timeMode={timeMode}
                   editable={false}
-                  onClick={() => pin.entryId && onOpenEntry(pin.entryId)}
+                  view={camera.view}
+                  onClick={() => { if (!camera.dragged() && pin.entryId) onOpenEntry(pin.entryId); }}
                 />
               </div>
             );
           })}
         </div>
-        {Math.round(sizePct) !== 100 && <div className="map-size-indicator">{Math.round(sizePct)}%</div>}
+        <MapZoomControls camera={camera} sizePct={sizePct} />
         <div className="map-resize-handle" onPointerDown={handleResizeStart} title="Drag to resize · double-click to reset" onDoubleClick={() => setSizePct(100)} />
       </div>
       {pins.length > 0 && (
@@ -25621,7 +25822,12 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     };
     input.click();
   };
-  const drawing = useMapDrawing({ data, onChange: commit, svgRef: imgRef, canvasRef, width: canvasTree.width, height: canvasTree.height, fillContext, stamps, layerImages: { urls: mergedUrls, missing: layerImages.missing }, painter });
+  // The camera (r045) renders after the tool hook, which reads its view at
+  // the event; the camera reads the tool hook's state at the event too.
+  const cameraViewRef = useRef(null);
+  const drawingRef = useRef(null);
+  const drawing = useMapDrawing({ data, onChange: commit, svgRef: imgRef, canvasRef, width: canvasTree.width, height: canvasTree.height, fillContext, stamps, layerImages: { urls: mergedUrls, missing: layerImages.missing }, painter, getView: () => cameraViewRef.current });
+  drawingRef.current = drawing;
   // Canvas size presets for image-less maps. With shapes or pins on the map
   // the switch warns first, because nothing is transformed: shapes keep their
   // coordinates (anything beyond the new edges is cut off) and pins keep their
@@ -25662,30 +25868,24 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     commit({ ...data, drawing: { ...d, width: imageSize.width, height: imageSize.height } }, { silent: true });
   }, [data, imageSize, onChange]);
 
-  // Ctrl+scroll zoom, mirroring MapView. Wrapper-width approach keeps the
-  // pin-placement and drag math zoom-independent: handlers read imgRef's
-  // getBoundingClientRect (the svg canvas), which already reflects the actual
-  // rendered size at any zoom level, so click-to-fraction conversion still
-  // works.
-  //
-  // Effect deps include canvasReady because the map-canvas div is gated
-  // behind it while an image loads: the ref is null on first mount, and the
-  // effect re-runs when the canvas mounts and binds to it.
-  const [mapZoom, setMapZoom] = useState(1);
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-    const handler = (e) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      setMapZoom(z => {
-        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-        return Math.max(0.5, Math.min(4, z * factor));
-      });
-    };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
-  }, [canvasReady]);
+  // The camera: pan mode is the Pan tool; the wheel and the keys wait while a
+  // stroke, a drag, or a pin drag is in progress; a second finger cancels
+  // whichever of those it lands on. The view's pointer math and the pins
+  // go through camera.view.
+  const camera = useMapCamera({
+    width: canvasTree.width, height: canvasTree.height, canvasRef, svgRef: imgRef, enabled: canvasReady,
+    panMode: () => !!drawingRef.current && drawingRef.current.tool === "pan",
+    locked: () => (!!drawingRef.current && drawingRef.current.isBusy()) || !!draggingPinId,
+    cancelGesture: () => { if (drawingRef.current) drawingRef.current.cancelGesture(); setDraggingPinId(null); },
+  });
+  cameraViewRef.current = camera.view;
+  // a screen point as a 0-1 fraction of the canvas, through the view (pins are stored that way)
+  const pinFraction = (clientX, clientY) => {
+    const rect = imgRef.current ? imgRef.current.getBoundingClientRect() : null;
+    if (!rect || !rect.width || !rect.height) return null;
+    const v = camera.view;
+    return [(v.x + (clientX - rect.left) / rect.width * v.w) / v.W, (v.y + (clientY - rect.top) / rect.height * v.h) / v.H];
+  };
   const handleResizeStart = useResizeHandler(canvasRef, sizePct, setSizePct);
 
   const setImage = async () => {
@@ -25735,15 +25935,14 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
 
   const handleCanvasClick = (e) => {
     if (drawing.tool !== "pin") return;
-    if (e.target && e.target.closest && e.target.closest(".map-resize-handle")) return; // a click on the resize grip is not a pin
+    if (e.target && e.target.closest && e.target.closest(".map-resize-handle, .map-zoom")) return; // a click on the resize grip or the zoom bar is not a pin
+    if (camera.dragged()) return; // the press panned the view
     if (draggingPinId) return;
     if (dragMoved) { setDragMoved(false); return; }
     if (selectedPinId) { setSelectedPinId(null); return; }
-    if (!imgRef.current) return;
-
-    const rect = imgRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    const frac = pinFraction(e.clientX, e.clientY);
+    if (!frac) return;
+    const [x, y] = frac;
     if (x < 0 || x > 1 || y < 0 || y > 1) return;
 
     const newPin = {
@@ -25771,10 +25970,10 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     let moved = false;
 
     const handleMove = (e) => {
-      if (!imgRef.current) return;
-      const rect = imgRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+      const frac = pinFraction(e.clientX, e.clientY);
+      if (!frac) return;
+      const x = Math.max(0, Math.min(1, frac[0]));
+      const y = Math.max(0, Math.min(1, frac[1]));
       if (Math.abs(x - startX) > 0.002 || Math.abs(y - startY) > 0.002) {
         moved = true;
       }
@@ -25838,15 +26037,17 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
         <div className="map-empty" style={{ borderTop: "none" }}>Loading image...</div>
       ) : (
           <div
-            className={`map-canvas tool-${drawing.tool} ${drawing.tool !== "pin" ? "draw-mode" : ""} ${mapZoom > 1 ? "zoomed" : ""}`}
+            className={`map-canvas tool-${drawing.tool} ${drawing.tool !== "pin" ? "draw-mode" : ""} ${camera.className}`}
             ref={canvasRef}
             onClick={handleCanvasClick}
+            onPointerDownCapture={camera.onPointerDownCapture}
             tabIndex={0}
             style={{ borderRadius: "0 0 3px 3px", width: `${sizePct}%`, marginLeft: sizePct > 100 ? `${(100 - sizePct) / 2}%` : undefined }}
           >
-            <div style={{ position: "relative", width: `${mapZoom * 100}%`, transition: "width 100ms ease" }}>
+            <div style={{ position: "relative" }}>
               {mapTreeToReact(canvasTree, "canvas", {
                 ref: imgRef,
+                viewBox: camera.viewBox,
                 onPointerDown: drawing.onSvgPointerDown,
                 onPointerMove: drawing.onSvgPointerMove,
                 onPointerLeave: drawing.onSvgPointerLeave,
@@ -25862,13 +26063,14 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
                   entries={entries}
                   editable
                   isSelected={pin.id === selectedPinId}
+                  view={camera.view}
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => handlePinPointerDown(e, pin.id)}
                 />
               ))}
-              <MapEditorOverlay width={canvasTree.width} height={canvasTree.height} drawing={drawing} />
+              <MapEditorOverlay width={canvasTree.width} height={canvasTree.height} drawing={drawing} view={camera.view} />
             </div>
-            {Math.round(sizePct) !== 100 && <div className="map-size-indicator">{Math.round(sizePct)}%</div>}
+            <MapZoomControls camera={camera} sizePct={sizePct} />
             <div className="map-resize-handle" onPointerDown={handleResizeStart} title="Drag to resize · double-click to reset" onDoubleClick={() => setSizePct(100)} />
           </div>
       )}
