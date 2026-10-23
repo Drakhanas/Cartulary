@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r046) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r047) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -256,3 +256,15 @@ day it was written. Done and Cancel in the strip, a filter in the picker, Import
 the stamps are used, a letter per tool, arrows that nudge, labels a screen reader can
 say, the pen's eraser end, Cancel that puts the folder back. Twenty-four rotations.
 Sixteen cuts in one session. One left in the amendment, and it is prose.
+
+r047 was the prose. The help's Cartographia topic had been written at r038 for an
+editor of eight tools and said so in a dozen places: eight tools, widths of 2, 4, or 8,
+Ctrl+scroll from half size to four times, no freehand brush, no image stamps. Ten
+forks about what the help should say and where, all recommendations taken. It became
+three topics, split by who opens them, and the site's page became a hub with two
+sub-panels to match. Every label, letter, and number in the new text was checked
+against the source by a script before Drak read it, and the writing itself turned up
+two wrong claims against the code before the script ran. Time mode's paragraphs were
+lifted by extraction, not retyped. Twenty-five rotations. Seventeen cuts in one
+session. The amendment is done, and with it pillar 3; what is left is the two carves
+that waited for this shape.
