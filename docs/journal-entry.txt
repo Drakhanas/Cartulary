@@ -1,4 +1,4 @@
-=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r045) ===
+=== 2026-10-19 (session 19, v1.6: handoff audit, the scoped-edit gate mode, source and docs into GitHub, r031-r046) ===
 
 One cut tonight, late, and before it the session had already changed more than most
 sessions with five.
@@ -243,3 +243,16 @@ each other at the event instead, as functions. The wheel and the keys wait while
 pointer is down; a second finger is the one thing that does not, because a pinch
 has no other way to begin. Drak passed it on the Surface in the same evening.
 Twenty-three rotations. Fifteen cuts in one session.
+
+r046 was the polish cut, nine forks of small things, and Drak widened one of them:
+if the strip was going to be fixed slots, could he arrange the slots himself. He
+could, because fixed slots had already turned the strip into a list of named groups,
+and a list is a thing a modal can reorder. The probe then said the swatches moved
+anyway, and they did: the hint above the strip wrapped to a different number of lines
+per tool and carried the whole column with it. A fixed slot in a box that moves is not
+fixed. The hint got two lines of height for good. The same probe was the first to
+reload the page with the editor open and found the close warning had thrown since the
+day it was written. Done and Cancel in the strip, a filter in the picker, Import where
+the stamps are used, a letter per tool, arrows that nudge, labels a screen reader can
+say, the pen's eraser end, Cancel that puts the folder back. Twenty-four rotations.
+Sixteen cuts in one session. One left in the amendment, and it is prose.
