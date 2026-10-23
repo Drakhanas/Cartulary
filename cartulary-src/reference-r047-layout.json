@@ -68,110 +68,114 @@
     ],
     [
       "16_trunk.jsx",
-      1293
+      265
     ],
     [
-      "17_cartographia/00_model.jsx",
+      "17_concordance.jsx",
+      1028
+    ],
+    [
+      "18_cartographia/00_model.jsx",
       1096
     ],
     [
-      "17_cartographia/01_renderer.jsx",
+      "18_cartographia/01_renderer.jsx",
       380
     ],
     [
-      "17_cartographia/02_tools.jsx",
+      "18_cartographia/02_tools.jsx",
       2121
     ],
     [
-      "17_cartographia/03_view.jsx",
+      "18_cartographia/03_view.jsx",
       1288
     ],
     [
-      "17_cartographia/04_index.jsx",
+      "18_cartographia/04_index.jsx",
       348
     ],
     [
-      "18_chronometric.jsx",
+      "19_chronometric.jsx",
       1528
     ],
     [
-      "19_linea.jsx",
+      "20_linea.jsx",
       646
     ],
     [
-      "20_stemma.jsx",
+      "21_stemma.jsx",
       1410
     ],
     [
-      "21_trunk.jsx",
+      "22_trunk.jsx",
       354
     ],
     [
-      "22_glossopoeia/00_schemas.jsx",
+      "23_glossopoeia/00_schemas.jsx",
       476
     ],
     [
-      "22_glossopoeia/01_substrate.jsx",
+      "23_glossopoeia/01_substrate.jsx",
       1025
     ],
     [
-      "22_glossopoeia/02_grammar.jsx",
+      "23_glossopoeia/02_grammar.jsx",
       380
     ],
     [
-      "22_glossopoeia/03_components.jsx",
+      "23_glossopoeia/03_components.jsx",
       393
     ],
     [
-      "22_glossopoeia/04_view.jsx",
+      "23_glossopoeia/04_view.jsx",
       845
     ],
     [
-      "23_ephemeris/00_body-kinds.jsx",
+      "24_ephemeris/00_body-kinds.jsx",
       187
     ],
     [
-      "23_ephemeris/01_shell.jsx",
+      "24_ephemeris/01_shell.jsx",
       722
     ],
     [
-      "23_ephemeris/02_asbo.jsx",
+      "24_ephemeris/02_asbo.jsx",
       1459
     ],
     [
-      "23_ephemeris/03_observe.jsx",
+      "24_ephemeris/03_observe.jsx",
       1937
     ],
     [
-      "23_ephemeris/04_forcealign.jsx",
+      "24_ephemeris/04_forcealign.jsx",
       585
     ],
     [
-      "23_ephemeris/05_compute.jsx",
+      "24_ephemeris/05_compute.jsx",
       1177
     ],
     [
-      "23_ephemeris/06_orbital-math.jsx",
+      "24_ephemeris/06_orbital-math.jsx",
       1266
     ],
     [
-      "24_kalendarium.jsx",
+      "25_kalendarium.jsx",
       876
     ],
     [
-      "25_home-data.jsx",
+      "26_home-data.jsx",
       1514
     ],
     [
-      "26_trunk.jsx",
+      "27_trunk.jsx",
       248
     ],
     [
-      "27_modals.jsx",
+      "28_modals.jsx",
       286
     ],
     [
-      "28_trunk.jsx",
+      "29_trunk.jsx",
       5
     ]
   ],
