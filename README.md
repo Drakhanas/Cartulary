@@ -95,11 +95,13 @@ The GitHub Actions workflow in `.github/workflows/` runs all of this on every pu
 
 - `handoff.md`: where the project stands, cut by cut, with the verification each one had.
 - `changelog.md` and the per-version changelogs: what changed and why.
-- `roadmap.md` and `roadmap-principles.md`: what is planned and the rules for planning it.
+- `roadmap.md`, `roadmap-principles.md`, `roadmap-archive.md`: what is planned, the rules for planning it, and the plans of the versions that shipped.
 - `cartulary-doctrine.md`, `doctrine-code-watch.md`, `doctrine-site.md`: standing rules learned from mistakes, each with the mistake that taught it.
 - `cartulary-spine-manifest.md`: the module tree with line counts and what each module holds.
 - `cartographia-plus-spec.md`, `maps-promotion-spec.md`, and the Glossopoeia documents: the specs the larger features were built from.
 - `release-notes/`: the patch notes and public copy for each release.
+
+The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page carries the same shapes.
 
 ## Contributing
 
