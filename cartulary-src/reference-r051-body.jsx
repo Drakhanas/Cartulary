@@ -25220,32 +25220,30 @@ function useMapLayerImages(layers, dirHandle, imageFolder) {
 // The map font for a downloaded file. An svg opened on its own, or loaded as
 // an image to be drawn to a canvas, is a sealed document: it cannot see the
 // page's web fonts, so a label would fall back to the viewer's serif. The
-// download embeds Cormorant Garamond instead: the Google Fonts stylesheet
-// names the latin woff2, which is fetched and written in as a data URL. One
-// fetch per session, cached on the function; offline, or on any failure,
-// null, and the file falls back silently.
+// download embeds Cormorant Garamond instead, copied from the page's own
+// stylesheet: the release build inlines every font it uses as a data-URL
+// @font-face, and the regular-weight rule is written into the file as it
+// stands. Nothing is fetched; the application makes no network request
+// (r051). Found once per session, cached on the function. A build whose
+// fonts come from a stylesheet link (the development head) has no inline
+// rule; the result is null and the file falls back silently.
 function mapFontFaceCss() {
-  if (!mapFontFaceCss.promise) {
-    mapFontFaceCss.promise = (async () => {
-      try {
-        const ctl = new AbortController();
-        const timer = setTimeout(() => ctl.abort(), 8000);
-        const css = await (await fetch("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&display=swap", { signal: ctl.signal })).text();
-        const blocks = css.match(/@font-face\s*\{[^}]*\}/g) || [];
-        const latin = blocks.find(b => /unicode-range:\s*U\+0000-00FF/i.test(b)) || blocks[0];
-        const m = latin ? /url\((https:[^)\s"']+\.woff2)\)/.exec(latin) : null;
-        if (!m) throw new Error("no woff2 url");
-        const bytes = new Uint8Array(await (await fetch(m[1], { signal: ctl.signal })).arrayBuffer());
-        clearTimeout(timer);
-        let bin = "";
-        for (let i = 0; i < bytes.length; i += 1) bin += String.fromCharCode(bytes[i]);
-        return `@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;src:url(data:font/woff2;base64,${btoa(bin)}) format('woff2');}`;
-      } catch (err) {
-        return null;
-      }
-    })();
+  if (mapFontFaceCss.css === undefined) {
+    let found = null;
+    try {
+      const css = Array.from(document.querySelectorAll("style")).map(s => s.textContent || "").join("\n");
+      const blocks = css.match(/@font-face\s*\{[^}]*\}/g) || [];
+      found = blocks.find(b =>
+        /font-family:\s*['"]?Cormorant Garamond['"]?\s*;/i.test(b)
+        && /font-weight:\s*(400|normal)\s*[;}]/i.test(b)
+        && !/font-style:\s*italic/i.test(b)
+        && /src:\s*url\(["']?data:/i.test(b)) || null;
+    } catch (err) {
+      found = null;
+    }
+    mapFontFaceCss.css = found;
   }
-  return mapFontFaceCss.promise;
+  return mapFontFaceCss.css;
 }
 
 // The svg of a saved map as a standalone file: the drawing with the image
@@ -25253,8 +25251,8 @@ function mapFontFaceCss() {
 // folder image is read through the folder handle, a filename with no folder
 // cannot be read and the file is written without it, which the caller says),
 // the world's stamps resolved, hidden layers omitted, no pins (pins are app
-// data with their own renderer), the map font embedded when it can be
-// fetched, href doubled as xlink:href on image, use, and textPath so older
+// data with their own renderer), the map font embedded from the page's own
+// stylesheet, href doubled as xlink:href on image, use, and textPath so older
 // viewers open it, and width and height on the root so a viewer, and Firefox
 // drawing it to a canvas, know its size. Raster layers are read the same way
 // (r043); one that cannot be read is left out and named in layersMissing.
@@ -25310,7 +25308,7 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
     (node.children || []).forEach(double);
   };
   double(tree);
-  const fontCss = await mapFontFaceCss();
+  const fontCss = mapFontFaceCss();
   if (fontCss) tree.children.unshift({ tag: "style", raw: fontCss });
   const attrs = { ...tree.attrs, "xmlns:xlink": "http://www.w3.org/1999/xlink", width: mapNum(tree.width), height: mapNum(tree.height) };
   delete attrs.class;
@@ -42383,7 +42381,7 @@ The rules:
 
 If no pins on the map have temporal data (no ranges anywhere), the Time button doesn't appear — the feature stays out of the way for non-historical maps. Permanent flags alone don't make the button appear, since there's nothing to scrub through.
 
-**Downloading a map.** In a map's view (not the editor), a **Download** row above the canvas writes the saved map as a file named after the map. **SVG** is the map as a standalone file: the drawing with the image and every painted layer inlined when they can be read, the stamps and tips it uses resolved into the file (each once), hidden layers left out, the map font embedded when it can be fetched, and no pins (pins are app data with their own renderer). **PNG** is the same drawn at twice the canvas size, scaled down to fit sixteen million pixels when the canvas is huge. A note beside the buttons says what was written, and says so when the image or a painted layer could not be read (a folder file with no folder connected): the file then has the rest of the drawing. The world's HTML export draws every map through the same renderer, image, drawing, painted layers, and pins together.
+**Downloading a map.** In a map's view (not the editor), a **Download** row above the canvas writes the saved map as a file named after the map. **SVG** is the map as a standalone file: the drawing with the image and every painted layer inlined when they can be read, the stamps and tips it uses resolved into the file (each once), hidden layers left out, the map font embedded, and no pins (pins are app data with their own renderer). **PNG** is the same drawn at twice the canvas size, scaled down to fit sixteen million pixels when the canvas is huge. A note beside the buttons says what was written, and says so when the image or a painted layer could not be read (a folder file with no folder connected): the file then has the rest of the drawing. The world's HTML export draws every map through the same renderer, image, drawing, painted layers, and pins together.
 
 **Limitations.** No pen pressure: a stroke is the width you set however hard you press. No colors beyond the palette of eight for shapes, labels, and paint (a stamp pack can carry its own colors, and a color tip paints as it is). No grid or snapping beyond the rotation knob's Shift snap, no fog of war, no measurement or scale tools, no layer opacity or blend modes, and no placing a shape or a stroke from the keyboard. Cartulary's map support is reference-grade, not VTT-grade: a drawn, painted, or imported map with clickable, cross-referenced, time-aware pins. If you need a virtual tabletop experience, this isn't that.` },
 

@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "bb99abf3b7acacfd1df7fe9557dcb1da83c1e255985d038a4f8516dc3b19a83f",
+  "anchor_sha256": "50480113ab7f5382af4ea5e24191b43c1305a21de504b6bb86d506db79cddc81",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -88,7 +88,7 @@
     ],
     [
       "18_cartographia/03_view.jsx",
-      1288
+      1286
     ],
     [
       "18_cartographia/04_index.jsx",
