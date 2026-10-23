@@ -11766,6 +11766,7 @@ function App() {
   // uncommitted map (the entry-new analogue).
   const [activeMapId, setActiveMapId] = useState(null);
   const [mapDraft, setMapDraft] = useState(null);
+  const mapEditorApiRef = useRef(null); // what the open map editor lets this component call (r046: Cancel's restore)
   const initialMapDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
@@ -11893,6 +11894,7 @@ function App() {
     disableBackupReminder: false,
     templatesCollapsed: false,
     sidebarWidth: 236,
+    mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -11944,6 +11946,7 @@ function App() {
             sidebarWidth: typeof stored.sidebarWidth === "number"
               ? Math.max(200, Math.min(500, stored.sidebarWidth))
               : 236,
+            mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -12278,16 +12281,17 @@ function App() {
 
   // Warn before tab close / refresh if a draft is dirty (Bug 3).
   // Auto-save's 500ms debounce means a recent edit may not yet be persisted.
+  const draftDirtyRef = useRef(() => false); // the latest isDraftDirty, declared further down; the loading renders never reach it
   useEffect(() => {
     const handler = (e) => {
-      if (isDraftDirty()) {
+      if (draftDirtyRef.current()) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [entryDraft, tplDraft]);
+  }, []);
 
   // ── Derived data ──────────────────────────────────────────────────────────────
   // Hooks must come BEFORE any early return so the hook count stays stable across renders.
@@ -12487,6 +12491,7 @@ function App() {
     return false;
   };
 
+  draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
     const which = mapDraft ? "this map" : entryDraft ? "this entry" : "this template";
@@ -12832,6 +12837,8 @@ function App() {
   const cancelMapEdit = () => {
     if (!confirmDiscardDraft()) return;
     const existed = (state.cartographia || []).some(m => m.id === activeMapId);
+    // the folder back to what it held when the draft opened (r046); the editor keeps the originals
+    if (mapEditorApiRef.current && typeof mapEditorApiRef.current.restoreOriginals === "function") mapEditorApiRef.current.restoreOriginals();
     setMapDraft(null); initialMapDraftRef.current = null;
     if (!existed) setActiveMapId(null); // brand-new map, never committed: back to index
   };
@@ -15505,6 +15512,10 @@ function App() {
                   bodies={state.celestialBodies}
                   flash={flash}
                   stamps={state.mapStamps}
+                  onStampsChange={(next) => updateState(s => ({ ...s, mapStamps: next }))}
+                  stripLayout={prefs.mapStrip}
+                  onStripLayout={(v) => setPrefs(p => ({ ...p, mapStrip: v }))}
+                  api={mapEditorApiRef}
                 />
               }
             />
@@ -23021,21 +23032,76 @@ function useImageNaturalSize(url, onError) {
 // every write goes through the editor's history (useMapHistory), one step
 // per completed gesture, and shapes go to an explicit active layer.
 
+// Each tool has a key (r046): one letter, pressed with no modifier and no
+// field focused, picks it.
 const MAP_TOOLS = [
-  { id: "pin",     label: "Pin",     hint: "Click on map to add pin · Click pin to edit · Drag pin to move" },
-  { id: "select",  label: "Select",  hint: "Click a shape to select it · Drag to move · Drag a point or a corner to reshape · Drag the knob above to turn (Shift snaps) · Delete removes it · Right-click returns to Pin" },
-  { id: "rect",    label: "Rect",    hint: "Drag on the map to draw a rectangle · Right-click when done" },
-  { id: "ellipse", label: "Ellipse", hint: "Drag on the map to draw an ellipse · Right-click when done" },
-  { id: "polygon", label: "Polygon", hint: "Click to place the corners of a closed, filled area · First corner, double-click, Enter, or right-click closes it · Esc discards" },
-  { id: "stroke",  label: "Line",    hint: "Click to place the points of an open line · Double-click, Enter, or right-click finishes it · Esc discards" },
-  { id: "freehand", label: "Freehand", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Right-click when done" },
-  { id: "fill",    label: "Fill",    hint: "Click inside an area to fill it with the Fill color · The fill goes under the lines around it, and small gaps in them close · Right-click when done" },
-  { id: "text",    label: "Text",    hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
-  { id: "stamp",   label: "Stamp",   hint: "Pick a stamp in the strip, then click to place it or drag to size it · Right-click when done" },
-  { id: "brush",   label: "Brush",   hint: "Drag on the map to paint on the active raster layer (with a vector layer active, the stroke lands in a new raster layer named Paint above it) · Tip, size, opacity, and the Fill color are in the strip · Right-click when done" },
-  { id: "eraser",  label: "Eraser",  hint: "Drag on the map to erase from the active raster layer · Tip, size, and opacity are in the strip · Right-click when done" },
-  { id: "pan",     label: "Pan",     hint: "Drag to move the view · Ctrl+wheel, a pinch, the corner buttons, or + and - zoom; 0 fits · From any tool, hold Space or drag with the middle button · Right-click when done" },
+  { id: "pin",     label: "Pin",     key: "n", hint: "Click on map to add pin · Click pin to edit · Drag pin to move" },
+  { id: "select",  label: "Select",  key: "v", hint: "Click a shape to select it · Drag to move · Corners and points reshape it, the knob turns it · Arrows nudge it · Delete removes it · Right-click returns to Pin" },
+  { id: "rect",    label: "Rect",    key: "r", hint: "Drag on the map to draw a rectangle · Right-click when done" },
+  { id: "ellipse", label: "Ellipse", key: "e", hint: "Drag on the map to draw an ellipse · Right-click when done" },
+  { id: "polygon", label: "Polygon", key: "p", hint: "Click to place the corners of a closed, filled area · Done in the strip, the first corner, a double-click, Enter, or right-click closes it · Esc discards" },
+  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards" },
+  { id: "freehand", label: "Freehand", key: "f", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Right-click when done" },
+  { id: "fill",    label: "Fill",    key: "g", hint: "Click inside an area to fill it with the Fill color · The fill goes under the lines around it, and small gaps in them close · Right-click when done" },
+  { id: "text",    label: "Text",    key: "t", hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
+  { id: "stamp",   label: "Stamp",   key: "s", hint: "Pick a stamp in the strip, then click to place it or drag to size it · Right-click when done" },
+  { id: "brush",   label: "Brush",   key: "b", hint: "Drag on the map to paint on the active raster layer (a vector layer active gets a Paint layer above it) · Tip, size, opacity, and Fill in the strip · Right-click when done" },
+  { id: "eraser",  label: "Eraser",  key: "x", hint: "Drag on the map to erase from the active raster layer · Tip, size, and opacity are in the strip · A pen's eraser end erases from any drawing tool · Right-click when done" },
+  { id: "pan",     label: "Pan",     key: "h", hint: "Drag to move the view · Ctrl+wheel, a pinch, the corner buttons, or + and - zoom; 0 fits · Space or the middle button pans from any tool · Right-click when done" },
 ];
+
+// The strip's layout (r046): the groups it is built from, in rows, and the
+// order of the tool buttons. The default is what the editor ships with; a
+// person's own, kept in the app's preferences through the Arrange modal, is
+// normalized on every read so each group and each tool appears exactly once
+// whatever was stored, and anything unknown is dropped.
+const MAP_STRIP_GROUPS = [
+  { id: "tools",   label: "Tools" },
+  { id: "canvas",  label: "Canvas size (image-less maps)" },
+  { id: "history", label: "Undo and Redo" },
+  { id: "layers",  label: "Layers and the active layer" },
+  { id: "arrange", label: "Arrange" },
+  { id: "fill",    label: "Fill swatches" },
+  { id: "stroke",  label: "Stroke swatches" },
+  { id: "width",   label: "Width" },
+  { id: "smooth",  label: "Smooth" },
+  { id: "tool",    label: "The tool's own controls" },
+];
+const MAP_STRIP_DEFAULT = {
+  rows: [["tools"], ["canvas", "history", "layers", "arrange"], ["fill", "stroke", "width", "smooth", "tool"]],
+  tools: MAP_TOOLS.map(t => t.id),
+};
+function mapStripLayout(raw) {
+  const known = MAP_STRIP_GROUPS.map(g => g.id);
+  const src = raw && typeof raw === "object" ? raw : {};
+  const seen = new Set();
+  const rows = (Array.isArray(src.rows) ? src.rows : [])
+    .map(r => (Array.isArray(r) ? r : []).filter(g => typeof g === "string" && known.includes(g) && !seen.has(g) && seen.add(g)))
+    .filter(r => r.length > 0);
+  const missing = known.filter(g => !seen.has(g));
+  if (rows.length === 0) MAP_STRIP_DEFAULT.rows.forEach(r => rows.push(r.slice()));
+  else if (missing.length) rows[rows.length - 1].push(...missing);
+  const ids = MAP_TOOLS.map(t => t.id);
+  const tools = (Array.isArray(src.tools) ? src.tools : []).filter((id, i, a) => typeof id === "string" && ids.includes(id) && a.indexOf(id) === i);
+  ids.forEach(id => { if (!tools.includes(id)) tools.push(id); });
+  return { rows, tools };
+}
+
+// The selection, said in words, for the strip's live region.
+function mapDescribeShape(s, stamps) {
+  if (!s) return "Nothing selected";
+  const n = (v) => Math.round(v);
+  switch (s.type) {
+    case "rect": return `Rectangle, ${n(s.w)} by ${n(s.h)}`;
+    case "ellipse": return `Ellipse, ${n(s.w)} by ${n(s.h)}`;
+    case "polygon": return `Polygon, ${s.points.length} points`;
+    case "stroke": return `Line, ${s.points.length} points`;
+    case "region": return "Filled region";
+    case "text": return `Label "${s.text}"`;
+    case "stamp": { const d = mapStampDef(s.stampId, stamps); return `Stamp ${d ? d.name : s.stampId}`; }
+    default: return String(s.type);
+  }
+}
 
 // Canvas sizes offered on image-less maps (an image map's canvas is the image).
 const MAP_CANVAS_PRESETS = [
@@ -23524,6 +23590,13 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const cancelDraft = () => { setDraft(null); setCursor(null); };
 
   const onSvgPointerDown = (e) => {
+    if (e.pointerType === "pen" && e.button === 5 && e.isPrimary !== false) {
+      // the pen's eraser end (r046): an Eraser stroke whatever the tool; the tool and the strip stay
+      e.preventDefault();
+      if (canvasRef.current && canvasRef.current.focus) canvasRef.current.focus({ preventScroll: true });
+      beginStroke(e, "eraser");
+      return;
+    }
     if (e.button !== 0 || e.isPrimary === false) return;
     if (canvasRef.current && canvasRef.current.focus) canvasRef.current.focus({ preventScroll: true });
     if (tool === "pan") return; // the camera takes the press in the capture phase
@@ -23814,8 +23887,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     live.onChange({ ...d, drawing: { ...d.drawing, layers: next } }, opts);
   };
   const pendingLayerRef = useRef(null); // a Paint layer whose first stroke has not landed yet
-  const beginStroke = (e) => {
+  const beginStroke = (e, forced) => {
     if (strokeRef.current) return; // a second finger
+    const mode = forced || tool; // "brush" or "eraser"; the pen's eraser end forces the latter
     const al = activeLayer;
     if (!al) { setFillNote("No layer to paint on; add one in Layers"); return; }
     if (!al.visible || al.locked) return; // the hint says which
@@ -23823,7 +23897,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     let layer = al;
     let newLayer = null;
     if (al.kind !== "raster") {
-      if (tool === "eraser") return; // the hint asks for a raster layer
+      if (mode === "eraser") return; // the hint asks for a raster layer
       const pending = pendingLayerRef.current;
       if (pending && pending.afterId === al.id) {
         layer = pending.layer; // the Paint layer of the stroke still landing
@@ -23834,7 +23908,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
         newLayer = { layer, afterId: al.id };
         pendingLayerRef.current = newLayer;
       }
-    } else if (tool === "eraser" && !layer.image) {
+    } else if (mode === "eraser" && !layer.image) {
       setFillNote(`Nothing to erase on "${layer.name}"`);
       return;
     } else if (layer.image && !layer.image.startsWith("data:") && layerImages && Array.isArray(layerImages.missing) && layerImages.missing.includes(layer.image)) {
@@ -23843,12 +23917,12 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     }
     const p = toPointRaw(e);
     if (!p) return;
-    const settings = paintSettings;
+    const settings = paint[mode === "eraser" ? "eraser" : "brush"];
     const tip = mapTipDef(settings.tipId, stamps) || mapBuiltinTips()[0];
     const s = {
-      seq: ++strokeSeqRef.current, pointerId: e.pointerId, tool, key, newLayer,
+      seq: ++strokeSeqRef.current, pointerId: e.pointerId, tool: mode, key, newLayer,
       layerId: layer.id, layerName: layer.name, units: { w: layer.width, h: layer.height },
-      tip, size: settings.size, opacity: settings.opacity, color: tool === "eraser" ? "#000000" : (style.fill || MAP_PALETTE[0].hex),
+      tip, size: settings.size, opacity: settings.opacity, color: mode === "eraser" ? "#000000" : (style.fill || MAP_PALETTE[0].hex),
       ready: false, released: false, cancelled: false, pending: [p], last: null, carry: 0, cursor: null, raf: 0,
     };
     strokeRef.current = s;
@@ -24089,6 +24163,35 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (vertexDrag) setVertexDrag(null);
   };
 
+  // The keyboard (r046): one letter per tool, and the arrows nudging the
+  // selected shape by a unit (ten with Shift) as one undo step per run.
+  // Document-wide in every tool, never while a field has focus or a modifier
+  // is down (the zoom keys and Space are the camera's, Ctrl+Z the history's).
+  useEffect(() => {
+    const handler = (e) => {
+      const t = e.target;
+      const tag = t && t.tagName ? t.tagName.toUpperCase() : "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+        if (!selectedShape || !(tool === "select" || tool === "text" || tool === "stamp")) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        updateShape(selectedShape.id, translateMapShape(selectedShape, dx, dy), { coalesce: `nudge-${selectedShape.id}` });
+        return;
+      }
+      if (e.shiftKey) return;
+      const k = typeof e.key === "string" ? e.key.toLowerCase() : "";
+      const def = MAP_TOOLS.find(x => x.key === k);
+      if (!def || def.id === tool) return;
+      e.preventDefault();
+      setTool(def.id);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [tool, selectedShape, layers]);
   // Keys are document-wide while a drawing tool is active, because the strip's
   // buttons take focus when clicked and a Delete that only worked with the
   // canvas focused would fail right after picking a swatch. Typing targets are
@@ -24301,7 +24404,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     tool, setTool, hint, current, applyStyle, editSelected,
     stampId, setStampId,
     selectedShape, deleteSelected: () => { if (selectedShape) deleteShape(selectedShape.id); },
-    draft, cursor, selBox, style, selectable,
+    draft, cursor, selBox, style, selectable, finishDraft, cancelDraft,
     layers, activeLayerId: activeLayer ? activeLayer.id : null, setActiveLayerId,
     focusTextId, consumeFocusText: () => setFocusTextId(null),
     addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer, setLayerImage, clearLayerImage,
@@ -24405,16 +24508,23 @@ function useMapHistory(data, onChange, limit, onRestore) {
 }
 
 
-// The strip under the editor toolbar: tools, the size presets on an image-less
-// map, Undo and Redo, the Layers toggle and the active layer, and (for the
-// drawing tools, or while a shape is selected) the fill and stroke swatches,
-// the width, Smooth, the text controls for a label, the shape's layer, and
-// Delete.
-function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, canvasSize, onCustomSize, layersOpen, onToggleLayers, stamps }) {
-  const { tool, setTool, current, applyStyle, editSelected, selectedShape, deleteSelected, layers, activeLayerId, setActiveLayerId, moveShapeToLayer, focusTextId, consumeFocusText } = drawing;
+// The strip under the editor toolbar (r046): built from named groups in
+// rows, the layout a person can edit. The tools; the canvas presets on an
+// image-less map, Undo and Redo, the Layers toggle and the active layer,
+// Arrange; Fill, Stroke, Width, and Smooth, always in place and dimmed when
+// the tool or the selection has no use for them, so nothing moves under the
+// mouse; and the tool's own group, which changes with the tool: Done and
+// Cancel with the point count while a polygon or line draft is open, the
+// stamp picks, the tip and size and opacity, the text controls, the angle,
+// the shape's layer, Delete. A visually hidden live region names the tool
+// when it changes and the selection when it changes.
+function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, canvasSize, onCustomSize, layersOpen, onToggleLayers, stamps, onStampsChange, layout, onLayout, flash }) {
+  const { tool, setTool, current, applyStyle, editSelected, selectedShape, deleteSelected, layers, activeLayerId, setActiveLayerId, moveShapeToLayer, focusTextId, consumeFocusText, draft, finishDraft, cancelDraft } = drawing;
   const worldStamps = Array.isArray(stamps) ? stamps : [];
   const [pickerOpen, setPickerOpen] = useState(false);
   const [tipPickerOpen, setTipPickerOpen] = useState(false);
+  const [arrangeOpen, setArrangeOpen] = useState(false);
+  const strip = mapStripLayout(layout);
   const kind = selectedShape ? selectedShape.type : tool;
   // The Custom canvas size fields: seeded from the canvas whenever Custom
   // opens or the size changes under them, applied by Set or Enter.
@@ -24437,17 +24547,24 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
       consumeFocusText();
     }
   }, [focusTextId, selectedShape]);
-  const showStyle = tool !== "pin" && tool !== "pan" && (tool !== "select" || !!selectedShape);
-  const showFill = kind !== "stroke" && kind !== "freehand" && kind !== "eraser";
-  const showStroke = kind !== "fill" && kind !== "brush" && kind !== "eraser"; // a bucket fill lands with no stroke; give it one in Select
-  const showSmooth = kind === "rect" || kind === "polygon" || kind === "stroke" || kind === "freehand" || kind === "region";
+  const styleOn = tool !== "pin" && tool !== "pan" && (tool !== "select" || !!selectedShape);
+  const fillOn = styleOn && kind !== "stroke" && kind !== "freehand" && kind !== "eraser";
+  const strokeOn = styleOn && kind !== "fill" && kind !== "brush" && kind !== "eraser"; // a bucket fill lands with no stroke; give it one in Select
+  const widthOn = styleOn && kind !== "stamp" && kind !== "fill" && kind !== "brush" && kind !== "eraser"; // a stamp's line weight is the symbol's own
+  const smoothOn = styleOn && (kind === "rect" || kind === "polygon" || kind === "stroke" || kind === "freehand" || kind === "region");
   const isText = !!selectedShape && selectedShape.type === "text";
   const hasAngle = !!selectedShape && (selectedShape.type === "text" || selectedShape.type === "stamp");
-  const showWidth = kind !== "stamp" && kind !== "fill" && kind !== "brush" && kind !== "eraser"; // a stamp's line weight is the symbol's own
+  const draftOpen = !!draft && (draft.type === "polygon" || draft.type === "stroke");
   const { stampId, setStampId, paintSettings, setPaint } = drawing;
   const shapeLayer = selectedShape ? layers.find(l => l.shapes.some(s => s.id === selectedShape.id)) : null;
-  const swatches = (value, onPick) => (
-    <span className="map-swatches">
+  const vectorLayers = layers.filter(l => l.kind !== "raster");
+  // the live region: the tool when it changes, the selection when it changes; nothing on mount
+  const [live, setLive] = useState("");
+  const mountedRef = useRef(false);
+  useEffect(() => { if (!mountedRef.current) return; const t = MAP_TOOLS.find(x => x.id === tool); setLive(`${t ? t.label : tool} tool`); }, [tool]);
+  useEffect(() => { if (!mountedRef.current) { mountedRef.current = true; return; } setLive(mapDescribeShape(selectedShape, worldStamps)); }, [selectedShape ? selectedShape.id : null]);
+  const swatches = (which, value, onPick, on) => (
+    <span className="map-swatches" role="group" aria-label={which}>
       {MAP_PALETTE.map(c => (
         <button
           key={c.id}
@@ -24455,21 +24572,184 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
           className={`map-swatch ${value === c.hex ? "active" : ""}`}
           style={{ background: c.hex }}
           title={c.label}
+          aria-label={`${which}: ${c.label}`}
+          aria-pressed={value === c.hex}
+          disabled={!on}
           onClick={() => onPick(c.hex)}
         />
       ))}
-      <button type="button" className={`map-swatch map-swatch-none ${value == null ? "active" : ""}`} title="None" onClick={() => onPick(null)} />
+      <button type="button" className={`map-swatch map-swatch-none ${value == null ? "active" : ""}`} title="None" aria-label={`${which}: none`} aria-pressed={value == null} disabled={!on} onClick={() => onPick(null)} />
     </span>
   );
-  return (
-    <div className="map-tools">
-      <div className="map-tools-row">
-        {MAP_TOOLS.map(t => (
-          <button key={t.id} type="button" className={`btn btn-small ${tool === t.id ? "btn-accent" : "btn-ghost"}`} onClick={() => setTool(t.id)} title={t.hint}>{t.label}</button>
-        ))}
-        {showPresets && (
+  // The tool's own group, in order: the open draft, the brush, the stamp,
+  // the label, the angle, the shape's layer, Delete.
+  const toolGroup = () => {
+    const parts = [];
+    if (draftOpen) {
+      const need = draft.type === "polygon" ? 3 : 2;
+      parts.push(
+        <React.Fragment key="draft">
+          <span className="map-tools-label">{draft.type === "polygon" ? "Polygon" : "Line"}</span>
+          <span className="map-tools-value">{draft.points.length} {draft.points.length === 1 ? "point" : "points"}</span>
+          <button type="button" className="btn btn-small btn-accent" disabled={draft.points.length < need} onClick={() => finishDraft()} title={`Finish it (Enter, a double-click, or right-click); it needs ${need} points`}>Done</button>
+          <button type="button" className="btn btn-small btn-ghost" onClick={cancelDraft} title="Discard it (Esc)">Cancel</button>
+        </React.Fragment>
+      );
+    }
+    if ((tool === "brush" || tool === "eraser") && !selectedShape) {
+      // The tip: the built-in two inline, an armed imported tip first,
+      // More... for the rest; then the size (the slider to 256, the field to
+      // 1024) and the opacity. The Brush's color is the Fill.
+      const tips = mapBuiltinTips();
+      const alphaStamps = worldStamps.filter(s => s.kind === "alpha");
+      const armed = alphaStamps.find(s => s.id === paintSettings.tipId) || null;
+      const glyphFill = tool === "eraser" ? MAP_PALETTE[0].hex : current.fill;
+      parts.push(
+        <React.Fragment key="brush">
+          <span className="map-tools-label">Tip</span>
+          {armed && (
+            <button type="button" className="map-stamp-pick active" title={`${armed.name} (${armed.pack || "imported"})`} onClick={() => setTipPickerOpen(true)}>
+              <MapStampGlyph def={armed} fill={glyphFill} stroke={null} size={22} />
+            </button>
+          )}
+          {tips.map(t => (
+            <button key={t.id} type="button" className={`map-stamp-pick ${paintSettings.tipId === t.id ? "active" : ""}`} title={t.name} onClick={() => setPaint({ tipId: t.id })}>
+              <MapStampGlyph def={t} fill={glyphFill} stroke={null} size={22} />
+            </button>
+          ))}
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => setTipPickerOpen(true)} title="Every tip: the built-in two and the imported alpha stamps; import more there">More{"…"}</button>
+          {tipPickerOpen && <MapStampPicker stamps={alphaStamps} importInto={worldStamps} onImport={onStampsChange} flash={flash} builtins={tips} title="Choose a tip" current={paintSettings.tipId} fill={glyphFill} stroke={null} onPick={(id) => { setPaint({ tipId: id }); setTipPickerOpen(false); }} onClose={() => setTipPickerOpen(false)} />}
+          <span className="map-tools-label">Size</span>
+          <input
+            className="map-tools-range"
+            type="range"
+            min={MAP_PAINT.sizeMin} max={MAP_PAINT.sizeMax} step="1"
+            value={Math.min(MAP_PAINT.sizeMax, paintSettings.size)}
+            onChange={e => setPaint({ size: parseInt(e.target.value, 10) || MAP_PAINT.sizeMin })}
+            title={`${tool === "eraser" ? "Eraser" : "Brush"} size, in drawing units`}
+          />
+          <input
+            className="input map-tools-num"
+            type="number"
+            min={MAP_PAINT.sizeMin} max={MAP_PAINT.sizeLimit} step="1"
+            value={paintSettings.size}
+            onChange={e => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) setPaint({ size: Math.max(MAP_PAINT.sizeMin, Math.min(MAP_PAINT.sizeLimit, v)) }); }}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+            title={`${tool === "eraser" ? "Eraser" : "Brush"} size, ${MAP_PAINT.sizeMin} to ${MAP_PAINT.sizeLimit}`}
+          />
+          <span className="map-tools-label">Opacity</span>
+          <input
+            className="map-tools-range"
+            type="range"
+            min="5" max="100" step="5"
+            value={Math.round(paintSettings.opacity * 100)}
+            onChange={e => setPaint({ opacity: Math.max(0.05, Math.min(1, (parseInt(e.target.value, 10) || 100) / 100)) })}
+            title={tool === "eraser" ? "How much one stroke takes away; strokes over each other add up" : "How strongly one stroke lands; strokes over each other add up"}
+          />
+          <span className="map-tools-value">{Math.round(paintSettings.opacity * 100)}%</span>
+        </React.Fragment>
+      );
+    }
+    if (tool === "stamp" || (selectedShape && selectedShape.type === "stamp")) {
+      // Pick arms the stamp for the next placement and swaps the selected
+      // stamp's symbol, which is also how a missing stamp is re-pointed.
+      const pick = (id) => { setStampId(id); if (selectedShape && selectedShape.type === "stamp") editSelected({ stampId: id }); };
+      const armed = worldStamps.find(s => s.id === stampId) || null;
+      const missing = selectedShape && selectedShape.type === "stamp" && !mapStampDef(selectedShape.stampId, worldStamps) ? selectedShape.stampId : null;
+      parts.push(
+        <React.Fragment key="stamp">
+          <span className="map-tools-label">Stamp</span>
+          {armed && (
+            <button type="button" className="map-stamp-pick active" title={`${armed.name} (${armed.pack || "imported"})`} onClick={() => setPickerOpen(true)}>
+              <MapStampGlyph def={armed} fill={current.fill} stroke={current.stroke} size={22} />
+            </button>
+          )}
+          {MAP_BUILTIN_STAMPS.map(st => (
+            <button
+              key={st.id}
+              type="button"
+              className={`map-stamp-pick ${stampId === st.id ? "active" : ""}`}
+              title={st.name}
+              onClick={() => pick(st.id)}
+            >
+              <MapStampGlyph def={st} fill={current.fill} stroke={current.stroke} size={22} />
+            </button>
+          ))}
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => setPickerOpen(true)} title="Every stamp, built in and imported; import more there">More{"…"}</button>
+          {missing && <span className="map-tools-missing" title="This stamp's pack is not in the world; pick another symbol or delete the shape">missing: {missing}</span>}
+          {pickerOpen && <MapStampPicker stamps={worldStamps} onImport={onStampsChange} flash={flash} current={stampId} fill={current.fill} stroke={current.stroke} onPick={(id) => { pick(id); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />}
+        </React.Fragment>
+      );
+    }
+    if (isText) {
+      parts.push(
+        <React.Fragment key="text">
+          <span className="map-tools-label">Text</span>
+          <input
+            ref={textRef}
+            className="input map-tools-text"
+            value={selectedShape.text}
+            onChange={e => editSelected({ text: e.target.value }, "text")}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+            placeholder="Label"
+          />
+          <span className="map-tools-label">Size</span>
+          {MAP_TEXT_SIZES.map(sz => (
+            <button key={sz} type="button" className={`btn btn-small ${selectedShape.fontSize === sz ? "btn-accent" : "btn-ghost"}`} onClick={() => editSelected({ fontSize: sz })}>{sz}</button>
+          ))}
+          <span className="map-tools-label">Arc</span>
+          <input
+            className="map-tools-range"
+            type="range"
+            min="-180" max="180" step="5"
+            value={selectedShape.arc || 0}
+            onChange={e => editSelected({ arc: parseInt(e.target.value, 10) || 0 }, "arc")}
+            title="Bend the label along an arc: right arches it up, left bends it down"
+          />
+          <span className="map-tools-value">{selectedShape.arc || 0}°</span>
+          {!!selectedShape.arc && <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ arc: 0 })} title="Straighten the label">Straight</button>}
+        </React.Fragment>
+      );
+    }
+    if (hasAngle) {
+      parts.push(
+        <React.Fragment key="angle">
+          <span className="map-tools-label">Angle</span>
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) - 15) * 100) / 100 })} title="Rotate 15 degrees counter-clockwise">−15</button>
+          <input
+            className="input map-tools-num"
+            type="number"
+            step="1"
+            value={Math.round((selectedShape.rotation || 0) * 100) / 100}
+            onChange={e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) editSelected({ rotation: v }, "rotation"); }}
+            title="Angle in degrees"
+          />
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) + 15) * 100) / 100 })} title="Rotate 15 degrees clockwise">+15</button>
+        </React.Fragment>
+      );
+    }
+    if (selectedShape && vectorLayers.length > 1) {
+      parts.push(
+        <React.Fragment key="layer">
+          <span className="map-tools-label">Layer</span>
+          <select className="input map-tools-select" value={shapeLayer ? shapeLayer.id : ""} onChange={e => moveShapeToLayer(selectedShape.id, e.target.value)} title="Move this shape to another vector layer">
+            {vectorLayers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </React.Fragment>
+      );
+    }
+    if (selectedShape) parts.push(<button key="delete" type="button" className="btn btn-small btn-danger" onClick={deleteSelected} title="Delete the selected shape (Delete)">Delete shape</button>);
+    return parts;
+  };
+  const group = (id) => {
+    switch (id) {
+      case "tools":
+        return strip.tools.map(tid => MAP_TOOLS.find(t => t.id === tid)).filter(Boolean).map(t => (
+          <button key={t.id} type="button" className={`btn btn-small ${tool === t.id ? "btn-accent" : "btn-ghost"}`} onClick={() => setTool(t.id)} title={`${t.label} (${t.key.toUpperCase()}) · ${t.hint}`}>{t.label}</button>
+        ));
+      case "canvas":
+        return showPresets ? (
           <>
-            <span className="map-tools-sep" />
             <span className="map-tools-label">Canvas</span>
             <select className="input map-tools-select" value={presetValue} onChange={e => onPreset(e.target.value)} title="Canvas size, in drawing units">
               {MAP_CANVAS_PRESETS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -24484,204 +24764,184 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
               </>
             )}
           </>
-        )}
-        <span className="map-tools-sep" />
-        <button type="button" className="btn btn-small btn-ghost" disabled={!history.canUndo} onClick={history.undo} title="Undo (Ctrl+Z)">Undo</button>
-        <button type="button" className="btn btn-small btn-ghost" disabled={!history.canRedo} onClick={history.redo} title="Redo (Ctrl+Shift+Z or Ctrl+Y)">Redo</button>
-        <span className="map-tools-sep" />
-        <button type="button" className={`btn btn-small ${layersOpen ? "btn-accent" : "btn-ghost"}`} onClick={onToggleLayers} title="Show or hide the layer list">Layers</button>
-        <span className="map-tools-label">Layer</span>
-        <select className="input map-tools-select" value={activeLayerId || ""} onChange={e => setActiveLayerId(e.target.value)} title="The layer new shapes go to">
-          {layers.map(l => <option key={l.id} value={l.id}>{l.name}{l.kind === "raster" ? " (raster)" : ""}{l.visible ? "" : " (hidden)"}{l.locked ? " (locked)" : ""}</option>)}
-        </select>
-      </div>
-      {showStyle && (
-        <div className="map-tools-row">
-          {(tool === "brush" || tool === "eraser") && !selectedShape && (() => {
-            // The tip: the built-in two inline, an armed imported tip first,
-            // More... for the rest; then the size (the slider to 256, the
-            // field to 1024) and the opacity. The Brush's color is the Fill.
-            const tips = mapBuiltinTips();
-            const alphaStamps = worldStamps.filter(s => s.kind === "alpha");
-            const armed = alphaStamps.find(s => s.id === paintSettings.tipId) || null;
-            const glyphFill = tool === "eraser" ? MAP_PALETTE[0].hex : current.fill;
-            return (
-              <>
-                <span className="map-tools-label">Tip</span>
-                {armed && (
-                  <button type="button" className="map-stamp-pick active" title={`${armed.name} (${armed.pack || "imported"})`} onClick={() => setTipPickerOpen(true)}>
-                    <MapStampGlyph def={armed} fill={glyphFill} stroke={null} size={22} />
-                  </button>
-                )}
-                {tips.map(t => (
-                  <button key={t.id} type="button" className={`map-stamp-pick ${paintSettings.tipId === t.id ? "active" : ""}`} title={t.name} onClick={() => setPaint({ tipId: t.id })}>
-                    <MapStampGlyph def={t} fill={glyphFill} stroke={null} size={22} />
-                  </button>
-                ))}
-                {alphaStamps.length > 0 && <button type="button" className="btn btn-small btn-ghost" onClick={() => setTipPickerOpen(true)} title="Every tip: the built-in two and the imported alpha stamps">More{"\u2026"}</button>}
-                {tipPickerOpen && <MapStampPicker stamps={alphaStamps} builtins={tips} title="Choose a tip" current={paintSettings.tipId} fill={glyphFill} stroke={null} onPick={(id) => { setPaint({ tipId: id }); setTipPickerOpen(false); }} onClose={() => setTipPickerOpen(false)} />}
-                <span className="map-tools-label">Size</span>
-                <input
-                  className="map-tools-range"
-                  type="range"
-                  min={MAP_PAINT.sizeMin} max={MAP_PAINT.sizeMax} step="1"
-                  value={Math.min(MAP_PAINT.sizeMax, paintSettings.size)}
-                  onChange={e => setPaint({ size: parseInt(e.target.value, 10) || MAP_PAINT.sizeMin })}
-                  title={`${tool === "eraser" ? "Eraser" : "Brush"} size, in drawing units`}
-                />
-                <input
-                  className="input map-tools-num"
-                  type="number"
-                  min={MAP_PAINT.sizeMin} max={MAP_PAINT.sizeLimit} step="1"
-                  value={paintSettings.size}
-                  onChange={e => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) setPaint({ size: Math.max(MAP_PAINT.sizeMin, Math.min(MAP_PAINT.sizeLimit, v)) }); }}
-                  onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
-                  title={`${tool === "eraser" ? "Eraser" : "Brush"} size, ${MAP_PAINT.sizeMin} to ${MAP_PAINT.sizeLimit}`}
-                />
-                <span className="map-tools-label">Opacity</span>
-                <input
-                  className="map-tools-range"
-                  type="range"
-                  min="5" max="100" step="5"
-                  value={Math.round(paintSettings.opacity * 100)}
-                  onChange={e => setPaint({ opacity: Math.max(0.05, Math.min(1, (parseInt(e.target.value, 10) || 100) / 100)) })}
-                  title={tool === "eraser" ? "How much one stroke takes away; strokes over each other add up" : "How strongly one stroke lands; strokes over each other add up"}
-                />
-                <span className="map-tools-value">{Math.round(paintSettings.opacity * 100)}%</span>
-              </>
-            );
-          })()}
-          {(tool === "stamp" || (selectedShape && selectedShape.type === "stamp")) && (() => {
-            // Pick arms the stamp for the next placement and swaps the selected
-            // stamp's symbol, which is also how a missing stamp is re-pointed.
-            const pick = (id) => { setStampId(id); if (selectedShape && selectedShape.type === "stamp") editSelected({ stampId: id }); };
-            const armed = worldStamps.find(s => s.id === stampId) || null;
-            const missing = selectedShape && selectedShape.type === "stamp" && !mapStampDef(selectedShape.stampId, worldStamps) ? selectedShape.stampId : null;
-            return (
-              <>
-                <span className="map-tools-label">Stamp</span>
-                {armed && (
-                  <button type="button" className="map-stamp-pick active" title={`${armed.name} (${armed.pack || "imported"})`} onClick={() => setPickerOpen(true)}>
-                    <MapStampGlyph def={armed} fill={current.fill} stroke={current.stroke} size={22} />
-                  </button>
-                )}
-                {MAP_BUILTIN_STAMPS.map(st => (
-                  <button
-                    key={st.id}
-                    type="button"
-                    className={`map-stamp-pick ${stampId === st.id ? "active" : ""}`}
-                    title={st.name}
-                    onClick={() => pick(st.id)}
-                  >
-                    <MapStampGlyph def={st} fill={current.fill} stroke={current.stroke} size={22} />
-                  </button>
-                ))}
-                {worldStamps.length > 0 && <button type="button" className="btn btn-small btn-ghost" onClick={() => setPickerOpen(true)} title="Every stamp, built in and imported">More{"\u2026"}</button>}
-                {missing && <span className="map-tools-missing" title="This stamp's pack is not in the world; pick another symbol or delete the shape">missing: {missing}</span>}
-                {pickerOpen && <MapStampPicker stamps={worldStamps} current={stampId} fill={current.fill} stroke={current.stroke} onPick={(id) => { pick(id); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />}
-              </>
-            );
-          })()}
-          {showFill && <><span className="map-tools-label">Fill</span>{swatches(current.fill, v => applyStyle({ fill: v }))}</>}
-          {showStroke && <><span className="map-tools-label">Stroke</span>{swatches(current.stroke, v => applyStyle({ stroke: v }))}</>}
-          {showWidth && (
-            <>
-              <span className="map-tools-label">Width</span>
-              <input
-                className="map-tools-range"
-                type="range"
-                min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.max} step="1"
-                value={Math.min(MAP_STROKE_WIDTH_RANGE.max, current.strokeWidth)}
-                onChange={e => applyStyle({ strokeWidth: parseInt(e.target.value, 10) || MAP_STROKE_WIDTH_RANGE.min }, "width")}
-                title="Line width, in drawing units"
-              />
-              <input
-                className="input map-tools-num"
-                type="number"
-                min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.limit} step="1"
-                value={current.strokeWidth}
-                onChange={e => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) applyStyle({ strokeWidth: Math.max(MAP_STROKE_WIDTH_RANGE.min, Math.min(MAP_STROKE_WIDTH_RANGE.limit, v)) }, "width"); }}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
-                title="Line width, 1 to 64"
-              />
-            </>
-          )}
-          {showSmooth && (
-            <button type="button" className={`btn btn-small ${current.smooth ? "btn-accent" : "btn-ghost"}`} onClick={() => applyStyle({ smooth: !current.smooth })} title="Round the corners and curve the path through its points">Smooth</button>
-          )}
-          {isText && (
-            <>
-              <span className="map-tools-label">Text</span>
-              <input
-                ref={textRef}
-                className="input map-tools-text"
-                value={selectedShape.text}
-                onChange={e => editSelected({ text: e.target.value }, "text")}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
-                placeholder="Label"
-              />
-              <span className="map-tools-label">Size</span>
-              {MAP_TEXT_SIZES.map(sz => (
-                <button key={sz} type="button" className={`btn btn-small ${selectedShape.fontSize === sz ? "btn-accent" : "btn-ghost"}`} onClick={() => editSelected({ fontSize: sz })}>{sz}</button>
-              ))}
-              <span className="map-tools-label">Arc</span>
-              <input
-                className="map-tools-range"
-                type="range"
-                min="-180" max="180" step="5"
-                value={selectedShape.arc || 0}
-                onChange={e => editSelected({ arc: parseInt(e.target.value, 10) || 0 }, "arc")}
-                title="Bend the label along an arc: right arches it up, left bends it down"
-              />
-              <span className="map-tools-value">{selectedShape.arc || 0}°</span>
-              {!!selectedShape.arc && <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ arc: 0 })} title="Straighten the label">Straight</button>}
-            </>
-          )}
-          {hasAngle && (
-            <>
-              <span className="map-tools-label">Angle</span>
-              <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) - 15) * 100) / 100 })} title="Rotate 15 degrees counter-clockwise">−15</button>
-              <input
-                className="input map-tools-num"
-                type="number"
-                step="1"
-                value={Math.round((selectedShape.rotation || 0) * 100) / 100}
-                onChange={e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) editSelected({ rotation: v }, "rotation"); }}
-                title="Angle in degrees"
-              />
-              <button type="button" className="btn btn-small btn-ghost" onClick={() => editSelected({ rotation: Math.round(((selectedShape.rotation || 0) + 15) * 100) / 100 })} title="Rotate 15 degrees clockwise">+15</button>
-            </>
-          )}
-          {selectedShape && layers.filter(l => l.kind !== "raster").length > 1 && (
-            <>
-              <span className="map-tools-label">Layer</span>
-              <select className="input map-tools-select" value={shapeLayer ? shapeLayer.id : ""} onChange={e => moveShapeToLayer(selectedShape.id, e.target.value)} title="Move this shape to another vector layer">
-                {layers.filter(l => l.kind !== "raster").map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
-            </>
-          )}
-          {selectedShape && <button type="button" className="btn btn-small btn-danger" onClick={deleteSelected}>Delete shape</button>}
+        ) : null;
+      case "history":
+        return (
+          <>
+            <button type="button" className="btn btn-small btn-ghost" disabled={!history.canUndo} onClick={history.undo} title="Undo (Ctrl+Z)">Undo</button>
+            <button type="button" className="btn btn-small btn-ghost" disabled={!history.canRedo} onClick={history.redo} title="Redo (Ctrl+Shift+Z or Ctrl+Y)">Redo</button>
+          </>
+        );
+      case "layers":
+        return (
+          <>
+            <button type="button" className={`btn btn-small ${layersOpen ? "btn-accent" : "btn-ghost"}`} onClick={onToggleLayers} title="Show or hide the layer list">Layers</button>
+            <span className="map-tools-label">Layer</span>
+            <select className="input map-tools-select" value={activeLayerId || ""} onChange={e => setActiveLayerId(e.target.value)} title="The layer new shapes go to">
+              {layers.map(l => <option key={l.id} value={l.id}>{l.name}{l.kind === "raster" ? " (raster)" : ""}{l.visible ? "" : " (hidden)"}{l.locked ? " (locked)" : ""}</option>)}
+            </select>
+          </>
+        );
+      case "arrange":
+        return <button type="button" className="btn btn-small btn-ghost" onClick={() => setArrangeOpen(true)} title="Arrange the strip: its rows, the order of its groups, and the order of the tools">Arrange{"…"}</button>;
+      case "fill":
+        return <><span className="map-tools-label">Fill</span>{swatches("Fill", current.fill, v => applyStyle({ fill: v }), fillOn)}</>;
+      case "stroke":
+        return <><span className="map-tools-label">Stroke</span>{swatches("Stroke", current.stroke, v => applyStyle({ stroke: v }), strokeOn)}</>;
+      case "width":
+        return (
+          <>
+            <span className="map-tools-label">Width</span>
+            <input
+              className="map-tools-range"
+              type="range"
+              min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.max} step="1"
+              value={Math.min(MAP_STROKE_WIDTH_RANGE.max, current.strokeWidth)}
+              disabled={!widthOn}
+              onChange={e => applyStyle({ strokeWidth: parseInt(e.target.value, 10) || MAP_STROKE_WIDTH_RANGE.min }, "width")}
+              title="Line width, in drawing units"
+            />
+            <input
+              className="input map-tools-num"
+              type="number"
+              min={MAP_STROKE_WIDTH_RANGE.min} max={MAP_STROKE_WIDTH_RANGE.limit} step="1"
+              value={current.strokeWidth}
+              disabled={!widthOn}
+              onChange={e => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) applyStyle({ strokeWidth: Math.max(MAP_STROKE_WIDTH_RANGE.min, Math.min(MAP_STROKE_WIDTH_RANGE.limit, v)) }, "width"); }}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") e.target.blur(); }}
+              title="Line width, 1 to 64"
+            />
+          </>
+        );
+      case "smooth":
+        return <button type="button" className={`btn btn-small ${current.smooth && smoothOn ? "btn-accent" : "btn-ghost"}`} disabled={!smoothOn} aria-pressed={!!current.smooth} onClick={() => applyStyle({ smooth: !current.smooth })} title="Round the corners and curve the path through its points">Smooth</button>;
+      case "tool":
+        return toolGroup();
+      default:
+        return null;
+    }
+  };
+  const groupOn = { fill: fillOn, stroke: strokeOn, width: widthOn, smooth: smoothOn };
+  return (
+    <div className="map-tools">
+      {strip.rows.map((row, i) => (
+        <div key={i} className="map-tools-row">
+          {row.map(id => {
+            const off = id in groupOn && !groupOn[id];
+            return <span key={id} className={`map-tools-group${off ? " off" : ""}`} data-group={id} aria-disabled={off ? "true" : undefined}>{group(id)}</span>;
+          })}
         </div>
-      )}
+      ))}
+      <span className="sr-only" role="status" aria-live="polite">{live}</span>
+      {arrangeOpen && <MapStripArrangeModal layout={strip} onChange={onLayout} onClose={() => setArrangeOpen(false)} />}
     </div>
   );
 }
 
-// The grid the strip's More... button opens: every stamp, built in and
-// imported, grouped by pack; a click arms it (and swaps the selected stamp's
-// symbol, as the inline buttons do) and closes.
-function MapStampPicker({ stamps, current, fill, stroke, onPick, onClose, builtins, title }) {
-  const groups = [{ id: "builtin", name: "Built in", stamps: builtins || MAP_BUILTIN_STAMPS }, ...mapStampGroups(stamps)];
+// The Arrange modal (r046): the strip's groups in their rows, each movable
+// up or down, a row break before any position but the first (the breaks
+// stay where they are when a group moves through them, so the rows keep
+// their shape), and the tool buttons in their order. Every change lands in
+// the strip behind the modal at once; Reset puts the shipped layout back.
+function MapStripArrangeModal({ layout, onChange, onClose }) {
+  const strip = mapStripLayout(layout);
+  const label = (id) => { const g = MAP_STRIP_GROUPS.find(x => x.id === id); return g ? g.label : id; };
+  const items = [];
+  const breaks = new Set();
+  strip.rows.forEach((row, ri) => row.forEach((id, i) => { if (ri > 0 && i === 0) breaks.add(items.length); items.push(id); }));
+  const rowsOf = (list, br) => { const rows = []; list.forEach((id, i) => { if (i === 0 || br.has(i)) rows.push([]); rows[rows.length - 1].push(id); }); return rows; };
+  const emit = (list, br, tools) => { if (onChange) onChange({ rows: rowsOf(list, br), tools: tools || strip.tools }); };
+  const moveGroup = (i, dir) => { const j = i + dir; if (j < 0 || j >= items.length) return; const next = items.slice(); const [it] = next.splice(i, 1); next.splice(j, 0, it); emit(next, breaks); };
+  const toggleBreak = (i) => { if (i === 0) return; const br = new Set(breaks); if (br.has(i)) br.delete(i); else br.add(i); emit(items, br); };
+  const moveTool = (i, dir) => { const j = i + dir; if (j < 0 || j >= strip.tools.length) return; const next = strip.tools.slice(); const [t] = next.splice(i, 1); next.splice(j, 0, t); emit(items, breaks, next); };
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+  let rowNo = 0;
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Arrange the strip</div>
+        <div className="modal-body">
+          <div className="map-arrange">
+            <div className="map-arrange-col">
+              <div className="modal-section-hdr">Groups and rows</div>
+              {items.map((id, i) => {
+                const start = i === 0 || breaks.has(i);
+                if (start) rowNo += 1;
+                return (
+                  <React.Fragment key={id}>
+                    {start && <div className="map-arrange-row">Row {rowNo}</div>}
+                    <div className="map-arrange-item">
+                      <button type="button" className="btn btn-small btn-ghost" disabled={i === 0} onClick={() => moveGroup(i, -1)} title="Move earlier" aria-label={`Move ${label(id)} earlier`}>▲</button>
+                      <button type="button" className="btn btn-small btn-ghost" disabled={i === items.length - 1} onClick={() => moveGroup(i, 1)} title="Move later" aria-label={`Move ${label(id)} later`}>▼</button>
+                      <span className="name">{label(id)}</span>
+                      {i > 0 && <label className="map-arrange-break" title="Start a new row here"><input type="checkbox" checked={breaks.has(i)} onChange={() => toggleBreak(i)} /> new row</label>}
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            <div className="map-arrange-col">
+              <div className="modal-section-hdr">Tools</div>
+              {strip.tools.map((id, i) => {
+                const t = MAP_TOOLS.find(x => x.id === id);
+                return (
+                  <div key={id} className="map-arrange-item">
+                    <button type="button" className="btn btn-small btn-ghost" disabled={i === 0} onClick={() => moveTool(i, -1)} title="Move earlier" aria-label={`Move ${t ? t.label : id} earlier`}>▲</button>
+                    <button type="button" className="btn btn-small btn-ghost" disabled={i === strip.tools.length - 1} onClick={() => moveTool(i, 1)} title="Move later" aria-label={`Move ${t ? t.label : id} later`}>▼</button>
+                    <span className="name">{t ? t.label : id}</span>
+                    {t && <span className="map-tools-value">{t.key.toUpperCase()}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <p className="map-stamps-note">The layout is yours, kept in this browser with the theme and the font size; it is not part of the world file.</p>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" style={{ marginRight: "auto" }} onClick={() => { if (onChange) onChange(null); }} title="The layout the editor ships with">Reset</button>
+          <button type="button" className="btn btn-accent" onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The grid the strip's More... button opens: every stamp, built in and
+// imported, grouped by pack, with a filter on names and pack names (r046)
+// and an Import button when the editor hands it the world's setter; a click
+// arms a stamp (and swaps the selected stamp's symbol, as the inline buttons
+// do) and closes. Escape clears the filter first, then closes.
+function MapStampPicker({ stamps, current, fill, stroke, onPick, onClose, builtins, title, onImport, importInto, flash }) {
+  const all = [{ id: "builtin", name: "Built in", stamps: builtins || MAP_BUILTIN_STAMPS }, ...mapStampGroups(stamps)];
+  const [q, setQ] = useState("");
+  const qRef = useRef("");
+  qRef.current = q;
+  const inputRef = useRef(null);
+  useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") { if (qRef.current) setQ(""); else onClose(); } };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  const needle = q.trim().toLowerCase();
+  const matches = (s, g) => !needle || String(s.name || "").toLowerCase().includes(needle) || String(g.name || "").toLowerCase().includes(needle);
+  const groups = all.map(g => ({ ...g, stamps: g.stamps.filter(s => matches(s, g)) })).filter(g => g.stamps.length > 0);
+  const total = all.reduce((n, g) => n + g.stamps.length, 0);
+  const shown = groups.reduce((n, g) => n + g.stamps.length, 0);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">{title || "Choose a stamp"}</div>
         <div className="modal-body">
+          <div className="map-stamp-filter">
+            <input ref={inputRef} className="input" value={q} onChange={e => setQ(e.target.value)} placeholder="Filter by name or pack" aria-label="Filter stamps by name or pack" />
+            <span className="map-stamps-note map-stamp-count">{needle ? `${shown} of ${total}` : `${total} ${total === 1 ? "stamp" : "stamps"}`}</span>
+          </div>
+          {groups.length === 0 && <div className="map-stamps-empty">Nothing is named like "{q.trim()}".</div>}
           {groups.map(g => (
             <div key={g.id} className="modal-section">
               <div className="modal-section-hdr">{g.name}</div>
@@ -24697,7 +24957,9 @@ function MapStampPicker({ stamps, current, fill, stroke, onPick, onClose, builti
           ))}
         </div>
         <div className="modal-actions">
-          <span className="map-stamps-note" style={{ marginRight: "auto" }}>Import packs and brush files from the Stamps panel at the top of Cartographia.</span>
+          {onImport
+            ? <MapStampImportButton stamps={importInto || stamps} onChange={onImport} flash={flash} className="btn btn-ghost" style={{ marginRight: "auto" }} label="Import pack or brushes" />
+            : <span className="map-stamps-note" style={{ marginRight: "auto" }}>Import packs and brush files from the Stamps panel at the top of Cartographia.</span>}
           <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
         </div>
       </div>
@@ -25640,7 +25902,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
   );
 }
 
-function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash, stamps, recordId }) {
+function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies, flash, stamps, recordId, onStampsChange, stripLayout, onStripLayout, api }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const [selectedPinId, setSelectedPinId] = useState(null);
@@ -25772,6 +26034,30 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     if (!mapRasterLayerCheck(dataUrl)) return { error: "too large to embed; connect an image folder in Settings" };
     return { image: dataUrl };
   };
+  // Cancel (r046): 12_trunk calls this through `api` before dropping the
+  // draft, so the folder holds what it held when the draft opened: every
+  // file the session overwrote goes back to what it held, every file the
+  // session made goes. Save leaves the files as they are.
+  const restoreOriginals = async () => {
+    if (!dirHandle) return;
+    const names = Object.keys(diskRef.current);
+    const held = { ...originalRef.current }, now = { ...diskRef.current };
+    diskRef.current = {};
+    originalRef.current = {};
+    for (const name of names) {
+      try {
+        if (held[name]) { if (now[name] !== held[name]) await writeLayerFile(name, held[name]); }
+        else if (typeof dirHandle.removeEntry === "function") await dirHandle.removeEntry(name);
+      } catch (err) {
+        console.warn("Cancel could not put back", name, err);
+      }
+    }
+  };
+  useEffect(() => {
+    if (!api) return undefined;
+    api.current = { restoreOriginals };
+    return () => { api.current = null; };
+  });
   // What the paint engine starts a stroke from: the layer's bitmap as a data
   // URL (inline as it is; a folder file read once through the fill cache).
   const loadBase = async (layer) => {
@@ -26025,7 +26311,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
         <span style={{ flex: 1 }} />
         <span className="map-editor-hint">{drawing.hint}</span>
       </div>
-      <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} canvasSize={{ width: data.drawing.width, height: data.drawing.height }} onCustomSize={applyCustomSize} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} stamps={stamps} />
+      <MapToolStrip drawing={drawing} history={history} showPresets={showPresets} presetValue={presetValue} onPreset={applyPreset} canvasSize={{ width: data.drawing.width, height: data.drawing.height }} onCustomSize={applyCustomSize} layersOpen={layersOpen} onToggleLayers={() => setLayersOpen(o => !o)} stamps={stamps} onStampsChange={onStampsChange} layout={stripLayout} onLayout={onStripLayout} flash={flash} />
       {layersOpen && <MapLayerPanel drawing={drawing} onLoadImage={loadLayerImage} missing={layerImages.missing} />}
 
       {data.image && errored ? (
@@ -26158,46 +26444,23 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
 // a pack, which is a correct file to start a new pack from. An import that
 // has nothing to report lands at once with a flash; one where the sanitizer
 // removed something, or dropped a stamp, shows the report first, with Cancel.
-function MapStampsPanel({ state, isLocked, onChange, flash }) {
-  const stamps = Array.isArray(state.mapStamps) ? state.mapStamps : [];
+// The import flow (r046, lifted from the Stamps panel so the picker has it
+// too): a button that opens the file dialog, reads the files through
+// mapReadStampFiles, and either applies the packs quietly or walks the
+// report modal, one pack at a time. A read pack becomes stored stamps: the
+// pack's id (a slug of its name when the name is editable) namespaces every
+// stamp id; a stamp this pack imported before is replaced in place, the
+// rest are appended.
+function MapStampImportButton({ stamps, onChange, flash, className, label, title, style }) {
+  const current = Array.isArray(stamps) ? stamps : [];
   const [pending, setPending] = useState(null); // the packs read from the import, waiting on the report modal: { packs, index }
   const [pendingName, setPendingName] = useState(""); // the editable name of the pack being shown
   const [reading, setReading] = useState(false); // an import being decoded; the button says so
-  const [writing, setWriting] = useState(false); // a PNG zip being built; its buttons wait
-  const usage = useMemo(() => mapStampUsage(state), [state.cartographia]);
-  const groups = mapStampGroups(stamps);
   const say = (text, type) => { if (flash) flash(text, type); };
-  const downloadBlob = (filename, blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-  const download = (filename, obj) => downloadBlob(filename, new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-  // A pack as PNGs in the Wonderdraft layout (buildMapStampPngZip); the
-  // built-ins through the same path under their pack id.
-  const exportPngZip = async (packId, name, list) => {
-    if (writing) return;
-    if (typeof JSZip === "undefined") { say("Zip library not loaded; try reloading the page.", "error"); return; }
-    setWriting(true);
-    try {
-      const blob = await buildMapStampPngZip(packId, list);
-      downloadBlob(`${packId}.stamps-png.zip`, blob);
-      say(`Wrote "${name}" as ${plural(list.length, "PNG", "PNGs")} in the Wonderdraft layout (${fmtBytes(blob.size)}). Unzip it into Wonderdraft's assets folder; Inkarnate and Dungeondraft take the PNGs inside.`);
-    } catch (err) {
-      console.warn("PNG zip failed", err);
-      say("The PNG zip could not be written.", "error");
-    } finally {
-      setWriting(false);
-    }
-  };
-  // A read pack becomes stored stamps: the pack's id (a slug of its name when
-  // the name is editable) namespaces every stamp id; a stamp this pack
-  // imported before is replaced in place, the rest are appended.
-  const applyPacks = (packs, current) => {
+  const fmtBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+  const listMore = (items, max) => (items.length > max ? [...items.slice(0, max), `and ${items.length - max} more`] : items);
+  const applyPacks = (packs) => {
     let next = current.slice();
     const said = [];
     const used = new Set();
@@ -26220,7 +26483,6 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
     say(`Imported ${said.join("; ")}.`);
   };
   const importPack = () => {
-    if (isLocked) return;
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json,application/json,.png,image/png,.zip,application/zip,.abr,.gbr,.gih,.brush,.brushset";
@@ -26230,89 +26492,30 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
       if (!files || !files.length) return;
       setReading(true);
       let read;
-      try { read = await mapReadStampFiles(files, stamps); } finally { setReading(false); }
+      try { read = await mapReadStampFiles(files, current); } finally { setReading(false); }
       if (!read.ok) { say(read.error, "error"); return; }
       const quiet = read.packs.every(p => !p.pack.editable && !p.report.removed.length && !p.report.dropped.length && p.stamps.length > 0);
-      if (quiet) { applyPacks(read.packs, stamps); return; }
+      if (quiet) { applyPacks(read.packs); return; }
       setPendingName(read.packs[0].pack.name);
       setPending({ packs: read.packs, index: 0 });
     };
     input.click();
   };
-  const fmtBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
-  const exportGroup = (g) => {
-    download(`${g.id}.cartulary-stamps.json`, buildMapStampPackFile(g.id, g.name, g.stamps));
-    say(`Exported "${g.name}" (${plural(g.stamps.length, "stamp", "stamps")}).`);
-  };
-  const exportBuiltins = () => {
-    download("cartulary-builtins.cartulary-stamps.json", buildMapStampPackFile("cartulary-builtins", "Cartulary built-in stamps", MAP_BUILTIN_STAMPS));
-    say("Exported the four built-in stamps as a pack. Edit it, rename it, and import it to make your own.");
-  };
-  const usageNote = (ids) => {
-    let shapes = 0;
-    const maps = new Set();
-    ids.forEach(id => { const u = usage[id]; if (u) { shapes += u.shapes; } });
-    (Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
-      const d = rec && rec.mapData && rec.mapData.drawing;
-      if ((d && Array.isArray(d.layers) ? d.layers : []).some(l => (Array.isArray(l.shapes) ? l.shapes : []).some(s => s && s.type === "stamp" && ids.includes(s.stampId)))) maps.add(rec.id);
-    });
-    return shapes > 0 ? ` It is placed ${plural(shapes, "time", "times")} on ${plural(maps.size, "map", "maps")}; those will show as missing until a pack with it is imported again.` : "";
-  };
-  const removeStamp = (s) => {
-    if (isLocked) return;
-    if (!confirm(`Delete the stamp "${s.name}"?${usageNote([s.id])}`)) return;
-    onChange(stamps.filter(x => x.id !== s.id));
-  };
-  const removeGroup = (g) => {
-    if (isLocked) return;
-    if (!confirm(`Delete the pack "${g.name}" and its ${plural(g.stamps.length, "stamp", "stamps")}?${usageNote(g.stamps.map(s => s.id))}`)) return;
-    const ids = new Set(g.stamps.map(s => s.id));
-    onChange(stamps.filter(x => !ids.has(x.id)));
-  };
-  const listMore = (items, max) => (items.length > max ? [...items.slice(0, max), `and ${items.length - max} more`] : items);
   return (
-    <div className="map-stamps">
-      <div className="map-stamps-head">
-        <span className="map-stamps-title">Stamps</span>
-        {!isLocked && <button type="button" className="btn btn-small btn-accent" onClick={importPack} disabled={reading} title="Import a stamp pack: a .json pack, a .zip of PNGs, PNG files, a Photoshop .abr, GIMP .gbr or .gih files, or Procreate .brush or .brushset files">{reading ? "Reading\u2026" : "+ Import pack or brushes"}</button>}
-        <button type="button" className="btn btn-small btn-ghost" onClick={exportBuiltins} title="A correct pack file with the four built-in stamps, to start your own from">Export built-ins as a pack</button>
-        <button type="button" className="btn btn-small btn-ghost" onClick={() => exportPngZip("cartulary-builtins", "Cartulary built-in stamps", MAP_BUILTIN_STAMPS)} disabled={writing} title="The four built-in stamps as PNGs in the Wonderdraft folder layout">{writing ? "Writing\u2026" : "Built-ins as PNG zip"}</button>
-      </div>
-      {groups.length === 0 ? (
-        <div className="map-stamps-empty">No imported stamps. The map editor's Stamp tool has four built in; a stamp pack adds more. Import takes a Cartulary pack, PNG files or a zip of them, a Photoshop .abr or the zip it came in, GIMP .gbr and .gih files, and Procreate .brush and .brushset files.</div>
-      ) : groups.map(g => (
-        <div key={g.id} className="map-stamp-group">
-          <div className="map-stamp-group-head">
-            <span className="map-stamp-group-name">{g.name}</span>
-            <span>{plural(g.stamps.length, "stamp", "stamps")}</span>
-            <span style={{ flex: 1 }} />
-            <button type="button" className="btn btn-small btn-ghost" onClick={() => exportGroup(g)} title="Write this pack back out as a file">Export</button>
-            <button type="button" className="btn btn-small btn-ghost" onClick={() => exportPngZip(g.id, g.name, g.stamps)} disabled={writing} title="This pack as PNGs in the Wonderdraft folder layout, svg stamps rasterized">{writing ? "Writing\u2026" : "PNG zip"}</button>
-            {!isLocked && <button type="button" className="btn btn-small btn-danger" onClick={() => removeGroup(g)} title="Delete this pack and every stamp in it">Delete pack</button>}
-          </div>
-          <div className="map-stamp-grid">
-            {g.stamps.map(s => (
-              <div key={s.id} className="map-stamp-tile" title={`${s.name} (${s.id}${s.kind === "alpha" || s.kind === "color" ? `, ${s.kind} tip ${s.width} \u00d7 ${s.height}` : ""})`}>
-                <MapStampGlyph def={s} fill={MAP_PALETTE[5].hex} stroke={MAP_PALETTE[0].hex} size={40} />
-                <span className="map-stamp-tile-name">{s.name}</span>
-                {!isLocked && <button type="button" className="map-stamp-tile-x" title="Delete this stamp" onClick={() => removeStamp(s)}>{"\u00d7"}</button>}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+    <>
+      <button type="button" className={className || "btn btn-small btn-accent"} style={style} onClick={importPack} disabled={reading} title={title || "Import a stamp pack: a .json pack, a .zip of PNGs, PNG files, a Photoshop .abr, GIMP .gbr or .gih files, or Procreate .brush or .brushset files"}>{reading ? "Reading…" : (label || "+ Import pack or brushes")}</button>
       {pending && (() => {
         // one modal per pack read; a zip of several folders steps through them
         const cur = pending.packs[pending.index];
         const last = pending.index === pending.packs.length - 1;
         const commit = () => {
           cur.pack.nameOverride = pendingName;
-          if (last) { applyPacks(pending.packs, stamps); setPending(null); return; }
+          if (last) { applyPacks(pending.packs); setPending(null); return; }
           setPendingName(pending.packs[pending.index + 1].pack.name);
           setPending({ ...pending, index: pending.index + 1 });
         };
         const skip = () => {
-          if (last) { const rest = pending.packs.filter((p, i) => i !== pending.index); if (rest.length) applyPacks(rest, stamps); setPending(null); return; }
+          if (last) { const rest = pending.packs.filter((p, i) => i !== pending.index); if (rest.length) applyPacks(rest); setPending(null); return; }
           setPendingName(pending.packs[pending.index + 1].pack.name);
           setPending({ packs: pending.packs.filter((p, i) => i !== pending.index), index: pending.index });
         };
@@ -26355,6 +26558,104 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
           </div>
         );
       })()}
+    </>
+  );
+}
+
+function MapStampsPanel({ state, isLocked, onChange, flash }) {
+  const stamps = Array.isArray(state.mapStamps) ? state.mapStamps : [];
+  const [writing, setWriting] = useState(false); // a PNG zip being built; its buttons wait
+  const usage = useMemo(() => mapStampUsage(state), [state.cartographia]);
+  const groups = mapStampGroups(stamps);
+  const say = (text, type) => { if (flash) flash(text, type); };
+  const downloadBlob = (filename, blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  const download = (filename, obj) => downloadBlob(filename, new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  // A pack as PNGs in the Wonderdraft layout (buildMapStampPngZip); the
+  // built-ins through the same path under their pack id.
+  const exportPngZip = async (packId, name, list) => {
+    if (writing) return;
+    if (typeof JSZip === "undefined") { say("Zip library not loaded; try reloading the page.", "error"); return; }
+    setWriting(true);
+    try {
+      const blob = await buildMapStampPngZip(packId, list);
+      downloadBlob(`${packId}.stamps-png.zip`, blob);
+      say(`Wrote "${name}" as ${plural(list.length, "PNG", "PNGs")} in the Wonderdraft layout (${fmtBytes(blob.size)}). Unzip it into Wonderdraft's assets folder; Inkarnate and Dungeondraft take the PNGs inside.`);
+    } catch (err) {
+      console.warn("PNG zip failed", err);
+      say("The PNG zip could not be written.", "error");
+    } finally {
+      setWriting(false);
+    }
+  };
+  const fmtBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+  const exportGroup = (g) => {
+    download(`${g.id}.cartulary-stamps.json`, buildMapStampPackFile(g.id, g.name, g.stamps));
+    say(`Exported "${g.name}" (${plural(g.stamps.length, "stamp", "stamps")}).`);
+  };
+  const exportBuiltins = () => {
+    download("cartulary-builtins.cartulary-stamps.json", buildMapStampPackFile("cartulary-builtins", "Cartulary built-in stamps", MAP_BUILTIN_STAMPS));
+    say("Exported the four built-in stamps as a pack. Edit it, rename it, and import it to make your own.");
+  };
+  const usageNote = (ids) => {
+    let shapes = 0;
+    const maps = new Set();
+    ids.forEach(id => { const u = usage[id]; if (u) { shapes += u.shapes; } });
+    (Array.isArray(state.cartographia) ? state.cartographia : []).forEach(rec => {
+      const d = rec && rec.mapData && rec.mapData.drawing;
+      if ((d && Array.isArray(d.layers) ? d.layers : []).some(l => (Array.isArray(l.shapes) ? l.shapes : []).some(s => s && s.type === "stamp" && ids.includes(s.stampId)))) maps.add(rec.id);
+    });
+    return shapes > 0 ? ` It is placed ${plural(shapes, "time", "times")} on ${plural(maps.size, "map", "maps")}; those will show as missing until a pack with it is imported again.` : "";
+  };
+  const removeStamp = (s) => {
+    if (isLocked) return;
+    if (!confirm(`Delete the stamp "${s.name}"?${usageNote([s.id])}`)) return;
+    onChange(stamps.filter(x => x.id !== s.id));
+  };
+  const removeGroup = (g) => {
+    if (isLocked) return;
+    if (!confirm(`Delete the pack "${g.name}" and its ${plural(g.stamps.length, "stamp", "stamps")}?${usageNote(g.stamps.map(s => s.id))}`)) return;
+    const ids = new Set(g.stamps.map(s => s.id));
+    onChange(stamps.filter(x => !ids.has(x.id)));
+  };
+  return (
+    <div className="map-stamps">
+      <div className="map-stamps-head">
+        <span className="map-stamps-title">Stamps</span>
+        {!isLocked && <MapStampImportButton stamps={stamps} onChange={onChange} flash={flash} />}
+        <button type="button" className="btn btn-small btn-ghost" onClick={exportBuiltins} title="A correct pack file with the four built-in stamps, to start your own from">Export built-ins as a pack</button>
+        <button type="button" className="btn btn-small btn-ghost" onClick={() => exportPngZip("cartulary-builtins", "Cartulary built-in stamps", MAP_BUILTIN_STAMPS)} disabled={writing} title="The four built-in stamps as PNGs in the Wonderdraft folder layout">{writing ? "Writing\u2026" : "Built-ins as PNG zip"}</button>
+      </div>
+      {groups.length === 0 ? (
+        <div className="map-stamps-empty">No imported stamps. The map editor's Stamp tool has four built in; a stamp pack adds more. Import takes a Cartulary pack, PNG files or a zip of them, a Photoshop .abr or the zip it came in, GIMP .gbr and .gih files, and Procreate .brush and .brushset files.</div>
+      ) : groups.map(g => (
+        <div key={g.id} className="map-stamp-group">
+          <div className="map-stamp-group-head">
+            <span className="map-stamp-group-name">{g.name}</span>
+            <span>{plural(g.stamps.length, "stamp", "stamps")}</span>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => exportGroup(g)} title="Write this pack back out as a file">Export</button>
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => exportPngZip(g.id, g.name, g.stamps)} disabled={writing} title="This pack as PNGs in the Wonderdraft folder layout, svg stamps rasterized">{writing ? "Writing\u2026" : "PNG zip"}</button>
+            {!isLocked && <button type="button" className="btn btn-small btn-danger" onClick={() => removeGroup(g)} title="Delete this pack and every stamp in it">Delete pack</button>}
+          </div>
+          <div className="map-stamp-grid">
+            {g.stamps.map(s => (
+              <div key={s.id} className="map-stamp-tile" title={`${s.name} (${s.id}${s.kind === "alpha" || s.kind === "color" ? `, ${s.kind} tip ${s.width} \u00d7 ${s.height}` : ""})`}>
+                <MapStampGlyph def={s} fill={MAP_PALETTE[5].hex} stroke={MAP_PALETTE[0].hex} size={40} />
+                <span className="map-stamp-tile-name">{s.name}</span>
+                {!isLocked && <button type="button" className="map-stamp-tile-x" title="Delete this stamp" onClick={() => removeStamp(s)}>{"\u00d7"}</button>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
