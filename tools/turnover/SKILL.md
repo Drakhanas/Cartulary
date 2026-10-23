@@ -65,6 +65,14 @@ found two of the four files missing from the skill package and rebuilt them; ses
 found the package's `prove_teeth.py` had gone stale against the tree and could only be
 replaced by Drak. A copy that lives in a skill package drifts, so there are no copies: the
 skill package carries this file as a pointer, and the scripts are invoked from the clone.
+Work from a clone of the repository; if the session doesn't have one, attach
+`Drakhanas/Cartulary` and clone it. If the skill package still holds a `check_docs.py`,
+`prove_teeth.py`, `conventions.md`, or `facts.example.json`, those are stale copies from
+before session 19: never run or read them.
+
+This file is the source of the installed skill. Change it here, in the repository, and
+refresh the skill from it; an edit made only to the installed copy is lost at the next
+refresh.
 
 - `SKILL.md` : this file.
 - `check_docs.py` : the gate. Takes `--docs DIR --src DIR` plus one of `--facts`,
@@ -98,8 +106,12 @@ python3 tools/turnover/check_docs.py --docs docs --src cartulary-src --write-fac
 
 The baseline (`docs/.turnover-baseline.json`) is committed and normally left alone: newly
 authored text must add no em dashes and no banned phrases, so the counts never need to
-rise. Re-write it with `--baseline docs/.turnover-baseline.json` only when verbatim
-pre-v1.6 content is relocated between documents.
+rise. Re-write it with `--baseline docs/.turnover-baseline.json` in two cases, and only
+after a Python sweep shows nothing newly authored: when verbatim pre-v1.6 content is
+relocated between documents, and after a rewrite that shrinks a document. The gate counts
+against the baseline, so a stale higher count lets new em dashes through;
+`prove_teeth.py`'s em-dash probe is what notices (session 19's document-debt pass needed
+exactly this).
 
 `--write-facts` derives file count, total lines, canonical lines, declaration
 count, no-trailing-newline count, and the active anchor **from the live tree**.
@@ -150,13 +162,15 @@ python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src
 
 Mandatory after any change to `check_docs.py` or `facts.json`. Ten mutation
 probes, each injecting one defect into a throwaway copy and asserting the gate
-goes RED on the right check. Every probe must read `OK`. A `MISS` means a blind
-spot: fix the check, never the probe.
+goes RED on the right check. Every probe must read `OK`, and the harness exits 1 if
+any reads `MISS`. A `MISS` means a blind spot: fix the check, never the probe.
 
 This phase is not optional and it is not ceremony. This project has shipped two
 gates that scored a check they printed but excluded from the verdict: `byte_ok`
-(wrong from r004 to r023) and `raw_ok` (wrong from r004 to r025). Both were
-found by trying to fool the gate, not by reading it.
+(wrong from v1.6's r004 to r023) and `raw_ok` (wrong from v1.6's r004 to r025). Both
+were found by trying to fool the gate, not by reading it. The harness itself had the
+same flaw until 2026-10-23: it printed `MISS` and exited 0, so CI's teeth step could not
+fail.
 
 ### Phase 4: the adversarial read
 
@@ -201,6 +215,8 @@ The checker treats every line as a live claim except:
 - **`changelog.md`**: everything under a `### Session` header older than the
   newest. Append-only history, preserved verbatim.
 - **`roadmap.md`**: everything above the newest `=== ADDED ... ===` block.
+- **`journal.txt`**: every entry before the newest `=== ` line. The journal keeps
+  every session's entry, oldest first, so only the newest is a live claim.
 - **Any line carrying `[stale: reason]`**: the explicit escape hatch.
 
 Use `[stale:]` when a document deliberately names something retired or wrong:
@@ -216,6 +232,9 @@ State this honestly rather than letting the green bar imply more than it means:
 - Whether a doctrine entry is *right*, only whether its numbers are.
 - File placement. `check_docs.py` reads documents and the tree; it does not know
   which module a header *should* live in.
+- Anything outside the six documents. The repository `README.md`, the files in
+  `tools/turnover/`, and `docs/release-notes/` are never read, so sweep their added
+  lines for em dashes and banned phrases by hand.
 - Anything not listed in `facts.json`. The `published` and `assertions` sections
   are the coverage, and they are only as good as what gets put in them. When a
   review round finds a figure the gate missed, add it to `facts.json` in the
