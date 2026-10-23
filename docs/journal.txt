@@ -407,4 +407,4 @@ review found. Then a rule for tags, decided before the first one was needed. The
 starts over with every version, and v1.6 left r030 through r051 on the remote as bare
 names, so v1.7's thirtieth cut would have asked git for a tag it already had. From here a
 tag carries its version, v1.7_r001, and the v1.6 tree as shipped is v1.7's r000, which
-nobody tags because v1.6 already marks it.
+nobody tags because v1.6 already marks it. The release gets one of its own: v1.7_Release.

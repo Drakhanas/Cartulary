@@ -190,8 +190,9 @@ and no upload.
 When CI is green on a cut's turnover, give Drak the three lines that tag it, because
 the session's git credential can't push tags: `git pull` / `git tag v<version>_r### <sha>`
 / `git push origin v<version>_r###`. A line's first tag is its r001; the shipped tree
-before it is r000 and is never tagged, and a ship turnover takes no tag. The rule is
-under Tags in `docs/handoff.md`.
+before it is r000 and is never tagged. A ship turnover gets the release tag instead,
+`v<version>_Release` with a capital R, in the same three lines. The rule is under Tags
+in `docs/handoff.md`.
 
 ## Marking deliberately superseded text
 

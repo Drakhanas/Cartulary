@@ -638,7 +638,9 @@
       "`working` and the parse gate",
       "`v<version>_r###`",
       "v1.7_r001",
-      "is never tagged"
+      "is never tagged",
+      "`v<version>_Release`",
+      "v1.7_Release"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -730,7 +732,8 @@
       "r050",
       "r051",
       "`v{VERSION}_r###`",
-      "v1.7_r001"
+      "v1.7_r001",
+      "`v{VERSION}_Release`"
     ],
     "journal.txt": [
       "r030",
