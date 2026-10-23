@@ -6,6 +6,27 @@ Nothing in the backlog is committed to a version. A row is a claim about the tre
 
 ---
 
+## v1.7: the Letters and Pipes update
+
+Named by Drak on 2026-10-23. Not opened yet: `VERSION` in `inlining/build_inline.py` still reads `'1.6'`, and the line opens when code work starts.
+
+- **Letters: writing tools.** Drak's scope, held open on purpose until work on the app begins. Nothing in the backlog is attached to it.
+- **Pipes: the deficiencies a new adversarial review raised** (2026-10-23), addressed when code work is planned. The list isn't in the repository yet; when it comes in, each item is checked against the tree before it's scheduled, the same rule as any backlog row.
+- **Carry-in fixes, whatever the theme:** the three product-text defects in the backlog below (the Concordance help's reload line, the save-file schema's missing `longform` and `grid` shapes in the help and on the site, and the Ephemeris note that still names v1.5). They're the natural first cut after the line opens, and that cut also flips the two version literals in `08_export-layer`.
+- **Everything else in the backlog stays unscheduled** unless planning Letters or Pipes pulls it in.
+
+### Before code work
+
+None of these edits the application, so none takes an r-number.
+
+1. **Bring the adversarial review into the repository** when Drak is ready to plan, as the input to Pipes, with each deficiency checked against the tree first.
+2. **Drak's files and accounts:** refresh the `cartulary-turnover` skill package (point it at `tools/turnover/` and drop its script copies; its account of the handoff is behind `conventions.md` since 2026-10-23); put the v1.4 patch notes and the v1.5 zip README into `docs/release-notes/`; take itch screenshots for v1.6.
+3. **Build and gate tooling** (scripts only, no product code): make `prove_gate_teeth.py` find its targets by role instead of by filename (it names `11_io-utils.jsx` and `02_trunk.jsx`); move the temporary file `finals` writes off the hard-coded `/tmp`; and give the doc gate's retired-anchor check a narrower rule, so a history word anywhere on a line stops excusing it while the legitimate history lines keep passing. Any of these may turn out to be a Pipes item once the review's list is in.
+4. **The entry-ref audit's semantic half:** the mechanical half was checked 2026-10-23 (the 20 built-in templates carry 149 ref targets naming 19 distinct targets, every one a built-in template or a registered node source, so nothing dangles). What's left is a read of whether each field points at the right template; a wrong one becomes a cut in the line.
+5. **Optional document debt:** the spine manifest (91 KB) is mostly pillar 2's finished carve record. It could freeze the way the handoff did, with the module map and the gate design kept live.
+
+---
+
 ## Backlog: features
 
 - **Concordance sector graph.** Half shipped in v1.5: the node-source registry already puts stars, planets, and moons in Concordance and draws the `parentBodyId` hierarchy as "orbits" edges, so the star-planet-moon view exists. Still open: connections between star systems with distance stored on the edge (topological, not coordinate-accurate), distance labels on those edges, and a stars-only filter mode. Open design questions: binary stars, 2D or 3D, the single-system empty state, and whether it's a Concordance mode or its own view. The same two primitives (kind-aware filtering, per-edge metadata) would also serve trade routes and faction links. It's one of three items here big enough to headline a release, with variant filter v2 and the Game Mechanics pack. The full sketch is in `roadmap-archive.md`, in the v1.6 record's copy of the backlog.
@@ -20,7 +41,7 @@ Nothing in the backlog is committed to a version. A row is a claim about the tre
 
 - **`App` hooks-extraction.** `App` is about three quarters of the core. Shrinking it is a refactor that keeps behavior but not bytes, so the parity gate can't verify it; it needs a verification design before it needs code.
 - **First-step context-completeness gate.** Not built. It matters only if editing goes module-scoped (loading the spine and one module instead of the whole tree).
-- **A named `utils` module** for the 43-line `02_trunk` residue arc. Optional. `prove_gate_teeth.py` targets `02_trunk.jsx` (and `11_io-utils.jsx`) by name, so the carve updates those probes in the same cut.
+- **A named `utils` module** for the 43-line `02_trunk` residue arc. Optional. `prove_gate_teeth.py` names `02_trunk.jsx` as a probe target, so the carve updates the probes in the same cut unless the before-code tooling item has made them find their targets by role.
 
 ## Backlog: product-text defects
 
@@ -29,11 +50,6 @@ Found by the independent read of the rewritten handoff on 2026-10-23. Each is a 
 - **The Concordance help says the template filter comes back all-on after a reload** ("refresh the page and all templates are visible again", in the help module's Concordance topic). Since v1.5's r134 the filter opens empty, by design.
 - **The save-file schema has no `longform` or `grid` shape.** The in-app JSON Save File Schema topic's field-type list and its field-values table omit both, and cartulary.world's JSON Structure page lists `grid` as a two-dimensional array (`grid[rowIndex][colIndex]`), which it isn't. The real shape is `{ rowAxisLabel, colAxisLabel, rows:[{id,label}], cols:[{id,label}], cells:{ [rowId]:{ [colId]:{ type, value } } } }` (`makeEmptyGrid` in `05_field-system`).
 - **A promoted Ephemeris event still writes "native recurrence support is not in v1.5"** into its notes (`12_trunk`). The version is stale; D.4 above is the feature it refers to.
-
-## Backlog: documents and housekeeping
-
-- **Entry-ref correctness audit, the semantic half.** The mechanical half was checked 2026-10-23: the 20 built-in templates carry 149 ref targets naming 19 distinct targets, and every one is a built-in template or a registered node source (ConLang, Astronomical Body), so nothing dangles. Whether each field points at the right template is a read nobody has done.
-- **Needs Drak's files:** the `cartulary-turnover` skill package pointed at `tools/turnover/` with its script copies dropped (its description of the handoff is also behind `conventions.md` since 2026-10-23); the v1.4 patch notes and the v1.5 zip README into `docs/release-notes/`; itch screenshots for v1.6.
 
 ## Tolerated
 
@@ -71,3 +87,7 @@ Found by the independent read of the rewritten handoff on 2026-10-23. Each is a 
 **Corrected the same night.** An independent read of the rewritten handoff and this file against the tree found the struck data-shapes row, the Concordance edge-label half of the polish row, the Game Mechanics row's "design done", the sector graph as the only headline-sized item, and this file's account of what the doc gate reads all wrong. Each is fixed above, and three product-text defects it found are now on the backlog.
 
 **The journal row is done.** There was never a master `journal.txt` to import: the journal began as a turnover aid against context compaction, and Drak never collected the entries. Drak's call (2026-10-23): the repository is the master. `docs/journal.txt` replaces `journal-entry.txt`, keeps every entry oldest first, starts with the two entries the repository's history held (sessions 18 and 19), and the doc gate reads only its newest entry.
+
+=== ADDED 2026-10-23 (session 19, later: v1.7 named) ===
+
+**v1.7 is the Letters and Pipes update** (Drak, 2026-10-23): Letters is writing tools, with its scope held open until work on the app begins, and Pipes is the deficiencies a new adversarial review raised, addressed when code work is planned. The v1.7 section at the top of this file holds the carry-in fixes and the before-code list. **No line is open** until the `VERSION` bump; v1.6 stays shipped from the r051 tree (finals `b99381a041153d9d` and `e748142eadb3e1aa`). The entry-ref audit and Drak's files moved from the housekeeping backlog into the before-code list, which is now their one place.
