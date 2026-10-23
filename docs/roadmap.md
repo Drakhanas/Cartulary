@@ -12,7 +12,7 @@ Named by Drak on 2026-10-23. Not opened yet: `VERSION` in `inlining/build_inline
 
 - **Letters: writing tools.** Drak's scope, held open on purpose until work on the app begins. Nothing in the backlog is attached to it.
 - **Pipes: the deficiencies a new adversarial review raised** (2026-10-23), addressed when code work is planned. The list isn't in the repository yet; when it comes in, each item is checked against the tree before it's scheduled, the same rule as any backlog row.
-- **Carry-in fixes, whatever the theme:** the three product-text defects in the backlog below (the Concordance help's reload line, the save-file schema's missing `longform` and `grid` shapes in the help and on the site, and the Ephemeris note that still names v1.5). They're the natural first cut after the line opens, and that cut also flips the two version literals in `08_export-layer`.
+- **Carry-in fixes, whatever the theme:** the three product-text defects in the backlog below (the Concordance help's reload line, the save-file schema's missing `longform` and `grid` shapes in the help and on the site, and the Ephemeris note that still names v1.5). They're the natural first cut after the line opens (r001, the line's first tag, `v1.7_r001`; the v1.6 tree as shipped is its r000 and isn't tagged), and that cut also flips the two version literals in `08_export-layer`.
 - **Everything else in the backlog stays unscheduled** unless planning Letters or Pipes pulls it in.
 
 ### Before code work

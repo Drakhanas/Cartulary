@@ -635,7 +635,10 @@
       "Never freeze a body",
       "finals-pass.md",
       "hash equal to the artifact last passed",
-      "`working` and the parse gate"
+      "`working` and the parse gate",
+      "`v<version>_r###`",
+      "v1.7_r001",
+      "is never tagged"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -725,7 +728,9 @@
       "r048",
       "r049",
       "r050",
-      "r051"
+      "r051",
+      "`v{VERSION}_r###`",
+      "v1.7_r001"
     ],
     "journal.txt": [
       "r030",

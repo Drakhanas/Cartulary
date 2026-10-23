@@ -400,3 +400,11 @@ came back five kilobytes longer, which is about what the missing rules weighed. 
 that the journal had been addressed all along to a master file he never kept: it started as
 a way to get turnover through context compaction, not as something to collect. So this file
 is the master now, starting from the two entries the repository happened to hold.
+
+Before anything opened, the next line got a name, the Letters and Pipes update: writing
+tools Drak is keeping vague until the work starts, and the deficiencies a new adversarial
+review found. Then a rule for tags, decided before the first one was needed. The r-counter
+starts over with every version, and v1.6 left r030 through r051 on the remote as bare
+names, so v1.7's thirtieth cut would have asked git for a tag it already had. From here a
+tag carries its version, v1.7_r001, and the v1.6 tree as shipped is v1.7's r000, which
+nobody tags because v1.6 already marks it.

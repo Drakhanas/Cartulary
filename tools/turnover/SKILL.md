@@ -182,9 +182,16 @@ not against the other documents:
 ### Phase 5: deliver
 
 Only after phases 2, 3, and 4 are clean. Commit the documents (one turnover commit,
-the r-number in the message) and push; CI runs phases 2 and 3 again. State what
-changed and its size from the commit stat; if a correction round added more than it
-removed, say so and say why (G5). There is no zip and no upload.
+the revision in the message written as its tag, `Turnover v1.7_r001`) and push; CI
+runs phases 2 and 3 again. State what changed and its size from the commit stat; if a
+correction round added more than it removed, say so and say why (G5). There is no zip
+and no upload.
+
+When CI is green on a cut's turnover, give Drak the three lines that tag it, because
+the session's git credential can't push tags: `git pull` / `git tag v<version>_r### <sha>`
+/ `git push origin v<version>_r###`. A line's first tag is its r001; the shipped tree
+before it is r000 and is never tagged, and a ship turnover takes no tag. The rule is
+under Tags in `docs/handoff.md`.
 
 ## Marking deliberately superseded text
 

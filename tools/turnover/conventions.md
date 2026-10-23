@@ -105,6 +105,9 @@ the two entries its history held, sessions 18 and 19.)*
 - **Filename references decay.** `NN_` prefixes reflow on every upstream insertion, so
   re-verify every `NN_name.jsx` reference against the live tree at each turnover.
 - **Per-arc and per-module line counts are Python `splitlines()` counts**, never `wc -l`.
+- **A revision from a closed line carries its version** (`v1.6 r036`). The r-counter starts
+  over with each line, so a bare r-number means the open line's, or, between lines, the line
+  just closed. Tags carry the same pair as `v<version>_r###` (`docs/handoff.md`, Tags).
 - **Rebaseline after a rewrite that shrinks a document** (`check_docs.py --baseline`), once a
   Python sweep shows nothing newly authored. The em-dash and banned-phrase checks count against
   the baseline, so a stale higher count lets new text through; `prove_teeth.py`'s em-dash probe

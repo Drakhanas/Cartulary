@@ -83,6 +83,8 @@ A **content change** edits the modules through a script in `inlining/cuts/` and 
 
 A **pure reorganization** (carving a module out of a larger one, renumbering) changes no byte of the body. `build_inline.py verify` reassembles the tree, canonicalizes it, and compares it to the anchor; anything but an exact match fails.
 
+Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. `v1.7_r001` is the first change after v1.6 shipped, and a release is the last tag of its version. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
+
 `inlining/prove_gate_teeth.py` and `tools/turnover/prove_teeth.py` inject one defect at a time into a throwaway copy of the tree or the docs and prove each gate still fails on what it should, so a gate that has gone quiet is caught. The project shipped two that had been scoring wrong for twenty revisions before these existed.
 
 The project's working documents in `docs/` are gated too. `tools/turnover/check_docs.py` checks the handoff, changelog, roadmap, doctrine, manifest, and journal against the tree and against `docs/facts.json`: file names that no longer exist, line counts that drifted, claims that disagree with the source. The conventions are in `tools/turnover/conventions.md`.
