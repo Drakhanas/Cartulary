@@ -1293,10 +1293,7 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
   overflow:hidden;cursor:crosshair;user-select:none;
   margin-bottom:18px;width:100%;
 }
-.map-canvas.zoomed{overflow:auto;max-height:75vh}
-.map-canvas.view-mode{cursor:default}
-.map-canvas.view-mode-pannable{cursor:grab}
-.map-canvas.view-mode-pannable:active{cursor:grabbing}
+.map-canvas.view-mode{cursor:grab;touch-action:pan-y}
 .map-image{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
 
 .map-resize-handle{
@@ -1314,15 +1311,18 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 }
 .map-resize-handle:hover{opacity:.95}
 
-.map-size-indicator{
-  position:absolute;bottom:6px;left:6px;
-  font-size:calc(10px * var(--font-scale));color:var(--text-dim);
-  background:rgba(12,11,10,.75);padding:2px 7px;border-radius:3px;
-  font-family:'DM Sans',sans-serif;letter-spacing:.04em;
-  pointer-events:none;z-index:18;
-  opacity:0;transition:opacity .15s;
+.map-zoom{
+  position:absolute;bottom:6px;left:6px;z-index:19;
+  display:flex;align-items:center;gap:3px;
+  background:rgba(12,11,10,.78);padding:2px 4px;border-radius:3px;
+  touch-action:auto;
 }
-.map-canvas:hover .map-size-indicator{opacity:1}
+.map-zoom .btn{padding:1px 7px;min-width:0}
+.map-zoom-value{
+  font-size:calc(10px * var(--font-scale));color:var(--text-dim);
+  font-family:'DM Sans',sans-serif;letter-spacing:.04em;
+  min-width:34px;text-align:center;
+}
 
 .map-pin{
   position:absolute;transform:translate(-50%, -100%);
@@ -1448,7 +1448,7 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .map-canvas.tool-select{cursor:default}
 .map-canvas.tool-rect,.map-canvas.tool-ellipse,.map-canvas.tool-polygon,.map-canvas.tool-stroke,.map-canvas.tool-freehand,.map-canvas.tool-brush,.map-canvas.tool-eraser{cursor:crosshair}
 .map-canvas.tool-fill{cursor:cell}
-.map-canvas.draw-mode,.map-pin,.map-resize-handle{touch-action:none}
+.map-canvas,.map-pin,.map-resize-handle{touch-action:none}
 .map-paint-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:4;display:none}
 .map-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:6}
 .map-canvas.tool-select .map-overlay{pointer-events:auto}
@@ -1456,6 +1456,8 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .map-canvas.tool-select .map-overlay [data-vertex]{cursor:crosshair}
 .map-canvas.tool-text{cursor:text}
 .map-canvas.tool-stamp{cursor:copy}
+.map-canvas.tool-pan,.map-canvas.pan-ready{cursor:grab}
+.map-canvas.pan-active{cursor:grabbing}
 .map-canvas.tool-select .map-overlay [data-handle="nw"],.map-canvas.tool-select .map-overlay [data-handle="se"]{cursor:nwse-resize}
 .map-canvas.tool-select .map-overlay [data-handle="ne"],.map-canvas.tool-select .map-overlay [data-handle="sw"]{cursor:nesw-resize}
 .map-canvas.tool-select .map-overlay [data-handle="rotate"]{cursor:grab}
