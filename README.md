@@ -99,9 +99,9 @@ The GitHub Actions workflow in `.github/workflows/` runs all of this on every pu
 - `cartulary-doctrine.md`, `doctrine-code-watch.md`, `doctrine-site.md`: standing rules learned from mistakes, each with the mistake that taught it.
 - `cartulary-spine-manifest.md`: the module tree with line counts and what each module holds.
 - `cartographia-plus-spec.md`, `maps-promotion-spec.md`, and the Glossopoeia documents: the specs the larger features were built from.
-- `release-notes/`: the patch notes and public copy for each release.
+- `release-notes/`: the patch notes, the public copy, and the finals checklist for each release.
 
-The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page carries the same shapes.
+The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page. Neither documents the `longform` and `grid` field shapes correctly yet; the fix is on the roadmap.
 
 ## Contributing
 

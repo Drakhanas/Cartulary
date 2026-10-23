@@ -68,6 +68,11 @@ def _drift_published(d):
             return
     raise SystemExit(f'published probe: pattern for {key!r} matched no numeric figure')
 probes.append(("published figure drift", _drift_published))
+# A probe that misses must fail the run, not only print MISS: CI runs this script after the
+# doc gate, and until 2026-10-23 it always exited 0, so a green CI said nothing about the
+# probes. The fact-check of the rewritten handoff found it by raising the baseline in a
+# scratch copy and watching the run print MISS and exit 0.
+misses=[]
 print(f'{"probe":26} {"exit":>4}  first failing check')
 for name, mutate in probes:
     with tempfile.TemporaryDirectory() as td:
@@ -75,6 +80,7 @@ for name, mutate in probes:
         mutate(d)
         code,chk=run(d, d/'facts.json')
         mark='OK ' if code!=0 else 'MISS'
+        if code==0: misses.append(name)
         print(f'  {mark} {name:24} {code:>4}  {chk}')
 # span + assertion probes mutate facts, not docs
 with tempfile.TemporaryDirectory() as td:
@@ -87,6 +93,7 @@ with tempfile.TemporaryDirectory() as td:
     arc=next(iter(f['spans'])); f['spans'][arc][0][1]=f['spans'][arc][0][0]
     (d/'facts.json').write_text(json.dumps(f,indent=2))
     code,chk=run(d,d/'facts.json'); print(f'  {"OK " if code else "MISS"} {"span ends on blank":24} {code:>4}  {chk}')
+    if not code: misses.append('span ends on blank')
 with tempfile.TemporaryDirectory() as td:
     d=Path(td)/'docs'; shutil.copytree(DOCS,d)
     # Derived: the original set line 2056, an r025 figure that at r030 was out of range
@@ -95,6 +102,10 @@ with tempfile.TemporaryDirectory() as td:
     f=json.loads((d/'facts.json').read_text()); f['assertions'][0]['line']+=1
     (d/'facts.json').write_text(json.dumps(f,indent=2))
     code,chk=run(d,d/'facts.json'); print(f'  {"OK " if code else "MISS"} {"tree assertion wrong":24} {code:>4}  {chk}')
+    if not code: misses.append('tree assertion wrong')
 
 print()
 print("If any probe reads MISS, the gate has a blind spot. Fix the check, not the probe.")
+if misses:
+    print(f"{len(misses)} probe(s) missed: {', '.join(misses)}")
+    raise SystemExit(1)

@@ -632,7 +632,10 @@
       "docs/roadmap.md",
       "8554fdf",
       "prove_teeth.py",
-      "Never freeze a body"
+      "Never freeze a body",
+      "finals-pass.md",
+      "hash equal to the artifact last passed",
+      "`working` and the parse gate"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -696,7 +699,9 @@
       "roadmap-principles.md",
       "r051",
       "b99381a041153d9d",
-      "No line is open"
+      "No line is open",
+      "product-text defects",
+      "makeEmptyGrid"
     ],
     "cartulary-doctrine.md": [
       "r030",

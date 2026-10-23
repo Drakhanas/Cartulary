@@ -65,9 +65,10 @@ inline when a live block deliberately quotes something retired.
 
 **`roadmap.md`** is the standing backlog (features, engineering, housekeeping, what is tolerated,
 what is decided no, what is deferred), edited in place as items move, followed by a dated
-`=== ADDED ... ===` block per session. The newest block is the current status and the only part
-the checker reads; the standing sections are kept true by hand, and a row struck there is
-recorded, with its evidence, in that session's block.
+`=== ADDED ... ===` block per session. The newest block is the current status. The checker reads it
+for figures, file names, and anchors, and reads the whole file for em dashes, banned phrases,
+tables, and required strings; the standing sections are kept true by hand, and a row struck there
+is recorded, with its evidence, in that session's block.
 
 **At a version's close** (the upload, not the build), the changelog freezes verbatim to
 `changelog-v<version>.md`, the handoff to `handoff-v<version>.md`, and the version's plan and
@@ -98,6 +99,10 @@ report; the changelog already is one.
 - **Filename references decay.** `NN_` prefixes reflow on every upstream insertion, so
   re-verify every `NN_name.jsx` reference against the live tree at each turnover.
 - **Per-arc and per-module line counts are Python `splitlines()` counts**, never `wc -l`.
+- **Rebaseline after a rewrite that shrinks a document** (`check_docs.py --baseline`), once a
+  Python sweep shows nothing newly authored. The em-dash and banned-phrase checks count against
+  the baseline, so a stale higher count lets new text through; `prove_teeth.py`'s em-dash probe
+  is what notices, and since 2026-10-23 it fails the run when it misses.
 
 ## `facts.json`
 

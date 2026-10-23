@@ -314,7 +314,13 @@ that the changelog already held, and a roadmap still filing the v1.5 plan under 
 Up four months after v1.5 shipped. Drak said kill some of it, and took every recommendation.
 The changelog froze, the handoff froze and came back at 28 KB as current state, the roadmap's
 past went verbatim into its archive, and the build doc that described a workflow from before
-the tree existed went away. Three more backlog rows turned out to be done, one of them closed
+the tree existed went away. Two more backlog rows turned out to be done, one of them closed
 in June in a document nobody reread, and I had repeated it as never run an hour earlier. The
 gate needed its baseline lowered before its em-dash probe would bite again: shrinking the
-documents had loosened it.
+documents had loosened it. Then a second agent read the rewrite cold, with the tree open, and
+found twenty-two things the gate had let through. The worst was a rule I had condensed: a
+pure carve skips the browser pass when its bytes match the anchor and its artifact hashes
+to one already passed, and my version kept only the first half, which sounds like enough
+until a changed shell walks through it. One row I had struck as done wasn't. The probe
+harness for the doc gate had never been able to fail. All of it is fixed, and the handoff
+came back five kilobytes longer, which is about what the missing rules weighed.
