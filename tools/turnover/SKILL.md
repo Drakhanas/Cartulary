@@ -65,14 +65,6 @@ found two of the four files missing from the skill package and rebuilt them; ses
 found the package's `prove_teeth.py` had gone stale against the tree and could only be
 replaced by Drak. A copy that lives in a skill package drifts, so there are no copies: the
 skill package carries this file as a pointer, and the scripts are invoked from the clone.
-Work from a clone of the repository; if the session doesn't have one, attach
-`Drakhanas/Cartulary` and clone it. If the skill package still holds a `check_docs.py`,
-`prove_teeth.py`, `conventions.md`, or `facts.example.json`, those are stale copies from
-before session 19: never run or read them.
-
-This file is the source of the installed skill. Change it here, in the repository, and
-refresh the skill from it; an edit made only to the installed copy is lost at the next
-refresh.
 
 - `SKILL.md` : this file.
 - `check_docs.py` : the gate. Takes `--docs DIR --src DIR` plus one of `--facts`,
@@ -81,6 +73,15 @@ refresh.
   `Path(__file__).parent`, so it must stay beside `check_docs.py`. Its targets derive from
   `facts.json`, never from a literal of one session.
 - `conventions.md` : per-document authoring rules and what goes where. Phase 1 reads it.
+
+Work from a clone of the repository; if the session doesn't have one, attach
+`Drakhanas/Cartulary` and clone it. If the installed skill package still holds its own
+`check_docs.py`, `prove_teeth.py`, `conventions.md`, or `facts.example.json`, those are
+stale copies from before session 19: use the clone's `tools/turnover/`, never the package's.
+
+This file is the source of the installed skill. Change it here, in the repository, and
+refresh the skill from it; an edit made only to the installed copy is lost at the next
+refresh.
 
 `facts.json` is NOT skill code. It is per-project state, regenerated each session by
 `--write-facts`, and lives with the documents at `docs/facts.json`, as does the em-dash and
