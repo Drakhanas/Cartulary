@@ -340,7 +340,7 @@ Triggered by v1.5 Ephemeris work but doesn't block v1.5 ship. The plain-text-in-
 - **Concordance size-threshold variant** — the full-graph-for-small-worlds / empty-only-past-N-nodes option was declined for blanket-empty at r134. On record in case it resurfaces.
 - **Deferred indefinitely:** Stemma v2 features, world-scoped custom assets (gates Scrap conlang migration), mobile UX, Ephemeris sky-from-surface view.
 
-## v1.6 — Cartographia+ map creator (next active)
+## v1.6 — Cartographia+ map creator (SHIPPED 2026-10-23)
 
 Per the long-standing plan: the full map-creation feature, ~60–100 hour build, shipped standalone with no competing headline feature. Reset the line at session start (`build_inline.py` VERSION 1.5 -> 1.6, r-counter -> r001). Planning not yet started as of the v1.5 ship.
 
@@ -560,7 +560,7 @@ Then the four remaining map-independent view carves. Two of them are entangled w
 
 **The open tooling question from session 18 is closed.** Drak chose the scoped-edit mode over the r026 procedure and over dropping the parity gate for pillar 3. It is built, probed (eighteen probes), and in the repository; the content-cut procedure is in the handoff. Pillar 3 can start.
 
-**The project lives in `github.com/Drakhanas/Cartulary` (private).** Cold start is a clone; turnover is a commit; CI runs every gate on every push. The bundle zips, the turnover zips, and the Project's per-session documents are gone. Drak clones locally at `D:\Git\_Cartulary` and pushes tags from there.
+**The project lives in `github.com/Drakhanas/Cartulary` (public since the v1.6 ship on 2026-10-23; private before).** Cold start is a clone; turnover is a commit; CI runs every gate on every push. The bundle zips, the turnover zips, and the Project's per-session documents are gone. Drak clones locally at `D:\Git\_Cartulary` and pushes tags from there.
 
 **Pillar 3, the drawing editor (Cartographia+), is under way.** The v1 scope and won't-have list above are unchanged except for layers (below). The build order is the build sheet; cuts go under the edit procedure, each browser-passed and rotated with `freeze`. Expect the editor to touch `16_trunk` (cartographia), `12_trunk` (App routing and handlers), `08_export-layer` (SVG in exports), `10_migrate` (any new `mapData` shape), `26_home-data` (help), and `shell.html` (CSS); every one of those is a declared scope on the cut that touches it.
 
@@ -573,3 +573,11 @@ Then the four remaining map-independent view carves. Two of them are entangled w
 **Follow-ups opened this session, none blocking:** master `journal.txt` into `docs/` with a checker change; the `cartulary-turnover` skill package refreshed to point at `tools/turnover/`; the v1.4 patch notes and the itch README into `docs/release-notes/`; tag pushes from Drak's clone.
 
 **Deferred unchanged:** `App` hooks-extraction, the first-step context-completeness gate, a named `utils` module for the 43-line `02_trunk` residue. **Doc debt unchanged:** the doctrine's v1.4 feature-surface section.
+
+=== ADDED 2026-10-23 (session 19: v1.6 SHIPPED; line closed at r051) ===
+
+**v1.6 shipped 2026-10-23 from the r051 tree:** maps as records (pillar 1, r001), the module tree (pillar 2, r002-r030 and the two carves r048-r049), the map editor with painting, stamps, and brush packs (pillar 3 and its amendment, r031-r047), the help and the site read against the app (r038, r047, r050), the download's font from the file itself (r051). Finals `Cartulary_v1.6.html` sha256 `b99381a041153d9d` and `Cartulary_v1.6_Readable.html` sha256 `e748142eadb3e1aa`, regenerable from the tagged tree. On itch with the rewritten page and the devlog; the repository public with issues enabled, cartulary.world deployed (one re-upload of `site/helloworld.html` from `main` owed for the r051 clause).
+
+**Nothing else is owed on v1.6.** `App` hooks-extraction stays deferred (its own risk tier); the optional `utils` split of `02_trunk` stays optional. Known and accepted at ship: no pen pressure, the palette of eight, no grid or snapping beyond the knob's Shift snap, the Readable build's slower start.
+
+**The v1.7 line opens with the `VERSION` bump in `build_inline.py`** (r-counter to r001, `changelog.md` frozen to `changelog-v1.6.md`, a fresh one started). What goes in it is Drak's call, from the post-v1.5 backlog carried above, the post-pillar backlog in the handoff, and whatever the v1.6 release teaches. Carry forward from release prep: `docs/cartulary-build.md` is stale throughout (it describes the single-file workflow from before modularization) and sits in a public repository; delete it or rewrite it against `inlining/build_inline.py`'s docstring and the README. Screenshots for the itch page were not refreshed for v1.6.

@@ -703,7 +703,9 @@
       "reference-r051-layout.json",
       "r051_font_inline.py",
       "b99381a041153d9d",
-      "e748142eadb3e1aa"
+      "e748142eadb3e1aa",
+      "v1.6 is SHIPPED",
+      "2026-10-23"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -827,7 +829,8 @@
       "r051",
       "5be00252d31a679c",
       "r051_font_inline.py",
-      "b99381a041153d9d"
+      "b99381a041153d9d",
+      "SHIPPED 2026-10-23"
     ],
     "roadmap.md": [
       "r030",
