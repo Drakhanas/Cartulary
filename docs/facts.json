@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44095,
-    "raw_body_lines": 44095,
-    "canonical_lines": 41911,
+    "total_lines": 44110,
+    "raw_body_lines": 44110,
+    "canonical_lines": 41926,
     "decl_count": 510,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r051-body.jsx"
+    "active_anchor": "reference-r052-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44095,
+      "value": 44110,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 41911,
+      "value": 41926,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44095,
+      "value": 44110,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2298604,
+      "value": 2299501,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "twenty-seven",
-        27
+        "twenty-eight",
+        28
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,9 @@
       "value": 5231,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r051": {
-      "value": "5be00252d31a679c",
-      "pattern": "working[^\\n]{0,40}at r051 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r052": {
+      "value": "d8369c86696f8f46",
+      "pattern": "working[^\\n]{0,40}at r052 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -495,7 +495,7 @@
     },
     {
       "file": "10_migrate.jsx",
-      "line": 5816,
+      "line": 5831,
       "contains": "marked.use({"
     },
     {
@@ -618,14 +618,13 @@
       "18_cartographia",
       "r050",
       "r051",
-      "reference-r051-body.jsx",
-      "5be00252d31a679c",
-      "reference-r051-layout.json",
+      "reference-r052-body.jsx",
+      "d8369c86696f8f46",
+      "reference-r052-layout.json",
       "b99381a041153d9d",
       "e748142eadb3e1aa",
       "v1.6 is SHIPPED",
       "2026-10-23",
-      "No line is open",
       "changelog-v1.6.md",
       "handoff-v1.6.md",
       "tools/turnover/conventions.md",
@@ -642,7 +641,13 @@
       "`v<version>_Release`",
       "v1.7_Release",
       "`inlining/cuts/v<version>_r###_description.py`",
-      "(p / 'cartulary-src').is_dir()"
+      "(p / 'cartulary-src').is_dir()",
+      "r052",
+      "1dbfec5bbafcdaa2",
+      "v1.6.1 is OPEN",
+      "v1.6.1_r052",
+      "v1.6.1_Release",
+      "v1.4"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -690,16 +695,20 @@
       "r050",
       "e6e610a404924a85",
       "r051",
-      "reference-r051-body.jsx",
-      "5be00252d31a679c",
-      "reference-r051-layout.json"
+      "reference-r052-body.jsx",
+      "d8369c86696f8f46",
+      "reference-r052-layout.json",
+      "r052",
+      "1dbfec5bbafcdaa2"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
       "changelog-v1.5.md",
       "Between v1.6 and v1.7",
       "session 19",
-      "r051"
+      "r051",
+      "v1.6.1",
+      "r052"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -708,7 +717,9 @@
       "b99381a041153d9d",
       "No line is open",
       "product-text defects",
-      "makeEmptyGrid"
+      "makeEmptyGrid",
+      "v1.6.1",
+      "r052"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -737,7 +748,9 @@
       "v1.7_r001",
       "`v{VERSION}_Release`",
       "`v{VERSION}_r###_description.py`",
-      "the folder that holds `cartulary-src/`"
+      "the folder that holds `cartulary-src/`",
+      "v1.6.1",
+      "r052"
     ],
     "journal.txt": [
       "r030",
@@ -760,7 +773,9 @@
       "r048",
       "r049",
       "r050",
-      "r051"
+      "r051",
+      "v1.6.1",
+      "r052"
     ]
   }
 }

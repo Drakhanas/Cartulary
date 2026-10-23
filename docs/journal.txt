@@ -412,3 +412,13 @@ nobody tags because v1.6 already marks it. The release gets one of its own: v1.7
 Settling where the cut scripts go turned up six that had stopped working when they moved
 into the repository, four days earlier and without a sound, because nothing ever runs an
 old script. The twenty-one after them still replay to the byte.
+
+Then the bug got a release of its own. Drak's call was to fix it now, as the project's
+first patch: v1.6.1, continuing v1.6's count, so the first tag in the new naming is
+v1.6.1_r052. The fix is a few lines in a cleanup that had asked one question, is this an
+entry, of things that stopped being entries at v1.5; the same function had been taught the
+answer for Concordance positions back then and never for references. A second agent,
+reading cold, reproduced the loss through the real picker and found three edges I had
+missed: maps lose their references too, fields inside groups never did, and a world
+upgraded from v1.4 lost them at the upgrade, which this patch doesn't reach. The pass was
+good the first time.
