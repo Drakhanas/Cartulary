@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "14235203eb9f7c9ebc4f6fc1ab4059633dc206fedf717f2c8f43bdaec2aca1e3",
+  "anchor_sha256": "bb99abf3b7acacfd1df7fe9557dcb1da83c1e255985d038a4f8516dc3b19a83f",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -164,7 +164,7 @@
     ],
     [
       "26_home-data.jsx",
-      1514
+      1516
     ],
     [
       "27_trunk.jsx",
