@@ -304,6 +304,6 @@ remembers. What remains is the flip.
 v1.6 shipped on the twenty-third, a little after midnight Drak's time. The zip went up on
 itch with the page in its own markup and a devlog about one globe and an ostrich egg; the
 repository went public with issues on, the tags moved to the commits CI had actually passed,
-and the site went up with it, one commit behind, the font clause still to follow. Fifty-one revisions, three pillars, one amendment, two
+and the site went up with it, the second try byte-identical to the tree. Fifty-one revisions, three pillars, one amendment, two
 carves after the fact, and a font that turned out to have been in the file all along. The
 line closes here; the next one opens when the version number changes.
