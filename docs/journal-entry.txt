@@ -289,7 +289,7 @@ quarter of an hour. Release notes next, one file per version, the format decided
 being owed through two releases.
 
 The notes were written and read, the finals built and passed on thirteen items across
-four machines, and the public copy was the last thing, which is where the release stopped
+three browsers and a Surface, and the public copy was the last thing, which is where the release stopped
 for a night. Writing the itch page's How it's built against the actual build turned up
 a sentence that had been false since r037: zero network requests after it loads. The
 SVG download asked Google for its font. The honest rewrite said so in two sentences, and
@@ -307,3 +307,14 @@ repository went public with issues on, the tags moved to the commits CI had actu
 and the site went up with it, the second try byte-identical to the tree. Fifty-one revisions, three pillars, one amendment, two
 carves after the fact, and a font that turned out to have been in the file all along. The
 line closes here; the next one opens when the version number changes.
+
+Then the documents, the same night. The doc set had grown to 738 KB, and most of it was v1.6
+remembering itself: a handoff of 177 KB, more than half of it one session's cut-by-cut detail
+that the changelog already held, and a roadmap still filing the v1.5 plan under Active / Next
+Up four months after v1.5 shipped. Drak said kill some of it, and took every recommendation.
+The changelog froze, the handoff froze and came back at 28 KB as current state, the roadmap's
+past went verbatim into its archive, and the build doc that described a workflow from before
+the tree existed went away. Three more backlog rows turned out to be done, one of them closed
+in June in a document nobody reread, and I had repeated it as never run an hour earlier. The
+gate needed its baseline lowered before its em-dash probe would bite again: shrinking the
+documents had loosened it.
