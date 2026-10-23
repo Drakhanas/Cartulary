@@ -87,6 +87,8 @@ lands; when a section closes, rewrite it as history and say what it cost.
 each opened by a `=== date (session N, ...) ===` line. The checker reads only the newest entry.
 First person, narrative, no headers, and it is the one place that records what went wrong and
 what it felt like to get it wrong. It is not a status report; the changelog already is one.
+It is kept for transparency, by Drak's choice: in a public repository, it lets anyone see how
+Cartulary was thought through, not only what changed.
 *(Amended 2026-10-23: it was `journal-entry.txt`, one entry for Drak to paste into a master
 `journal.txt` that he never kept, because the journal began as a turnover aid against context
 compaction rather than as a document to collect. The repository is the master now, seeded with

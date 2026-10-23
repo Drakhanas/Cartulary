@@ -1,6 +1,7 @@
 Session journal, oldest entry first. It began as a turnover aid, because long sessions kept losing
 things when their context compacted; the repository and the changelog hold the record now, and
-this is the narrative beside them. One entry per session that changes the record. The doc gate
+this is the narrative beside them, kept so anyone reading the repository can see how the
+project was thought through. One entry per session that changes the record. The doc gate
 reads only the newest entry. The repository became the master on 2026-10-23 with the two entries
 it held, sessions 18 and 19; nothing earlier was kept.
 
