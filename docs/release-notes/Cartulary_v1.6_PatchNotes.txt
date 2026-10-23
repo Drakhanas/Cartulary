@@ -131,6 +131,24 @@ SMALLER CHANGES
   editor and Stamps and brushes, matching the help.
 
 
+UNDER THE HOOD
+--------------
+
+Cartulary is still one HTML file, and it behaves the same whether you
+open v1.5 or v1.6. What changed is how that file is made. The source
+that used to be one 39,000-line script is now a tree of 44 module
+files, one per view or subsystem (the map editor is five of them), that
+a build assembles into the file you download. Every change to the tree
+is checked twice before it ships: the assembled file must parse, and a
+pure reorganization must reassemble byte for byte to a frozen reference.
+Nothing about this is visible in the application; it is what made a
+feature the size of the map editor buildable without touching the rest,
+and it is the shape the public repository has.
+
+The Readable build still ships beside the compiled one, with the JSX
+source intact, assembled from the same tree.
+
+
 WHERE TO FIND HELP
 ------------------
 
