@@ -382,7 +382,9 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 7. Notes, and Plot Thread and Theme / Motif moved under Fabula.
 8. Chronometric's math extracted, checked unchanged.
 9. The Fabula timeline.
-10. Backlinks, the counted delete confirmation and the kept cast records, the Concordance toggle, Fabula's HTML and Markdown export, the help, and the site.
+10. The kept cast records, the Concordance toggle, Fabula's HTML and Markdown export, the help, and the site.
+
+Letters comes before Pipes in v1.7 (Drak, 2026-10-24), so the two pieces of this spec that ride on backlinks' scan of incoming references, an entry's Referenced by list showing its Fabula records and the delete confirmation's count, land with backlinks (Pipes item 1), which is then built once over entries and Fabula together. Until then a delete cleans Fabula's references and keeps cast records as section 9 says, without the count.
 
 About ten cuts. The extraction and the timeline are the least certain.
 
