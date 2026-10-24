@@ -425,3 +425,44 @@ good the first time.
 
 v1.6.1 went up the same evening with a devlog that says what happened and why, and the zip
 in Drak's archive matches the build byte for byte.
+
+After the patch, the rest of the session was planning, and most of what went wrong in it
+was mine. Drak asked for my call on each of the review's items, and on the query layer I
+wrote that it fails the ten-years filter. The filter asks whether he would maintain a thing
+for ten years for free. I had answered his question for him, and he said so, and he was
+right: I can argue a feature's upkeep, but the verdict was never mine to give.
+
+The ninth item came from him: entries brought into one template at a time. Checking it
+turned up how little survives the trip between worlds. Every world gives its built-in
+templates ids of its own, so the same Character template has different field ids in two
+worlds, and a calendar id from another world falls back to the primary calendar without a
+word. He chose a format of Cartulary's own, written by a matching export, so the world the
+entries leave settles the ids before they go.
+
+Pushing that edit, git refused to update ten tags. The ones in this workspace sat on freeze
+commits nobody had pushed; GitHub's sat on turnover commits, as the rule says, and where one
+turnover had covered two cuts, the earlier tag held the later cut's tree. So the README's
+line that every script from r031 on reproduces its tag was false for four scripts on the
+public repository, and the replay I had run earlier that day to prove it had run against my
+own copy. I found it by accident, which is the uncomfortable part. Replayed against the
+right commits, all four reproduce exactly, and the text now names those commits.
+
+Reading the live itch page, WebFetch answered from a copy that knew only v1.0, and I came
+close to writing into the roadmap that the itch page doesn't name the repository. The
+browser showed that it does. Drak says that copy comes up every time; it's in the handoff
+and the doctrine now. The free-forever rewrite on the site went fine, once I sent him the
+file I had told him to upload.
+
+Letters got its shape late in the night: Fabula, a view for planning a story down to its
+scenes, with the writing done somewhere else. The useful thing I did there was a no.
+Promoting Plot Thread and Theme / Motif out of the entries, the way maps went in v1.6, would
+have broken their wiki-links and retired a template id that two fields still point at,
+which is the shape of the bug v1.6.1 had just fixed. They stay entries the view owns. The
+spec's tables, I noticed in the morning, ignore the table format Drak set for schemas; they
+get redone when the field lists are settled.
+
+The morning went to the tooling. Moving the finals' temporary file off /tmp turned up that
+the whole finals path would have broken, or quietly changed bytes, on a Windows machine,
+through default encodings and newline translation. With the fix the finals rebuild to the
+shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
+Letters before Pipes, and took it to a fresh session.

@@ -651,7 +651,9 @@
       "No line is open",
       "d9125ed013be5641",
       "c10c693bbacbe9e6",
-      "docs/release-notes/v1.6.1/finals-pass.md"
+      "docs/release-notes/v1.6.1/finals-pass.md",
+      "Letters before Pipes",
+      "fabula-spec.md"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -725,7 +727,9 @@
       "v1.6.1",
       "r052",
       "v1.6.1 shipped",
-      "d9125ed013be5641"
+      "d9125ed013be5641",
+      "Letters before Pipes",
+      "fabula-spec.md"
     ],
     "cartulary-doctrine.md": [
       "r030",
