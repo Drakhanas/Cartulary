@@ -152,4 +152,4 @@ Three were found by the independent read of the rewritten handoff on 2026-10-23;
 
 === ADDED 2026-10-24 (session 19, past midnight: Fabula's first decisions) ===
 
-**The spec has its first decisions** (Drak): several corpora per world, Fabula's records in Concordance behind one Fabula toggle, and an export of Fabula's own in HTML and Markdown, apart from the world's. Editable schemas and cleaning references out on a delete wait on Drak's answer to Claude's counterpoints, which the spec's section 12 records; the field lists are still to be decided. **No line is open.**
+**The spec has its first decisions** (Drak): several corpora per world, Fabula's records in Concordance behind one Fabula toggle, and an export of Fabula's own in HTML and Markdown, apart from the world's. Then Drak took Claude's middle paths on the other two: schemas the world can edit, with the fields a feature reads locked as core, and a deleted entry cleaned out of Fabula after a confirmation that counts what goes, with cast records kept. The field lists are still to be decided. **No line is open.**
