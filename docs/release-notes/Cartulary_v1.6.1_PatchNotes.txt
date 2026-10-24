@@ -1,0 +1,64 @@
+CARTULARY v1.6.1 - PATCH NOTES
+==============================
+
+A FIX FOR REFERENCES THAT DISAPPEARED
+-------------------------------------
+
+Some reference fields could lose their value the next time Cartulary
+opened your world. It happened when the field pointed at something
+that isn't an ordinary entry: a planet, moon, or star from Ephemeris,
+a language or another record from Glossopoeia, or a map. The value
+saved and showed normally until the next reload, import, or restore
+from Version History, and then it was gone. Both v1.5 and v1.6 did
+this. v1.6.1 fixes it.
+
+Where you would have seen it
+  - A Location whose Parent is a planet, a moon, or another body.
+  - A Historical Event whose Location includes a body.
+  - A field you built in the template builder with more than one
+    allowed target, when its value pointed at a body, a Glossopoeia
+    record (a language, a word, a sound, an affix, and so on), or a
+    map.
+
+  Fields that allow a single target kept their values, including the
+  built-in Languages Spoken fields, and so did fields inside a group.
+
+What changed
+  - These references now survive loading, importing, and restoring.
+  - A reference that points somewhere the field doesn't allow, or at
+    something that no longer exists, is still cleared, as before.
+
+Getting a lost reference back
+  - Re-entering it by hand is usually simplest.
+  - A .json export saved before the reference disappeared still has
+    it, and so may a Version History snapshot taken after you set it
+    and before the next reload. Importing or restoring either one in
+    v1.6.1 keeps the reference, but both replace the whole world with
+    that saved copy, so anything done since then is lost. Export your
+    current world first.
+
+One case this release doesn't cover
+  - A world made in v1.4 lost these references the first time v1.5
+    or later opened it, and importing a v1.4 file into v1.6.1 still
+    loses them. It's on the list for a later release.
+
+
+SMALLER CHANGES
+---------------
+
+  - The HTML export's footer and generator tag say v1.6.1.
+
+
+WHERE TO FIND HELP
+------------------
+
+The full usage guide is inside the application: click the Home icon
+in the sidebar. Full documentation is also at cartulary.world.
+
+The source is public at github.com/Drakhanas/Cartulary: the module
+tree the single file is built from, the build, the gates that check
+it, and the project's own documentation.
+
+Questions or bug reports: drakhanas.itch.io/cartulary (page comments)
+or the Discord at discord.gg/zWMKXfZtcC. Bug reports can also be filed
+as issues at github.com/Drakhanas/Cartulary.

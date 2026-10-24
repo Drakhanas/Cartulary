@@ -422,3 +422,6 @@ reading cold, reproduced the loss through the real picker and found three edges 
 missed: maps lose their references too, fields inside groups never did, and a world
 upgraded from v1.4 lost them at the upgrade, which this patch doesn't reach. The pass was
 good the first time.
+
+v1.6.1 went up the same evening with a devlog that says what happened and why, and the zip
+in Drak's archive matches the build byte for byte.

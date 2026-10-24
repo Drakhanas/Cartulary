@@ -644,10 +644,14 @@
       "(p / 'cartulary-src').is_dir()",
       "r052",
       "1dbfec5bbafcdaa2",
-      "v1.6.1 is OPEN",
+      "v1.6.1 is SHIPPED",
       "v1.6.1_r052",
       "v1.6.1_Release",
-      "v1.4"
+      "v1.4",
+      "No line is open",
+      "d9125ed013be5641",
+      "c10c693bbacbe9e6",
+      "docs/release-notes/v1.6.1/finals-pass.md"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -719,7 +723,9 @@
       "product-text defects",
       "makeEmptyGrid",
       "v1.6.1",
-      "r052"
+      "r052",
+      "v1.6.1 shipped",
+      "d9125ed013be5641"
     ],
     "cartulary-doctrine.md": [
       "r030",

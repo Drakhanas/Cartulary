@@ -1,0 +1,8 @@
+<!-- Title field: Cartulary v1.6.1 - References that stay put -->
+<p>v1.6.1 fixes one bug. It's the kind that loses work, so it gets a release of its own instead of waiting for v1.7.</p>
+<h2>What happened</h2>
+<p>A reference field could empty itself. When a field pointed at something that isn't an ordinary entry (a planet or moon from Ephemeris, a language or another record from Glossopoeia, or a map), the value saved and showed normally, and the next time Cartulary opened the world it was gone. The likeliest place to have met it is a Location whose Parent is a planet.</p>
+<p>Every time a world loads, Cartulary checks its references and clears the ones that point nowhere. That check was written before bodies, languages, and maps became records of their own, and it only knew how to find entries. In a field that can point at more than one kind of thing, it took a reference to anything else for a broken one and cleared it. v1.5 and v1.6 both shipped with it. It turned up while checking the built-in templates' reference fields.</p>
+<h2>What changed</h2>
+<p>The check now recognizes bodies, Glossopoeia records, and maps, and keeps a reference to one whenever the field allows that kind of target. A reference to something deleted, or to something the field doesn't allow, is still cleared, as it always was. Nothing else changed, apart from the HTML export's footer saying v1.6.1.</p>
+<p>If you lost a reference this way, re-entering it is the simplest fix. The patch notes cover the other ways back, and the one case this release doesn't reach yet: worlds made in v1.4.</p>

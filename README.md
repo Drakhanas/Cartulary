@@ -73,7 +73,7 @@ node inlining/validate_html.js inlining/out/Cartulary_v1.6.1.html
 node inlining/validate_html.js inlining/out/Cartulary_v1.6.1_Readable.html
 ```
 
-`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v1.6.1.html`, the precompiled build users run, and `Cartulary_v1.6.1_Readable.html`, the same application with the JSX intact and Babel inside to compile it. The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's).
+`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v1.6.1.html`, the precompiled build users run, and `Cartulary_v1.6.1_Readable.html`, the same application with the JSX intact and Babel inside to compile it. The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's, and `v1.6.1_Release` v1.6.1's).
 
 ## How a change is made
 
@@ -83,7 +83,7 @@ A **content change** edits the modules through a script in `inlining/cuts/` and 
 
 A **pure reorganization** (carving a module out of a larger one, renumbering) changes no byte of the body. `build_inline.py verify` reassembles the tree, canonicalizes it, and compares it to the anchor; anything but an exact match fails.
 
-Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. A patch continues its version's count: v1.6.1's fix, `v1.6.1_r052`, came after v1.6's r051 and is the first tag in this naming. A new minor version starts over, so v1.7's first change will be `v1.7_r001`. A release is tagged `v<version>_Release` on the commit that records it as shipped, so v1.6.1's will be `v1.6.1_Release`. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
+Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. A patch continues its version's count: v1.6.1's fix, `v1.6.1_r052`, came after v1.6's r051 and is the first tag in this naming. A new minor version starts over, so v1.7's first change will be `v1.7_r001`. A release is tagged `v<version>_Release` on the commit that records it as shipped, so v1.6.1's is `v1.6.1_Release`. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
 
 A change's script in `inlining/cuts/` carries the same name, so v1.7's first will be `v1.7_r001_<description>.py`; v1.6's are `r025_sweep.py` through `r051_font_inline.py`. From r031 on, each one run against the tag before it reproduces its change exactly. r025 through r030 came into the repository with the tree already past them, so they're a record of what ran, not something to re-run.
 
