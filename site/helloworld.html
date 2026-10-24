@@ -410,15 +410,15 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <div class="tenets">
       <div class="tenet">
         <h3>One file, offline, forever</h3>
-        <p>Everything (the program, the fonts, the interface) is inlined into a single HTML document. Once it's on your drive it needs nothing else: no internet, no server, no dependency that can go dark. Run it from a hard drive, a USB stick, an email attachment you sent yourself. It'll open the same way in ten years, on a plane, in a bunker, after the company that made it is long gone.</p>
+        <p>Everything (the program, the fonts, the interface) is inlined into a single HTML document. Once it's on your drive it needs nothing else: no internet, no server, no dependency that can go dark. Run it from a hard drive, a USB stick, an email attachment you sent yourself. It'll open the same way in ten years, on a plane, in a bunker, long after I've stopped working on it.</p>
       </div>
       <div class="tenet">
         <h3>Your data never leaves your machine</h3>
         <p>There is no cloud, no telemetry, no analytics, no account. Your world is saved in your browser's own IndexedDB and in the <code>.json</code> files you export. Nothing is uploaded, because there is nowhere to upload it to. There is no "us" sitting on a server with a copy of your world. We could not look at your data if we wanted to.</p>
       </div>
       <div class="tenet">
-        <h3>Free, and not as a pricing decision</h3>
-        <p>Cartulary is MIT-licensed, and an MIT license can't be revoked on code that's already shipped. But the deeper reason it stays free is the architecture. There's no server to meter, no account to gate, no feature to lock behind a wall, because there's no backend at all. It isn't free because someone chose a price of zero and could choose otherwise tomorrow. It's free because the design leaves nothing to charge for and no way to charge for it.</p>
+        <h3>Free, and it doesn't need me</h3>
+        <p>Cartulary is MIT-licensed, and an MIT license can't be revoked on code that's already shipped. There's no server to meter, no account to gate, and no subscription to sell, because there's no backend at all. What no license can promise is that fixes keep coming. This is one person's project with no release schedule, and nobody can guarantee ten years of updates, me included. So it's built not to depend on me. The source is <a href="https://github.com/Drakhanas/Cartulary">public on GitHub</a>, the build runs offline from pinned copies of everything it uses, and rebuilding from it gives you the file I ship, byte for byte. If I stop, anyone can pick it up from where I left off.</p>
       </div>
       <div class="tenet">
         <h3>Built with AI, and saying so</h3>
@@ -440,7 +440,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     </div>
     <div class="callout">
       <span class="callout-h">The file is its own source</span>
-      <p>There's no separate repository to clone. The HTML you download is the whole program, and a readable build ships the original code in plain sight inside it. If you want to read how a feature works, or audit what it does with your data, open the file in a text editor. What you run is what you can read.</p>
+      <p>The HTML you download is the whole program, and a readable build ships the original code in plain sight inside it. If you want to read how a feature works, or audit what it does with your data, open the file in a text editor. What you run is what you can read. The tree it's assembled from is public too, at <a href="https://github.com/Drakhanas/Cartulary">github.com/Drakhanas/Cartulary</a>, though you'll never need it to use Cartulary.</p>
     </div>
   </section>
 
@@ -2151,7 +2151,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
 
   <section id="colo-free">
     <h3>Free by construction</h3>
-    <p>Cartulary is free, and it stays free for a reason sturdier than a promise. It's MIT-licensed, and an MIT license can't be revoked on code that already shipped. Underneath that, the architecture leaves nothing to charge for: no server to meter, no account to gate, no feature that could live behind a wall, because there is no backend at all. It isn't priced at zero by a decision someone could reverse tomorrow. The design forecloses the question. The longer version of this argument is on the <a href="#overview">Overview</a>.</p>
+    <p>Cartulary is MIT-licensed, and an MIT license can't be revoked on code that already shipped. Underneath that, the architecture leaves nothing to meter: no server, no account, no feature that could live behind a wall, because there is no backend at all. That settles the price. It doesn't settle whether fixes keep coming, which takes someone doing the work, and for now that's one person on no schedule. What the build settles is that the someone doesn't have to be me. The source tree is public at <a href="https://github.com/Drakhanas/Cartulary">github.com/Drakhanas/Cartulary</a>, with the checks that gate every change and the project's working notes. Every library the build uses is pinned in the repository, so it builds with no network, and from v1.6 on, a clean checkout of a release's tag rebuilds that release's files byte for byte. Anyone can carry Cartulary on from that record, under the same license.</p>
   </section>
 
   <section id="colo-a11y">
