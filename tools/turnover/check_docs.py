@@ -4,7 +4,7 @@ check_docs.py -- mechanical gate for a Cartulary turnover doc set.
 
 Rebuilt at session 17 from the skill spec, facts.json, and prove_teeth.py, the
 only three artefacts of the original that survived. Behaviour is pinned by the
-ten probes in prove_teeth.py: if a probe reads MISS, this file is wrong.
+eleven probes in prove_teeth.py: if a probe reads MISS, this file is wrong.
 
 The premise, from the skill: everything checkable gets checked by a script, not
 by attention. Session 16 shipped a turnover and spent four rounds correcting it,
@@ -249,13 +249,31 @@ def check_published(docs, facts, out):
 # A retired anchor named as HISTORY is correct prose: the anchor-history
 # paragraph, the rotation table, and prerequisite 3's account of the stale
 # project script all have to name them. The check fires only when a retired
-# anchor appears on a line carrying no history or staleness signal, which is
-# what "named as live" means. The first edition of this check had no such
-# heuristic and reported 22 false positives across five documents, every one of
-# them a correct sentence.
+# anchor appears with no history or staleness signal in its own sentence (or
+# its own table cell), which is what "named as live" means. The first edition
+# of this check had no such heuristic and reported 22 false positives across
+# five documents, every one of them a correct sentence. The second scoped the
+# signal to the whole LINE, so one history word anywhere excused every anchor
+# on it, and the manifest carries a single line of 5,817 characters; since
+# 2026-10-24 the signal has to sit in the same sentence as the anchor it
+# excuses. Narrowing it turned up two honest markers the list lacked,
+# "rotated" and a dated "at rNNN", and nothing else.
 HISTORY_SIGNAL = re.compile(
-    r'retired|anchored|anchor rotated|rotation|history|stale|superseded|'
-    r'\u2192|->|was the|formerly|no longer', re.I)
+    r'retired|anchored|rotated|rotation|history|stale|superseded|'
+    r'\u2192|->|was the|formerly|no longer|\bat r\d{3}\b', re.I)
+
+# A sentence ends at . ! ? or ; followed by whitespace, and a table cell at |.
+# A file name's dots are never followed by a space, so they don't split.
+SEGMENT_END = re.compile(r'(?<=[.!?;])\s+|\|')
+
+
+def _sentence_at(line, pos):
+    start = 0
+    for m in SEGMENT_END.finditer(line):
+        if m.start() > pos:
+            return line[start:m.start()]
+        start = m.end()
+    return line[start:]
 
 
 def check_anchor(docs, active, out):
@@ -267,9 +285,9 @@ def check_anchor(docs, active, out):
             seen_active = True
         for ln, line in live_lines(name, text):
             for m in ANCHOR_REF.finditer(line):
-                if m.group(0) != active and not HISTORY_SIGNAL.search(line):
+                if m.group(0) != active and not HISTORY_SIGNAL.search(_sentence_at(line, m.start())):
                     bad.append(f'{name}:{ln} names retired anchor {m.group(0)} '
-                               f'with no history marker; active is {active}')
+                               f'with no history marker in its sentence; active is {active}')
     if not seen_active:
         bad.append(f'active anchor {active} is named nowhere in the doc set')
     return bad

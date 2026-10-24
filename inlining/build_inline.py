@@ -67,6 +67,7 @@ the HTML parser closes the script early and the page dies silently.
 import base64
 import re
 import subprocess
+import tempfile
 import sys
 from pathlib import Path
 
@@ -314,7 +315,7 @@ def escape_for_inline_script(js_text):
 def build_js_libs_block(libs):
     parts = []
     for cdnjs_path, local_path, prepend in libs:
-        content = (NODE_MODULES / local_path).read_text()
+        content = (NODE_MODULES / local_path).read_text(encoding='utf-8')
         if prepend:
             content = prepend + content
         parts.append(f'<script>/* inlined: {cdnjs_path} */\n'
@@ -368,11 +369,17 @@ def precompile_jsx_block(html):
     if len(jsx_source) < 100_000:
         raise RuntimeError(f"JSX block suspiciously small ({len(jsx_source)} bytes)")
 
-    tmp_in = Path('/tmp/cartulary_jsx_input.jsx')
-    tmp_in.write_text(jsx_source)
-    print(f"  Compiling {len(jsx_source):,} bytes of JSX via @babel/standalone...")
-    result = subprocess.run(['node', str(COMPILE_JSX), str(tmp_in)],
-                            capture_output=True, text=True, check=False)
+    # The JSX goes to node through a file in a fresh temporary directory, not a
+    # fixed /tmp path, which a Windows Python reads as \tmp on the current
+    # drive, a folder that usually isn't there. Bytes and an
+    # explicit UTF-8 decode, so the platform's default encoding and newline
+    # translation can't change what Babel reads or what comes back.
+    with tempfile.TemporaryDirectory() as td:
+        tmp_in = Path(td) / 'cartulary_jsx_input.jsx'
+        tmp_in.write_bytes(jsx_source.encode('utf-8'))
+        print(f"  Compiling {len(jsx_source):,} bytes of JSX via @babel/standalone...")
+        result = subprocess.run(['node', str(COMPILE_JSX), str(tmp_in)],
+                                capture_output=True, encoding='utf-8', check=False)
     if result.returncode != 0:
         print(f"  Babel transform failed:\n{result.stderr}", file=sys.stderr)
         raise RuntimeError("JSX precompile failed")
@@ -578,13 +585,13 @@ def mode_finals():
     print("Precompiled production build (no Babel runtime)...")
     pre = build_final(html, 'precompiled')
     pre_path = OUT_DIR / f'Cartulary_v{VERSION}.html'
-    pre_path.write_text(pre)
+    pre_path.write_bytes(pre.encode('utf-8'))
     print(f"  {pre_path.name}: {pre_path.stat().st_size:,} bytes\n")
 
     print("Readable build (JSX preserved, Babel runtime)...")
     read = build_final(html, 'readable')
     read_path = OUT_DIR / f'Cartulary_v{VERSION}_Readable.html'
-    read_path.write_text(read)
+    read_path.write_bytes(read.encode('utf-8'))
     print(f"  {read_path.name}: {read_path.stat().st_size:,} bytes\n")
     print(f"Both in: {OUT_DIR}")
 

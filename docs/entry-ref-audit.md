@@ -31,6 +31,8 @@ Shown in the shipped finals, headless:
 7. **Containment that skips planes.** Location › Parent takes Location and Astronomical Body but not Cosmology / Plane, while Historical Event › Location takes all three. Character › Current Whereabouts and Race › Native Habitat take only Location. Low priority, since a site on a plane can be a Location entry. Proposed: Location Parent adds Cosmology / Plane; the other two stay.
 8. **Rulers.** Faction › Leadership doesn't take House, Cosmology › Ruling Powers takes only Deity, and Location › Government / Authority takes only Faction. Low priority. Proposed: Faction Leadership adds House; the other two stay.
 
+**Drak's calls (2026-10-24):** flags 1 to 5 go into v1.7 as one cut. Flag 6 is skipped, because turning a single field into a multi-select rewrites the values worlds already store, and flags 7 and 8 are skipped as low value.
+
 Read and left alone: Deity › Pantheon targets Religion, which looks odd beside its label but is the inverse of Religion › Worshipped Deities, and every field marked ok in the table.
 
 ## What a fix costs

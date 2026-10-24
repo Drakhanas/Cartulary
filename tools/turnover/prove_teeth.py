@@ -31,6 +31,9 @@ probes=[
  ("malformed table row",     lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\n| a | b |\n|---|---|\n| a | b | c |\n")),
  ("banned phrase",           lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nA robust and seamless approach.\n")),
  ("retired anchor as live",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nUse `reference-r018-body.jsx`.\n")),
+ # The history word sits one sentence away, on the same line. Until 2026-10-24 the
+ # check read the whole line, so this passed; the marker has to share the anchor's sentence.
+ ("history word elsewhere",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nThe anchor history is in the manifest. Use `reference-r018-body.jsx` today.\n")),
 ]
 # The required-string probe reads its target FROM facts.json instead of naming one.
 # The original hardcoded "r025, header integrity", which stopped proving anything the

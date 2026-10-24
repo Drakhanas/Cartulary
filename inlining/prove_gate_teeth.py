@@ -26,6 +26,8 @@ from pathlib import Path
 
 INL = Path(__file__).resolve().parent
 SRC = INL.parent / 'cartulary-src'
+sys.path.insert(0, str(INL))
+import canonicalize  # noqa: E402  the gate's own header and declaration rules
 
 
 def run_mode(root, mode, *args):
@@ -78,22 +80,97 @@ def _write(p, lines):
     p.write_text('\n'.join(lines), encoding='utf-8')
 
 
+# ----- probe targets, resolved by role ------------------------------------------
+# A probe names what it needs of a file, never the file. Until 2026-10-24 these
+# probes named `11_io-utils.jsx` and `02_trunk.jsx` outright, so the next carve
+# of either would have had to rewrite the probes in the same cut. Each role is
+# resolved once, from the real tree, and every sandbox copy uses the same
+# relative path. A role no module fits stops the run: a probe with no target
+# proves nothing, and must not read as a pass.
+
+def _modules(M):
+    return sorted(M.rglob('[0-9][0-9]_*.jsx'), key=lambda f: f.relative_to(M).as_posix())
+
+
+def _shear_site(L):
+    """(i, j) for the first column-0 header whose target (canonicalize's rule:
+    the first top-level declaration after it) is a one-line `const` with two
+    more top-level declarations after it in the same file. Moving line i to
+    just before line j leaves the header labelling the declaration between:
+    the r013 shear."""
+    for h, line in enumerate(L):
+        if not canonicalize._is_header(line):
+            continue
+        i = next((k for k in range(h + 1, len(L)) if canonicalize._DECL.match(L[k])), None)
+        if i is None or not (L[i].startswith('const ') and L[i].rstrip().endswith(';')):
+            continue
+        later = [k for k in range(i + 1, len(L)) if canonicalize._DECL.match(L[k])]
+        if len(later) >= 2:
+            return i, later[1]
+    return None
+
+
+def _misfile_shape(L):
+    """A file that opens blank, header, blank: its header can move to the tail
+    of the file before it and leave the assembled body byte-identical."""
+    return len(L) > 2 and L[0] == '' and canonicalize._is_header(L[1]) and L[2] == ''
+
+
+def _roles():
+    M = SRC / 'modules'
+    files = _modules(M)
+
+    def need(role, hits):
+        if not hits:
+            raise SystemExit(f'prove_gate_teeth: no module fits the {role} role')
+        return hits[0].relative_to(M)
+
+    # PLAIN: an ordinary flat module with a top-level const and an interior blank
+    # line; the smallest, so the probes that drop or rename a line stay cheap.
+    plain = sorted((len(_lines(p)), n, p) for n, p in enumerate(files)
+                   if p.parent == M
+                   and any(l.startswith('const ') for l in _lines(p))
+                   and any(k > 0 and l == '' for k, l in enumerate(_lines(p))))
+    return (need('plain', [p for _, _, p in plain]),
+            need('shear', [p for p in files if _shear_site(_lines(p))]),
+            need('misfile', [p for p in files[1:] if _misfile_shape(_lines(p))]))
+
+
+PLAIN, SHEAR, MISFILE = _roles()
+
+
+def _misfile(M):
+    """Move the MISFILE module's opening header to the tail of the file before
+    it. That file's trailing blank lines go first: the assembler strips them
+    anyway, and left in place they would add a blank at the join."""
+    files = _modules(M)
+    b = M / MISFILE
+    a = files[files.index(b) - 1]
+    LA, LB = _lines(a), _lines(b)
+    while LA and LA[-1] == '':
+        LA.pop()
+    hdr = LB.pop(1)          # the header
+    LB.pop(1)                # the blank under it
+    _write(a, LA + ['', hdr])
+    _write(b, LB)
+
+
 def drop_code_line(M):
-    p = M / '11_io-utils.jsx'
+    p = M / PLAIN
     L = _lines(p)
     i = next(k for k, l in enumerate(L) if l.startswith('const '))
     _write(p, L[:i] + L[i + 1:])
 
 
 def drop_blank_line(M):
-    p = M / '11_io-utils.jsx'
+    p = M / PLAIN
     L = _lines(p)
     i = next(k for k, l in enumerate(L) if k > 0 and l == '')
     _write(p, L[:i] + L[i + 1:])
 
 
 def rename_decl(M):
-    p = M / '11_io-utils.jsx'
+    p = M / PLAIN
     t = p.read_text(encoding='utf-8')
     m = re.search(r'^const ([A-Za-z0-9_$]+)', t, re.M)
     p.write_text(t.replace(m.group(1), m.group(1) + 'X'), encoding='utf-8')
@@ -103,11 +180,11 @@ def shear_header(M):
     """Relocate a declaration and leave its section header behind. The r013
     shape exactly: multiset, decl-set, and raw count all survive, so the pair
     list is the only check that can see it."""
-    p = M / '02_trunk.jsx'
+    p = M / SHEAR
     L = _lines(p)
-    decl = L.pop(next(k for k, l in enumerate(L) if l.startswith('const genId')))
-    j = next(k for k, l in enumerate(L) if l.startswith('const isoNow'))
-    L.insert(j, decl)
+    i, j = _shear_site(L)
+    decl = L.pop(i)
+    L.insert(j - 1, decl)  # j counted before the pop
     _write(p, L)
 
 
@@ -117,17 +194,9 @@ def misfile_header(M):
     same line sequence either way, so sequence, decl-set, byte-identity, raw
     count and header_pairs all pass. Only the per-file placement check can see
     it. This probe is the reason that check exists."""
-    # Resolve by NAME, not NN prefix: every mid-tree carve reflows the prefixes
-    # (r027-r029 moved this pair from 19/20 to 23/24). `b` is the home-data
-    # module; `a` is whatever file precedes it in assembly order.
-    files = sorted(M.rglob('[0-9][0-9]_*.jsx'), key=lambda f: f.relative_to(M).as_posix())
-    b = next(f for f in files if f.name.endswith('_home-data.jsx'))
-    a = files[files.index(b) - 1]
-    LA, LB = _lines(a), _lines(b)
-    hdr = LB.pop(1)          # the header
-    LB.pop(1)                # the blank under it
-    _write(a, LA + ['', hdr])
-    _write(b, LB)
+    # `b` is the MISFILE role (see _roles); `a` is whatever file precedes it in
+    # assembly order.
+    _misfile(M)
 
 
 PROBES = [
@@ -167,36 +236,15 @@ PROBES = [
 # file (the assembled body is unchanged, only the raw text knows) and the
 # misfiled header (byte-identical body, placement is the only signal).
 
-def _by_name(M, suffix):
-    return next(p for p in sorted(M.rglob('[0-9][0-9]_*.jsx'),
-                                  key=lambda f: f.relative_to(M).as_posix())
-                if p.name.endswith(suffix))
-
-
-def _rel(M, p):
-    return p.relative_to(M).as_posix()
-
-
 def _append_decl(M):
-    p = _by_name(M, '_io-utils.jsx')
+    p = M / PLAIN
     p.write_text(p.read_text(encoding='utf-8').rstrip('\n') + '\n\nconst zzProbeDecl = 1;',
                  encoding='utf-8')
 
 
 def _trailing_blank(M):
-    p = _by_name(M, '_io-utils.jsx')
+    p = M / PLAIN
     p.write_text(p.read_text(encoding='utf-8').rstrip('\n') + '\n\n', encoding='utf-8')
-
-
-def _misfile_by_name(M):
-    b = _by_name(M, '_home-data.jsx')
-    files = sorted(M.rglob('[0-9][0-9]_*.jsx'), key=lambda f: f.relative_to(M).as_posix())
-    a = files[files.index(b) - 1]
-    LA, LB = _lines(a), _lines(b)
-    hdr = LB.pop(1)
-    LB.pop(1)
-    _write(a, LA + ['', hdr])
-    _write(b, LB)
 
 
 def _stale_layout(M):
@@ -206,8 +254,8 @@ def _stale_layout(M):
 
 
 def _rename_file(M):
-    p = _by_name(M, '_io-utils.jsx')
-    p.rename(p.with_name(p.name.replace('io-utils', 'io-utilz')))
+    p = M / PLAIN
+    p.rename(p.with_name(p.stem + 'z' + p.suffix))
 
 
 def _touch_shell(M):
@@ -216,45 +264,52 @@ def _touch_shell(M):
                  encoding='utf-8')
 
 
-def _io_utils_scope():
-    return ('--files', _rel(SRC / 'modules', _by_name(SRC / 'modules', '_io-utils.jsx')))
+def _plain_scope():
+    return ('--files', PLAIN.as_posix())
+
+
+def _other_scope():
+    """A declared file that isn't the one the probe touches."""
+    M = SRC / 'modules'
+    other = next(p for p in _modules(M) if p.relative_to(M) != PLAIN)
+    return ('--files', other.relative_to(M).as_posix())
 
 
 def _misfile_scope():
     M = SRC / 'modules'
-    b = _by_name(M, '_home-data.jsx')
-    files = sorted(M.rglob('[0-9][0-9]_*.jsx'), key=lambda f: f.relative_to(M).as_posix())
-    return ('--files', _rel(M, files[files.index(b) - 1]) + ',' + _rel(M, b))
+    files = _modules(M)
+    b = M / MISFILE
+    return ('--files', files[files.index(b) - 1].relative_to(M).as_posix() + ',' + MISFILE.as_posix())
 
 
 EDIT_PROBES = [
     ("declared edit (positive control)", 'edit', _append_decl,
      lambda c, o: c == 0 and 'EDIT GREEN' in o and 'out-of-scope files : PASS' in o
                   and 'decl delta         : PASS' in o and 'zzProbeDecl' in o,
-     _io_utils_scope() + ('--add', 'zzProbeDecl')),
+     _plain_scope() + ('--add', 'zzProbeDecl')),
     ("edit outside declared scope", 'edit', drop_blank_line,
-     lambda c, o: c != 0 and 'out-of-scope files : FAIL' in o and 'io-utils.jsx' in o and 'EDIT RED' in o,
-     ('--files', '02_trunk.jsx')),
+     lambda c, o: c != 0 and 'out-of-scope files : FAIL' in o and PLAIN.name in o and 'EDIT RED' in o,
+     _other_scope()),
     ("undeclared declaration added", 'edit', _append_decl,
      lambda c, o: c != 0 and 'decl delta         : FAIL' in o and 'added, undeclared' in o,
-     _io_utils_scope()),
+     _plain_scope()),
     ("declaration lost in scope", 'edit', drop_code_line,
      lambda c, o: c != 0 and 'decl delta         : FAIL' in o and 'removed, undeclared' in o,
-     _io_utils_scope()),
+     _plain_scope()),
     ("declared file ends on a blank", 'edit', _trailing_blank,
      lambda c, o: c != 0 and 'out-of-scope files : PASS' in o and 'decl delta         : PASS' in o
                   and 'rule-1 shape       : FAIL' in o and 'EDIT RED' in o,
-     _io_utils_scope()),
-    ("misfile a header (in scope)", 'edit', _misfile_by_name,
+     _plain_scope()),
+    ("misfile a header (in scope)", 'edit', _misfile,
      lambda c, o: c != 0 and 'out-of-scope files : PASS' in o
                   and 'header placement   : FAIL' in o and 'EDIT RED' in o,
      _misfile_scope()),
     ("shear reported, not scored", 'edit', shear_header,
      lambda c, o: c == 0 and 'EDIT GREEN' in o and 'retargeted' in o,
-     ('--files', '02_trunk.jsx')),
+     ('--files', SHEAR.as_posix())),
     ("stale layout", 'edit', _stale_layout,
      lambda c, o: c != 0 and 'layout fresh       : FAIL' in o,
-     _io_utils_scope()),
+     _plain_scope()),
     ("file renamed (not an edit)", 'edit', _rename_file,
      lambda c, o: c != 0 and 'file set unchanged : FAIL' in o),
     ("shell changed, undeclared", 'edit', _touch_shell,

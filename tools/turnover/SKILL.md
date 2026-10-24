@@ -69,7 +69,7 @@ skill package carries this file as a pointer, and the scripts are invoked from t
 - `SKILL.md` : this file.
 - `check_docs.py` : the gate. Takes `--docs DIR --src DIR` plus one of `--facts`,
   `--write-facts`, `--baseline`. Exits 0 on `DOCS GREEN`.
-- `prove_teeth.py` : ten mutation probes against the gate. Resolves the checker through
+- `prove_teeth.py` : eleven mutation probes against the gate. Resolves the checker through
   `Path(__file__).parent`, so it must stay beside `check_docs.py`. Its targets derive from
   `facts.json`, never from a literal of one session.
 - `conventions.md` : per-document authoring rules and what goes where. Phase 1 reads it.
@@ -161,7 +161,7 @@ a checker bug, fix the checker and go to phase 3.
 python3 tools/turnover/prove_teeth.py --docs docs --src cartulary-src
 ```
 
-Mandatory after any change to `check_docs.py` or `facts.json`. Ten mutation
+Mandatory after any change to `check_docs.py` or `facts.json`. Eleven mutation
 probes, each injecting one defect into a throwaway copy and asserting the gate
 goes RED on the right check. Every probe must read `OK`, and the harness exits 1 if
 any reads `MISS`. A `MISS` means a blind spot: fix the check, never the probe.
