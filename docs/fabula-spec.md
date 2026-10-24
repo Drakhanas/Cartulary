@@ -12,10 +12,12 @@ Fabula is a new view, a peer of Linea, Stemma, and Kalendarium, for planning the
 
 - **Everything but the writing.** Fabula goes as far as scene beats or scenes and never holds the prose. The doctrine's scope line is now "Not a prose tool".
 - **Names.** The view is **Fabula**. A group of stories is a **Corpus**, because a corpus covers works set in the same world that aren't linked as well as those that are.
-- **Several stories per world**, grouped into corpora.
+- **Several stories per world**, grouped into corpora, and **several corpora per world** with each story in at most one, so a world can keep different series apart (Drak, 2026-10-24).
 - **Plot Thread and Theme / Motif stay entries** and move under Fabula. Promoting them to records the way maps went would break their wiki-links, take threads off Chronometric, and retire a template id that two built-in fields target, the shape of the v1.4 upgrade bug.
 - **The breakdown in section 5**, accepted as a first draft.
 - **A timeline of Fabula's own** for a story or a corpus, kept apart from Chronometric (section 8).
+- **Concordance shows Fabula's records when Fabula is selected** in its filter (Drak, 2026-10-24).
+- **Fabula has an export of its own**, HTML and Markdown, separate from the world's (Drak, 2026-10-24).
 - **Stemma v2** ships alongside as the brainstorm engine and stays its own view.
 - **Models:** Reedsy's writing guides and Studio templates, and Savannah Gilbo's First Draft Roadmap. Gilbo's steps 1 to 4 and 6 are the Story's panels, step 5 is People, steps 7 and 8 are Plot and Outline, and steps 9 and 10 (the writing routine and the draft) stay out.
 
@@ -46,7 +48,7 @@ fabula: {
   A story's `outline` is its ordered tree of part, chapter, and scene ids (section 7), so the order lives in one place.
 - **`migrate()` adds an empty slice** when it's missing, as it does for `cartographia`. A world from v1.6.1 loads with an empty Fabula and nothing else changes. `SCHEMA_VERSION` stays 1, because the change only adds.
 - **Fixed schemas in code, built per world,** the way Glossopoeia's are (`23_glossopoeia/00_schemas.jsx`): stable field ids, a help line on every field, and entry-ref fields that find the world's template ids by name, since every world seeds its built-ins with ids of its own. Records render through the shared `EntryForm`, so every field type behaves as it does in an entry and no form code is new.
-- **Links between Fabula records** (a scene's POV pointing at a cast record) go through the node-source registry (`22_trunk`) with a sentinel id per kind, like Glossopoeia's `__conlangs__`, so `EntryForm`'s pickers can offer them. Registering a kind also makes it a Concordance node today; whether Fabula's kinds should be is decision 12.3.
+- **Links between Fabula records** (a scene's POV pointing at a cast record) go through the node-source registry (`22_trunk`) with a sentinel id per kind, like Glossopoeia's `__conlangs__`, so `EntryForm`'s pickers can offer them. Registering a kind also makes it a Concordance node. Each registered kind is its own toggle in Concordance's filter today, and Fabula would add eleven, so Fabula's kinds sit behind one Fabula toggle, off until selected like everything in that filter.
 - **Downgrade.** `migrate()` deep-clones the state and keeps keys it doesn't know, so a v1.7 world opened in v1.6.1 should keep `state.fabula` untouched through a save. Section 11 tests it rather than assuming it.
 
 ## 4. The view
@@ -345,9 +347,9 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 - **Wiki-links** resolve to entries and celestial bodies (`InlineWikiLinkText`), so Fabula's records aren't wiki-link targets in v1.7. Threads and motifs, as entries, are.
 - **Backlinks** (Pipes item 1): an entry's Referenced by list includes the Fabula records that point at it, so a character shows its cast records and scenes.
 - **Search and the query layer** cover entries. Fabula filters its own lists by status, POV, thread, and the like.
-- **Concordance:** decision 12.3.
+- **Concordance:** behind one Fabula toggle in its filter (section 3), with edges for the links: a cast record to its Character, a scene to its POV, participants, setting, and threads, an arc or a relationship to its cast, a plot point or a promise to its scenes.
 - **A deleted entry:** Fabula keeps the dead link and shows it as missing, the way Stemma shows an orphaned node, so the author can relink it, and nothing in Fabula is deleted with the entry. Entries' own references are scrubbed on delete (`scrubEntryRefs`); decision 12.4 is whether Fabula should match that instead.
-- **Exports:** the world JSON carries `state.fabula`. A story exports as Markdown: its panels, cast, arcs, outline with beats, and promises, which is the story bible. Whether the HTML export includes stories is decision 12.5.
+- **Exports:** the world JSON carries `state.fabula`, as the save file must. Fabula's records stay out of the world's HTML and Markdown exports. Fabula has its own export instead, in HTML and in Markdown, for one story or a whole corpus, with the include-secrets choice the other exports offer: the panels, cast, arcs, relationships, outline with its beats, plot points, and promises. The Markdown version is the story bible.
 - **Entry import and export** (Pipes item 9) moves entries only; Fabula's records don't ride in `cartulary_entries_export`.
 - **Lock and secrets:** Lock Mode blocks Fabula's edits, and the secrets toggle hides its secret fields, as everywhere else.
 - **Help and site:** a Fabula topic in the in-app help and a Fabula page on cartulary.world, and the JSON Save File Schema topic and the site's JSON Structure page document `state.fabula`, written against the component.
@@ -362,7 +364,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 6. Notes, and Plot Thread and Theme / Motif moved under Fabula.
 7. Chronometric's math extracted, checked unchanged.
 8. The Fabula timeline.
-9. Backlinks, the story Markdown export, the help, and the site.
+9. Backlinks, the Concordance toggle, Fabula's HTML and Markdown export, the help, and the site.
 
 About nine cuts. The extraction and the timeline are the least certain.
 
@@ -378,12 +380,12 @@ About nine cuts. The extraction and the timeline are the least certain.
 
 ## 12. Open decisions (Drak)
 
-1. **Corpora:** several per world with each story in at most one, as drafted, or one corpus per world?
-2. **Schemas:** fixed, as drafted (the Glossopoeia way, and far cheaper), or editable like templates? Custom fields could come in a later version either way.
-3. **Concordance:** should Fabula's records be graph nodes? Claude's recommendation is no for v1.7, which takes a small registry flag so a registered kind can stay off the graph; threads and motifs are on it already.
-4. **A deleted entry:** a visible missing link, as drafted, or scrubbed the way entries' references are?
-5. **HTML export:** include stories, or keep them out of the reader-facing export?
-6. **The field lists:** cuts, additions, renames.
+1. **Corpora:** decided, several per world (section 1).
+2. **Schemas:** Drak leans editable (2026-10-24). Claude's case against fully editable: Fabula's features read particular fields (the timeline reads a scene's When, POV, and Threads; the unpaid-promise flag reads Setup In and Payoff In; a cast record is defined by its Character link; plot points carry their structure's slots; the export walks known fields), so every one of them would need a branch for a field that's gone or retyped, and a later version's schema change would have to merge with each user's edits, the machinery built-in templates already carry. Claude's middle path: the fields a feature reads are core, relabelable but not deletable or retypable; every other field is editable, and every type takes the user's own added fields. That costs a cut: the schemas are stored per world and the Template Builder learns Fabula's kinds and the core lock. Waiting on Drak.
+3. **Concordance:** decided, one Fabula toggle (section 3).
+4. **A deleted entry:** Drak leans toward cleaning the references out (2026-10-24). Claude's case against cleaning everything: a cast record is defined by its Character link, so cleaning it leaves a husk with a role, a voice, and arcs but no character, or deletes the record and the arcs, relationships, and scene POVs that hang off it; and today's entry delete is a bare confirmation that already cleans entries' references without a count. Claude's middle path: clean, but the delete confirmation first says what it will clean ("removes her from 2 cast records and 9 scenes"), counted by the same scan as backlinks, and a cast record whose character is deleted stays, marked as such, so its story work can be relinked or deleted by hand. Waiting on Drak.
+5. **Exports:** decided, Fabula's own, HTML and Markdown (section 9).
+6. **The field lists:** to be decided (Drak, 2026-10-24).
 
 ## Sources
 
