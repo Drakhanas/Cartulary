@@ -1,6 +1,6 @@
 # Cartulary, Fabula Spec (v1.7, Letters)
 
-> **DRAFT for Drak's review.** Started 2026-10-23 (session 19) from Drak's calls that night. Nothing here is built. Once the open decisions in section 12 are settled and the field tables pass his review, this freezes as the build sheet the cuts work from, the way `maps-promotion-spec.md` did for v1.6's first cut. Until then every table is a proposal.
+> **The build sheet, settled 2026-10-25.** Started 2026-10-23 (session 19) from Drak's calls that night; the field tables passed his review on 2026-10-25 (session 20), one table per message, and section 12's decisions are made but one, which waits for the Plot cut. The cuts work from this file, the way v1.6's first cut worked from `maps-promotion-spec.md`, and a change to a decision here is Drak's call and lands here before the cut that makes it. Nothing is built yet.
 
 ---
 
@@ -24,7 +24,7 @@ Fabula is a new view, a peer of Linea, Stemma, and Kalendarium, for planning the
 - **Other on multi-selects, for every template** (Drak, 2026-10-25). The four multi-selects whose lists end in Other get a real one, built into the field system rather than worked around. It went in as v1.7's r005, which saves each typed value as one more string in the same list.
 - **Brainstorm waits for Stemma v2** (Drak, 2026-10-25). No field can point at a stemma yet, so the Story's link to the trees behind it is settled with Stemma v2, which follows Fabula.
 - **Fabula's record types join the registry with its first screen** (Drak, 2026-10-25). The registry makes a source a reference target in every template builder and a toggle in Concordance, so the first cut seeds the slice and the schemas only, and the registry entries come with the first cut that shows Fabula, together with Concordance's single Fabula toggle and a builder that offers only sources marked eligible.
-- **The field lists are in review** (from 2026-10-25), in Drak's table format and one table per message, his call. Section 5 holds the tables as they stand.
+- **The field lists are settled** (Drak, 2026-10-25), reviewed one table per message in his table format, his call. What the review changed: the Story gains Threads, and the Premise panel's Themes is core, since the Plot and Meaning tabs list them; the Premise panel puts the theme pair under the Logline and the conflict fields under that; Genre gains Sci-Fantasy and Point of View Third Objective; the Setting panel's Places and a scene's Setting take Location, Cosmology / Plane, Astronomical Body, and Vehicle, since a big enough carrier can be a setting; a cast record's character can be a Deity / Entity, as can a scene's walk-ons, and Role loses Narrator, which the Narration panel's Narrators already says; Arc's and Promise & Payoff's statuses start at Idea; a scene with no POV of its own takes its chapter's, and chapters and scenes share one status list; and a research note gains Used In and stays with one story.
 - **Models:** Reedsy's writing guides and Studio templates, and Savannah Gilbo's First Draft Roadmap. Gilbo's steps 1 to 4 and 6 are the Story's panels, step 5 is People, steps 7 and 8 are Plot and Outline, and steps 9 and 10 (the writing routine and the draft) stay out.
 
 ## 2. The boundary
@@ -64,9 +64,9 @@ fabula: {
 - **A story** opens on its Story record, with section tabs across the top:
   - **Story:** the Story's own fields and its four panels (Premise, Genre, Narration, Setting).
   - **People:** Cast, Arcs, Relationships.
-  - **Plot:** Plot Threads (entries), Plot Points, Promises & Payoffs.
+  - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs.
   - **Outline:** Parts, Chapters, and Scenes as one ordered tree.
-  - **Meaning:** Themes & Motifs (entries).
+  - **Meaning:** Themes & Motifs (entries, the ones the Premise panel's Themes lists).
   - **Notes:** Research Notes.
   - **Timeline:** section 8.
 - **A corpus** opens on its own page: its stories in reading order, reordered by drag, its notes, and the corpus timeline.
@@ -81,15 +81,16 @@ The tables are in Drak's format: Label / Type / Notes, one line per field. Type 
 A field is core when a feature reads it by meaning, not just by being a field. Concordance's edges, backlinks, and the export read any link or field generically, so they don't make a field core. Core fields can be relabeled but not deleted or retyped:
 
 - **Corpus:** the reading order, which is the corpus's `storyIds` and not a field.
-- **Story:** Status (the index shows it), Structure and Custom Slots (they seed plot points).
+- **Story:** Status (the index shows it), Structure and Custom Slots (they seed plot points), Threads (the Plot tab lists them), and the Premise panel's Themes (the Meaning tab lists them).
 - **Cast:** Character.
 - **Arc:** Cast, Turning Points (the timeline marks them).
 - **Relationship:** Cast A, Cast B.
 - **Plot Point:** Slot, Delivered In.
 - **Promise & Payoff:** Setup In, Payoff In (the unpaid-promise flag).
+- **Chapter:** POV (a scene with no POV of its own takes it).
 - **Scene:** POV, When, Threads (the timeline's lanes and placement).
 
-Every record's name is core by construction. Part / Act, Chapter, and Research Note have no core fields beyond it.
+Every record's name is core by construction. Part / Act and Research Note have no core fields beyond it.
 
 ### 5.1 Corpus
 
@@ -122,10 +123,11 @@ Structure             select                       half-eligible · core · {Thr
 
 Custom Slots          group                        core · showWhen Structure = Custom; one slot per row, in order
     · Slot            text
+Threads               entry-ref multi              core · -> Plot Thread; the threads this story carries
 Notes                 textarea
 ```
 
-Brainstorm, a link to the Stemma trees behind the story, is out until Stemma v2 (section 1).
+Threads is where the story records the threads it carries, so one thread can run through several books (section 4). Brainstorm, a link to the Stemma trees behind the story, is out until Stemma v2 (section 1).
 
 **Premise** panel (Gilbo 1 and 2):
 
@@ -134,11 +136,11 @@ Label                 Type                         Notes
 Why                   textarea                     why you're writing it
 What If               textarea                     the idea in a sentence or two
 Logline               text                         half-eligible · who, what they want, what's in the way
+Theme Statement       textarea                     what the story argues
+Themes                entry-ref multi              core · -> Theme / Motif; the Meaning tab lists them
 Central Conflict      textarea
 Conflict Kinds        multiselect otherTextField   Other + · {vs Character, vs Self, vs Society, vs Nature, vs Technology, vs the Supernatural, vs Fate}
 Stakes                textarea                     what's lost if they fail
-Theme Statement       textarea                     what the story argues
-Themes                entry-ref multi              -> Theme / Motif
 Synopsis              textarea                     a summary of the plot, for planning
 ```
 
@@ -146,7 +148,7 @@ Synopsis              textarea                     a summary of the plot, for pl
 
 ```
 Label                 Type                         Notes
-Genre                 select otherTextField        half-eligible · Other + · {Fantasy, Science Fiction, Mystery, Thriller, Romance, Horror, Historical, Literary, Adventure}
+Genre                 select otherTextField        half-eligible · Other + · {Fantasy, Science Fiction, Sci-Fantasy, Mystery, Thriller, Romance, Horror, Historical, Literary, Adventure}
 Subgenre              text                         half-eligible
 
 Tone                  multiselect otherTextField   Other + · {Bleak, Hopeful, Comic, Wry, Tense, Lyrical, Grim, Cozy}
@@ -163,7 +165,7 @@ Comparable Titles     group                        one per row
 
 ```
 Label                 Type                         Notes
-Point of View         select                       half-eligible · {First, Second, Third Limited, Third Omniscient, Multiple}
+Point of View         select                       half-eligible · {First, Second, Third Limited, Third Omniscient, Third Objective, Multiple}
 Tense                 select                       half-eligible · {Past, Present, Mixed}
 Narrative Distance    select                       half-eligible · {Close, Medium, Distant, Varies}
 Reliability           select                       half-eligible · {Reliable, Unreliable, Varies}
@@ -180,7 +182,7 @@ Label                 Type                         Notes
 Time Period           text                         half-eligible · as the story names it
 Story Timespan        calendar-date-range          when it happens, in your calendar
 
-Places                entry-ref multi              -> Location, Cosmology / Plane
+Places                entry-ref multi              -> Location, Cosmology / Plane, Astronomical Body, Vehicle
 Rules in Play         entry-ref multi              -> Magic / Tech System, Religion / Belief System, Faction / Government / Organization, Culture / People
 
 Arena                 textarea                     how the setting makes or limits trouble
@@ -189,17 +191,17 @@ Sensory Palette       textarea                     the sights, sounds, and smell
 
 ### 5.3 Cast
 
-One record per character per story; the same Character entry can have a cast record in each book with a different role.
+One record per character per story; the same entry can have a cast record in each book with a different role. The character can be a Character entry or a Deity / Entity entry, so a god or a ship's AI can be cast.
 
-Name: the character as this story knows them; filled from the Character entry when it's picked.
+Name: the character as this story knows them; filled from the entry picked.
 
 ```
 Label                 Type                         Notes
-Character             entry-ref                    half-eligible · core · required · -> Character
+Character             entry-ref                    half-eligible · core · required · -> Character, Deity / Entity
 Importance            select                       half-eligible · {Main, Secondary, Minor}
 First Appears         entry-ref                    half-eligible · -> Scene (Fabula), this story
 
-Role                  multiselect otherTextField   Other + · {Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Narrator, Supporting}
+Role                  multiselect otherTextField   Other + · {Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Supporting}
 Belief Systems        entry-ref multi              -> Religion / Belief System
 
 Motive                textarea                     why they act; for an antagonist, the aims
@@ -210,7 +212,7 @@ Secrets               textarea                     secret · what the reader lea
 Notes                 textarea
 ```
 
-Role is multi-select because a protagonist is often the narrator too. Secrets uses the existing secret flag, so it hides with the secrets toggle like every other secret field.
+Role is multi-select because one character often holds two roles, a protagonist who's also the love interest, say. Who narrates is the Narration panel's Narrators, so Role has no Narrator. Secrets uses the existing secret flag, so it hides with the secrets toggle like every other secret field.
 
 ### 5.4 Arc
 
@@ -222,7 +224,7 @@ Name: the arc's name, such as "Mira's fall".
 Label                 Type                         Notes
 Cast                  entry-ref                    half-eligible · core · -> Cast (Fabula), this story; whose arc
 Arc Type              select otherTextField        half-eligible · Other + · {Positive Change, Flat, Negative Change, Disillusionment, Corruption, Fall}
-Status                select                       half-eligible · {Planned, Underway, Resolved, Abandoned}
+Status                select                       half-eligible · {Idea, Planned, Underway, Resolved, Abandoned}
 
 Want                  textarea                     the external goal (Gilbo 5)
 Need                  textarea                     the internal need
@@ -277,7 +279,7 @@ Name: a short label for what's promised.
 ```
 Label                 Type                         Notes
 Kind                  select otherTextField        half-eligible · Other + · {Foreshadowing, Chekhov's Gun, Open Question, Red Herring, Prophecy, Callback, Running Gag}
-Status                select                       half-eligible · {Planned, Planted, Paid Off, Subverted, Dropped}
+Status                select                       half-eligible · {Idea, Planned, Planted, Paid Off, Subverted, Dropped}
 
 Setup In              entry-ref multi              core · -> Scene (Fabula), this story
 Payoff In             entry-ref multi              core · -> Scene (Fabula), this story
@@ -306,8 +308,8 @@ Name: the chapter's title.
 
 ```
 Label                 Type                         Notes
-POV                   entry-ref                    half-eligible · -> Cast (Fabula), this story
-Status                select                       half-eligible · {Planned, Outlined, Drafted, Revised, Final}
+POV                   entry-ref                    half-eligible · core · -> Cast (Fabula), this story; a scene with no POV of its own takes this one
+Status                select                       half-eligible · {Idea, Planned, Outlined, Drafted, Revised, Final, Cut}
 Target Length         number                       half-eligible · words; a planning number
 
 Purpose               textarea
@@ -315,24 +317,26 @@ Summary               textarea
 Notes                 textarea
 ```
 
+A scene with no POV of its own takes its chapter's, so a book with one POV per chapter sets it once, and only a scene that differs sets its own. Chapters and scenes share one status list.
+
 ### 5.10 Scene
 
 Name: the scene's title.
 
 ```
 Label                 Type                         Notes
-POV                   entry-ref                    half-eligible · core · -> Cast (Fabula), this story
-Setting               entry-ref                    half-eligible · -> Location
+POV                   entry-ref                    half-eligible · core · -> Cast (Fabula), this story; empty takes the chapter's
+Setting               entry-ref                    half-eligible · -> Location, Cosmology / Plane, Astronomical Body, Vehicle
 Goal                  text                         half-eligible · what the POV character wants here
 Conflict              text                         half-eligible · what's in the way
 Outcome               select otherTextField        half-eligible · Other + · {Yes; No; Yes, but; No, and}
 Turn                  text                         half-eligible · what has changed by the end
-Status                select                       half-eligible · {Idea, Outlined, Drafted, Revised, Cut}
+Status                select                       half-eligible · {Idea, Planned, Outlined, Drafted, Revised, Final, Cut}
 
 When                  calendar-date-range          core · story time, in your calendar
 
 Participants          entry-ref multi              -> Cast (Fabula), this story
-Walk-ons              entry-ref multi              -> Character; anyone without a cast record
+Walk-ons              entry-ref multi              -> Character, Deity / Entity; anyone without a cast record
 Threads               entry-ref multi              core · -> Plot Thread; the threads it moves
 Motifs                entry-ref multi              -> Theme / Motif
 
@@ -348,6 +352,7 @@ Name: the topic.
 ```
 Label                 Type                         Notes
 Applies To            entry-ref multi              -> any template
+Used In               entry-ref multi              -> Scene (Fabula), this story; where the research lands
 Sources               group                        one source per row
     · Title           text
     · Link            url
@@ -355,6 +360,8 @@ Findings              textarea
 Open Questions        textarea
 Notes                 textarea
 ```
+
+Applies To is set to any template, which offers world entries and nothing else: no bodies, maps, Glossopoeia records, or Fabula records. Used In is what ties a note to the scenes that need it. A note belongs to one story, so research a series shares lives in one story's notes or in a world entry; a note that belongs to a corpus is on the roadmap (Drak, 2026-10-25: per story for now).
 
 ### 5.12 Plot Thread and Theme / Motif
 
@@ -394,7 +401,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 
 - **Scope:** one story, or a whole corpus, picked at the top.
 - **Modes:** story time places scenes by their When in your calendar; telling order places them by their position in the outline; a third mode plots one order against the other, where a straight-told book draws a straight line and every flashback or jump breaks it. Fabula is narratology's word for the events in the order they happened, as against the order they're told, so the view's name is this mode's subject.
-- **Lanes:** by POV, by thread, or by arc.
+- **Lanes:** by POV (a scene's own, or its chapter's when it has none), by thread, or by arc.
 - **Marks:** plot points as markers, chapters and parts as bands in telling order, threads' Timespans as spans.
 - **Undated scenes** appear in the telling-order modes and wait in a tray in story-time mode.
 - **Kept apart:** it shows only Fabula's records and Fabula's threads, and nothing it adds appears on Chronometric.
@@ -405,7 +412,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 - **Wiki-links** resolve to entries and celestial bodies (`InlineWikiLinkText`), so Fabula's records aren't wiki-link targets in v1.7. Threads and motifs, as entries, are.
 - **Backlinks** (Pipes item 1): an entry's Referenced by list includes the Fabula records that point at it, so a character shows its cast records and scenes.
 - **Search and the query layer** cover entries. Fabula filters its own lists by status, POV, thread, and the like.
-- **Concordance:** behind one Fabula toggle in its filter (section 3), with edges for the links: a cast record to its Character, a scene to its POV, participants, setting, and threads, an arc or a relationship to its cast, a plot point or a promise to its scenes.
+- **Concordance:** behind one Fabula toggle in its filter (section 3), with edges for the links: a story to its threads and themes, a cast record to its character, a scene to its POV, participants, setting, and threads, an arc or a relationship to its cast, a plot point or a promise to its scenes, a research note to what it applies to and the scenes it's used in.
 - **A deleted entry:** the delete confirmation first says what the delete will remove, counted by the same scan as backlinks, across entries and Fabula alike ("removes her from 4 entries, 2 cast records, and 9 scenes"); today it's a bare `Delete "Aria"?` prompt. Then Fabula's references to the entry are cleaned out the way entries' are (`scrubEntryRefs`), with one exception: a cast record whose character is deleted stays, marked "character deleted", with its role, voice, arcs, and relationships intact, to relink or delete by hand. Stemma's linked nodes still turn orphan as they do now.
 - **Exports:** the world JSON carries `state.fabula`, as the save file must. Fabula's records stay out of the world's HTML and Markdown exports. Fabula has its own export instead, in HTML and in Markdown, for one story or a whole corpus, with the include-secrets choice the other exports offer: the panels, cast, arcs, relationships, outline with its beats, plot points, and promises. The Markdown version is the story bible.
 - **Entry import and export** (Pipes item 9) moves entries only; Fabula's records don't ride in `cartulary_entries_export`.
@@ -416,7 +423,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 
 Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of the field lists use it.
 
-1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries (v1.7's r006, once the field lists are approved).
+1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries (v1.7's r006; the field lists were approved 2026-10-25).
 2. The Template Builder learns Fabula's kinds and the core lock.
 3. The view: the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1); then the sidebar entry, index, corpus and story records with the Story panels.
 4. People: cast, arcs, relationships.
@@ -449,7 +456,8 @@ About ten cuts. The extraction and the timeline are the least certain.
 3. **Concordance:** decided, one Fabula toggle (section 3).
 4. **A deleted entry:** Drak leans toward cleaning the references out (2026-10-24). Claude's case against cleaning everything: a cast record is defined by its Character link, so cleaning it leaves a husk with a role, a voice, and arcs but no character, or deletes the record and the arcs, relationships, and scene POVs that hang off it; and today's entry delete is a bare confirmation that already cleans entries' references without a count. Claude's middle path: clean, but the delete confirmation first says what it will clean ("removes her from 2 cast records and 9 scenes"), counted by the same scan as backlinks, and a cast record whose character is deleted stays, marked as such, so its story work can be relinked or deleted by hand. Drak took the middle path (2026-10-24); section 9.
 5. **Exports:** decided, Fabula's own, HTML and Markdown (section 9).
-6. **The field lists:** in review from 2026-10-25, one table per message, in Drak's format; section 5 holds them as they stand. Five calls were made on the way (section 1): Other on multi-selects, built for every template; built first, as r005; typed values saved as more strings in the same list; Brainstorm out until Stemma v2; and the registry entries with the first screen.
+6. **The field lists:** decided (Drak, 2026-10-25), all fifteen tables passed one per message, in his format; section 1 has what the review changed. Five calls came first (section 1): Other on multi-selects, built for every template; built first, as r005; typed values saved as more strings in the same list; Brainstorm out until Stemma v2; and the registry entries with the first screen.
+7. **Thread pickers** (open, for the Plot cut): with the Story's Threads a field of its own (2026-10-25), a scene's, a plot point's, and a promise's Threads could offer every Plot Thread, only the story's, or every one with a pick from outside the story's list added to it. Claude leans to the last: nothing is hidden, and the Plot tab stays complete.
 
 ## Sources
 
