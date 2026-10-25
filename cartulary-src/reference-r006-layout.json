@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "e70e86fef21544cdcda6cd8294fd02f7b5e565e473b8c75ff251d7d30942f611",
+  "anchor_sha256": "b2a8ba4e362f54bdb9cf9a825d94924fd733ca34896a684a8cb166f3586002e3",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -44,7 +44,7 @@
     ],
     [
       "10_migrate.jsx",
-      6113
+      6117
     ],
     [
       "11_io-utils.jsx",
@@ -108,7 +108,7 @@
     ],
     [
       "22_trunk.jsx",
-      357
+      379
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -168,7 +168,7 @@
     ],
     [
       "27_trunk.jsx",
-      248
+      494
     ],
     [
       "28_modals.jsx",
