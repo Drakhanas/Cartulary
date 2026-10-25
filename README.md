@@ -69,11 +69,10 @@ for t in deps/*.tgz; do
 done
 
 python3 inlining/build_inline.py finals
-node inlining/validate_html.js inlining/out/Cartulary_v1.6.1.html
-node inlining/validate_html.js inlining/out/Cartulary_v1.6.1_Readable.html
+for f in inlining/out/Cartulary_v*.html; do node inlining/validate_html.js "$f"; done
 ```
 
-`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v1.6.1.html`, the precompiled build users run, and `Cartulary_v1.6.1_Readable.html`, the same application with the JSX intact and Babel inside to compile it. The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's, and `v1.6.1_Release` v1.6.1's).
+`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v<version>.html`, the precompiled build users run, and `Cartulary_v<version>_Readable.html`, the same application with the JSX intact and Babel inside to compile it (at `v1.6.1_Release`, `Cartulary_v1.6.1.html` and `Cartulary_v1.6.1_Readable.html`). The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's, and `v1.6.1_Release` v1.6.1's).
 
 ## How a change is made
 
@@ -105,7 +104,7 @@ The GitHub Actions workflow in `.github/workflows/` runs all of this on every pu
 - `cartographia-plus-spec.md`, `maps-promotion-spec.md`, and the Glossopoeia documents: the specs the larger features were built from.
 - `release-notes/`: what each release shipped, verbatim: the patch notes, the text in each zip, and an index with every release's finals hashes; for v1.6, also the public copy and the finals checklist.
 
-The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page. The in-app topic doesn't document the `longform` and `grid` field shapes yet, and the site's `grid` shape is wrong; the fix is on the roadmap.
+The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page. Since v1.7's r001 both give every field type's value shape, `longform` and `grid` included; the released v1.6.1 and the live site lack them until v1.7 ships.
 
 ## Contributing
 

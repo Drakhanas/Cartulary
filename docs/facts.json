@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44110,
-    "raw_body_lines": 44110,
-    "canonical_lines": 41926,
+    "total_lines": 44118,
+    "raw_body_lines": 44118,
+    "canonical_lines": 41933,
     "decl_count": 510,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r052-body.jsx"
+    "active_anchor": "reference-r001-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44110,
+      "value": 44118,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 41926,
+      "value": 41933,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44110,
+      "value": 44118,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2299501,
+      "value": 2300726,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "twenty-eight",
-        28
+        "twenty-nine",
+        29
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,9 @@
       "value": 5231,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r052": {
-      "value": "d8369c86696f8f46",
-      "pattern": "working[^\\n]{0,40}at r052 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r001": {
+      "value": "e11d0a9253eedaad",
+      "pattern": "working[^\\n]{0,40}at r001 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -618,9 +618,6 @@
       "18_cartographia",
       "r050",
       "r051",
-      "reference-r052-body.jsx",
-      "d8369c86696f8f46",
-      "reference-r052-layout.json",
       "b99381a041153d9d",
       "e748142eadb3e1aa",
       "v1.6 is SHIPPED",
@@ -643,17 +640,26 @@
       "`inlining/cuts/v<version>_r###_description.py`",
       "(p / 'cartulary-src').is_dir()",
       "r052",
-      "1dbfec5bbafcdaa2",
       "v1.6.1 is SHIPPED",
       "v1.6.1_r052",
       "v1.6.1_Release",
       "v1.4",
-      "No line is open",
       "d9125ed013be5641",
       "c10c693bbacbe9e6",
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
-      "fabula-spec.md"
+      "fabula-spec.md",
+      "reference-r001-body.jsx",
+      "reference-r001-layout.json",
+      "a2f26b602064207c",
+      "e11d0a9253eedaad",
+      "v1.7 is OPEN",
+      "Common Year",
+      "stop hook",
+      "0e289d8e7ece2c9c",
+      "stages the old content",
+      "owes a pass of its own",
+      "answers the font requests empty"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -703,9 +709,13 @@
       "r051",
       "reference-r052-body.jsx",
       "d8369c86696f8f46",
-      "reference-r052-layout.json",
       "r052",
-      "1dbfec5bbafcdaa2"
+      "1dbfec5bbafcdaa2",
+      "reference-r001-body.jsx",
+      "a2f26b602064207c",
+      "e11d0a9253eedaad",
+      "On v1.7 r001 verification",
+      "reference-r001-layout.json"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -714,7 +724,12 @@
       "session 19",
       "r051",
       "v1.6.1",
-      "r052"
+      "r052",
+      "## v1.7",
+      "session 20",
+      "v1.7_r001",
+      "Common Year",
+      "e11d0a9253eedaad"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -729,7 +744,11 @@
       "v1.6.1 shipped",
       "d9125ed013be5641",
       "Letters before Pipes",
-      "fabula-spec.md"
+      "fabula-spec.md",
+      "session 20",
+      "Common Year",
+      "A grid's starting shape",
+      "### Document debt"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -760,7 +779,10 @@
       "`v{VERSION}_r###_description.py`",
       "the folder that holds `cartulary-src/`",
       "v1.6.1",
-      "r052"
+      "r052",
+      "session 20",
+      "stage every file in its scope",
+      "stop hook"
     ],
     "journal.txt": [
       "r030",
@@ -785,7 +807,9 @@
       "r050",
       "r051",
       "v1.6.1",
-      "r052"
+      "r052",
+      "session 20",
+      "Common Year"
     ]
   }
 }

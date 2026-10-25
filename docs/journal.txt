@@ -466,3 +466,38 @@ the whole finals path would have broken, or quietly changed bytes, on a Windows 
 through default encodings and newline translation. With the fix the finals rebuild to the
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
+
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, and r001, the carry-in text fixes and Common Year) ===
+
+A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
+ran the gates, and every figure it promised came back the same. That's less of an event than
+it sounds, which is the point of it. What didn't work was attaching the repository with push
+access, which the session's own permission check refused until Drak said to retry. Then the
+stop hook asked me to push the version bump, and I told Drak, as if it were news, that the
+hook and the procedure would collide at the first cut. He asked whether this had happened in
+the last chat. It had, from r031 on, at every cut, answered the same way each time and
+written down nowhere. That's the second time today the lesson has been the same: the
+environment's habits go in the handoff, or the next session meets them as a stranger.
+
+r001 was text. The roadmap had three product-text defects and the Gregorian rename waiting
+for it; reading for them found five more, and Drak's pass found a sixth by way of a question.
+The rename held the only real decisions: what to call a calendar with Gregorian months and no
+leap day, and whether to rename it in worlds that already have it. He took Common Year over my
+Default Calendar, and his is the better name, since it says what the calendar is where mine
+only said what it was for. He took my call on old worlds, which is to leave them alone,
+because a name a user has lived with is the user's.
+
+Two things went wrong on my side. The first probe never loaded the app, because the working
+build fetches its libraries from cdnjs and the sandbox can't, so the probe now serves the
+vendored copies from deps/; obvious once the timeout said so, invisible until then. The second
+was the amend. When Drak asked for the builder's grid hint to go into r001, I put the cut's
+files back with git checkout, which stages the old content as well as writing it, reran the
+script, and amended with only the two new changes added. The commit came out holding r000's
+text for six files. git status said so at once, and a second amend fixed it before anything
+left the sandbox, but for a minute the commit called r001 wasn't r001. The doctrine has the
+rule now.
+
+The question that found the sixth string was a good one: shouldn't a grid ask how many rows
+and columns you want? Nothing does, anywhere, and every cell starts as Text with its own
+dropdown, so a table of numbers is a chore. I'd put a starting shape on the template's field.
+It's on the roadmap, undecided, which is where Drak's questions wait until he answers them.
