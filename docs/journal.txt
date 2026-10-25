@@ -536,3 +536,20 @@ builder can't tick a template that isn't there, and a question the roadmap had f
 unchecked got checked by the person it happened to. r004 was always going to repair those
 fields; now it has a world that needs it. Drak took my call to freeze r003 as passed and put
 the fix where it belongs.
+
+r004 was that repair, and Drak handed me the v1.4 final to build it against. That mattered
+more than I expected. Making the world in v1.4 itself and walking it through the real builds
+found two things a simulation wouldn't have: r001, the last build before r002, had already
+thrown away a target my test template's builder had added by id, and r003 had already mended
+most of the map fields I'd told Drak were broken. The second one stung. I'd found the map
+promotion's leftover while reading for the cut and written it up as a fork with a sure
+account, every field that ever pointed at a map template still dead. He said fold it in, and
+the control, the same world opened by r003, came back with half of that account wrong,
+because r002's resolve takes a multi-target field's maps back from its "Map" name. Only
+fields that take one template stayed broken. I'd checked the mechanism and not its reach.
+The fix was the same either way, but what I'd told him wasn't, and the corrected version
+went out before his pass. The rest held: Location › Parent and Historical Event › Location
+target bodies again, the language fields keep their words as well as their languages, and a
+second load changes nothing. What r004 can't do is give back the references the old upgrade
+already deleted, and if Drak's world had any, they're gone. He passed it a little after
+midnight.

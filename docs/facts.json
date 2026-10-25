@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44370,
-    "raw_body_lines": 44370,
-    "canonical_lines": 42177,
-    "decl_count": 516,
+    "total_lines": 44534,
+    "raw_body_lines": 44534,
+    "canonical_lines": 42338,
+    "decl_count": 517,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r003-body.jsx"
+    "active_anchor": "reference-r004-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44370,
+      "value": 44534,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 516,
+      "value": 517,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 42177,
+      "value": 42338,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44370,
+      "value": 44534,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2316754,
+      "value": 2325779,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-one",
-        31
+        "thirty-two",
+        32
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,9 @@
       "value": 5241,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r003": {
-      "value": "a2bb59988f15030f",
-      "pattern": "working[^\\n]{0,40}at r003 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r004": {
+      "value": "0731070bf5555171",
+      "pattern": "working[^\\n]{0,40}at r004 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -495,7 +495,7 @@
     },
     {
       "file": "10_migrate.jsx",
-      "line": 5916,
+      "line": 6079,
       "contains": "marked.use({"
     },
     {
@@ -649,10 +649,10 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r003-body.jsx",
-      "reference-r003-layout.json",
-      "b1b07ff195a9e796",
-      "a2bb59988f15030f",
+      "reference-r004-body.jsx",
+      "reference-r004-layout.json",
+      "16337a1350d7e7e6",
+      "0731070bf5555171",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -669,7 +669,11 @@
       "v1.7_r003",
       "resolveRefTarget",
       "refLinkHtml",
-      "mapDeleteMessage"
+      "mapDeleteMessage",
+      "v1.7_r004",
+      "retargetRetired",
+      "retiredTargetsRepairedV17",
+      "755e95a722506f5e"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -730,11 +734,16 @@
       "710f0d88e89bde32",
       "On v1.7 r002 verification",
       "reference-r003-body.jsx",
-      "reference-r003-layout.json",
       "b1b07ff195a9e796",
       "a2bb59988f15030f",
       "On v1.7 r003 verification",
-      "08_export-layer:1512"
+      "08_export-layer:1512",
+      "reference-r004-body.jsx",
+      "reference-r004-layout.json",
+      "16337a1350d7e7e6",
+      "0731070bf5555171",
+      "On v1.7 r004 verification",
+      "10_migrate:6079"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -756,7 +765,11 @@
       "v1.7_r003",
       "a2bb59988f15030f",
       "b1b07ff195a9e796",
-      "resolveRefTarget"
+      "resolveRefTarget",
+      "v1.7_r004",
+      "0731070bf5555171",
+      "16337a1350d7e7e6",
+      "retargetRetired"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -781,7 +794,9 @@
       "r004",
       "Language / Glossary",
       "v1.7_r003",
-      "Deleting a Glossopoeia record leaves entry references to it"
+      "Deleting a Glossopoeia record leaves entry references to it",
+      "v1.7_r004",
+      "A map template of the user's own, promoted to Cartographia before r004"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -818,7 +833,9 @@
       "stop hook",
       "every load",
       "Judge stored data by the rules that produced it",
-      "A user's world carries every upgrade it has been through"
+      "A user's world carries every upgrade it has been through",
+      "A migration that retires something other records point at by id",
+      "The control decides how far a defect reaches"
     ],
     "journal.txt": [
       "r030",
@@ -847,7 +864,8 @@
       "session 20",
       "Common Year",
       "r002",
-      "r003"
+      "r003",
+      "r004"
     ]
   }
 }

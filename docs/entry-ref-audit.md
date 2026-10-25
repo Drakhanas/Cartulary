@@ -18,7 +18,7 @@ Shown in the shipped finals, headless:
 - **v1.5** (`Cartulary_v1.5.html`, `c3a62e07e09b0194`): the same result for the same Parent and Location, so the bug shipped in both releases.
 - **Worlds upgraded from v1.4** lost these references at the upgrade. The v1.5 conversion turns Astronomical Body entries into bodies with the same ids, and the cleanup at the end of the same pass drops the references, because the converted fields still list the retired template's id. Shown with a world built in the v1.4 final and loaded in v1.5, v1.6, and the v1.6.1 build.
 
-**The fix is v1.6.1's r052** (2026-10-23): the cleanup accepts an id that resolves to a registered record whose source is among the field's targets (`refTemplatesId`, else `refTemplateId`), the rule the picker offers them by, and judges entry references as before. It doesn't reach the v1.4 path above, whose fields name the retired template rather than the body source.
+**The fix is v1.6.1's r052** (2026-10-23): the cleanup accepts an id that resolves to a registered record whose source is among the field's targets (`refTemplatesId`, else `refTemplateId`), the rule the picker offers them by, and judges entry references as before. It doesn't reach the v1.4 path above, whose fields name the retired template rather than the body source. **Done in v1.7's r004** (passed by Drak 2026-10-25): the conversion now points those fields at the body source, and a once-per-world repair does it for a world upgraded before; the references an earlier load deleted don't come back (`docs/changelog.md` has the cut).
 
 ## Flags, strongest first
 
