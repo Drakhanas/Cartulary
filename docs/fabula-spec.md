@@ -59,8 +59,8 @@ fabula: {
 
 ## 4. The view
 
-- **Sidebar:** "Fabula", beside the other views.
-- **Index:** each corpus with its stories in reading order, then the stories in no corpus. A row shows the title, status, its counts of cast and scenes, and when it was last updated.
+- **Sidebar:** "Fabula", after Linea in the default order (Drak, 2026-10-25). The same call moves Kalendarium below Ephemeris, so the default runs Linea, Fabula, Stemma, Ephemeris, Kalendarium, Glossopoeia, Cartographia, Concordance, and the two timelines; a sidebar the user has rearranged keeps its order and gains Fabula after Linea.
+- **Index:** each corpus with its stories in reading order, then the stories in no corpus, corpora and the stories in no corpus sorted by name. A row shows the title, status, its counts of cast and scenes, and when it was last updated. A story's row has a Corpus dropdown, no corpus or any corpus, which puts the story at the end of that corpus's reading order (Drak, 2026-10-25); a story made from a corpus's page starts in it. Deleting a corpus leaves its stories in no corpus.
 - **A story** opens on its Story record, with section tabs across the top:
   - **Story:** the Story's own fields and its four panels (Premise, Genre, Narration, Setting).
   - **People:** Cast, Arcs, Relationships.
@@ -69,7 +69,7 @@ fabula: {
   - **Meaning:** Themes & Motifs (entries, the ones the Premise panel's Themes lists).
   - **Notes:** Research Notes.
   - **Timeline:** section 8.
-- **A corpus** opens on its own page: its stories in reading order, reordered by drag, its notes, and the corpus timeline.
+- **A corpus** opens on its own page: its fields, edited the way an entry's are, its stories in reading order, reordered by drag or by arrow buttons with no edit step, and the corpus timeline.
 - **Plot Thread and Theme / Motif** leave the sidebar's template list through a flag on the template that the sidebar honors. They stay in `BUILTIN_TEMPLATES`, Restore Built-ins and Reset Template keep working, and they open inside Fabula in the normal entry form. Which stories use a thread is recorded on the Story (its Threads field), not on the thread, so one thread can run through several books.
 
 ## 5. Record types and fields
@@ -424,8 +424,8 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of the field lists use it.
 
 1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries: done in v1.7's r006 (2026-10-25). The code grows inside `27_trunk` until the view is in, then a carve gives Fabula a module of its own (Drak's call), since the edit gate refuses a cut that adds a file.
-2. The Template Builder learns Fabula's kinds and the core lock.
-3. The view: the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1); then the sidebar entry, index, corpus and story records with the Story panels.
+2. The view, before the builder (Drak, 2026-10-25: the help lines get reviewed in place while every schema still follows the seed), in two cuts. v1.7's r007: the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1), with the sidebar entry, the index, and the corpus page. v1.7's r008: the story page, its section tabs, and the Story tab's own fields and four panels.
+3. The Template Builder learns Fabula's kinds and the core lock, once the fields have had some use.
 4. People: cast, arcs, relationships.
 5. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard.
 6. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag.
