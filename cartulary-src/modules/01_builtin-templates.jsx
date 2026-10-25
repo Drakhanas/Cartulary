@@ -964,8 +964,9 @@ const resolveTemplateRefs = (templates) => {
 // it derived then (migrate()'s pass).
 //
 // Per entry-ref field, group subfields included:
-//   - A field holding an id that resolves to nothing (a deleted template, or a
-//     v1.4 world's retired Astronomical Body template) is left alone.
+//   - A field holding an id that resolves to nothing (a deleted template, say)
+//     is left alone. migrate() mends one the v1.5 conversions retired, just
+//     after its own call here (v1.7 r004).
 //   - Multi-target (a non-empty id list): a name whose target is listed keeps
 //     its place; a name whose target isn't listed goes; a name that resolves
 //     to nothing stays, so a restored built-in is targeted again; a listed
@@ -975,8 +976,8 @@ const resolveTemplateRefs = (templates) => {
 //   - Cleared (an empty id list): the names go if any of them resolves.
 //   - Switched back to a single target (the id list and refFilters both null,
 //     as the builder's toggle leaves them): the names go. An id list that's
-//     null without that is the v1.5 Language / Glossary supersede waiting on
-//     a resolve, and stays for the v1.4 path to repair.
+//     null without that is left from the v1.5 Language / Glossary supersede,
+//     and stays for migrate() to mend (v1.7 r004).
 //   - Single target: the name follows the id. Set to any template (the id
 //     null), a name that resolves goes and one that doesn't stays. A name
 //     with no id at all hasn't been resolved yet, and stays.
