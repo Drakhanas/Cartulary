@@ -150,7 +150,7 @@ const BUILTIN_TEMPLATES = [
         showWhen: { fieldLabel: "Type", values: ["Currency / Coin"] } },
       { label: "Currency Details", type: "text", halfWidth: true,
         showWhen: { fieldLabel: "Type", values: ["Currency / Coin"] } },
-      { label: "Current Owner", type: "entry-ref", refTemplate: "Character", halfWidth: true },
+      { label: "Current Owner", type: "entry-ref", refTemplates: ["Character", "Faction / Government / Organization", "House / Dynasty / Clan / Bloodline"], halfWidth: true },
       { label: "Current Location", type: "entry-ref", refTemplate: "Location", halfWidth: true },
       { label: "Enchanted / Enhanced With", type: "entry-ref", refTemplate: "Magic / Tech System", multi: true },
       { label: "Appearance", type: "textarea" },
@@ -205,9 +205,11 @@ const BUILTIN_TEMPLATES = [
       { label: "Practitioner / Wielder of", type: "entry-ref", refTemplate: "Magic / Tech System", multi: true },
       { label: "Affiliations", type: "entry-ref", refTemplate: "Faction / Government / Organization", multi: true },
       { label: "House / Kin-group", type: "entry-ref", refTemplate: "House / Dynasty / Clan / Bloodline", multi: true },
-      { label: "Ally / Mentor", type: "entry-ref", refTemplate: "Character", multi: true },
-      { label: "Enemies", type: "entry-ref", refTemplate: "Character", multi: true },
-      { label: "Possessions", type: "entry-ref", refTemplate: "Artifact / Object / Currency", multi: true },
+      { label: "Ally / Mentor", type: "entry-ref",
+        refTemplates: ["Character", "Faction / Government / Organization", "Culture / People", "Deity / Entity"], multi: true },
+      { label: "Enemies", type: "entry-ref",
+        refTemplates: ["Character", "Faction / Government / Organization", "Culture / People", "Deity / Entity"], multi: true },
+      { label: "Possessions", type: "entry-ref", refTemplates: ["Artifact / Object / Currency", "Weapon / Armor", "Vehicle"], multi: true },
       { label: "Lineage / Bloodline", type: "textarea" },
       { label: "Appearance", type: "textarea" },
       { label: "Description", type: "textarea" },
@@ -420,7 +422,7 @@ const BUILTIN_TEMPLATES = [
       { label: "Cadet Branches", type: "entry-ref", refTemplate: "House / Dynasty / Clan / Bloodline", multi: true },
       { label: "Members", type: "entry-ref", refTemplate: "Character", multi: true },
       { label: "Holdings / Domains", type: "entry-ref", refTemplate: "Location", multi: true },
-      { label: "Heirlooms", type: "entry-ref", refTemplate: "Artifact / Object / Currency", multi: true },
+      { label: "Heirlooms", type: "entry-ref", refTemplates: ["Artifact / Object / Currency", "Weapon / Armor"], multi: true },
       { label: "Married Into / Allied", type: "entry-ref", refTemplate: "House / Dynasty / Clan / Bloodline", multi: true },
       { label: "Affiliated Factions", type: "entry-ref", refTemplate: "Faction / Government / Organization", multi: true },
       { label: "Sigil / Arms", type: "textarea" },
@@ -778,7 +780,7 @@ const BUILTIN_TEMPLATES = [
       { label: "Other Names", type: "text", halfWidth: true },
       { label: "Status", type: "select", otherTextField: true, halfWidth: true,
         options: ["Active", "Underground", "Extinct", "Heretical", "Unknown", "Other"] },
-      { label: "Founder", type: "entry-ref", refTemplate: "Character", halfWidth: true },
+      { label: "Founder", type: "entry-ref", refTemplates: ["Character", "Deity / Entity"], halfWidth: true },
       { label: "Founded / Established", type: "calendar-date", halfWidth: true },
       { label: "Type", type: "select", otherTextField: true, halfWidth: true,
         options: ["Monotheistic", "Polytheistic", "Pantheistic", "Animistic", "Ancestor Worship", "Cult", "Mystery Religion", "Philosophy", "Other"] },
@@ -843,7 +845,7 @@ const BUILTIN_TEMPLATES = [
         options: ["Common", "Feared", "Forbidden", "Regulated", "Restricted", "Revered", "Sacred", "Suppressed", "Tolerated", "Unknown", "Other"] },
       { label: "Cultural Reach", type: "select", otherTextField: true, halfWidth: true,
         options: ["Local", "Regional", "Continental", "Global", "Cosmic", "Variable", "Unknown", "Other"] },
-      { label: "Source / Where Found", type: "entry-ref", refTemplate: "Location", multi: true },
+      { label: "Source / Where Found", type: "entry-ref", refTemplates: ["Location", "Creature", "Astronomical Body"], multi: true },
       { label: "Counter / Antidote", type: "entry-ref", refTemplate: "Substance / Material", multi: true },
       { label: "Description / Appearance", type: "textarea" },
       { label: "Properties", type: "textarea" },
@@ -875,7 +877,7 @@ const BUILTIN_TEMPLATES = [
         options: ["Universal", "Cultural", "Personal", "Genre-specific", "Setting-specific", "Unknown", "Other"] },
       { label: "Associated Characters", type: "entry-ref", refTemplate: "Character", multi: true },
       { label: "Associated Locations", type: "entry-ref", refTemplate: "Location", multi: true },
-      { label: "Associated Objects", type: "entry-ref", refTemplate: "Artifact / Object / Currency", multi: true },
+      { label: "Associated Objects", type: "entry-ref", refTemplates: ["Artifact / Object / Currency", "Weapon / Armor", "Vehicle"], multi: true },
       { label: "Associated Plot Threads", type: "entry-ref", refTemplate: "Plot Thread", multi: true },
       { label: "Description", type: "textarea" },
       { label: "How It Appears", type: "textarea" },
@@ -902,7 +904,7 @@ const BUILTIN_TEMPLATES = [
           "Submersible": ["Submarine", "Bathyscaphe", "Diving Bell", "Aquatic Mecha", "Other"],
           "Mythic / Magical": ["Flying Carpet", "Magical Boat", "Phoenix Carriage", "Astral Galleon", "Cosmic Vessel", "Other"]
         } },
-      { label: "Owner / Faction", type: "entry-ref", refTemplate: "Faction / Government / Organization", halfWidth: true },
+      { label: "Owner / Faction", type: "entry-ref", refTemplates: ["Faction / Government / Organization", "Character", "House / Dynasty / Clan / Bloodline"], halfWidth: true },
       { label: "Captain / Commander", type: "entry-ref", refTemplate: "Character", halfWidth: true },
       { label: "Propulsion / Power", type: "text", halfWidth: true },
       { label: "Passenger / Cargo Capacity", type: "text", halfWidth: true },
@@ -912,7 +914,7 @@ const BUILTIN_TEMPLATES = [
         options: ["Common", "Feared", "Forbidden", "Regulated", "Restricted", "Revered", "Sacred", "Suppressed", "Tolerated", "Unknown", "Other"] },
       { label: "Cultural Reach", type: "select", otherTextField: true, halfWidth: true,
         options: ["Local", "Regional", "Continental", "Global", "Cosmic", "Variable", "Unknown", "Other"] },
-      { label: "Power Source", type: "entry-ref", refTemplate: "Magic / Tech System", multi: true },
+      { label: "Power Source", type: "entry-ref", refTemplates: ["Magic / Tech System", "Substance / Material"], multi: true },
       { label: "Crew", type: "entry-ref", refTemplate: "Character", multi: true },
       { label: "Description", type: "textarea" },
       { label: "Appearance", type: "textarea" },
@@ -961,7 +963,7 @@ const BUILTIN_TEMPLATES = [
         options: ["Local", "Regional", "Continental", "Global", "Cosmic", "Variable", "Unknown", "Other"] },
       { label: "Enchanted / Enhanced With", type: "entry-ref", refTemplate: "Magic / Tech System", multi: true },
       { label: "Materials", type: "entry-ref", refTemplate: "Substance / Material", multi: true },
-      { label: "Previous Owners", type: "entry-ref", refTemplate: "Character", multi: true },
+      { label: "Previous Owners", type: "entry-ref", refTemplates: ["Character", "Faction / Government / Organization", "House / Dynasty / Clan / Bloodline"], multi: true },
       { label: "Origin / Smith / Maker", type: "textarea" },
       { label: "Appearance / Description", type: "textarea" },
       { label: "Properties / Enchantments", type: "textarea" },
@@ -971,28 +973,48 @@ const BUILTIN_TEMPLATES = [
     ]},
 ];
 
-// Resolve refTemplate (name) to actual template id at load time
-const resolveTemplateRefs = (templates) => {
+// How a reference field's target names map to ids, and ids back to names:
+// every template by name, then the registered node sources. Split out of
+// resolveTemplateRefs in v1.7 r002 so syncRefTargetNames below resolves names
+// exactly as it does.
+// BODY_REF_LABEL ("Astronomical Body") is a sentinel name that doesn't map to
+// any real template; it represents state.celestialBodies as a ref target.
+// Adding it here lets refTemplates author-facing lists use the same
+// mechanism for both entry-templates and bodies. The picker recognizes
+// BODY_REF_SENTINEL and switches to body-listing mode.
+// r077/r081: map the body label (and its legacy alias) to the sentinel, but
+// ONLY if no real template already claims that name — a real template always
+// wins. This matters because the label was renamed to the Ephemeris workspace
+// name ("Astronomical Body"), which is also what the deleted v1.4 built-in was
+// called and a natural name for a user to recreate. Multi-template refs
+// re-resolve from names whenever resolveTemplateRefs runs (see fix() below), so
+// an unconditional assignment would silently hijack a user's same-named template.
+// ConLang is the Glossopoeia language-container sentinel (state.glossopoeia.
+// conlangs), the supersede target for the retired Language / Glossary
+// template. Same guard: a real user template named "ConLang" wins.
+// v1.7 r002: the same guard for every other registered source (Lexeme, Map and
+// the rest), whose names a template or pack file could use and lost here.
+// allSources false resolves names as before r002 (body label and ConLang only).
+const refTargetIndex = (templates, allSources = true) => {
   const byName = {};
-  templates.forEach(t => { byName[t.name] = t.id; });
-  // BODY_REF_LABEL ("Astronomical Body") is a sentinel name that doesn't map to
-  // any real template; it represents state.celestialBodies as a ref target.
-  // Adding it here lets refTemplates author-facing lists use the same
-  // mechanism for both entry-templates and bodies. The picker recognizes
-  // BODY_REF_SENTINEL and switches to body-listing mode.
-  // r077/r081: map the body label (and its legacy alias) to the sentinel, but
-  // ONLY if no real template already claims that name — a real template always
-  // wins. This matters because the label was renamed to the Ephemeris workspace
-  // name ("Astronomical Body"), which is also what the deleted v1.4 built-in was
-  // called and a natural name for a user to recreate. Multi-template refs
-  // re-resolve from names on every load (see fix() below), so an unconditional
-  // assignment would silently hijack a user's same-named template every load.
+  const nameById = new Map();
+  templates.forEach(t => { if (t && t.id) { byName[t.name] = t.id; nameById.set(t.id, t.name); } });
   if (!(BODY_REF_LABEL in byName)) byName[BODY_REF_LABEL] = BODY_REF_SENTINEL;
   if (!("Celestial Body" in byName)) byName["Celestial Body"] = BODY_REF_SENTINEL; // legacy alias (pre-r077 label)
-  // ConLang is the Glossopoeia language-container sentinel (state.glossopoeia.
-  // conlangs), the supersede target for the retired Language / Glossary
-  // template. Same guard: a real user template named "ConLang" wins.
   if (!(CONLANG_REF_LABEL in byName)) byName[CONLANG_REF_LABEL] = SYNTH_TPL_CONLANG;
+  NODE_SOURCE_REGISTRY.forEach(src => {
+    if (allSources && !(src.name in byName)) byName[src.name] = src.id;
+    if (!nameById.has(src.id)) nameById.set(src.id, src.name);
+  });
+  return { byName, nameById };
+};
+
+// Resolve refTemplate (name) to actual template id at load time
+const resolveTemplateRefs = (templates) => {
+  const { byName, nameById } = refTargetIndex(templates);
+  // v1.7 r002: an id that points at a template or a registered source survives
+  // re-resolution (the multi-template branch of fix()).
+  const liveTargetIds = new Set(nameById.keys());
   const fix = (field, ownTemplate) => {
     // Legacy single-template ref: refTemplate (name) → refTemplateId (instance id).
     if (field.type === "entry-ref" && field.refTemplate && !field.refTemplateId) {
@@ -1000,10 +1022,15 @@ const resolveTemplateRefs = (templates) => {
     }
     // v1.3: multi-template ref: refTemplates (array of names) → refTemplatesId
     // (array of instance ids). Dropped entries where the template doesn't exist.
+    // v1.7 r002: an id that still resolves is never dropped here. Rebuilding the
+    // ids from the names alone took away a target the template builder had
+    // added (it saved ids without names), and migrate()'s cleanup then deleted
+    // every reference to it. Kept ids stay in their order; the names add
+    // whatever they resolve to.
     if (field.type === "entry-ref" && Array.isArray(field.refTemplates)) {
-      field.refTemplatesId = field.refTemplates
-        .map(n => byName[n])
-        .filter(Boolean);
+      const kept = (Array.isArray(field.refTemplatesId) ? field.refTemplatesId : []).filter(id => liveTargetIds.has(id));
+      const fromNames = field.refTemplates.map(n => byName[n]).filter(Boolean);
+      field.refTemplatesId = [...new Set([...kept, ...fromNames])];
     }
     // v1.3: refFilters fieldLabel → fieldId resolution per target template.
     // Built-in templates declare filters by field label (since field IDs are
@@ -1054,6 +1081,80 @@ const resolveTemplateRefs = (templates) => {
     return field;
   };
   templates.forEach(t => t.fields.forEach(f => fix(f, t)));
+};
+
+// v1.7 r002: a reference field's target names follow its target ids, so that
+// resolving the names again changes nothing. The template builder edits ids
+// and used to leave the names behind; resolveTemplateRefs then undid its
+// edits whenever it ran: a removed target came back, a field cleared to take
+// any template narrowed again, one switched back to a single target turned
+// multi-target again, and the target hint on the field's label (refHintFor,
+// which reads names first) went stale. (An added target dropped out, taking
+// the references to it along; resolveTemplateRefs now keeps any id that still
+// resolves.) saveTemplate runs this on the template being saved; migrate()
+// runs it once per world on every template. `templates` is the whole list,
+// for resolving names; `only`, when given, is the templates to change;
+// `legacy` resolves names as resolveTemplateRefs did before r002, to judge ids
+// it derived then (migrate()'s pass).
+//
+// Per entry-ref field, group subfields included:
+//   - A field holding an id that resolves to nothing (a deleted template, or a
+//     v1.4 world's retired Astronomical Body template) is left alone.
+//   - Multi-target (a non-empty id list): a name whose target is listed keeps
+//     its place; a name whose target isn't listed goes; a name that resolves
+//     to nothing stays, so a restored built-in is targeted again; a listed
+//     target without a name gets one at the end. A field with no name list
+//     keeps ids only. A single-target name or id left from before the field
+//     went multi-target goes: nothing reads it but the stale hint.
+//   - Cleared (an empty id list): the names go if any of them resolves.
+//   - Switched back to a single target (the id list and refFilters both null,
+//     as the builder's toggle leaves them): the names go. An id list that's
+//     null without that is the v1.5 Language / Glossary supersede waiting on
+//     a resolve, and stays for the v1.4 path to repair.
+//   - Single target: the name follows the id. Set to any template (the id
+//     null), a name that resolves goes and one that doesn't stays. A name
+//     with no id at all hasn't been resolved yet, and stays.
+const syncRefTargetNames = (templates, only, legacy) => {
+  const { byName, nameById } = refTargetIndex(templates, !legacy);
+  const sync = (f) => {
+    if (!f || typeof f !== "object") return;
+    if (f.type === "group" && Array.isArray(f.subfields)) f.subfields.forEach(sync);
+    if (f.type !== "entry-ref") return;
+    const ids = Array.isArray(f.refTemplatesId) ? f.refTemplatesId : null;
+    if (ids && ids.some(id => !nameById.has(id))) return;
+    if (f.refTemplateId && !nameById.has(f.refTemplateId)) return;
+    const names = Array.isArray(f.refTemplates) ? f.refTemplates : null;
+    if (ids && ids.length > 0) {
+      if (names) {
+        const listed = new Set(ids);
+        const named = new Set();
+        const next = [];
+        names.forEach(n => {
+          const id = byName[n];
+          if (id === undefined) next.push(n);
+          else if (listed.has(id) && !named.has(id)) { next.push(n); named.add(id); }
+        });
+        ids.forEach(id => { if (!named.has(id)) { next.push(nameById.get(id)); named.add(id); } });
+        f.refTemplates = next;
+      }
+      if ("refTemplate" in f) delete f.refTemplate;
+      if (f.refTemplateId) f.refTemplateId = null;
+      return;
+    }
+    if (ids) {
+      if (names && names.some(n => byName[n] !== undefined)) f.refTemplates = [];
+    } else if (names && f.refTemplatesId === null && f.refFilters === null) {
+      delete f.refTemplates;
+    }
+    if (f.refTemplate) {
+      if (f.refTemplateId) {
+        if (byName[f.refTemplate] !== f.refTemplateId) f.refTemplate = nameById.get(f.refTemplateId);
+      } else if (f.refTemplateId === null && byName[f.refTemplate] !== undefined) {
+        delete f.refTemplate;
+      }
+    }
+  };
+  (only || templates).forEach(t => { if (t && Array.isArray(t.fields)) t.fields.forEach(sync); });
 };
 
 const makeTemplateFromBuiltin = (bt) => ({
@@ -6265,6 +6366,21 @@ const migrate = (state) => {
     state.world.templateRenames[migKey] = true;
   });
 
+  // v1.7 r002: each reference field's target names brought into line with its
+  // ids, once per world, before anything below re-resolves them (the
+  // duplicate merge, the built-in backfills, the showWhen repair). A world
+  // saved before r002 holds the template builder's target edits in the ids
+  // alone, and resolving the stale names would undo them. After the template
+  // renames, so the names come out current. Names resolve as they did before
+  // r002, when the stored ids were derived: a name only r002 resolves (Lexeme,
+  // Map) dropped out then and reads as a name that resolves to nothing, kept
+  // for the next resolve to pick up. See syncRefTargetNames.
+  if (!state.migrations || typeof state.migrations !== "object") state.migrations = {};
+  if (!state.migrations.refTargetNamesSyncedV17) {
+    syncRefTargetNames(state.templates, null, true);
+    state.migrations.refTargetNamesSyncedV17 = true;
+  }
+
   // Deduplication pass: heal worlds that already received the duplicate from
   // the buggy migration order (rename ran AFTER backfill, producing two templates
   // with the same name). For each duplicate name, keep the template that has
@@ -11454,6 +11570,76 @@ const migrate = (state) => {
   // toggles, etc.) land in the same object as additional keys.
   if (!state.viewPrefs || typeof state.viewPrefs !== "object") state.viewPrefs = {};
 
+  // v1.7 r002: the entry-ref audit's flags 1 to 5 (docs/entry-ref-audit.md;
+  // Drak, 2026-10-24). Eleven built-in fields gain targets in worlds made
+  // before r002 (BUILTIN_TEMPLATES carries them for new worlds), once per world
+  // and field, names and ids together, never removing one. A single-target
+  // field becomes multi-target, as the builder's toggle makes it; a field open
+  // to every template stays open; a field holding an id that resolves to
+  // nothing is left alone, as syncRefTargetNames leaves it; a target template
+  // the user deleted isn't added, nor one whose name a template of the user's
+  // own holds; a field the user relabelled isn't found. The lists are edited
+  // here directly, because calling resolveTemplateRefs would re-derive every
+  // field in the world. After the v1.5 conversions, so the body target is the
+  // body source and not a v1.4 template about to be removed. Tracked per world
+  // (state.world.refTargetUpdates), as OPTIONS_UPDATES is.
+  {
+    const FAC = "Faction / Government / Organization";
+    const HOUSE = "House / Dynasty / Clan / Bloodline";
+    const REF_TARGET_ADDITIONS = [
+      { template: "Artifact / Object / Currency", field: "Current Owner", rev: "v1.7-r002", add: [FAC, HOUSE] },
+      { template: "Character", field: "Ally / Mentor", rev: "v1.7-r002", add: [FAC, "Culture / People", "Deity / Entity"] },
+      { template: "Character", field: "Enemies", rev: "v1.7-r002", add: [FAC, "Culture / People", "Deity / Entity"] },
+      { template: "Character", field: "Possessions", rev: "v1.7-r002", add: ["Weapon / Armor", "Vehicle"] },
+      { template: HOUSE, field: "Heirlooms", rev: "v1.7-r002", add: ["Weapon / Armor"] },
+      { template: "Religion / Belief System", field: "Founder", rev: "v1.7-r002", add: ["Deity / Entity"] },
+      { template: "Substance / Material", field: "Source / Where Found", rev: "v1.7-r002", add: ["Creature", BODY_REF_LABEL] },
+      { template: "Theme / Motif", field: "Associated Objects", rev: "v1.7-r002", add: ["Weapon / Armor", "Vehicle"] },
+      { template: "Vehicle", field: "Owner / Faction", rev: "v1.7-r002", add: ["Character", HOUSE] },
+      { template: "Vehicle", field: "Power Source", rev: "v1.7-r002", add: ["Substance / Material"] },
+      { template: "Weapon / Armor", field: "Previous Owners", rev: "v1.7-r002", add: [FAC, HOUSE] },
+    ];
+    if (!state.world.refTargetUpdates || typeof state.world.refTargetUpdates !== "object") {
+      state.world.refTargetUpdates = {};
+    }
+    const { byName, nameById } = refTargetIndex(state.templates);
+    const targetIdFor = (name) => {
+      const builtin = state.templates.find(t => t.name === name && t.origin === TEMPLATE_ORIGIN.BUILTIN);
+      if (builtin) return builtin.id;
+      if (state.templates.some(t => t.name === name)) return null;
+      const src = NODE_SOURCE_REGISTRY.find(s => s.name === name);
+      return src ? src.id : null;
+    };
+    REF_TARGET_ADDITIONS.forEach(({ template: tplName, field: fieldLabel, rev, add }) => {
+      const migKey = `${tplName}:${fieldLabel}:targets:${rev}`;
+      if (state.world.refTargetUpdates[migKey]) return;
+      state.world.refTargetUpdates[migKey] = true;
+      const tpl = state.templates.find(t => t.name === tplName && t.origin === TEMPLATE_ORIGIN.BUILTIN);
+      const f = tpl && (tpl.fields || []).find(x => x && x.label === fieldLabel && x.type === "entry-ref");
+      if (!f) return;
+      const multi = Array.isArray(f.refTemplatesId) && f.refTemplatesId.length > 0;
+      // A single target never resolved yet (no id key at all) counts by its name.
+      const single = f.refTemplateId
+        || ((f.refTemplate && !("refTemplateId" in f)) ? byName[f.refTemplate] : undefined);
+      const ids = multi ? [...f.refTemplatesId] : (single ? [single] : []);
+      if (ids.length === 0) return;
+      if (ids.some(id => !nameById.has(id))) return;
+      const names = (multi && Array.isArray(f.refTemplates)) ? [...f.refTemplates] : ids.map(id => nameById.get(id));
+      add.forEach(name => {
+        const id = targetIdFor(name);
+        if (!id || ids.includes(id)) return;
+        ids.push(id);
+        names.push(name);
+      });
+      f.refTemplatesId = ids;
+      f.refTemplates = names;
+      if (!multi) {
+        f.refTemplateId = null;
+        if ("refTemplate" in f) delete f.refTemplate;
+      }
+    });
+  }
+
   // Normalize each entry's field values via the shared helper. This catches
   // legacy entry-ref shapes, array-shaped tags fields, malformed name-history
   // rows, and calendar-date zombies — all in one pass.
@@ -13109,6 +13295,8 @@ function App() {
       cleaned.id = `tpl-${slugify(cleaned.name)}-${genId().slice(-4)}`;
       cleaned.origin = TEMPLATE_ORIGIN.USER;
       ensureIds(cleaned.fields);
+      // v1.7 r002: target names follow target ids (see syncRefTargetNames).
+      syncRefTargetNames([...state.templates, cleaned], [cleaned]);
       updateState(s => ({ ...s, templates: [...s.templates, cleaned] }));
       setActiveTemplateId(cleaned.id);
     } else {
@@ -13117,6 +13305,7 @@ function App() {
       // future canonical migrations). If they're editing their own template,
       // it stays user-origin.
       ensureIds(cleaned.fields);
+      syncRefTargetNames(state.templates.map(t => t.id === activeTemplateId ? cleaned : t), [cleaned]);
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === activeTemplateId ? cleaned : t) }));
     }
     clearDraftAndStorage(); setView("list");
