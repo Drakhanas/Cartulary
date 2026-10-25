@@ -79,23 +79,24 @@ const MAP_REF_LABEL = "Map";
 // Fabula's record kinds (v1.7 r006; docs/fabula-spec.md, section 3). Each
 // has the array in state.fabula that holds its records (slice) and a sentinel
 // id, the way Glossopoeia's kinds have theirs, so a reference field can name a
-// kind of Fabula record. None is registered: the registry entries come with
-// the first cut that shows Fabula, together with Concordance's single Fabula
-// toggle and a template builder that offers only sources marked eligible
-// (Drak, 2026-10-25). Until then the ids appear only in Fabula's seeded
-// schemas (fabulaSeedSchemas).
+// kind of Fabula record. They joined the registry with the first cut that
+// shows Fabula, v1.7's r007, as sources that aren't eligible as reference
+// targets, together with Concordance's single Fabula toggle and a template
+// builder that offers only eligible sources (Drak, 2026-10-25). label is the
+// kind's own name, where name says it's Fabula's; color is its node's in
+// Concordance.
 const FABULA_KINDS = [
-  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)" },
-  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)" },
-  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)" },
-  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)" },
-  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)" },
-  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)" },
-  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)" },
-  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)" },
-  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)" },
-  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)" },
-  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)" },
+  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)",           label: "Corpus",           color: "#d9a066" },
+  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)",            label: "Story",            color: "#e6c27a" },
+  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)",             label: "Cast",             color: "#d98f8f" },
+  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)",              label: "Arc",              color: "#c97b9b" },
+  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)",     label: "Relationship",     color: "#b98bc0" },
+  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)",       label: "Plot Point",       color: "#8fa8d9" },
+  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)", label: "Promise & Payoff", color: "#7fb8c2" },
+  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)",       label: "Part / Act",       color: "#a3b87f" },
+  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)",          label: "Chapter",          color: "#c2b47f" },
+  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)",            label: "Scene",            color: "#d6a07a" },
+  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)",    label: "Research Note",    color: "#a3a3ad" },
 ];
 
 const NODE_SOURCE_REGISTRY = [
@@ -301,6 +302,23 @@ const NODE_SOURCE_REGISTRY = [
       return edges;
     },
   },
+  // v1.7 r007: Fabula's record kinds (FABULA_KINDS), one source each. Not
+  // eligible: no template's field can point at one, and the template builder
+  // offers eligible sources only. group puts all eleven behind one toggle in
+  // Concordance's filter, named by groupName. Their records and edges are read
+  // beside Fabula's view (fabulaRegistryInstances, fabulaRegistryEdges).
+  ...FABULA_KINDS.map(k => ({
+    id: k.id,
+    name: k.name,
+    color: k.color,
+    icon: "\u2042", // ⁂
+    refEligible: false,
+    group: "fabula",
+    groupName: "Fabula",
+    getInstances: (state) => fabulaRegistryInstances(state, k),
+    getColor: () => k.color,
+    getEdges: (state) => fabulaRegistryEdges(state, k),
+  })),
 ];
 
 // Synthetic template objects, shaped like BUILTIN_TEMPLATES entries so the
@@ -317,6 +335,8 @@ const getRegisteredSyntheticTemplates = () =>
     origin: TEMPLATE_ORIGIN.BUILTIN,
     synthetic: true,
     refEligible: !!src.refEligible,
+    group: src.group || null,
+    groupName: src.groupName || null,
     fields: [],
   }));
 

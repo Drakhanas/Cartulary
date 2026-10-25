@@ -96,8 +96,9 @@ function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
   const filters = field.refFilters || {};
   // v1.5 r077: registered node types (Astronomical Body, future ConLang) are
   // offered as ref targets alongside real templates. Checking one stores its
-  // synthetic-template id (= the body sentinel) into refTemplatesId.
-  const targetTemplates = [...templates, ...getRegisteredSyntheticTemplates()];
+  // synthetic-template id (= the body sentinel) into refTemplatesId. Since
+  // v1.7 r007 only the sources marked eligible: Fabula's kinds aren't.
+  const targetTemplates = [...templates, ...getRegisteredSyntheticTemplates().filter(t => t.refEligible)];
   const toggleTpl = (tplId, tplName) => {
     const nextChecked = new Set(checked);
     const nextFilters = { ...filters };
@@ -284,7 +285,7 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                     <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={sf.refTemplateId || ""} onChange={e => onUpdate(parentPath, sf.id, { refTemplateId: e.target.value || null })}>
                       <option value="">Any template</option>
                       {(templates || []).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
-                      {getRegisteredSyntheticTemplates().map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                      {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                     </select>
                   )}
                   <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={sf.relationKind || ""} onChange={e => onUpdate(parentPath, sf.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
@@ -936,7 +937,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
                 <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={field.refTemplateId || ""} onChange={e => updateField(field.id, { refTemplateId: e.target.value || null })}>
                   <option value="">Any template</option>
                   {templates.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
-                  {getRegisteredSyntheticTemplates().map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                  {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                 </select>
               )}
               <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={field.relationKind || ""} onChange={e => updateField(field.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">

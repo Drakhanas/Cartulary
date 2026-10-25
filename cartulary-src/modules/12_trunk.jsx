@@ -29,6 +29,13 @@ function App() {
   const [mapDraft, setMapDraft] = useState(null);
   const mapEditorApiRef = useRef(null); // what the open map editor lets this component call (r046: Cancel's restore)
   const initialMapDraftRef = useRef(null);
+  // Fabula session state (v1.7 r007), the map pattern: activeCorpusId null =
+  // the index, an id = that corpus's page; corpusDraft null = view mode, an
+  // object = its fields in edit (a working copy, committed on Save). A
+  // corpusDraft whose id isn't in state.fabula.corpora is a new corpus.
+  const [activeCorpusId, setActiveCorpusId] = useState(null);
+  const [corpusDraft, setCorpusDraft] = useState(null);
+  const initialCorpusDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -129,7 +136,9 @@ function App() {
   // User preferences (theme + font size + view order + backup reminder state).
   // Persisted separately from world state. lastExportAt is when the user last
   // downloaded a JSON backup; the backup reminder uses it as its anchor.
-  const DEFAULT_VIEW_ORDER = ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"];
+  // v1.7 r007 (Drak, 2026-10-25): Fabula after Linea, and Kalendarium below
+  // Ephemeris.
+  const DEFAULT_VIEW_ORDER = ["family", "fabula", "stemma", "ephemeris", "kalendarium", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"];
   // Prior canonical orderings of DEFAULT_VIEW_ORDER. When a user's stored
   // viewOrder matches any of these (after filter-to-known), they haven't
   // customized — uplift them to the current canonical order so default-order
@@ -146,6 +155,8 @@ function App() {
     ["family", "stemma", "kalendarium", "cartographia", "graph", "timeline", "chronometrics"],
     // v1.5 pre-Glossopoeia order (Ephemeris in, Glossopoeia not yet)
     ["family", "stemma", "kalendarium", "ephemeris", "cartographia", "graph", "timeline", "chronometrics"],
+    // v1.5 through v1.7 r006 (Glossopoeia in, Fabula not yet)
+    ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"],
   ];
   const [prefs, setPrefs] = useState({
     theme: "default",
@@ -749,21 +760,23 @@ function App() {
     if (entryDraft && JSON.stringify(entryDraft) !== initialEntryDraftRef.current) return true;
     if (tplDraft && JSON.stringify(tplDraft) !== initialTplDraftRef.current) return true;
     if (mapDraft && JSON.stringify(mapDraft) !== initialMapDraftRef.current) return true;
+    if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
     return false;
   };
 
   draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
-    const which = mapDraft ? "this map" : entryDraft ? "this entry" : "this template";
+    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : entryDraft ? "this entry" : "this template";
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
+    initialCorpusDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -783,7 +796,7 @@ function App() {
   const selectView = (v) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null);
+    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null);
     clearDraftAndStorage(); setSearch(""); setView(v);
   };
 
@@ -815,6 +828,19 @@ function App() {
       setMapDraft(null); initialMapDraftRef.current = null;
       setActiveMapId(id);
       setView("cartographia");
+      return;
+    }
+    // v1.7 r007: Fabula fallback. A corpus opens on its page; a story, whose
+    // page comes in r008, opens its corpus's page, or the index when it's in
+    // no corpus.
+    const fabCorpora = (state.fabula && Array.isArray(state.fabula.corpora)) ? state.fabula.corpora : [];
+    const fabStory = (state.fabula && Array.isArray(state.fabula.stories)) ? state.fabula.stories.find(st => st && st.id === id) : null;
+    if (fabStory || fabCorpora.some(c => c && c.id === id)) {
+      const home = fabStory ? fabCorpora.find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(id)) : null;
+      setActiveTagFilter(null);
+      setCorpusDraft(null); initialCorpusDraftRef.current = null;
+      setActiveCorpusId(fabStory ? (home ? home.id : null) : id);
+      setView("fabula");
       return;
     }
     // v1.5 r004: body fallback. Bodies are not entries — they live in
@@ -1121,6 +1147,140 @@ function App() {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
     }
+  };
+
+  // v1.7 r007: Fabula's corpora and stories (docs/fabula-spec.md, section 4).
+  // A corpus's page follows the map's: a new corpus is a draft until Save,
+  // and its fields change through Edit, Save, and Cancel. Its reading order
+  // and the stories in it change at once, as the index's actions do. A
+  // corpus's membership is its storyIds; a story's corpus is stored nowhere
+  // else, and each change takes the story out of every corpus first.
+  const updateFabula = (fn) => updateState(s => ({ ...s, fabula: fn(s.fabula || {}) }));
+  const fabArr = (fab, slice) => (Array.isArray(fab[slice]) ? fab[slice] : []);
+
+  const openCorpus = (id) => {
+    if (!confirmDiscardDraft()) return;
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(id);
+    setView("fabula");
+  };
+
+  const closeCorpusToIndex = () => {
+    if (!confirmDiscardDraft()) return;
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(null);
+  };
+
+  const createCorpus = () => {
+    if (isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const id = `fab-corpus-${genId()}`;
+    const draft = { id, name: "", fields: {} };
+    setActiveCorpusId(id);
+    setCorpusDraft(draft);
+    initialCorpusDraftRef.current = JSON.stringify(draft);
+    setView("fabula");
+  };
+
+  const editCorpus = () => {
+    const rec = fabArr(state.fabula || {}, "corpora").find(c => c.id === activeCorpusId);
+    if (!rec || isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = { id: rec.id, name: rec.name || "", fields: JSON.parse(JSON.stringify(rec.fields || {})) };
+    setCorpusDraft(draft);
+    initialCorpusDraftRef.current = JSON.stringify(draft);
+  };
+
+  const saveCorpus = () => {
+    if (!corpusDraft || isLocked) return;
+    const name = (corpusDraft.name || "").trim();
+    if (!name) return;
+    const now = isoNow();
+    updateFabula(fab => {
+      const arr = fabArr(fab, "corpora");
+      const old = arr.find(c => c.id === corpusDraft.id);
+      const rec = { ...(old || { storyIds: [], createdAt: now }), id: corpusDraft.id, name, fields: corpusDraft.fields || {}, updatedAt: now };
+      return { ...fab, corpora: old ? arr.map(c => c.id === rec.id ? rec : c) : [...arr, rec] };
+    });
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(corpusDraft.id);
+    flash("Saved");
+  };
+
+  const cancelCorpusEdit = () => {
+    if (!confirmDiscardDraft()) return;
+    const existed = fabArr(state.fabula || {}, "corpora").some(c => c.id === activeCorpusId);
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    if (!existed) setActiveCorpusId(null); // a new corpus, never saved: back to the index
+  };
+
+  // Deleting a corpus leaves its stories in Fabula, in no corpus.
+  const deleteCorpus = (id) => {
+    if (isLocked) return;
+    updateFabula(fab => ({ ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) }));
+    if (activeCorpusId === id) {
+      setActiveCorpusId(null);
+      setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    }
+  };
+
+  // A new story, in a corpus (at the end of its reading order) or in none.
+  // Returns its id, so the row it lands in can open its title for typing.
+  const createStory = (corpusId) => {
+    if (isLocked) return null;
+    const id = `fab-story-${genId()}`;
+    const now = isoNow();
+    updateFabula(fab => ({
+      ...fab,
+      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: {}, outline: [], createdAt: now, updatedAt: now }],
+      corpora: fabArr(fab, "corpora").map(c => c.id === corpusId ? { ...c, storyIds: [...(c.storyIds || []), id], updatedAt: now } : c),
+    }));
+    return id;
+  };
+
+  const renameStory = (id, name) => {
+    const n = (name || "").trim();
+    if (isLocked || !n) return;
+    updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === id ? { ...st, name: n, updatedAt: isoNow() } : st) }));
+  };
+
+  const deleteStory = (id) => {
+    if (isLocked) return;
+    updateFabula(fab => ({
+      ...fab,
+      stories: fabArr(fab, "stories").filter(st => st.id !== id),
+      corpora: fabArr(fab, "corpora").map(c => (c.storyIds || []).includes(id) ? { ...c, storyIds: c.storyIds.filter(x => x !== id) } : c),
+    }));
+  };
+
+  // The Corpus dropdown: into a corpus, at the end of its reading order, or
+  // into none (corpusId null).
+  const setStoryCorpus = (storyId, corpusId) => {
+    if (isLocked) return;
+    const now = isoNow();
+    updateFabula(fab => ({
+      ...fab,
+      corpora: fabArr(fab, "corpora").map(c => {
+        const ids = (c.storyIds || []).filter(x => x !== storyId);
+        if (c.id === corpusId) return { ...c, storyIds: [...ids, storyId], updatedAt: now };
+        return ids.length === (c.storyIds || []).length ? c : { ...c, storyIds: ids, updatedAt: now };
+      }),
+      stories: fabArr(fab, "stories").map(st => st.id === storyId ? { ...st, updatedAt: now } : st),
+    }));
+  };
+
+  // The reading order: a story to a new place in its corpus.
+  const moveCorpusStory = (corpusId, storyId, toIndex) => {
+    if (isLocked) return;
+    updateFabula(fab => ({
+      ...fab,
+      corpora: fabArr(fab, "corpora").map(c => {
+        if (c.id !== corpusId || !(c.storyIds || []).includes(storyId)) return c;
+        const ids = c.storyIds.filter(x => x !== storyId);
+        ids.splice(Math.max(0, Math.min(ids.length, toIndex)), 0, storyId);
+        return { ...c, storyIds: ids, updatedAt: isoNow() };
+      }),
+    }));
   };
 
   const openEditEntry = () => {
@@ -3425,6 +3585,13 @@ function App() {
       headerTitle = rec?.name || "Map";
     } else headerTitle = "Cartographia";
   }
+  else if (view === "fabula") {
+    if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
+    else if (activeCorpusId) {
+      const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+      headerTitle = rec?.name || "Corpus";
+    } else headerTitle = "Fabula";
+  }
   else if (view === "ephemeris") headerTitle = "Ephemeris";
   else if (view === "glossopoeia") headerTitle = "Glossopoeia";
   else if (view === "home") headerTitle = "Home";
@@ -3560,6 +3727,18 @@ function App() {
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
+              </>}
+              {view === "fabula" && corpusDraft && <>
+                <button className="btn btn-ghost" onClick={cancelCorpusEdit}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveCorpus} disabled={!corpusDraft?.name?.trim()}>Save</button>
+              </>}
+              {view === "fabula" && activeCorpusId && !corpusDraft && <>
+                {!isLocked && <button className="btn btn-danger" onClick={() => {
+                  const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+                  if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
+                }}>Delete</button>}
+                {!isLocked && <button className="btn btn-ghost" onClick={editCorpus}>Edit</button>}
+                <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back</button>
               </>}
               {(view === "tpl-build" || view === "tpl-edit") && <>
                 {view === "tpl-edit" && tplDraft && tplDraft.origin === TEMPLATE_ORIGIN.BUILTIN && (
@@ -3836,6 +4015,78 @@ function App() {
           {view === "ephemeris" && (
             <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
           )}
+          {view === "fabula" && !activeCorpusId && !corpusDraft && (
+            <FabulaIndexView
+              state={state}
+              isLocked={isLocked}
+              onOpenCorpus={openCorpus}
+              onCreateCorpus={createCorpus}
+              onCreateStory={createStory}
+              onRenameStory={renameStory}
+              onDeleteStory={deleteStory}
+              onSetStoryCorpus={setStoryCorpus}
+            />
+          )}
+          {view === "fabula" && corpusDraft && (
+            <EntryForm
+              draft={corpusDraft}
+              template={fabulaTemplate(state, "corpus")}
+              entries={state.entries}
+              templates={state.templates}
+              bodies={state.celestialBodies}
+              registeredNodes={getRegisteredGraphNodes(state)}
+              onChange={setCorpusDraft}
+              showSecrets={showSecrets}
+              imageFolder={state.world.imageFolder}
+              allTags={allTags}
+              dirHandle={dirHandle}
+              calendar={getCalendar(state, null)}
+              primaryCalendar={state.world.calendar}
+              additionalCalendars={[]}
+              selfEntryId={corpusDraft.id}
+              flash={flash}
+              hideTags
+            />
+          )}
+          {view === "fabula" && activeCorpusId && !corpusDraft && (() => {
+            const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+            if (!rec) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--text-dim)" }}>
+                  This corpus no longer exists.
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back to Fabula</button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <EntryView
+                entry={rec}
+                template={fabulaTemplate(state, "corpus")}
+                templates={state.templates}
+                entries={state.entries}
+                onOpenEntry={openEntryFromAnywhere}
+                onSelectTag={selectTag}
+                showSecrets={showSecrets}
+                imageFolder={state.world.imageFolder}
+                dirHandle={dirHandle}
+                calendar={getCalendar(state, null)}
+                state={state}
+                onUpdateViewPrefs={updateViewPrefs}
+                canvasSlot={
+                  <FabulaReadingOrder
+                    state={state}
+                    corpus={rec}
+                    isLocked={isLocked}
+                    onMoveStory={moveCorpusStory}
+                    onCreateStory={createStory}
+                    onRenameStory={renameStory}
+                  />
+                }
+              />
+            );
+          })()}
           {view === "glossopoeia" && (
             <GlossopoeiaView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} flash={flash} />
           )}
@@ -4620,6 +4871,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
     ephemeris:     { id: "ephemeris",     icon: "☉", label: "Ephemeris" },
     glossopoeia:   { id: "glossopoeia",   icon: "\u03b1", label: "Glossopoeia" },
     cartographia:  { id: "cartographia",  icon: "▦", label: "Cartographia" },
+    fabula:        { id: "fabula",        icon: "\u2042", label: "Fabula" },
   };
 
   // Filter map-kind templates out of the visible Templates list — they live
@@ -4638,7 +4890,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
     .map((t, originalIdx) => ({ t, originalIdx }))
     .filter(({ t }) => t.kind !== "map" && (t.origin === "builtin" || !packedTemplateIds.has(t.id)));
 
-  const orderedViews = (viewOrder || ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"])
+  const orderedViews = (viewOrder || ["family", "fabula", "stemma", "ephemeris", "kalendarium", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"])
     .map(id => VIEW_DEFS[id])
     .filter(Boolean);
 

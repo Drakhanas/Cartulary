@@ -605,6 +605,13 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     setEnabledTemplates(next);
   };
 
+  // v1.7 r007: a group of sources (Fabula's eleven kinds) toggles as one.
+  const toggleGroup = (ids, on) => {
+    const next = new Set(enabledTemplates);
+    ids.forEach(id => { if (on) next.delete(id); else next.add(id); });
+    setEnabledTemplates(next);
+  };
+
   const allOn = () => setEnabledTemplates(new Set([...state.templates.map(t => t.id), ...getRegisteredSyntheticTemplates().map(t => t.id)]));
   const allOff = () => setEnabledTemplates(new Set());
 
@@ -997,7 +1004,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
               <a href="#" onClick={(e) => { e.preventDefault(); allOff(); }} style={{ color: "var(--text-dim)", textDecoration: "none" }}>none</a>
             </span>
           </div>
-          {[...state.templates, ...getRegisteredSyntheticTemplates()].map(t => (
+          {[...state.templates, ...getRegisteredSyntheticTemplates().filter(t => !t.group)].map(t => (
             <label key={t.id} className="graph-filter-row">
               <input type="checkbox" checked={enabledTemplates.has(t.id)} onChange={() => toggleTemplate(t.id)} />
               <span className="graph-filter-color" style={{ background: t.color }} />
@@ -1005,6 +1012,21 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
               <span className="graph-filter-count">{perTemplateCount[t.id] || 0}</span>
             </label>
           ))}
+          {Object.values(getRegisteredSyntheticTemplates().filter(t => t.group).reduce((acc, t) => {
+            (acc[t.group] = acc[t.group] || []).push(t);
+            return acc;
+          }, {})).map(members => {
+            const ids = members.map(m => m.id);
+            const on = ids.every(id => enabledTemplates.has(id));
+            return (
+              <label key={`group-${members[0].group}`} className="graph-filter-row">
+                <input type="checkbox" checked={on} onChange={() => toggleGroup(ids, on)} />
+                <span className="graph-filter-color" style={{ background: members[0].color }} />
+                <span className="graph-filter-name">{members[0].groupName || members[0].group}</span>
+                <span className="graph-filter-count">{ids.reduce((n, id) => n + (perTemplateCount[id] || 0), 0)}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
 

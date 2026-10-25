@@ -144,7 +144,7 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
@@ -155,10 +155,10 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
       {!previewMode && (
         template.ipaName
           ? <IpaTextInput value={draft.name} onChange={(nm) => onChange({ ...draft, name: nm })} placeholder={`${template.name} name...`} ipaSymbols={ipaSymbols} className="form-title-input" autoFocus />
-          : <input className="form-title-input" placeholder={`${template.name} name...`} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
+          : <input className="form-title-input" placeholder={`${template.name} name...`} title={template.nameHelp || undefined} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
       )}
 
-      {!previewMode && (
+      {!previewMode && !hideTags && (
         <div className="form-tags-bar">
           <label className="form-label">Tags</label>
           <input className="input form-tags-input" placeholder="comma-separated tags..." value={(draft.tags || []).join(", ")} onChange={e => onChange({ ...draft, tags: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} list="all-tags" />
