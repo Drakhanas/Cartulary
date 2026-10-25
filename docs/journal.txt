@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, and r005's Other on multi-selects) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, and r006's slice) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -570,3 +570,19 @@ control says the probe meant something: fifteen checks passed in r005, and the s
 r004 failed thirteen of them. Reading the help for it turned up a line about marking fields
 half-width, wrong since v1.3, which I filed instead of fixing, since it wasn't the cut's. Drak
 passed it, and the tables come next, the Corpus first, by itself.
+
+The tables went better one at a time. Drak passed all fifteen in an afternoon, and most of
+his changes were his own: the theme pair above the conflict, Sci-Fantasy, a carrier big
+enough to be a setting. What I brought him was mostly my own mess. My spec said a story keeps
+its threads in a field that no version of my table had. And Research Note's Applies To, set to
+any template, turned out to offer world entries and nothing else, which I only knew after
+reading the picker's code instead of trusting the word "any".
+
+Planning r006 turned up one more of mine. My note in the roadmap said Fabula's first cut
+would add modules, and the edit gate I'd be cutting it under refuses a cut that adds a file.
+Drak took the old way round: grow it inside a trunk arc, carve it out later, the way the map
+editor went. The cut itself has nothing on screen, so the probe had to carry it. It reads its
+expectations from the tables Drak passed, not from my code, and it opens an r006 world in the
+v1.6.1 final, which rebuilt from its tag to the shipped hash, to show the way back keeps
+Fabula's data. Thirty-five checks passed, and r005 failed thirty. Drak passed it a little
+before six.

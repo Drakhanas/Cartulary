@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44574,
-    "raw_body_lines": 44574,
-    "canonical_lines": 42378,
-    "decl_count": 517,
+    "total_lines": 44846,
+    "raw_body_lines": 44846,
+    "canonical_lines": 42645,
+    "decl_count": 521,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r005-body.jsx"
+    "active_anchor": "reference-r006-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44574,
+      "value": 44846,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 517,
+      "value": 521,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 42378,
+      "value": 42645,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44574,
+      "value": 44846,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 77,
+      "value": 78,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2328318,
+      "value": 2348701,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-three",
-        33
+        "thirty-four",
+        34
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,17 @@
       "value": 5241,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r005": {
-      "value": "cd6875aa3a5295db",
-      "pattern": "working[^\\n]{0,40}at r005 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r006": {
+      "value": "046261e6caccc29f",
+      "pattern": "working[^\\n]{0,40}at r006 hashes to sha256 `([0-9a-f]{16})`"
+    },
+    "header_pairs_cold_start": {
+      "value": 78,
+      "pattern": "header pairs at (\\d+)"
+    },
+    "header_pairs_verify": {
+      "value": 78,
+      "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     }
   },
   "assertions": [
@@ -495,7 +503,7 @@
     },
     {
       "file": "10_migrate.jsx",
-      "line": 6079,
+      "line": 6083,
       "contains": "marked.use({"
     },
     {
@@ -512,6 +520,16 @@
       "file": "08_export-layer.jsx",
       "line": 1523,
       "contains": "function HtmlExportModal"
+    },
+    {
+      "file": "22_trunk.jsx",
+      "line": 87,
+      "contains": "const FABULA_KINDS"
+    },
+    {
+      "file": "27_trunk.jsx",
+      "line": 250,
+      "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
     }
   ],
   "spans": {
@@ -649,10 +667,10 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r005-body.jsx",
-      "reference-r005-layout.json",
-      "e70e86fef21544cd",
-      "cd6875aa3a5295db",
+      "reference-r006-body.jsx",
+      "reference-r006-layout.json",
+      "b2a8ba4e362f54bd",
+      "046261e6caccc29f",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -676,7 +694,11 @@
       "755e95a722506f5e",
       "v1.7_r005",
       "MultiSelectEditor",
-      "One item per message"
+      "One item per message",
+      "v1.7_r006",
+      "ensureFabulaSlice",
+      "FABULA_KINDS",
+      "d9125ed013be5641"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -745,12 +767,17 @@
       "16337a1350d7e7e6",
       "0731070bf5555171",
       "On v1.7 r004 verification",
-      "10_migrate:6079",
+      "10_migrate:6083",
       "reference-r005-body.jsx",
-      "reference-r005-layout.json",
       "e70e86fef21544cd",
       "cd6875aa3a5295db",
-      "On v1.7 r005 verification"
+      "On v1.7 r005 verification",
+      "reference-r006-body.jsx",
+      "reference-r006-layout.json",
+      "b2a8ba4e362f54bd",
+      "046261e6caccc29f",
+      "On v1.7 r006 verification",
+      "FABULA_KINDS"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -780,7 +807,11 @@
       "v1.7_r005",
       "cd6875aa3a5295db",
       "e70e86fef21544cd",
-      "MultiSelectEditor"
+      "MultiSelectEditor",
+      "v1.7_r006",
+      "046261e6caccc29f",
+      "b2a8ba4e362f54bd",
+      "ensureFabulaSlice"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -810,7 +841,8 @@
       "A map template of the user's own, promoted to Cartographia before r004",
       "v1.7_r005",
       "Other on multi-selects: done in r005",
-      "CI's two warnings"
+      "CI's two warnings",
+      "v1.7_r006"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -880,7 +912,8 @@
       "r002",
       "r003",
       "r004",
-      "r005"
+      "r005",
+      "r006"
     ]
   }
 }
