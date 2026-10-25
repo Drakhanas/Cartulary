@@ -120,7 +120,8 @@ const renderFieldForMd = (field, val, ctx) => {
       const isSpouse = field.relationKind === SPOUSE_KIND;
       const fmt = (d) => d && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, ctx.calendar)}` : null;
       const rendered = items.map(it => {
-        const ref = entryById[it.id];
+        // v1.7 r003: a body, a Glossopoeia record, or a map writes its name too.
+        const ref = entryById[it.id] || (ctx.nodeById && ctx.nodeById[it.id]);
         if (!ref) return "(missing entry)";
         const labelPart = it.label ? ` (called "${it.label}")` : "";
         const statusPart = it.status && it.status !== "active" ? ` [${it.status}]` : "";
@@ -170,7 +171,7 @@ const renderFieldForMd = (field, val, ctx) => {
         const cell = g.cells[rid]?.[cid];
         if (gridCellIsEmpty(cell)) return "";
         const { type, value: cv } = cell;
-        if (type === "entry-ref") { const ref = entryById[cv]; return ref ? ref.name : "(missing entry)"; }
+        if (type === "entry-ref") { const ref = entryById[cv] || (ctx.nodeById && ctx.nodeById[cv]); return ref ? ref.name : "(missing entry)"; }
         if (type === "calendar-date") return cv && cv.year != null ? (cv.approximate ? "~" : "") + formatCalendarDate(cv, ctx.calendar) : "";
         if (type === "calendar-date-range") {
           const s = cv.start && cv.start.year != null ? (cv.start.approximate ? "~" : "") + formatCalendarDate(cv.start, ctx.calendar) : "?";
@@ -271,7 +272,7 @@ const buildSingleEntryMarkdown = (entry, template, state, options = { includeSec
   const entryById = Object.fromEntries(entries.map(e => [e.id, e]));
   const entryByLowerName = {};
   entries.forEach(e => { if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e; });
-  const ctx = { entryById, entryByLowerName, calendar: world.calendar, options, imageManifest: null };
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest: null };
 
   const out = [];
   out.push(`# ${entry.name || "(unnamed)"}`);
@@ -503,7 +504,7 @@ const buildMarkdownExport = (state, options = { includeSecrets: false }) => {
     if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e;
   });
   const imageManifest = options.collectImages ? { bySource: {}, entries: [], inlineCount: 0 } : null;
-  const ctx = { entryById, entryByLowerName, calendar: world.calendar, options, imageManifest };
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest };
 
   const out = [];
   // Header block
@@ -737,6 +738,27 @@ const formatDateForHtml = (date, ctx) => {
   return (v.approximate || date.approximate ? "~" : "") + formatCalendarDate(v, ctx.displayCalendar);
 };
 
+// v1.7 r003: the registered records (bodies, Glossopoeia records, maps) by id,
+// for an export's context, so a reference to one resolves as an entry's does.
+const registeredNodeIndex = (state) =>
+  Object.fromEntries(getRegisteredGraphNodes(state).map(n => [n.id, n]));
+
+// v1.7 r003: one reference value in the HTML export. An entry links to its
+// article, and so does a map, whose article reuses the entry-<id> scheme; a
+// body or a Glossopoeia record has no article, so it's its name, titled with
+// its type; an id nothing has is the broken-link span it always was.
+const refLinkHtml = (id, ctx) => {
+  const ref = ctx.entryById[id];
+  if (ref) return `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`;
+  const node = ctx.nodeById ? ctx.nodeById[id] : null;
+  if (node && node.templateId === SYNTH_TPL_MAP) return `<a class="entry-ref-link" href="#entry-${htmlEscape(node.id)}">${htmlEscape(node.name)}</a>`;
+  if (node) {
+    const src = getRegisteredSourceById(node.templateId);
+    return `<span class="entry-ref-record" title="${htmlEscape(src ? src.name : "")}">${htmlEscape(node.name)}</span>`;
+  }
+  return `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
+};
+
 // Render one field's value as HTML. Mirrors renderFieldForMd's structure but
 // emits HTML strings (already escaped) and resolves cross-references as anchor
 // hrefs. Returns null when the value is empty / should be suppressed.
@@ -827,10 +849,7 @@ const renderFieldForHtml = (field, val, ctx) => {
         : (field.multi ? (Array.isArray(val) ? val.filter(Boolean) : []) : (val ? [val] : [])).map(id => ({ id }));
       const isSpouse = field.relationKind === SPOUSE_KIND;
       const rendered = items.map(it => {
-        const ref = entryById[it.id];
-        const linkOrSpan = ref
-          ? `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`
-          : `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
+        const linkOrSpan = refLinkHtml(it.id, ctx);
         const labelPart = it.label ? ` <span class="entry-ref-label">(called &ldquo;${htmlEscape(it.label)}&rdquo;)</span>` : "";
         const statusPart = it.status && it.status !== "active" ? ` <span class="entry-ref-status">[${htmlEscape(it.status)}]</span>` : "";
         let datesPart = "";
@@ -889,12 +908,7 @@ const renderFieldForHtml = (field, val, ctx) => {
         const cell = g.cells[rid]?.[cid];
         if (gridCellIsEmpty(cell)) return "";
         const { type, value: cv } = cell;
-        if (type === "entry-ref") {
-          const ref = entryById[cv];
-          return ref
-            ? `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`
-            : `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
-        }
+        if (type === "entry-ref") return refLinkHtml(cv, ctx);
         if (type === "calendar-date") return cv && cv.year != null ? htmlEscape(formatDateForHtml(cv, ctx)) : "";
         if (type === "calendar-date-range") {
           const s = cv.start && cv.start.year != null ? htmlEscape(formatDateForHtml(cv.start, ctx)) : "?";
@@ -1351,6 +1365,7 @@ const buildHtmlExport = async (state, options, dirHandle) => {
   // Entries' renderArticleHtml call computes entryCal and overrides ctx.entryCalendar.
   const baseCtx = {
     entryById,
+    nodeById: registeredNodeIndex(state),
     entryByLowerName,
     options,
     currentMomentDay,

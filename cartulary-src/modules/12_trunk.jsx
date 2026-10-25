@@ -1106,10 +1106,17 @@ function App() {
 
   const deleteMap = (id) => {
     if (isLocked) return;
-    // Maps are leaf nodes (nothing entry-refs them), so no ref scrub is needed.
-    // Any lingering concordance position keyed by this id is dropped on next
-    // load by migrate's position validation; live, it simply stops rendering.
-    updateState(s => ({ ...s, cartographia: (s.cartographia || []).filter(m => m.id !== id) }));
+    // v1.7 r003: maps are reference targets, so the delete clears references
+    // to this one from every entry's fields, groups and grids included, as a
+    // body's delete does; both confirmations count them first
+    // (mapDeleteMessage). Any lingering concordance position keyed by this id
+    // is dropped on next load by migrate's position validation; live, it
+    // simply stops rendering.
+    updateState(s => ({
+      ...s,
+      cartographia: (s.cartographia || []).filter(m => m.id !== id),
+      entries: scrubEntryRefs(s.entries, s.templates, new Set([id])),
+    }));
     if (activeMapId === id) {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
@@ -3549,7 +3556,7 @@ function App() {
               {view === "cartographia" && activeMapId && !mapDraft && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = (state.cartographia || []).find(m => m.id === activeMapId);
-                  if (rec && confirm(`Delete map "${rec.name}"? This cannot be undone.`)) deleteMap(activeMapId);
+                  if (rec && confirm(mapDeleteMessage(rec, state))) deleteMap(activeMapId);
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>

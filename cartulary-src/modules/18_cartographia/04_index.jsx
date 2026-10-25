@@ -232,6 +232,16 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
   );
 }
 
+// v1.7 r003: a map's delete confirmation, counting the entries that reference
+// it, as a body's delete does; deleteMap clears those references.
+const mapDeleteMessage = (rec, state) => {
+  const n = countInboundEntryRefs(state.entries, state.templates, rec.id);
+  const refs = n === 0 ? ""
+    : n === 1 ? " Referenced by 1 entry. Deleting this map removes that reference; the entry stays intact."
+    : ` Referenced by ${n} entries. Deleting this map removes those references; the entries stay intact.`;
+  return `Delete map "${rec.name}"?${refs} This cannot be undone.`;
+};
+
 function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, onStampsChange, flash }) {
   const maps = (Array.isArray(state.cartographia) ? state.cartographia : [])
     .slice()
@@ -330,7 +340,7 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, on
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(`Delete map "${rec.name}"? This cannot be undone.`)) {
+                        if (confirm(mapDeleteMessage(rec, state))) {
                           onDelete(rec.id);
                         }
                       }}

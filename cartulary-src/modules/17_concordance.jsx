@@ -772,6 +772,10 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     // the word "Other" never appears, the customText takes its place.
     const entriesById = {};
     for (const e of state.entries) entriesById[e.id] = e;
+    // v1.7 r003: a referenced body, Glossopoeia record, or map is named too,
+    // where it used to drop out of the pane.
+    const registeredNameById = {};
+    for (const n of getRegisteredGraphNodes(state)) registeredNameById[n.id] = n.name;
     // Pre-index cascade children by their parent field id so we can find
     // a parent's child in one lookup during the iteration.
     const cascadeChildByParentId = {};
@@ -805,7 +809,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       let renderedValue = null;
       if (f.type === "entry-ref") {
         const ids = getEntryRefIds(f, v);
-        const names = ids.map(id => entriesById[id]?.name).filter(Boolean);
+        const names = ids.map(id => entriesById[id]?.name || registeredNameById[id]).filter(Boolean);
         if (names.length === 0) continue;
         renderedValue = names.join(", ");
       } else if (f.type === "calendar-date") {

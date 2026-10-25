@@ -69,8 +69,10 @@ const WRITINGSYSTEM_REF_LABEL = "Writing System";
 
 // Cartographia Map sentinel (v1.6 r001). Maps live in state.cartographia, a
 // flat slice (no langId, no parent). Registered as a node source so they stay
-// graphable in Concordance with their outbound pin edges. NOT ref-eligible:
-// nothing entry-refs a map, so they never appear in the ref picker.
+// graphable in Concordance with their outbound pin edges. Ref-eligible since
+// v1.7 r003, on purpose (Drak, 2026-10-24): the template builder offered Map
+// as a target all along, and since v1.6.1's r052 a reference to a map
+// survives the load.
 const SYNTH_TPL_MAP = "__maps__";
 const MAP_REF_LABEL = "Map";
 
@@ -252,7 +254,7 @@ const NODE_SOURCE_REGISTRY = [
     name: MAP_REF_LABEL,
     color: "#7ec8c8",
     icon: "\u25a3", // ▣
-    refEligible: false,
+    refEligible: true,
     getInstances: (state) =>
       (Array.isArray(state.cartographia) ? state.cartographia : [])
         .filter(m => m && m.id)
@@ -260,7 +262,8 @@ const NODE_SOURCE_REGISTRY = [
     getColor: () => "#7ec8c8",
     // Outbound pin edges: for each pin with a target entry, map -> entry, with
     // the same 📍-prefixed label rule the kind:"map" entry walk used in v1.5.
-    // Leaf node: nothing points back at a map.
+    // A field that references a map adds its own edge into the map, from the
+    // field walk in Concordance.
     getEdges: (state) => {
       const maps = Array.isArray(state.cartographia) ? state.cartographia : [];
       const edges = [];

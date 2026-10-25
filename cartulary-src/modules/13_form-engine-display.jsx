@@ -75,6 +75,9 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
     if (!cm || cm.year == null) return null;
     return calendarDateToAbsoluteDay(state.world.calendar, cm);
   })();
+  // v1.7 r003: the records that aren't entries (bodies, Glossopoeia records,
+  // maps), so a reference to one shows its name (resolveRefTarget).
+  const registeredNodes = state ? getRegisteredGraphNodes(state) : [];
   return (
     <div className="entry-view">
       <div className="entry-header-row">
@@ -133,7 +136,7 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{field.label}</span>
                 {field.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
           );
         }
@@ -149,14 +152,14 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{a.label}</span>
                 {a.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
             <div className={`field-group ${b.secret ? "secret" : ""}`}>
               <div className="field-label" title={b.label}>
                 <span>{b.label}</span>
                 {b.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
           </div>
         );
@@ -402,7 +405,25 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
   return <div ref={containerRef} className="md-content" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
+// v1.7 r003: what a reference value points at, for display: an entry, a body,
+// or another registered record (a Glossopoeia record, a map), or null when
+// nothing has its id. `open` says whether a click can take you there:
+// openEntryFromAnywhere knows entries, maps, and bodies, and a Glossopoeia
+// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24).
+// `kind` names the record's type for a chip that can't be opened.
+const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
+  if (!id) return null;
+  const e = (entries || []).find(x => x && x.id === id);
+  if (e) return { name: e.name, open: true };
+  const b = (bodies || []).find(x => x && x.id === id);
+  if (b) return { name: b.name, open: true };
+  const n = (registeredNodes || []).find(x => x && x.id === id);
+  if (!n) return null;
+  const src = getRegisteredSourceById(n.templateId);
+  return { name: n.name, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL, kind: src ? src.name : "" };
+};
+
+function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
   const ftype = field.type;
   if (ftype === "textarea") return <MarkdownDisplay markdown={value || ""} entries={entries} templates={templates} bodies={bodies} onOpenEntry={onOpenEntry} dirHandle={dirHandle} />;
   if (ftype === "longform") return <LongformDisplay value={value || ""} />;
@@ -510,8 +531,10 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
           // state.celestialBodies (when a field's refTemplates includes
           // "Celestial Body"). Bodies retain their id from before migration,
           // so the lookup falls through naturally for legacy refs too.
-          const ref = entries.find(e => e.id === it.id) || (bodies || []).find(b => b && b.id === it.id);
+          // v1.7 r003: so does any other registered record (resolveRefTarget).
+          const ref = resolveRefTarget(it.id, entries, bodies, registeredNodes);
           if (!ref) return <span key={i} className="entry-ref-chip" style={{ opacity: 0.5 }}>(missing entry)</span>;
+          if (!ref.open) return <span key={i} className="entry-ref-chip" style={{ cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" }} title={ref.kind}>{ref.name}</span>;
           // Spouse-only narrative: status (when non-active) and marriage dates.
           let spouseMeta = null;
           if (isSpouse) {
@@ -550,7 +573,7 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
               return (
                 <div key={sub.id} className="field-group" style={{ marginBottom: 12 }}>
                   <div className="field-label">{sub.label}</div>
-                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} />
+                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} />
                 </div>
               );
             })}
@@ -567,8 +590,9 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
       if (gridCellIsEmpty(cell)) return null;
       const { type, value: cv } = cell;
       if (type === "entry-ref") {
-        const ref = entries.find(e => e.id === cv) || (bodies || []).find(b => b && b.id === cv);
+        const ref = resolveRefTarget(cv, entries, bodies, registeredNodes);
         if (!ref) return <span className="entry-ref-chip" style={{ opacity: 0.5 }}>(missing)</span>;
+        if (!ref.open) return <span className="entry-ref-chip" style={{ cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" }} title={ref.kind}>{ref.name}</span>;
         return (
           <a className="entry-ref-chip" href="#" onClick={(e) => { e.preventDefault(); onOpenEntry(cv); }}>
             <span className="entry-ref-chip-icon">→</span>{ref.name}
