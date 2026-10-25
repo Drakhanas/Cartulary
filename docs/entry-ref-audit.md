@@ -33,6 +33,8 @@ Shown in the shipped finals, headless:
 
 **Drak's calls (2026-10-24):** flags 1 to 5 go into v1.7 as one cut. Flag 6 is skipped, because turning a single field into a multi-select rewrites the values worlds already store, and flags 7 and 8 are skipped as low value.
 
+**Done in v1.7's r002** (2026-10-24, passed by Drak): flags 1 to 5 as proposed, in `BUILTIN_TEMPLATES` for new worlds and by a once-per-world migration for existing ones, which adds the targets to built-in-origin templates by exact field label, names and ids together, and never removes one (`docs/changelog.md` has the cut). The table below is the v1.6 tree as it was read, before r002. Planning the cut found that the template builder's target edits didn't survive `resolveTemplateRefs`, which rebuilt a multi-target field's ids from its names whenever it ran, so a target added in the builder dropped out and the cleanup then deleted the references to it. r002 fixed that first, because the obvious way to write the migration, re-resolving the world's templates, would have set it off.
+
 Read and left alone: Deity › Pantheon targets Religion, which looks odd beside its label but is the inverse of Religion › Worshipped Deities, and every field marked ok in the table.
 
 ## What a fix costs

@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, and r001, the carry-in text fixes and Common Year) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, and r002's target lists) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -501,3 +501,27 @@ The question that found the sixth string was a good one: shouldn't a grid ask ho
 and columns you want? Nothing does, anywhere, and every cell starts as Text with its own
 dropdown, so a table of numbers is a chore. I'd put a starting shape on the template's field.
 It's on the roadmap, undecided, which is where Drak's questions wait until he answers them.
+
+The small data fixes were meant to be the easy stretch of the line: widen eleven target
+lists, add a migration, move on. Reading for them turned up two things the audit hadn't,
+and the second would have made my own migration do the damage. References to languages,
+maps, and the other records that aren't entries display as "(missing entry)" almost
+everywhere, and have since v1.5, though v1.6.1 made sure they survive. That one is r003's.
+The other was older and worse. The template builder writes a field's targets as ids, and
+resolveTemplateRefs rebuilds the ids from the names whenever certain loads run it, so a
+target added in the builder dropped out, and the cleanup threw away every reference to it.
+I showed it headless before saying it out loud, and the obvious way to write the flags
+migration, re-resolving the world's templates, was exactly the trigger.
+
+So r002 became the fix first and the flags second, and Drak took every recommendation. Most
+of the cut's time went into cases: a target added, one removed, a field cleared, one switched
+back to a single target, one set to any template, one retargeted, one relabelled, one still
+pointing at a template that's gone. Each looked like one rule until I wrote down what the
+builder actually leaves in storage. Two would have gone wrong without a sound. The builder's
+switch back to a single target leaves the id list null, and so, it turned out, does v1.5's
+supersede of the Language / Glossary template, which trusted a comment saying the rebuild
+runs on every load. It doesn't, and those fields are r004's now. And my sync's first draft
+judged old names by r002's rules, which would have deleted names the old rules had never
+resolved. The probe ran the same world through r001 as a control, and r001 failed 21 of the
+27 load checks, which is the only reason I believe the 48 that r002 passed mean anything.
+Drak passed it in one go.

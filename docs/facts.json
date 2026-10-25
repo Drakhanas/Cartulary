@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44118,
-    "raw_body_lines": 44118,
-    "canonical_lines": 41933,
-    "decl_count": 510,
+    "total_lines": 44307,
+    "raw_body_lines": 44307,
+    "canonical_lines": 42118,
+    "decl_count": 512,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r001-body.jsx"
+    "active_anchor": "reference-r002-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44118,
+      "value": 44307,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 510,
+      "value": 512,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 41933,
+      "value": 42118,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44118,
+      "value": 44307,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2300726,
+      "value": 2312403,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "twenty-nine",
-        29
+        "thirty",
+        30
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,9 +107,9 @@
       "value": 5231,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r001": {
-      "value": "e11d0a9253eedaad",
-      "pattern": "working[^\\n]{0,40}at r001 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r002": {
+      "value": "710f0d88e89bde32",
+      "pattern": "working[^\\n]{0,40}at r002 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -495,7 +495,7 @@
     },
     {
       "file": "10_migrate.jsx",
-      "line": 5831,
+      "line": 5916,
       "contains": "marked.use({"
     },
     {
@@ -649,17 +649,23 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r001-body.jsx",
-      "reference-r001-layout.json",
-      "a2f26b602064207c",
-      "e11d0a9253eedaad",
+      "reference-r002-body.jsx",
+      "reference-r002-layout.json",
+      "8af1a730ac383d32",
+      "710f0d88e89bde32",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
       "0e289d8e7ece2c9c",
       "stages the old content",
       "owes a pass of its own",
-      "answers the font requests empty"
+      "answers the font requests empty",
+      "v1.7_r002",
+      "syncRefTargetNames",
+      "refTargetIndex",
+      "r003",
+      "r004",
+      "as a control"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -715,7 +721,11 @@
       "a2f26b602064207c",
       "e11d0a9253eedaad",
       "On v1.7 r001 verification",
-      "reference-r001-layout.json"
+      "reference-r002-body.jsx",
+      "reference-r002-layout.json",
+      "8af1a730ac383d32",
+      "710f0d88e89bde32",
+      "On v1.7 r002 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -729,7 +739,11 @@
       "session 20",
       "v1.7_r001",
       "Common Year",
-      "e11d0a9253eedaad"
+      "e11d0a9253eedaad",
+      "v1.7_r002",
+      "710f0d88e89bde32",
+      "8af1a730ac383d32",
+      "syncRefTargetNames"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -748,7 +762,11 @@
       "session 20",
       "Common Year",
       "A grid's starting shape",
-      "### Document debt"
+      "### Document debt",
+      "v1.7_r002",
+      "r003",
+      "r004",
+      "Language / Glossary"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -782,7 +800,9 @@
       "r052",
       "session 20",
       "stage every file in its scope",
-      "stop hook"
+      "stop hook",
+      "every load",
+      "Judge stored data by the rules that produced it"
     ],
     "journal.txt": [
       "r030",
@@ -809,7 +829,8 @@
       "v1.6.1",
       "r052",
       "session 20",
-      "Common Year"
+      "Common Year",
+      "r002"
     ]
   }
 }
