@@ -76,6 +76,28 @@ const WRITINGSYSTEM_REF_LABEL = "Writing System";
 const SYNTH_TPL_MAP = "__maps__";
 const MAP_REF_LABEL = "Map";
 
+// Fabula's record kinds (v1.7 r006; docs/fabula-spec.md, section 3). Each
+// has the array in state.fabula that holds its records (slice) and a sentinel
+// id, the way Glossopoeia's kinds have theirs, so a reference field can name a
+// kind of Fabula record. None is registered: the registry entries come with
+// the first cut that shows Fabula, together with Concordance's single Fabula
+// toggle and a template builder that offers only sources marked eligible
+// (Drak, 2026-10-25). Until then the ids appear only in Fabula's seeded
+// schemas (fabulaSeedSchemas).
+const FABULA_KINDS = [
+  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)" },
+  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)" },
+  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)" },
+  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)" },
+  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)" },
+  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)" },
+  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)" },
+  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)" },
+  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)" },
+  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)" },
+  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)" },
+];
+
 const NODE_SOURCE_REGISTRY = [
   {
     id: SYNTH_TPL_ASTROBODY,

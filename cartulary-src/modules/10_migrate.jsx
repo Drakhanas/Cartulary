@@ -5935,6 +5935,10 @@ const migrate = (state) => {
   // files where they were previously allowed.
   state.entries = scrubSelfRefs(state.entries, state.templates);
 
+  // v1.7 r006: Fabula's slice and its seeded schemas (docs/fabula-spec.md,
+  // section 3). Last, so the templates the schemas point at are final.
+  ensureFabulaSlice(state);
+
   return state;
 };
 
