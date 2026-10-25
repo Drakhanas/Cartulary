@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44534,
-    "raw_body_lines": 44534,
-    "canonical_lines": 42338,
+    "total_lines": 44574,
+    "raw_body_lines": 44574,
+    "canonical_lines": 42378,
     "decl_count": 517,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r004-body.jsx"
+    "active_anchor": "reference-r005-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44534,
+      "value": 44574,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 42338,
+      "value": 42378,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44534,
+      "value": 44574,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2325779,
+      "value": 2328318,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-two",
-        32
+        "thirty-three",
+        33
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,20 +107,20 @@
       "value": 5241,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r004": {
-      "value": "0731070bf5555171",
-      "pattern": "working[^\\n]{0,40}at r004 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r005": {
+      "value": "cd6875aa3a5295db",
+      "pattern": "working[^\\n]{0,40}at r005 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1223,
+      "line": 1253,
       "contains": "Longform + rich text editor"
     },
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1225,
+      "line": 1255,
       "contains": "function LongformEditor"
     },
     {
@@ -649,14 +649,14 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r004-body.jsx",
-      "reference-r004-layout.json",
-      "16337a1350d7e7e6",
-      "0731070bf5555171",
+      "reference-r005-body.jsx",
+      "reference-r005-layout.json",
+      "e70e86fef21544cd",
+      "cd6875aa3a5295db",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
-      "54751a1acd6f9d87",
+      "6a5cf284a00a9046",
       "stages the old content",
       "owes a pass of its own",
       "answers the font requests empty",
@@ -673,7 +673,10 @@
       "v1.7_r004",
       "retargetRetired",
       "retiredTargetsRepairedV17",
-      "755e95a722506f5e"
+      "755e95a722506f5e",
+      "v1.7_r005",
+      "MultiSelectEditor",
+      "One item per message"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -739,11 +742,15 @@
       "On v1.7 r003 verification",
       "08_export-layer:1512",
       "reference-r004-body.jsx",
-      "reference-r004-layout.json",
       "16337a1350d7e7e6",
       "0731070bf5555171",
       "On v1.7 r004 verification",
-      "10_migrate:6079"
+      "10_migrate:6079",
+      "reference-r005-body.jsx",
+      "reference-r005-layout.json",
+      "e70e86fef21544cd",
+      "cd6875aa3a5295db",
+      "On v1.7 r005 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -769,7 +776,11 @@
       "v1.7_r004",
       "0731070bf5555171",
       "16337a1350d7e7e6",
-      "retargetRetired"
+      "retargetRetired",
+      "v1.7_r005",
+      "cd6875aa3a5295db",
+      "e70e86fef21544cd",
+      "MultiSelectEditor"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -796,7 +807,10 @@
       "v1.7_r003",
       "Deleting a Glossopoeia record leaves entry references to it",
       "v1.7_r004",
-      "A map template of the user's own, promoted to Cartographia before r004"
+      "A map template of the user's own, promoted to Cartographia before r004",
+      "v1.7_r005",
+      "Other on multi-selects: done in r005",
+      "CI's two warnings"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -865,7 +879,8 @@
       "Common Year",
       "r002",
       "r003",
-      "r004"
+      "r004",
+      "r005"
     ]
   }
 }

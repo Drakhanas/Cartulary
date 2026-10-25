@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, and r003's reference display) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, and r005's Other on multi-selects) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -553,3 +553,20 @@ target bodies again, the language fields keep their words as well as their langu
 second load changes nothing. What r004 can't do is give back the references the old upgrade
 already deleted, and if Drak's world had any, they're gone. He passed it a little after
 midnight.
+
+r005 wasn't the cut I'd planned. The plan was Fabula, its field lists first, and when Drak
+asked what was on deck I gave him all fifteen tables, redone in his format, with forks riding
+on them, in one go. He told me it was too much at once and asked for them one at a time. I
+should have seen that without being told. A table he can't hold in his head while he reads it
+is a table he can only wave through, and a fork that leans on tables he hasn't read yet isn't
+much of a question. From there it went one item to a message, and the next two
+calls took him a letter each.
+
+One of those calls made r005. Four of the lists ended in Other on a multi-select, which the
+field system couldn't do: a dropdown could take a typed value and a multi-select couldn't.
+Drak's answer was to build it for every template, ahead of Fabula, with what's typed saved as
+more strings in the same list, so the save format doesn't move. The cut was small, and the
+control says the probe meant something: fifteen checks passed in r005, and the same world in
+r004 failed thirteen of them. Reading the help for it turned up a line about marking fields
+half-width, wrong since v1.3, which I filed instead of fixing, since it wasn't the cut's. Drak
+passed it, and the tables come next, the Corpus first, by itself.
