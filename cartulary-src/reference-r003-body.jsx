@@ -4274,7 +4274,8 @@ const renderFieldForMd = (field, val, ctx) => {
       const isSpouse = field.relationKind === SPOUSE_KIND;
       const fmt = (d) => d && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, ctx.calendar)}` : null;
       const rendered = items.map(it => {
-        const ref = entryById[it.id];
+        // v1.7 r003: a body, a Glossopoeia record, or a map writes its name too.
+        const ref = entryById[it.id] || (ctx.nodeById && ctx.nodeById[it.id]);
         if (!ref) return "(missing entry)";
         const labelPart = it.label ? ` (called "${it.label}")` : "";
         const statusPart = it.status && it.status !== "active" ? ` [${it.status}]` : "";
@@ -4324,7 +4325,7 @@ const renderFieldForMd = (field, val, ctx) => {
         const cell = g.cells[rid]?.[cid];
         if (gridCellIsEmpty(cell)) return "";
         const { type, value: cv } = cell;
-        if (type === "entry-ref") { const ref = entryById[cv]; return ref ? ref.name : "(missing entry)"; }
+        if (type === "entry-ref") { const ref = entryById[cv] || (ctx.nodeById && ctx.nodeById[cv]); return ref ? ref.name : "(missing entry)"; }
         if (type === "calendar-date") return cv && cv.year != null ? (cv.approximate ? "~" : "") + formatCalendarDate(cv, ctx.calendar) : "";
         if (type === "calendar-date-range") {
           const s = cv.start && cv.start.year != null ? (cv.start.approximate ? "~" : "") + formatCalendarDate(cv.start, ctx.calendar) : "?";
@@ -4425,7 +4426,7 @@ const buildSingleEntryMarkdown = (entry, template, state, options = { includeSec
   const entryById = Object.fromEntries(entries.map(e => [e.id, e]));
   const entryByLowerName = {};
   entries.forEach(e => { if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e; });
-  const ctx = { entryById, entryByLowerName, calendar: world.calendar, options, imageManifest: null };
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest: null };
 
   const out = [];
   out.push(`# ${entry.name || "(unnamed)"}`);
@@ -4657,7 +4658,7 @@ const buildMarkdownExport = (state, options = { includeSecrets: false }) => {
     if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e;
   });
   const imageManifest = options.collectImages ? { bySource: {}, entries: [], inlineCount: 0 } : null;
-  const ctx = { entryById, entryByLowerName, calendar: world.calendar, options, imageManifest };
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest };
 
   const out = [];
   // Header block
@@ -4891,6 +4892,27 @@ const formatDateForHtml = (date, ctx) => {
   return (v.approximate || date.approximate ? "~" : "") + formatCalendarDate(v, ctx.displayCalendar);
 };
 
+// v1.7 r003: the registered records (bodies, Glossopoeia records, maps) by id,
+// for an export's context, so a reference to one resolves as an entry's does.
+const registeredNodeIndex = (state) =>
+  Object.fromEntries(getRegisteredGraphNodes(state).map(n => [n.id, n]));
+
+// v1.7 r003: one reference value in the HTML export. An entry links to its
+// article, and so does a map, whose article reuses the entry-<id> scheme; a
+// body or a Glossopoeia record has no article, so it's its name, titled with
+// its type; an id nothing has is the broken-link span it always was.
+const refLinkHtml = (id, ctx) => {
+  const ref = ctx.entryById[id];
+  if (ref) return `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`;
+  const node = ctx.nodeById ? ctx.nodeById[id] : null;
+  if (node && node.templateId === SYNTH_TPL_MAP) return `<a class="entry-ref-link" href="#entry-${htmlEscape(node.id)}">${htmlEscape(node.name)}</a>`;
+  if (node) {
+    const src = getRegisteredSourceById(node.templateId);
+    return `<span class="entry-ref-record" title="${htmlEscape(src ? src.name : "")}">${htmlEscape(node.name)}</span>`;
+  }
+  return `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
+};
+
 // Render one field's value as HTML. Mirrors renderFieldForMd's structure but
 // emits HTML strings (already escaped) and resolves cross-references as anchor
 // hrefs. Returns null when the value is empty / should be suppressed.
@@ -4981,10 +5003,7 @@ const renderFieldForHtml = (field, val, ctx) => {
         : (field.multi ? (Array.isArray(val) ? val.filter(Boolean) : []) : (val ? [val] : [])).map(id => ({ id }));
       const isSpouse = field.relationKind === SPOUSE_KIND;
       const rendered = items.map(it => {
-        const ref = entryById[it.id];
-        const linkOrSpan = ref
-          ? `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`
-          : `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
+        const linkOrSpan = refLinkHtml(it.id, ctx);
         const labelPart = it.label ? ` <span class="entry-ref-label">(called &ldquo;${htmlEscape(it.label)}&rdquo;)</span>` : "";
         const statusPart = it.status && it.status !== "active" ? ` <span class="entry-ref-status">[${htmlEscape(it.status)}]</span>` : "";
         let datesPart = "";
@@ -5043,12 +5062,7 @@ const renderFieldForHtml = (field, val, ctx) => {
         const cell = g.cells[rid]?.[cid];
         if (gridCellIsEmpty(cell)) return "";
         const { type, value: cv } = cell;
-        if (type === "entry-ref") {
-          const ref = entryById[cv];
-          return ref
-            ? `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`
-            : `<span class="broken-link" title="Referenced entry no longer exists">(missing entry)</span>`;
-        }
+        if (type === "entry-ref") return refLinkHtml(cv, ctx);
         if (type === "calendar-date") return cv && cv.year != null ? htmlEscape(formatDateForHtml(cv, ctx)) : "";
         if (type === "calendar-date-range") {
           const s = cv.start && cv.start.year != null ? htmlEscape(formatDateForHtml(cv.start, ctx)) : "?";
@@ -5505,6 +5519,7 @@ const buildHtmlExport = async (state, options, dirHandle) => {
   // Entries' renderArticleHtml call computes entryCal and overrides ctx.entryCalendar.
   const baseCtx = {
     entryById,
+    nodeById: registeredNodeIndex(state),
     entryByLowerName,
     options,
     currentMomentDay,
@@ -13049,10 +13064,17 @@ function App() {
 
   const deleteMap = (id) => {
     if (isLocked) return;
-    // Maps are leaf nodes (nothing entry-refs them), so no ref scrub is needed.
-    // Any lingering concordance position keyed by this id is dropped on next
-    // load by migrate's position validation; live, it simply stops rendering.
-    updateState(s => ({ ...s, cartographia: (s.cartographia || []).filter(m => m.id !== id) }));
+    // v1.7 r003: maps are reference targets, so the delete clears references
+    // to this one from every entry's fields, groups and grids included, as a
+    // body's delete does; both confirmations count them first
+    // (mapDeleteMessage). Any lingering concordance position keyed by this id
+    // is dropped on next load by migrate's position validation; live, it
+    // simply stops rendering.
+    updateState(s => ({
+      ...s,
+      cartographia: (s.cartographia || []).filter(m => m.id !== id),
+      entries: scrubEntryRefs(s.entries, s.templates, new Set([id])),
+    }));
     if (activeMapId === id) {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
@@ -15492,7 +15514,7 @@ function App() {
               {view === "cartographia" && activeMapId && !mapDraft && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = (state.cartographia || []).find(m => m.id === activeMapId);
-                  if (rec && confirm(`Delete map "${rec.name}"? This cannot be undone.`)) deleteMap(activeMapId);
+                  if (rec && confirm(mapDeleteMessage(rec, state))) deleteMap(activeMapId);
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
@@ -16986,6 +17008,9 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
     if (!cm || cm.year == null) return null;
     return calendarDateToAbsoluteDay(state.world.calendar, cm);
   })();
+  // v1.7 r003: the records that aren't entries (bodies, Glossopoeia records,
+  // maps), so a reference to one shows its name (resolveRefTarget).
+  const registeredNodes = state ? getRegisteredGraphNodes(state) : [];
   return (
     <div className="entry-view">
       <div className="entry-header-row">
@@ -17044,7 +17069,7 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{field.label}</span>
                 {field.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
           );
         }
@@ -17060,14 +17085,14 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{a.label}</span>
                 {a.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
             <div className={`field-group ${b.secret ? "secret" : ""}`}>
               <div className="field-label" title={b.label}>
                 <span>{b.label}</span>
                 {b.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
             </div>
           </div>
         );
@@ -17313,7 +17338,25 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
   return <div ref={containerRef} className="md-content" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
+// v1.7 r003: what a reference value points at, for display: an entry, a body,
+// or another registered record (a Glossopoeia record, a map), or null when
+// nothing has its id. `open` says whether a click can take you there:
+// openEntryFromAnywhere knows entries, maps, and bodies, and a Glossopoeia
+// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24).
+// `kind` names the record's type for a chip that can't be opened.
+const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
+  if (!id) return null;
+  const e = (entries || []).find(x => x && x.id === id);
+  if (e) return { name: e.name, open: true };
+  const b = (bodies || []).find(x => x && x.id === id);
+  if (b) return { name: b.name, open: true };
+  const n = (registeredNodes || []).find(x => x && x.id === id);
+  if (!n) return null;
+  const src = getRegisteredSourceById(n.templateId);
+  return { name: n.name, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL, kind: src ? src.name : "" };
+};
+
+function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
   const ftype = field.type;
   if (ftype === "textarea") return <MarkdownDisplay markdown={value || ""} entries={entries} templates={templates} bodies={bodies} onOpenEntry={onOpenEntry} dirHandle={dirHandle} />;
   if (ftype === "longform") return <LongformDisplay value={value || ""} />;
@@ -17421,8 +17464,10 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
           // state.celestialBodies (when a field's refTemplates includes
           // "Celestial Body"). Bodies retain their id from before migration,
           // so the lookup falls through naturally for legacy refs too.
-          const ref = entries.find(e => e.id === it.id) || (bodies || []).find(b => b && b.id === it.id);
+          // v1.7 r003: so does any other registered record (resolveRefTarget).
+          const ref = resolveRefTarget(it.id, entries, bodies, registeredNodes);
           if (!ref) return <span key={i} className="entry-ref-chip" style={{ opacity: 0.5 }}>(missing entry)</span>;
+          if (!ref.open) return <span key={i} className="entry-ref-chip" style={{ cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" }} title={ref.kind}>{ref.name}</span>;
           // Spouse-only narrative: status (when non-active) and marriage dates.
           let spouseMeta = null;
           if (isSpouse) {
@@ -17461,7 +17506,7 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
               return (
                 <div key={sub.id} className="field-group" style={{ marginBottom: 12 }}>
                   <div className="field-label">{sub.label}</div>
-                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} />
+                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} />
                 </div>
               );
             })}
@@ -17478,8 +17523,9 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, onOpenEnt
       if (gridCellIsEmpty(cell)) return null;
       const { type, value: cv } = cell;
       if (type === "entry-ref") {
-        const ref = entries.find(e => e.id === cv) || (bodies || []).find(b => b && b.id === cv);
+        const ref = resolveRefTarget(cv, entries, bodies, registeredNodes);
         if (!ref) return <span className="entry-ref-chip" style={{ opacity: 0.5 }}>(missing)</span>;
+        if (!ref.open) return <span className="entry-ref-chip" style={{ cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" }} title={ref.kind}>{ref.name}</span>;
         return (
           <a className="entry-ref-chip" href="#" onClick={(e) => { e.preventDefault(); onOpenEntry(cv); }}>
             <span className="entry-ref-chip-icon">→</span>{ref.name}
@@ -21494,6 +21540,10 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     // the word "Other" never appears, the customText takes its place.
     const entriesById = {};
     for (const e of state.entries) entriesById[e.id] = e;
+    // v1.7 r003: a referenced body, Glossopoeia record, or map is named too,
+    // where it used to drop out of the pane.
+    const registeredNameById = {};
+    for (const n of getRegisteredGraphNodes(state)) registeredNameById[n.id] = n.name;
     // Pre-index cascade children by their parent field id so we can find
     // a parent's child in one lookup during the iteration.
     const cascadeChildByParentId = {};
@@ -21527,7 +21577,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       let renderedValue = null;
       if (f.type === "entry-ref") {
         const ids = getEntryRefIds(f, v);
-        const names = ids.map(id => entriesById[id]?.name).filter(Boolean);
+        const names = ids.map(id => entriesById[id]?.name || registeredNameById[id]).filter(Boolean);
         if (names.length === 0) continue;
         renderedValue = names.join(", ");
       } else if (f.type === "calendar-date") {
@@ -26865,6 +26915,16 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
   );
 }
 
+// v1.7 r003: a map's delete confirmation, counting the entries that reference
+// it, as a body's delete does; deleteMap clears those references.
+const mapDeleteMessage = (rec, state) => {
+  const n = countInboundEntryRefs(state.entries, state.templates, rec.id);
+  const refs = n === 0 ? ""
+    : n === 1 ? " Referenced by 1 entry. Deleting this map removes that reference; the entry stays intact."
+    : ` Referenced by ${n} entries. Deleting this map removes those references; the entries stay intact.`;
+  return `Delete map "${rec.name}"?${refs} This cannot be undone.`;
+};
+
 function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, onStampsChange, flash }) {
   const maps = (Array.isArray(state.cartographia) ? state.cartographia : [])
     .slice()
@@ -26963,7 +27023,7 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, on
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(`Delete map "${rec.name}"? This cannot be undone.`)) {
+                        if (confirm(mapDeleteMessage(rec, state))) {
                           onDelete(rec.id);
                         }
                       }}
@@ -30634,8 +30694,10 @@ const WRITINGSYSTEM_REF_LABEL = "Writing System";
 
 // Cartographia Map sentinel (v1.6 r001). Maps live in state.cartographia, a
 // flat slice (no langId, no parent). Registered as a node source so they stay
-// graphable in Concordance with their outbound pin edges. NOT ref-eligible:
-// nothing entry-refs a map, so they never appear in the ref picker.
+// graphable in Concordance with their outbound pin edges. Ref-eligible since
+// v1.7 r003, on purpose (Drak, 2026-10-24): the template builder offered Map
+// as a target all along, and since v1.6.1's r052 a reference to a map
+// survives the load.
 const SYNTH_TPL_MAP = "__maps__";
 const MAP_REF_LABEL = "Map";
 
@@ -30817,7 +30879,7 @@ const NODE_SOURCE_REGISTRY = [
     name: MAP_REF_LABEL,
     color: "#7ec8c8",
     icon: "\u25a3", // ▣
-    refEligible: false,
+    refEligible: true,
     getInstances: (state) =>
       (Array.isArray(state.cartographia) ? state.cartographia : [])
         .filter(m => m && m.id)
@@ -30825,7 +30887,8 @@ const NODE_SOURCE_REGISTRY = [
     getColor: () => "#7ec8c8",
     // Outbound pin edges: for each pin with a target entry, map -> entry, with
     // the same 📍-prefixed label rule the kind:"map" entry walk used in v1.5.
-    // Leaf node: nothing points back at a map.
+    // A field that references a map adds its own edge into the map, from the
+    // field walk in Concordance.
     getEdges: (state) => {
       const maps = Array.isArray(state.cartographia) ? state.cartographia : [];
       const edges = [];
@@ -42370,7 +42433,7 @@ You're not limited to the built-in set. See **Example Template** for a fully-wor
 - **Calendar Date (in-world)** — single point in time using your custom calendar (see Kalendarium)
 - **Calendar Date Range (in-world)** — start + optional end, with approximate (~) flag per date. Drives duration display in Timeline; Chronometric.
 - **URL / Color / Image** — self-explanatory
-- **Entry Reference** — link to another entry (single or multi). Deleting the referenced entry (or the template that owns it) automatically clears the reference from any entry that pointed at it; you won't be left with broken links pointing at nothing.
+- **Entry Reference** — link to another entry (single or multi), or to a record that isn't an entry: an Astronomical Body, a Glossopoeia record, or a Map, which the template builder lists after the templates. Deleting the referenced entry, body, or map, or the template an entry belongs to, automatically clears the reference from any entry that pointed at it; you won't be left with broken links pointing at nothing.
 - **Name History** — list of former names with optional from/to dates. Drives time-aware label rendering on maps and timelines (a pin or event in 1640 can show "New Amsterdam" even if the entry's current name is "New York"). See Name History (former names) for details.
 - **Repeating Group** — list of structured sub-records
 - **Grid / Table**: a labeled table. Name the rows and columns and fill the cells; each cell picks its own type: text, a number, an entry reference, a calendar date, or a calendar date range. Top-level only (can't nest inside a Repeating Group).
@@ -42556,7 +42619,7 @@ If you don't know which to pick, pick PNG.
 
   { id: "cartographia", title: "Cartographia", content: `Maps in Cartulary are canvases: an image you bring, a blank sheet, or both, with a drawing on it (shapes, labels, stamps, and painted layers, in a layer stack) and clickable pins over it. Pins tie places to entries; the drawing is the map itself. Regional maps, dungeon layouts, star charts, floor plans, anything where points of interest cross-reference other entries. **Cartographia** is the sidebar view that indexes every map in the world, with the world's stamps and brushes in a panel above the list. This topic covers maps, pins, time mode, and the downloads; the drawing and painting tools are under **Map Editor**, and stamp packs and brush imports under **Stamps & Brushes**.
 
-**The index.** Click Cartographia in the sidebar for the map list, most recently updated first: the name, the pin count, "no image" for a blank canvas, the last update, a preview of the Description, and the tags. Click a row to open the map; Delete on the row removes the map with its drawing and its pins (the entries the pins linked to are untouched). Maps are their own records, not template entries: there is no map template and no map kind in the Template Builder, and every map carries the same three fields, Description, Scope / Region, and Notes. A world saved by v1.5 is migrated on load: each map entry becomes a map record, the map-kind templates are dropped, and any extra fields a custom map template had are kept in the record (not shown) with a line in Notes naming them.
+**The index.** Click Cartographia in the sidebar for the map list, most recently updated first: the name, the pin count, "no image" for a blank canvas, the last update, a preview of the Description, and the tags. Click a row to open the map; Delete on the row removes the map with its drawing and its pins (the entries the pins linked to are untouched); when entries reference the map, the confirmation says how many, and the references are cleared. Maps are their own records, not template entries: there is no map template and no map kind in the Template Builder, and every map carries the same three fields, Description, Scope / Region, and Notes. A world saved by v1.5 is migrated on load: each map entry becomes a map record, the map-kind templates are dropped, and any extra fields a custom map template had are kept in the record (not shown) with a line in Notes naming them.
 
 **Creating a map.** Click **+ New Map**. The editor shows the name and tags, the canvas, then the three fields; **Save** needs a name, and **Cancel** discards the draft (in folder mode it also puts back any layer files the session wrote). **Edit** on a saved map brings the editor back. **Set Image** brings an image in: with an image folder connected the file stays on disk and only its name is saved, otherwise it embeds in the save file, with a confirmation for anything over 1 MB. **Change Image** swaps the image and keeps the drawing and the pins; **Remove Image** clears it and leaves them on the canvas. An image map's canvas is the image's own size. Without an image the canvas is a blank vellum sheet, and a **Canvas** picker in the strip offers Landscape 1600 × 1000, Portrait 1000 × 1600, Square 1200 × 1200, or **Custom…** (whole units, 100 to 10000 a side; type the size, then **Set** or Enter). Changing the size of a map that already has work on it asks first, because nothing is transformed: shapes keep their coordinates and anything past the new edges is cut off, a painted layer is clipped, and pins keep their relative positions and shift against the drawing. Undo restores it. Sizes are drawing units, not screen pixels.
 

@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "8af1a730ac383d32fdb79c912d878645a699837c755f1250bcb92c0a042100e7",
+  "anchor_sha256": "b1b07ff195a9e7960bbd99f67b676f5398f3b2ac3647756dcc4b3bbb1133018c",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -36,7 +36,7 @@
     ],
     [
       "08_export-layer.jsx",
-      1576
+      1591
     ],
     [
       "09_trunk.jsx",
@@ -52,11 +52,11 @@
     ],
     [
       "12_trunk.jsx",
-      4968
+      4975
     ],
     [
       "13_form-engine-display.jsx",
-      658
+      682
     ],
     [
       "14_form-engine-edit.jsx",
@@ -72,7 +72,7 @@
     ],
     [
       "17_concordance.jsx",
-      1028
+      1032
     ],
     [
       "18_cartographia/00_model.jsx",
@@ -92,7 +92,7 @@
     ],
     [
       "18_cartographia/04_index.jsx",
-      348
+      358
     ],
     [
       "19_chronometric.jsx",
@@ -108,7 +108,7 @@
     ],
     [
       "22_trunk.jsx",
-      354
+      357
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
