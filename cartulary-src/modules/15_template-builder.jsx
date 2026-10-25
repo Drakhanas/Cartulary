@@ -197,7 +197,7 @@ function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
 // any subfield that's itself a group, until MAX_GROUP_DEPTH. Type selector
 // at the deepest allowed depth omits "group" so users can't bypass the cap.
 // Each subfield row exposes the same authoring capabilities as a top-level
-// field: required, secret, otherTextField (select), multi/multi-template/
+// field: required, secret, otherTextField (select, multiselect), multi/multi-template/
 // refTemplate/relationKind (entry-ref), cascade dependsOn + per-parent
 // options matrix (select), showWhen visibility config.
 // Cascade and showWhen candidates are restricted to other subfields at
@@ -253,8 +253,8 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                   <input type="checkbox" checked={!!sf.required} onChange={e => onUpdate(parentPath, sf.id, { required: e.target.checked })} />
                   Required
                 </label>
-                {sf.type === "select" && (
-                  <label title="Adds an 'Other' option that lets users type a custom value">
+                {(sf.type === "select" || sf.type === "multiselect") && (
+                  <label title={sf.type === "select" ? "Adds an 'Other' option that lets users type a custom value" : "Adds an Other box where users type values of their own"}>
                     <input type="checkbox" checked={!!sf.otherTextField} onChange={e => onUpdate(parentPath, sf.id, { otherTextField: e.target.checked })} />
                     Allow custom "Other" text
                   </label>
@@ -307,6 +307,11 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
               {sf.type === "select" && sf.otherTextField && (
                 <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
                   "Other" will be auto-added to the dropdown at runtime.
+                </div>
+              )}
+              {sf.type === "multiselect" && sf.otherTextField && (
+                <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+                  An Other box goes under the options; each value typed there is saved with the picked ones.
                 </div>
               )}
 
@@ -898,8 +903,8 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               <input type="checkbox" checked={!!field.required} onChange={e => updateField(field.id, { required: e.target.checked })} />
               Required
             </label>
-            {field.type === "select" && (
-              <label title="Adds an 'Other' option that lets users type a custom value">
+            {(field.type === "select" || field.type === "multiselect") && (
+              <label title={field.type === "select" ? "Adds an 'Other' option that lets users type a custom value" : "Adds an Other box where users type values of their own"}>
                 <input type="checkbox" checked={!!field.otherTextField} onChange={e => updateField(field.id, { otherTextField: e.target.checked })} />
                 Allow custom "Other" text
               </label>
@@ -959,6 +964,11 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
           {field.type === "select" && field.otherTextField && (
             <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
               "Other" will be auto-added to the dropdown at runtime.
+            </div>
+          )}
+          {field.type === "multiselect" && field.otherTextField && (
+            <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+              An Other box goes under the options; each value typed there is saved with the picked ones.
             </div>
           )}
 

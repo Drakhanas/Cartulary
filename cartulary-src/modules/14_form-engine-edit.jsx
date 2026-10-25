@@ -533,35 +533,65 @@ function FieldLabelText({ field, templates }) {
 // `tags` field). Value is an array of option strings. Options removed from
 // the set after an entry picked them ("stale") still render so the pick is
 // never silently dropped; they can be toggled off but not re-added.
+// v1.7 r005: with otherTextField on, an Other box under the options takes
+// values of the user's own, each saved as one more string in the same list
+// (Drak's call, 2026-10-25), so nothing that reads the value changes. A
+// typed value matching an option, or a value already picked, ignoring
+// case, picks that instead. While the setting is on, a listed value that
+// isn't an option is the user's own: a chip like the options', removed
+// the same way. With it off, such a value shows dashed, as a pick whose
+// option was deleted does.
 function MultiSelectEditor({ field, value, onChange }) {
   const selected = Array.isArray(value)
     ? value.filter(v => v != null && String(v).trim() !== "").map(v => String(v).trim())
     : [];
   const options = Array.isArray(field.options) ? field.options : [];
+  const allowOwn = !!field.otherTextField;
   const stale = selected.filter(v => !options.includes(v));
   const chips = [...options, ...stale];
+  const [own, setOwn] = useState("");
   const toggle = (opt) => {
     if (selected.includes(opt)) onChange(selected.filter(v => v !== opt));
     else onChange([...selected, opt]);
   };
-  if (chips.length === 0) return <div className="field-hint">No options defined for this field.</div>;
+  const addOwn = () => {
+    const typed = own.trim();
+    setOwn("");
+    if (!typed) return;
+    const same = (x) => x.toLowerCase() === typed.toLowerCase();
+    if (selected.some(same)) return;
+    onChange([...selected, options.find(same) || typed]);
+  };
+  if (chips.length === 0 && !allowOwn) return <div className="field-hint">No options defined for this field.</div>;
   return (
     <div className="multiselect-editor">
       {chips.map(opt => {
         const on = selected.includes(opt);
-        const isStale = stale.includes(opt);
+        const offList = stale.includes(opt);
+        const isStale = offList && !allowOwn;
         return (
           <button
             type="button"
             key={opt}
             className={`multiselect-chip${on ? " multiselect-chip-on" : ""}${isStale ? " multiselect-chip-stale" : ""}`}
             onClick={() => toggle(opt)}
-            title={isStale ? "No longer in this field's option set — click to remove" : undefined}
+            title={isStale ? "No longer in this field's option set; click to remove" : (offList ? "Your own value; click to remove" : undefined)}
           >
             {opt}
           </button>
         );
       })}
+      {allowOwn && (
+        <input
+          className="input"
+          value={own}
+          onChange={e => setOwn(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addOwn(); } }}
+          onBlur={addOwn}
+          placeholder={`Other ${(field.label || "value").toLowerCase()}: type your own, Enter adds it`}
+          maxLength={80}
+        />
+      )}
     </div>
   );
 }

@@ -78,7 +78,7 @@ Beyond per-field configuration, the builder has structural options:
 
 - **Show-when conditions.** A field can be set to render only when another field has a specific value — e.g. a "Manner of Death" field that appears only when Status is "Deceased." Conditions chain (A shows if B equals X; C shows if A is non-empty). The layout engine respects this when laying out half-width pairs so you don't get a stranded empty slot.
 - **Half-width pair layout.** Eligible field types can be marked half-width. The builder auto-pairs contiguous half-width fields onto the same row in the rendered entry form. Pairing happens after show-when evaluation, so dynamically-hidden fields don't disrupt pairing.
-- **Other-text reveal on select.** A select field can be configured so picking "Other" reveals a free-text input for the actual value. Useful for fields where you want canonical options plus an escape hatch.
+- **Other-text reveal on select.** A select field can be configured so picking "Other" reveals a free-text input for the actual value. Useful for fields where you want canonical options plus an escape hatch. A multi-select can carry the same setting: an Other box under its options takes values of your own, and each one is saved beside the options picked.
 - **Cascade chains.** Two select fields can be chained so the second's options depend on the first's value (e.g. Type → Subtype). Define the chain in the Template Builder; the entry form filters the second dropdown based on what's picked in the first.
 - **Entry-ref scope and filters.** An entry-ref field can be restricted to one or more templates' entries. Filter further via field-value criteria if needed (e.g. an entry-ref to Characters where Status is "Living").
 
@@ -1212,8 +1212,8 @@ A pack groups templates by id for display and sharing — it never owns or copie
 | \`text\`, \`textarea\` | string |
 | \`longform\` | string; a form feed (U+000C) on a line of its own is a divider |
 | \`tags\` | array of strings |
-| \`select\` | string (one of the field's \`options\`) |
-| \`multiselect\` | array of strings (a subset of the field's \`options\`) |
+| \`select\` | string (one of the field's \`options\`); with Allow custom "Other" text, \`{ value, customText }\`, where \`customText\` holds what was typed when \`value\` is "Other" |
+| \`multiselect\` | array of strings: the field's \`options\` picked, plus any values typed under Other when the field allows them |
 | \`number\` | number |
 | \`date\` | ISO-8601 date string |
 | \`url\`, \`color\` | string |
