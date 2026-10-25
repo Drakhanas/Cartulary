@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "b2a8ba4e362f54bdb9cf9a825d94924fd733ca34896a684a8cb166f3586002e3",
+  "anchor_sha256": "9d42ce11a6c8002e73e90028525f6928ff98cbb2ee385ed0c0dcc91fd7d962f1",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      4975
+      5227
     ],
     [
       "13_form-engine-display.jsx",
@@ -64,7 +64,7 @@
     ],
     [
       "15_template-builder.jsx",
-      1121
+      1122
     ],
     [
       "16_trunk.jsx",
@@ -72,7 +72,7 @@
     ],
     [
       "17_concordance.jsx",
-      1032
+      1054
     ],
     [
       "18_cartographia/00_model.jsx",
@@ -108,7 +108,7 @@
     ],
     [
       "22_trunk.jsx",
-      379
+      399
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -168,7 +168,7 @@
     ],
     [
       "27_trunk.jsx",
-      494
+      753
     ],
     [
       "28_modals.jsx",

@@ -12155,6 +12155,13 @@ function App() {
   const [mapDraft, setMapDraft] = useState(null);
   const mapEditorApiRef = useRef(null); // what the open map editor lets this component call (r046: Cancel's restore)
   const initialMapDraftRef = useRef(null);
+  // Fabula session state (v1.7 r007), the map pattern: activeCorpusId null =
+  // the index, an id = that corpus's page; corpusDraft null = view mode, an
+  // object = its fields in edit (a working copy, committed on Save). A
+  // corpusDraft whose id isn't in state.fabula.corpora is a new corpus.
+  const [activeCorpusId, setActiveCorpusId] = useState(null);
+  const [corpusDraft, setCorpusDraft] = useState(null);
+  const initialCorpusDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -12255,7 +12262,9 @@ function App() {
   // User preferences (theme + font size + view order + backup reminder state).
   // Persisted separately from world state. lastExportAt is when the user last
   // downloaded a JSON backup; the backup reminder uses it as its anchor.
-  const DEFAULT_VIEW_ORDER = ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"];
+  // v1.7 r007 (Drak, 2026-10-25): Fabula after Linea, and Kalendarium below
+  // Ephemeris.
+  const DEFAULT_VIEW_ORDER = ["family", "fabula", "stemma", "ephemeris", "kalendarium", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"];
   // Prior canonical orderings of DEFAULT_VIEW_ORDER. When a user's stored
   // viewOrder matches any of these (after filter-to-known), they haven't
   // customized — uplift them to the current canonical order so default-order
@@ -12272,6 +12281,8 @@ function App() {
     ["family", "stemma", "kalendarium", "cartographia", "graph", "timeline", "chronometrics"],
     // v1.5 pre-Glossopoeia order (Ephemeris in, Glossopoeia not yet)
     ["family", "stemma", "kalendarium", "ephemeris", "cartographia", "graph", "timeline", "chronometrics"],
+    // v1.5 through v1.7 r006 (Glossopoeia in, Fabula not yet)
+    ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"],
   ];
   const [prefs, setPrefs] = useState({
     theme: "default",
@@ -12875,21 +12886,23 @@ function App() {
     if (entryDraft && JSON.stringify(entryDraft) !== initialEntryDraftRef.current) return true;
     if (tplDraft && JSON.stringify(tplDraft) !== initialTplDraftRef.current) return true;
     if (mapDraft && JSON.stringify(mapDraft) !== initialMapDraftRef.current) return true;
+    if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
     return false;
   };
 
   draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
-    const which = mapDraft ? "this map" : entryDraft ? "this entry" : "this template";
+    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : entryDraft ? "this entry" : "this template";
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
+    initialCorpusDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -12909,7 +12922,7 @@ function App() {
   const selectView = (v) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null);
+    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null);
     clearDraftAndStorage(); setSearch(""); setView(v);
   };
 
@@ -12941,6 +12954,19 @@ function App() {
       setMapDraft(null); initialMapDraftRef.current = null;
       setActiveMapId(id);
       setView("cartographia");
+      return;
+    }
+    // v1.7 r007: Fabula fallback. A corpus opens on its page; a story, whose
+    // page comes in r008, opens its corpus's page, or the index when it's in
+    // no corpus.
+    const fabCorpora = (state.fabula && Array.isArray(state.fabula.corpora)) ? state.fabula.corpora : [];
+    const fabStory = (state.fabula && Array.isArray(state.fabula.stories)) ? state.fabula.stories.find(st => st && st.id === id) : null;
+    if (fabStory || fabCorpora.some(c => c && c.id === id)) {
+      const home = fabStory ? fabCorpora.find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(id)) : null;
+      setActiveTagFilter(null);
+      setCorpusDraft(null); initialCorpusDraftRef.current = null;
+      setActiveCorpusId(fabStory ? (home ? home.id : null) : id);
+      setView("fabula");
       return;
     }
     // v1.5 r004: body fallback. Bodies are not entries — they live in
@@ -13247,6 +13273,140 @@ function App() {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
     }
+  };
+
+  // v1.7 r007: Fabula's corpora and stories (docs/fabula-spec.md, section 4).
+  // A corpus's page follows the map's: a new corpus is a draft until Save,
+  // and its fields change through Edit, Save, and Cancel. Its reading order
+  // and the stories in it change at once, as the index's actions do. A
+  // corpus's membership is its storyIds; a story's corpus is stored nowhere
+  // else, and each change takes the story out of every corpus first.
+  const updateFabula = (fn) => updateState(s => ({ ...s, fabula: fn(s.fabula || {}) }));
+  const fabArr = (fab, slice) => (Array.isArray(fab[slice]) ? fab[slice] : []);
+
+  const openCorpus = (id) => {
+    if (!confirmDiscardDraft()) return;
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(id);
+    setView("fabula");
+  };
+
+  const closeCorpusToIndex = () => {
+    if (!confirmDiscardDraft()) return;
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(null);
+  };
+
+  const createCorpus = () => {
+    if (isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const id = `fab-corpus-${genId()}`;
+    const draft = { id, name: "", fields: {} };
+    setActiveCorpusId(id);
+    setCorpusDraft(draft);
+    initialCorpusDraftRef.current = JSON.stringify(draft);
+    setView("fabula");
+  };
+
+  const editCorpus = () => {
+    const rec = fabArr(state.fabula || {}, "corpora").find(c => c.id === activeCorpusId);
+    if (!rec || isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = { id: rec.id, name: rec.name || "", fields: JSON.parse(JSON.stringify(rec.fields || {})) };
+    setCorpusDraft(draft);
+    initialCorpusDraftRef.current = JSON.stringify(draft);
+  };
+
+  const saveCorpus = () => {
+    if (!corpusDraft || isLocked) return;
+    const name = (corpusDraft.name || "").trim();
+    if (!name) return;
+    const now = isoNow();
+    updateFabula(fab => {
+      const arr = fabArr(fab, "corpora");
+      const old = arr.find(c => c.id === corpusDraft.id);
+      const rec = { ...(old || { storyIds: [], createdAt: now }), id: corpusDraft.id, name, fields: corpusDraft.fields || {}, updatedAt: now };
+      return { ...fab, corpora: old ? arr.map(c => c.id === rec.id ? rec : c) : [...arr, rec] };
+    });
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setActiveCorpusId(corpusDraft.id);
+    flash("Saved");
+  };
+
+  const cancelCorpusEdit = () => {
+    if (!confirmDiscardDraft()) return;
+    const existed = fabArr(state.fabula || {}, "corpora").some(c => c.id === activeCorpusId);
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    if (!existed) setActiveCorpusId(null); // a new corpus, never saved: back to the index
+  };
+
+  // Deleting a corpus leaves its stories in Fabula, in no corpus.
+  const deleteCorpus = (id) => {
+    if (isLocked) return;
+    updateFabula(fab => ({ ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) }));
+    if (activeCorpusId === id) {
+      setActiveCorpusId(null);
+      setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    }
+  };
+
+  // A new story, in a corpus (at the end of its reading order) or in none.
+  // Returns its id, so the row it lands in can open its title for typing.
+  const createStory = (corpusId) => {
+    if (isLocked) return null;
+    const id = `fab-story-${genId()}`;
+    const now = isoNow();
+    updateFabula(fab => ({
+      ...fab,
+      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: {}, outline: [], createdAt: now, updatedAt: now }],
+      corpora: fabArr(fab, "corpora").map(c => c.id === corpusId ? { ...c, storyIds: [...(c.storyIds || []), id], updatedAt: now } : c),
+    }));
+    return id;
+  };
+
+  const renameStory = (id, name) => {
+    const n = (name || "").trim();
+    if (isLocked || !n) return;
+    updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === id ? { ...st, name: n, updatedAt: isoNow() } : st) }));
+  };
+
+  const deleteStory = (id) => {
+    if (isLocked) return;
+    updateFabula(fab => ({
+      ...fab,
+      stories: fabArr(fab, "stories").filter(st => st.id !== id),
+      corpora: fabArr(fab, "corpora").map(c => (c.storyIds || []).includes(id) ? { ...c, storyIds: c.storyIds.filter(x => x !== id) } : c),
+    }));
+  };
+
+  // The Corpus dropdown: into a corpus, at the end of its reading order, or
+  // into none (corpusId null).
+  const setStoryCorpus = (storyId, corpusId) => {
+    if (isLocked) return;
+    const now = isoNow();
+    updateFabula(fab => ({
+      ...fab,
+      corpora: fabArr(fab, "corpora").map(c => {
+        const ids = (c.storyIds || []).filter(x => x !== storyId);
+        if (c.id === corpusId) return { ...c, storyIds: [...ids, storyId], updatedAt: now };
+        return ids.length === (c.storyIds || []).length ? c : { ...c, storyIds: ids, updatedAt: now };
+      }),
+      stories: fabArr(fab, "stories").map(st => st.id === storyId ? { ...st, updatedAt: now } : st),
+    }));
+  };
+
+  // The reading order: a story to a new place in its corpus.
+  const moveCorpusStory = (corpusId, storyId, toIndex) => {
+    if (isLocked) return;
+    updateFabula(fab => ({
+      ...fab,
+      corpora: fabArr(fab, "corpora").map(c => {
+        if (c.id !== corpusId || !(c.storyIds || []).includes(storyId)) return c;
+        const ids = c.storyIds.filter(x => x !== storyId);
+        ids.splice(Math.max(0, Math.min(ids.length, toIndex)), 0, storyId);
+        return { ...c, storyIds: ids, updatedAt: isoNow() };
+      }),
+    }));
   };
 
   const openEditEntry = () => {
@@ -15551,6 +15711,13 @@ function App() {
       headerTitle = rec?.name || "Map";
     } else headerTitle = "Cartographia";
   }
+  else if (view === "fabula") {
+    if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
+    else if (activeCorpusId) {
+      const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+      headerTitle = rec?.name || "Corpus";
+    } else headerTitle = "Fabula";
+  }
   else if (view === "ephemeris") headerTitle = "Ephemeris";
   else if (view === "glossopoeia") headerTitle = "Glossopoeia";
   else if (view === "home") headerTitle = "Home";
@@ -15686,6 +15853,18 @@ function App() {
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
+              </>}
+              {view === "fabula" && corpusDraft && <>
+                <button className="btn btn-ghost" onClick={cancelCorpusEdit}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveCorpus} disabled={!corpusDraft?.name?.trim()}>Save</button>
+              </>}
+              {view === "fabula" && activeCorpusId && !corpusDraft && <>
+                {!isLocked && <button className="btn btn-danger" onClick={() => {
+                  const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+                  if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
+                }}>Delete</button>}
+                {!isLocked && <button className="btn btn-ghost" onClick={editCorpus}>Edit</button>}
+                <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back</button>
               </>}
               {(view === "tpl-build" || view === "tpl-edit") && <>
                 {view === "tpl-edit" && tplDraft && tplDraft.origin === TEMPLATE_ORIGIN.BUILTIN && (
@@ -15962,6 +16141,78 @@ function App() {
           {view === "ephemeris" && (
             <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
           )}
+          {view === "fabula" && !activeCorpusId && !corpusDraft && (
+            <FabulaIndexView
+              state={state}
+              isLocked={isLocked}
+              onOpenCorpus={openCorpus}
+              onCreateCorpus={createCorpus}
+              onCreateStory={createStory}
+              onRenameStory={renameStory}
+              onDeleteStory={deleteStory}
+              onSetStoryCorpus={setStoryCorpus}
+            />
+          )}
+          {view === "fabula" && corpusDraft && (
+            <EntryForm
+              draft={corpusDraft}
+              template={fabulaTemplate(state, "corpus")}
+              entries={state.entries}
+              templates={state.templates}
+              bodies={state.celestialBodies}
+              registeredNodes={getRegisteredGraphNodes(state)}
+              onChange={setCorpusDraft}
+              showSecrets={showSecrets}
+              imageFolder={state.world.imageFolder}
+              allTags={allTags}
+              dirHandle={dirHandle}
+              calendar={getCalendar(state, null)}
+              primaryCalendar={state.world.calendar}
+              additionalCalendars={[]}
+              selfEntryId={corpusDraft.id}
+              flash={flash}
+              hideTags
+            />
+          )}
+          {view === "fabula" && activeCorpusId && !corpusDraft && (() => {
+            const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
+            if (!rec) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--text-dim)" }}>
+                  This corpus no longer exists.
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back to Fabula</button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <EntryView
+                entry={rec}
+                template={fabulaTemplate(state, "corpus")}
+                templates={state.templates}
+                entries={state.entries}
+                onOpenEntry={openEntryFromAnywhere}
+                onSelectTag={selectTag}
+                showSecrets={showSecrets}
+                imageFolder={state.world.imageFolder}
+                dirHandle={dirHandle}
+                calendar={getCalendar(state, null)}
+                state={state}
+                onUpdateViewPrefs={updateViewPrefs}
+                canvasSlot={
+                  <FabulaReadingOrder
+                    state={state}
+                    corpus={rec}
+                    isLocked={isLocked}
+                    onMoveStory={moveCorpusStory}
+                    onCreateStory={createStory}
+                    onRenameStory={renameStory}
+                  />
+                }
+              />
+            );
+          })()}
           {view === "glossopoeia" && (
             <GlossopoeiaView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} flash={flash} />
           )}
@@ -16746,6 +16997,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
     ephemeris:     { id: "ephemeris",     icon: "☉", label: "Ephemeris" },
     glossopoeia:   { id: "glossopoeia",   icon: "\u03b1", label: "Glossopoeia" },
     cartographia:  { id: "cartographia",  icon: "▦", label: "Cartographia" },
+    fabula:        { id: "fabula",        icon: "\u2042", label: "Fabula" },
   };
 
   // Filter map-kind templates out of the visible Templates list — they live
@@ -16764,7 +17016,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
     .map((t, originalIdx) => ({ t, originalIdx }))
     .filter(({ t }) => t.kind !== "map" && (t.origin === "builtin" || !packedTemplateIds.has(t.id)));
 
-  const orderedViews = (viewOrder || ["family", "stemma", "kalendarium", "ephemeris", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"])
+  const orderedViews = (viewOrder || ["family", "fabula", "stemma", "ephemeris", "kalendarium", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"])
     .map(id => VIEW_DEFS[id])
     .filter(Boolean);
 
@@ -17927,7 +18179,7 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
@@ -17938,10 +18190,10 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
       {!previewMode && (
         template.ipaName
           ? <IpaTextInput value={draft.name} onChange={(nm) => onChange({ ...draft, name: nm })} placeholder={`${template.name} name...`} ipaSymbols={ipaSymbols} className="form-title-input" autoFocus />
-          : <input className="form-title-input" placeholder={`${template.name} name...`} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
+          : <input className="form-title-input" placeholder={`${template.name} name...`} title={template.nameHelp || undefined} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
       )}
 
-      {!previewMode && (
+      {!previewMode && !hideTags && (
         <div className="form-tags-bar">
           <label className="form-label">Tags</label>
           <input className="input form-tags-input" placeholder="comma-separated tags..." value={(draft.tags || []).join(", ")} onChange={e => onChange({ ...draft, tags: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} list="all-tags" />
@@ -19686,8 +19938,9 @@ function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
   const filters = field.refFilters || {};
   // v1.5 r077: registered node types (Astronomical Body, future ConLang) are
   // offered as ref targets alongside real templates. Checking one stores its
-  // synthetic-template id (= the body sentinel) into refTemplatesId.
-  const targetTemplates = [...templates, ...getRegisteredSyntheticTemplates()];
+  // synthetic-template id (= the body sentinel) into refTemplatesId. Since
+  // v1.7 r007 only the sources marked eligible: Fabula's kinds aren't.
+  const targetTemplates = [...templates, ...getRegisteredSyntheticTemplates().filter(t => t.refEligible)];
   const toggleTpl = (tplId, tplName) => {
     const nextChecked = new Set(checked);
     const nextFilters = { ...filters };
@@ -19874,7 +20127,7 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                     <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={sf.refTemplateId || ""} onChange={e => onUpdate(parentPath, sf.id, { refTemplateId: e.target.value || null })}>
                       <option value="">Any template</option>
                       {(templates || []).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
-                      {getRegisteredSyntheticTemplates().map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                      {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                     </select>
                   )}
                   <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={sf.relationKind || ""} onChange={e => onUpdate(parentPath, sf.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
@@ -20526,7 +20779,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
                 <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={field.refTemplateId || ""} onChange={e => updateField(field.id, { refTemplateId: e.target.value || null })}>
                   <option value="">Any template</option>
                   {templates.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
-                  {getRegisteredSyntheticTemplates().map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                  {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                 </select>
               )}
               <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={field.relationKind || ""} onChange={e => updateField(field.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
@@ -21581,6 +21834,13 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     setEnabledTemplates(next);
   };
 
+  // v1.7 r007: a group of sources (Fabula's eleven kinds) toggles as one.
+  const toggleGroup = (ids, on) => {
+    const next = new Set(enabledTemplates);
+    ids.forEach(id => { if (on) next.delete(id); else next.add(id); });
+    setEnabledTemplates(next);
+  };
+
   const allOn = () => setEnabledTemplates(new Set([...state.templates.map(t => t.id), ...getRegisteredSyntheticTemplates().map(t => t.id)]));
   const allOff = () => setEnabledTemplates(new Set());
 
@@ -21973,7 +22233,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
               <a href="#" onClick={(e) => { e.preventDefault(); allOff(); }} style={{ color: "var(--text-dim)", textDecoration: "none" }}>none</a>
             </span>
           </div>
-          {[...state.templates, ...getRegisteredSyntheticTemplates()].map(t => (
+          {[...state.templates, ...getRegisteredSyntheticTemplates().filter(t => !t.group)].map(t => (
             <label key={t.id} className="graph-filter-row">
               <input type="checkbox" checked={enabledTemplates.has(t.id)} onChange={() => toggleTemplate(t.id)} />
               <span className="graph-filter-color" style={{ background: t.color }} />
@@ -21981,6 +22241,21 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
               <span className="graph-filter-count">{perTemplateCount[t.id] || 0}</span>
             </label>
           ))}
+          {Object.values(getRegisteredSyntheticTemplates().filter(t => t.group).reduce((acc, t) => {
+            (acc[t.group] = acc[t.group] || []).push(t);
+            return acc;
+          }, {})).map(members => {
+            const ids = members.map(m => m.id);
+            const on = ids.every(id => enabledTemplates.has(id));
+            return (
+              <label key={`group-${members[0].group}`} className="graph-filter-row">
+                <input type="checkbox" checked={on} onChange={() => toggleGroup(ids, on)} />
+                <span className="graph-filter-color" style={{ background: members[0].color }} />
+                <span className="graph-filter-name">{members[0].groupName || members[0].group}</span>
+                <span className="graph-filter-count">{ids.reduce((n, id) => n + (perTemplateCount[id] || 0), 0)}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
@@ -30912,23 +31187,24 @@ const MAP_REF_LABEL = "Map";
 // Fabula's record kinds (v1.7 r006; docs/fabula-spec.md, section 3). Each
 // has the array in state.fabula that holds its records (slice) and a sentinel
 // id, the way Glossopoeia's kinds have theirs, so a reference field can name a
-// kind of Fabula record. None is registered: the registry entries come with
-// the first cut that shows Fabula, together with Concordance's single Fabula
-// toggle and a template builder that offers only sources marked eligible
-// (Drak, 2026-10-25). Until then the ids appear only in Fabula's seeded
-// schemas (fabulaSeedSchemas).
+// kind of Fabula record. They joined the registry with the first cut that
+// shows Fabula, v1.7's r007, as sources that aren't eligible as reference
+// targets, together with Concordance's single Fabula toggle and a template
+// builder that offers only eligible sources (Drak, 2026-10-25). label is the
+// kind's own name, where name says it's Fabula's; color is its node's in
+// Concordance.
 const FABULA_KINDS = [
-  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)" },
-  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)" },
-  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)" },
-  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)" },
-  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)" },
-  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)" },
-  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)" },
-  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)" },
-  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)" },
-  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)" },
-  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)" },
+  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)",           label: "Corpus",           color: "#d9a066" },
+  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)",            label: "Story",            color: "#e6c27a" },
+  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)",             label: "Cast",             color: "#d98f8f" },
+  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)",              label: "Arc",              color: "#c97b9b" },
+  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)",     label: "Relationship",     color: "#b98bc0" },
+  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)",       label: "Plot Point",       color: "#8fa8d9" },
+  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)", label: "Promise & Payoff", color: "#7fb8c2" },
+  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)",       label: "Part / Act",       color: "#a3b87f" },
+  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)",          label: "Chapter",          color: "#c2b47f" },
+  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)",            label: "Scene",            color: "#d6a07a" },
+  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)",    label: "Research Note",    color: "#a3a3ad" },
 ];
 
 const NODE_SOURCE_REGISTRY = [
@@ -31134,6 +31410,23 @@ const NODE_SOURCE_REGISTRY = [
       return edges;
     },
   },
+  // v1.7 r007: Fabula's record kinds (FABULA_KINDS), one source each. Not
+  // eligible: no template's field can point at one, and the template builder
+  // offers eligible sources only. group puts all eleven behind one toggle in
+  // Concordance's filter, named by groupName. Their records and edges are read
+  // beside Fabula's view (fabulaRegistryInstances, fabulaRegistryEdges).
+  ...FABULA_KINDS.map(k => ({
+    id: k.id,
+    name: k.name,
+    color: k.color,
+    icon: "\u2042", // ⁂
+    refEligible: false,
+    group: "fabula",
+    groupName: "Fabula",
+    getInstances: (state) => fabulaRegistryInstances(state, k),
+    getColor: () => k.color,
+    getEdges: (state) => fabulaRegistryEdges(state, k),
+  })),
 ];
 
 // Synthetic template objects, shaped like BUILTIN_TEMPLATES entries so the
@@ -31150,6 +31443,8 @@ const getRegisteredSyntheticTemplates = () =>
     origin: TEMPLATE_ORIGIN.BUILTIN,
     synthetic: true,
     refEligible: !!src.refEligible,
+    group: src.group || null,
+    groupName: src.groupName || null,
     fields: [],
   }));
 
@@ -44553,6 +44848,265 @@ const ensureFabulaSlice = (state) => {
     fab.schemas[k.kind] = seeded[k.kind];
   });
 };
+
+// ─── Fabula: the index and the corpus page (v1.7 r007) ─────────────────────────
+// Fabula's first screen (docs/fabula-spec.md, section 4). The index lists
+// every corpus with its stories in reading order, then the stories in no
+// corpus, corpora and loose stories by name; a corpus opens on its page,
+// where its reading order changes by drag or by the arrows. A story is a row
+// until its page comes, in r008. App holds the state and the handlers, as it
+// does for maps, and passes them down. What the node-source registry reads
+// for Fabula's kinds lives here too: a kind's records as nodes, and each
+// corpus's stories as its edges, so Concordance draws a corpus to its
+// stories. Links inside a record's fields aren't edges yet.
+const fabulaRegistryInstances = (state, k) =>
+  ((state && state.fabula && Array.isArray(state.fabula[k.slice])) ? state.fabula[k.slice] : [])
+    .filter(r => r && r.id)
+    .map(r => ({ id: r.id, name: r.name || "(untitled)", kind: k.kind }));
+
+const fabulaRegistryEdges = (state, k) => {
+  if (k.kind !== "corpus") return [];
+  const fab = (state && state.fabula) || {};
+  const storyIds = new Set((Array.isArray(fab.stories) ? fab.stories : []).map(st => st && st.id).filter(Boolean));
+  const edges = [];
+  (Array.isArray(fab.corpora) ? fab.corpora : []).forEach(c => {
+    if (!c || !c.id || !Array.isArray(c.storyIds)) return;
+    c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
+  });
+  return edges;
+};
+
+// A kind's schema as the template EntryForm and EntryView take: the world's
+// stored schema, or the seed when the world has none.
+const fabulaTemplate = (state, kind) => {
+  const k = FABULA_KINDS.find(x => x.kind === kind);
+  const stored = state.fabula && state.fabula.schemas && state.fabula.schemas[kind];
+  const s = stored && Array.isArray(stored.fields) ? stored : fabulaSeedSchemas(state.templates || [])[kind];
+  return { id: k.id, name: k.label, icon: "\u2042", color: k.color, kind: `fabula-${kind}`, fields: s.fields, nameHelp: s.nameHelp };
+};
+
+// A story's cast and scenes, for its row.
+const fabulaStoryCounts = (state, storyId) => {
+  const fab = state.fabula || {};
+  const count = (slice) => (Array.isArray(fab[slice]) ? fab[slice] : []).filter(r => r && r.storyId === storyId).length;
+  return { cast: count("cast"), scenes: count("scenes") };
+};
+
+const fabulaCorpusDeleteMessage = (corpus) => {
+  const n = Array.isArray(corpus.storyIds) ? corpus.storyIds.length : 0;
+  const name = corpus.name || "this corpus";
+  return n === 0
+    ? `Delete the corpus "${name}"?`
+    : `Delete the corpus "${name}"? Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`;
+};
+
+function FabulaStoryLine({ state, story }) {
+  const counts = fabulaStoryCounts(state, story.id);
+  const status = formatSelectDisplay((story.fields || {}).status);
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>{story.name || "(untitled story)"}</div>
+      <div style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
+        {status && <span>{status} · </span>}
+        {counts.cast} cast · {counts.scenes} {counts.scenes === 1 ? "scene" : "scenes"}
+        {story.updatedAt && <span> · updated {fmtDate(story.updatedAt)}</span>}
+      </div>
+    </div>
+  );
+}
+
+// One story's row, with its title renamed in place. autoRename opens the
+// title for typing, for a story just made, and onRenameEnd tells the parent
+// the typing is over. leading comes before the title (the reading order's
+// number), actions before Rename, trailing after it.
+function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRenameEnd, leading, actions, trailing, rowProps }) {
+  const [renaming, setRenaming] = useState(!!autoRename);
+  const [text, setText] = useState(story.name || "");
+  useEffect(() => { if (autoRename) { setText(story.name || ""); setRenaming(true); } }, [autoRename]);
+  const commit = () => {
+    const t = text.trim();
+    if (t && t !== story.name) onRename(story.id, t);
+    setRenaming(false);
+    if (onRenameEnd) onRenameEnd();
+  };
+  const { style: rowStyle, ...rest } = rowProps || {};
+  return (
+    <div className="stemma-index-row" {...rest} style={{ padding: "10px 16px", background: "var(--surf)", display: "flex", alignItems: "center", gap: 12, ...(rowStyle || {}) }}>
+      {leading}
+      {renaming && !isLocked ? (
+        <input
+          className="input"
+          autoFocus
+          aria-label="Story title"
+          value={text}
+          onFocus={e => e.target.select()}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") { e.preventDefault(); commit(); }
+            else if (e.key === "Escape") { e.preventDefault(); setText(story.name || ""); setRenaming(false); if (onRenameEnd) onRenameEnd(); }
+          }}
+          onBlur={commit}
+          style={{ flex: 1 }}
+        />
+      ) : <FabulaStoryLine state={state} story={story} />}
+      {!isLocked && !renaming && (
+        <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+          {actions}
+          <button className="btn" style={{ padding: "3px 8px", fontSize: 12 }} onClick={() => { setText(story.name || ""); setRenaming(true); }} title="Rename this story">Rename</button>
+          {trailing}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCreateStory, onRenameStory, onDeleteStory, onSetStoryCorpus }) {
+  const [justMade, setJustMade] = useState(null);
+  const fab = state.fabula || {};
+  const byName = (a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+  const corpora = (Array.isArray(fab.corpora) ? fab.corpora : []).filter(c => c && c.id).slice().sort(byName);
+  const stories = (Array.isArray(fab.stories) ? fab.stories : []).filter(st => st && st.id);
+  const storyById = new Map(stories.map(st => [st.id, st]));
+  const corpusOf = new Map();
+  corpora.forEach(c => (c.storyIds || []).forEach(id => { if (storyById.has(id) && !corpusOf.has(id)) corpusOf.set(id, c.id); }));
+  const loose = stories.filter(st => !corpusOf.has(st.id)).sort(byName);
+  const newStory = () => { const id = onCreateStory(null); if (id) setJustMade(id); };
+  const listBox = { display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" };
+  const smallBtn = { padding: "3px 8px", fontSize: 12 };
+  const row = (st) => (
+    <FabulaStoryRow
+      key={st.id}
+      state={state}
+      story={st}
+      isLocked={isLocked}
+      autoRename={justMade === st.id}
+      onRename={onRenameStory}
+      onRenameEnd={() => setJustMade(null)}
+      actions={
+        <select className="input" value={corpusOf.get(st.id) || ""} onChange={e => onSetStoryCorpus(st.id, e.target.value || null)} title="The corpus this story belongs to" aria-label="Corpus" style={{ fontSize: 12, padding: "3px 28px 3px 8px", minWidth: 130, maxWidth: 220 }}>
+          <option value="">No corpus</option>
+          {corpora.map(c => <option key={c.id} value={c.id}>{c.name || "(untitled corpus)"}</option>)}
+        </select>
+      }
+      trailing={
+        <button className="btn" style={{ ...smallBtn, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }} onClick={() => {
+          if (confirm(`Delete the story "${st.name || "untitled story"}"?`)) onDeleteStory(st.id);
+        }} title="Delete this story">Delete</button>
+      }
+    />
+  );
+  return (
+    <div style={{ padding: "20px 24px", maxWidth: 900 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 24 }}>
+        <div style={{ color: "var(--text-dim)", fontSize: 14, lineHeight: 1.5, maxWidth: 560 }}>
+          The stories set in this world, planned down to their scenes and beats; the writing itself happens somewhere else. A corpus gathers stories, a series or a shared world, and a story belongs to one corpus at most.
+        </div>
+        {!isLocked && (
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+            <button className="btn" onClick={onCreateCorpus}>+ New Corpus</button>
+            <button className="btn btn-accent" onClick={newStory}>+ New Story</button>
+          </div>
+        )}
+      </div>
+
+      {corpora.length === 0 && stories.length === 0 && (
+        <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--text-dim)", fontStyle: "italic", border: "1px dashed var(--border)", borderRadius: 6, background: "var(--surf)" }}>
+          No stories yet.{!isLocked && " Click + New Story or + New Corpus above to begin."}
+        </div>
+      )}
+
+      {corpora.map(c => {
+        const its = (c.storyIds || []).filter(id => corpusOf.get(id) === c.id).map(id => storyById.get(id));
+        const kind = formatSelectDisplay((c.fields || {}).kind);
+        const status = formatSelectDisplay((c.fields || {}).status);
+        return (
+          <div key={c.id} style={{ marginBottom: 20 }}>
+            <div
+              className="stemma-index-row"
+              style={{ padding: "12px 16px", background: "var(--surf)", cursor: "pointer", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, border: "1px solid var(--border)", borderRadius: 4, marginBottom: 6 }}
+              onClick={() => onOpenCorpus(c.id)}
+              title="Open this corpus"
+            >
+              <div style={{ fontSize: 16, fontWeight: 500, display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ color: "#d9a066", fontSize: 13 }}>{"\u2042"}</span>
+                <span>{c.name || "(untitled corpus)"}</span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
+                {[kind, status].filter(Boolean).join(" · ")}{(kind || status) ? " · " : ""}
+                {its.length} {its.length === 1 ? "story" : "stories"}
+                {c.updatedAt && <span> · updated {fmtDate(c.updatedAt)}</span>}
+              </div>
+            </div>
+            {its.length > 0
+              ? <div style={{ ...listBox, marginLeft: 18 }}>{its.map(row)}</div>
+              : <div style={{ marginLeft: 18, fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>No stories in this corpus yet.</div>}
+          </div>
+        );
+      })}
+
+      {loose.length > 0 && (
+        <div style={{ marginTop: corpora.length > 0 ? 28 : 0 }}>
+          {corpora.length > 0 && <div className="field-label" style={{ marginBottom: 8 }}><span>Stories in no corpus</span></div>}
+          <div style={listBox}>{loose.map(row)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// A corpus's stories in reading order, on its page: drag a row to a new
+// place, or move it with the arrows. A story made here starts at the end.
+function FabulaReadingOrder({ state, corpus, isLocked, onMoveStory, onCreateStory, onRenameStory }) {
+  // The dragged story, in a ref as well as in state: a drop can arrive before
+  // React has drawn the drag's start.
+  const dragRef = useRef(null);
+  const [dragId, setDragId] = useState(null);
+  const [justMade, setJustMade] = useState(null);
+  const fab = state.fabula || {};
+  const storyById = new Map((Array.isArray(fab.stories) ? fab.stories : []).filter(st => st && st.id).map(st => [st.id, st]));
+  const ids = (corpus.storyIds || []).filter(id => storyById.has(id));
+  const arrow = { padding: "3px 8px", fontSize: 12, minWidth: 30 };
+  return (
+    <div style={{ margin: "4px 0 20px" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+        <div className="field-label"><span>Reading order</span></div>
+        {!isLocked && <button className="btn" style={{ padding: "3px 10px", fontSize: 12 }} onClick={() => { const id = onCreateStory(corpus.id); if (id) setJustMade(id); }}>+ New Story</button>}
+      </div>
+      {ids.length === 0 ? (
+        <div style={{ fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>
+          No stories in this corpus yet.{!isLocked && " Add one here, or pick this corpus in a story's Corpus dropdown on Fabula's index."}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+          {ids.map((id, i) => (
+            <FabulaStoryRow
+              key={id}
+              state={state}
+              story={storyById.get(id)}
+              isLocked={isLocked}
+              autoRename={justMade === id}
+              onRename={onRenameStory}
+              onRenameEnd={() => setJustMade(null)}
+              rowProps={isLocked ? null : {
+                draggable: true,
+                onDragStart: (e) => { dragRef.current = id; setDragId(id); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", id); } catch (_) {} },
+                onDragOver: (e) => { const d = dragRef.current; if (d && d !== id) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+                onDrop: (e) => { e.preventDefault(); const d = dragRef.current; if (d && d !== id) onMoveStory(corpus.id, d, i); dragRef.current = null; setDragId(null); },
+                onDragEnd: () => { dragRef.current = null; setDragId(null); },
+                style: { cursor: "grab", opacity: dragId === id ? 0.5 : 1 },
+              }}
+              leading={<span style={{ width: 22, flexShrink: 0, color: "var(--text-dim)", fontSize: 13, textAlign: "right" }}>{i + 1}.</span>}
+              actions={<>
+                <button className="btn" style={arrow} disabled={i === 0} onClick={() => onMoveStory(corpus.id, id, i - 1)} title="Earlier in the reading order" aria-label="Move earlier">{"\u2191"}</button>
+                <button className="btn" style={arrow} disabled={i === ids.length - 1} onClick={() => onMoveStory(corpus.id, id, i + 1)} title="Later in the reading order" aria-label="Move later">{"\u2193"}</button>
+              </>}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Destructive Op confirmation modal (Reset / Import) ─────────────────────
 
