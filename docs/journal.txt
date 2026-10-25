@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, and r002's target lists) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, and r003's reference display) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -525,3 +525,14 @@ judged old names by r002's rules, which would have deleted names the old rules h
 resolved. The probe ran the same world through r001 as a control, and r001 failed 21 of the
 27 load checks, which is the only reason I believe the 48 that r002 passed mean anything.
 Drak passed it in one go.
+
+r003 was the display half. References to languages, words, bodies, and maps show their names
+now, in the entry view, its groups and grids, both exports, and Concordance's hover pane,
+which I hadn't listed and found doing the same thing. The probe passed all 25 checks and the
+control on r002 failed 19, and then Drak's pass found what no probe of mine could have: his
+own world's Location › Parent couldn't point at a planet at all. That world began in v1.4.
+The v1.5 conversion had left the retired Astronomical Body template's id in the field, the
+builder can't tick a template that isn't there, and a question the roadmap had filed as
+unchecked got checked by the person it happened to. r004 was always going to repair those
+fields; now it has a world that needs it. Drak took my call to freeze r003 as passed and put
+the fix where it belongs.

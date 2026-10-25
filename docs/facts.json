@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44307,
-    "raw_body_lines": 44307,
-    "canonical_lines": 42118,
-    "decl_count": 512,
+    "total_lines": 44370,
+    "raw_body_lines": 44370,
+    "canonical_lines": 42177,
+    "decl_count": 516,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r002-body.jsx"
+    "active_anchor": "reference-r003-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44307,
+      "value": 44370,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 512,
+      "value": 516,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 42118,
+      "value": 42177,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44307,
+      "value": 44370,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2312403,
+      "value": 2316754,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty",
-        30
+        "thirty-one",
+        31
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -104,12 +104,12 @@
       "pattern": "github\\.com/(Drakhanas/Cartulary)"
     },
     "cartographia_lines": {
-      "value": 5231,
+      "value": 5241,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r002": {
-      "value": "710f0d88e89bde32",
-      "pattern": "working[^\\n]{0,40}at r002 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r003": {
+      "value": "a2bb59988f15030f",
+      "pattern": "working[^\\n]{0,40}at r003 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -125,12 +125,12 @@
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 264,
+      "line": 267,
       "contains": "Longform + markdown display"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 266,
+      "line": 269,
       "contains": "function LongformDisplay"
     },
     {
@@ -225,7 +225,7 @@
     },
     {
       "file": "17_concordance.jsx",
-      "line": 1028,
+      "line": 1032,
       "contains": "}"
     },
     {
@@ -430,12 +430,12 @@
     },
     {
       "file": "18_cartographia/04_index.jsx",
-      "line": 235,
+      "line": 245,
       "contains": "function CartographiaIndexView"
     },
     {
       "file": "18_cartographia/04_index.jsx",
-      "line": 348,
+      "line": 358,
       "contains": "}"
     },
     {
@@ -500,17 +500,17 @@
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 925,
+      "line": 939,
       "contains": "const renderMapHtml"
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 1497,
+      "line": 1512,
       "contains": "HTML export modal"
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 1508,
+      "line": 1523,
       "contains": "function HtmlExportModal"
     }
   ],
@@ -525,7 +525,7 @@
     "17_concordance.jsx": [
       [
         1,
-        1028,
+        1032,
         "concordance"
       ]
     ],
@@ -560,7 +560,7 @@
     "18_cartographia/04_index.jsx": [
       [
         1,
-        348,
+        358,
         "index"
       ]
     ],
@@ -649,14 +649,14 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r002-body.jsx",
-      "reference-r002-layout.json",
-      "8af1a730ac383d32",
-      "710f0d88e89bde32",
+      "reference-r003-body.jsx",
+      "reference-r003-layout.json",
+      "b1b07ff195a9e796",
+      "a2bb59988f15030f",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
-      "0e289d8e7ece2c9c",
+      "54751a1acd6f9d87",
       "stages the old content",
       "owes a pass of its own",
       "answers the font requests empty",
@@ -665,7 +665,11 @@
       "refTargetIndex",
       "r003",
       "r004",
-      "as a control"
+      "as a control",
+      "v1.7_r003",
+      "resolveRefTarget",
+      "refLinkHtml",
+      "mapDeleteMessage"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -722,10 +726,15 @@
       "e11d0a9253eedaad",
       "On v1.7 r001 verification",
       "reference-r002-body.jsx",
-      "reference-r002-layout.json",
       "8af1a730ac383d32",
       "710f0d88e89bde32",
-      "On v1.7 r002 verification"
+      "On v1.7 r002 verification",
+      "reference-r003-body.jsx",
+      "reference-r003-layout.json",
+      "b1b07ff195a9e796",
+      "a2bb59988f15030f",
+      "On v1.7 r003 verification",
+      "08_export-layer:1512"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -743,7 +752,11 @@
       "v1.7_r002",
       "710f0d88e89bde32",
       "8af1a730ac383d32",
-      "syncRefTargetNames"
+      "syncRefTargetNames",
+      "v1.7_r003",
+      "a2bb59988f15030f",
+      "b1b07ff195a9e796",
+      "resolveRefTarget"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -766,7 +779,9 @@
       "v1.7_r002",
       "r003",
       "r004",
-      "Language / Glossary"
+      "Language / Glossary",
+      "v1.7_r003",
+      "Deleting a Glossopoeia record leaves entry references to it"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -802,7 +817,8 @@
       "stage every file in its scope",
       "stop hook",
       "every load",
-      "Judge stored data by the rules that produced it"
+      "Judge stored data by the rules that produced it",
+      "A user's world carries every upgrade it has been through"
     ],
     "journal.txt": [
       "r030",
@@ -830,7 +846,8 @@
       "r052",
       "session 20",
       "Common Year",
-      "r002"
+      "r002",
+      "r003"
     ]
   }
 }
