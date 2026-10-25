@@ -745,7 +745,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <p>To move around the canvas, scroll to zoom, from a fifth of normal size up to four times, and drag empty space to pan. Zoom buttons sit in the corner, with a reset that snaps the view back. Your zoom and position hold while you work, and a filter toggle doesn't throw them away.</p>
 
     <h3>The Templates filter</h3>
-    <p>The side panel lists every template with a checkbox, and because each row carries that template's color, the panel doubles as the graph's legend, telling you what each color means. Each row also shows a count of how many nodes of that type are currently in the graph. Untick a template and its entries vanish from the graph along with every edge that touched them; tick it back and they return. All and None at the top flip everything at once. The filter is per-session, so a refresh brings every template back, and toggling it never disturbs the layout you've built: hidden nodes simply stop drawing, their saved positions waiting for them. A node and connection count runs along the bottom edge of the canvas so you can see the current totals at a glance.</p>
+    <p>The side panel lists every template with a checkbox, and because each row carries that template's color, the panel doubles as the graph's legend, telling you what each color means. Each row also shows a count of how many nodes of that type are currently in the graph. Untick a template and its entries vanish from the graph along with every edge that touched them; tick it back and they return. All and None at the top flip everything at once. Nothing is ticked when Concordance opens, so the graph starts empty and a large world doesn't render as one tangle. Toggling the filter never disturbs the layout you've built: hidden nodes simply stop drawing, their saved positions waiting for them. A node and connection count runs along the bottom edge of the canvas so you can see the current totals at a glance.</p>
     <p>The list includes more than your regular templates. Astronomical Bodies defined in Ephemeris appear as their own toggleable type, as do Glossopoeia entities -- ConLangs, Lexemes, Phonemes, Grammatical Values, Affixes, Word-Building Processes, Inflection Classes, and Writing Systems -- and, since v1.6, Maps. Any of these that reference entries (or each other) produce edges just like a field on a regular template would. Toggle them off to reduce visual noise when you're not focusing on those parts of the world.</p>
 
     <h3>Focus mode</h3>
@@ -763,7 +763,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <p class="lead">Kalendarium holds every calendar in the world: the primary reckoning that everything else anchors to, and any number of additional calendars running alongside it. A world can have one calendar or a dozen, each with its own months, eras, week structure, seasons, and moons. You edit them here, compare them side by side, and navigate the year as a grid. Dates you enter anywhere in Cartulary draw from whatever you build in this view.</p>
 
     <h3>The primary calendar</h3>
-    <p>Every world has exactly one primary calendar. It's the system that every date in the world stores against internally: when you write a date on a character's birth, an event, a map pin, it's always in primary's terms underneath. The primary also sets the reference frame that additional calendars anchor to. Rename its months freely; existing dates redisplay under the new names without moving. The default world ships with a twelve-month Gregorian-shaped calendar as the primary, which you can strip out and rebuild from scratch the moment you open the calendar editor.</p>
+    <p>Every world has exactly one primary calendar. It's the system that every date in the world stores against internally: when you write a date on a character's birth, an event, a map pin, it's always in primary's terms underneath. The primary also sets the reference frame that additional calendars anchor to. Rename its months freely; existing dates redisplay under the new names without moving. The default world ships with Common Year as the primary: the twelve Gregorian months in a 365-day year with no leap day, since Kalendarium has no leap rules. You can strip it out and rebuild from scratch the moment you open the calendar editor.</p>
 
     <h3>Additional calendars</h3>
     <p>Click <strong>+ New Calendar</strong> in the Kalendarium header to add a parallel calendar. Its structure is entirely independent: different months, different eras, a different week cycle, its own seasons and moons. Its only tie to the primary is one <strong>anchor</strong> date, set in the calendar's own editor, that says "Year 1, Month 1, Day 1 of this calendar falls on this date in the primary." Everything else derives from that single alignment. All the absolute-day arithmetic runs under the hood; you just see dates in whatever calendar you're working with.</p>
@@ -1820,7 +1820,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
   "subfields":    [ ...field definitions ] // type "group"  -- nestable up to 3 levels deep
 }</code></pre>
     <p><code>refTemplate</code> references a template by its <code>name</code> (case-sensitive), not by ID. The <code>resolveTemplateRefs</code> step at load time also writes a runtime <code>refTemplateId</code>, but the canonical reference in the JSON is the name.</p>
-    <p>Groups nest up to 3 levels deep (group&rarr;group&rarr;group); level-3 subfields cannot themselves be groups. Grid and Longform fields are top-level only and cannot appear as subfields inside a group.</p>
+    <p>Groups nest up to 3 levels deep (group&rarr;group&rarr;group); level-3 subfields cannot themselves be groups. Grid fields are top-level only and cannot appear as subfields inside a group.</p>
   </section>
 
   <section id="js-entries">
@@ -1848,7 +1848,8 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <table style="width:100%;border-collapse:collapse;font-size:.95rem;margin:1rem 0">
       <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:.4em .8em;color:var(--accent)">Type</th><th style="text-align:left;padding:.4em .8em;color:var(--accent)">Value shape</th></tr></thead>
       <tbody>
-        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">text, textarea, longform</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">string</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">text, textarea</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">string</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">longform</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">string; a form feed (U+000C) on a line of its own is a divider</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">tags</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">array of strings</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">select</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">string (one of the field's <code>options</code>)</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">multiselect</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">array of strings (subset of <code>options</code>)</td></tr>
@@ -1864,10 +1865,11 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">entry-ref (with relationKind, single)</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)"><code>{ id: string, label?: string, status?: "active" | "former" | "estranged", marriedOn?: calendar-date, endedOn?: calendar-date }</code></td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">entry-ref (with relationKind, multi)</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">array of the above objects</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">group</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">array of objects, one per instance  -- each keyed by subfield IDs with values of the corresponding subfield types</td></tr>
-        <tr><td style="padding:.35em .8em;font-family:monospace">grid</td><td style="padding:.35em .8em">two-dimensional array of cell values  -- <code>grid[rowIndex][colIndex]</code> is a string or entry-ref</td></tr>
+        <tr><td style="padding:.35em .8em;font-family:monospace">grid</td><td style="padding:.35em .8em"><code>{ rowAxisLabel: string, colAxisLabel: string, rows: [ { id, label }, ... ], cols: [ { id, label }, ... ], cells: { [rowId]: { [colId]: { type, value } } } }</code></td></tr>
       </tbody>
     </table>
     <p><code>status</code>, <code>marriedOn</code>, and <code>endedOn</code> apply only to <code>relationKind: "spouse"</code> refs. <code>label</code> is the user-typed per-side override. <code>status</code>, <code>marriedOn</code>, and <code>endedOn</code> mirror to the partner on save.</p>
+    <p>A <code>grid</code> keeps its rows, columns, and axis names on each entry, and binds every cell to a row id and a column id, so renaming or reordering rows and columns leaves the cells where they were. Each cell carries its own <code>type</code>, one of <code>text</code>, <code>number</code>, <code>entry-ref</code>, <code>calendar-date</code>, or <code>calendar-date-range</code>, and a <code>value</code> shaped as that type is above (an <code>entry-ref</code> cell holds one id). An empty text cell isn't stored.</p>
     <p>A note on <code>tags</code>: the field type named "tags" stores an array of strings. The top-level <code>tags</code> property on entries is also an array of strings. Neither is ever a comma-separated string, regardless of how the UI renders them.</p>
   </section>
 
@@ -2090,7 +2092,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     "imageFolder": "world-images",
     "locked": false,
     "calendar": {
-      "name": "Gregorian",
+      "name": "Common Year",
       "months": [
         { "name": "January", "days": 31 },
         { "name": "February", "days": 28 }

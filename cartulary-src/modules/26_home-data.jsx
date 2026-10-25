@@ -120,13 +120,13 @@ You're not limited to the built-in set. See **Example Template** for a fully-wor
 - **Multi-select** — pick any number of options from a fixed set (like Dropdown, but many at once). Always full-width.
 - **Number** — quantitative
 - **Date** — real-world date
-- **Calendar Date (in-world)** — single point in time using your custom calendar (see Calendars & Dates)
+- **Calendar Date (in-world)** — single point in time using your custom calendar (see Kalendarium)
 - **Calendar Date Range (in-world)** — start + optional end, with approximate (~) flag per date. Drives duration display in Timeline; Chronometric.
 - **URL / Color / Image** — self-explanatory
 - **Entry Reference** — link to another entry (single or multi). Deleting the referenced entry (or the template that owns it) automatically clears the reference from any entry that pointed at it; you won't be left with broken links pointing at nothing.
 - **Name History** — list of former names with optional from/to dates. Drives time-aware label rendering on maps and timelines (a pin or event in 1640 can show "New Amsterdam" even if the entry's current name is "New York"). See Name History (former names) for details.
 - **Repeating Group** — list of structured sub-records
-- **Grid / Table**: a labeled table. Name the rows and columns, choose a cell type, and fill the cells. Cells can hold text, numbers, or entry references. Top-level only (can't nest inside a Repeating Group).
+- **Grid / Table**: a labeled table. Name the rows and columns and fill the cells; each cell picks its own type: text, a number, an entry reference, a calendar date, or a calendar date range. Top-level only (can't nest inside a Repeating Group).
 
 Long text fields support **Markdown** and **wiki-links**.
 
@@ -182,7 +182,7 @@ The schema doesn't model the cause of a name change (marriage vs ascension vs ad
 
 **Overlapping ranges.** If two rows both claim to cover the same year (probably a mistake), the first row wins. The system doesn't warn you about this — if you spot odd timeline labels, check Former Names for overlaps.` },
 
-  { id: "kalendarium", title: "Kalendarium", content: `**Kalendarium** is the sidebar view that holds every calendar in your world. The default world ships with a 12-month Gregorian calendar as the **primary**; you can replace it freely and add **additional** calendars alongside it for parallel reckonings — a faerie calendar, a dwarven calendar, an old empire's calendar that still gets cited in historical entries, whatever.
+  { id: "kalendarium", title: "Kalendarium", content: `**Kalendarium** is the sidebar view that holds every calendar in your world. The default world ships with **Common Year** as the **primary**, the twelve Gregorian months in a 365-day year with no leap day (Kalendarium has no leap rules); you can replace it freely and add **additional** calendars alongside it for parallel reckonings — a faerie calendar, a dwarven calendar, an old empire's calendar that still gets cited in historical entries, whatever.
 
 **The primary calendar** is the world's spine. Every absolute date is stored in primary's frame, and any additional calendars convert to and from primary through absolute-day math. Rename primary's months freely; existing dates re-display under the new names. Reordering and deletion are more fragile — see the warning at the bottom of this section.
 
@@ -317,7 +317,7 @@ If you don't know which to pick, pick PNG.
 
 **Looking at a map.** In a map's view the canvas pans when you drag it, and zooms with Ctrl+scroll (Cmd+scroll on a Mac), a pinch, the − and + buttons in the canvas's corner, or the keys + and −; 0 or the corner's **Fit** shows the whole canvas, which is as far out as it goes, and the range runs to 8x. Drag the canvas's bottom-right corner to resize the box on the page, from 25% to 150% of the column (past 100% it grows from the center); double-click the corner to snap back. Neither the zoom nor the size persists. The editor has the same controls and a Pan tool besides; see Map Editor.
 
-**Map fields.** Every map carries the same three fields (Description, Scope / Region, Notes) above its canvas. Custom per-map field sets are not part of v1.6; maps are a uniform record type.
+**Map fields.** Every map carries the same three fields (Description, Scope / Region, Notes) above its canvas. Custom per-map field sets aren't supported; maps are a uniform record type.
 
 **Time mode (chronicles).** When pins on a map link to entries that have a calendar-date-range field with data, a **Time** button appears in the controls above the canvas. Toggling it on adds a year scrubber, +/− buttons, a numeric year input, and one button per defined era. The map then filters pins by whether the current year falls within their linked entry's range.
 
@@ -525,7 +525,7 @@ A stemma has one **focal node** at the center, surrounded by 16 fixed slots arra
 - **Grid cells** that are entry references. Each ref cell becomes a directed edge labeled by the grid field.
 - **Repeating Group subfields.** The graph walks into every group instance, so entry-ref subfields (and wiki-links in text subfields) inside a repeating group feed edges the same as top-level fields.
 
-**Templates filter.** The right-side panel has a Templates section with one checkbox per template, plus all/none links at the top. Untick a template to hide its entries (and any edges that touched them) from the graph. The selection is per-session — refresh the page and all templates are visible again. **Filter changes preserve positions** — toggling templates on and off doesn't reset the layout you've built. Hidden nodes simply don't render; their saved positions wait. Zoom level and viewport position also persist across filter toggles within a session.
+**Templates filter.** The right-side panel has a Templates section with one checkbox per template, plus all/none links at the top. Untick a template to hide its entries (and any edges that touched them) from the graph. Nothing is ticked when Concordance opens, so the graph starts empty and a large world doesn't render as one tangle; **all** brings every template in at once. **Filter changes preserve positions** — toggling templates on and off doesn't reset the layout you've built. Hidden nodes simply don't render; their saved positions wait. Zoom level and viewport position also persist across filter toggles within a session.
 
 **Focus mode.** Type an entry name into the Focus combobox at the top of the side panel. Once it matches an existing entry exactly (the field autocompletes from your world, suggesting only entries from currently-visible templates), the graph collapses to just that entry's neighborhood. The **Hops** number input next to the matched name picks how far out to walk: 1 hop = direct connections only; 2 hops = friends-of-friends; higher values widen the included subgraph. Caps at 15, but in practice anything past 3-4 in a connected world tends to include nearly everything. Click **clear** to return to the full graph.
 
@@ -1151,7 +1151,8 @@ ConLang container records (\`conlangs\`) use the same shape minus \`langId\` —
   "type":     one of:
               "text" | "textarea" | "tags" | "select" | "multiselect" |
               "number" | "date" | "calendar-date" | "calendar-date-range" |
-              "url" | "color" | "image" | "entry-ref" | "name-history" | "group",
+              "url" | "color" | "image" | "entry-ref" | "name-history" |
+              "group" | "longform" | "grid",
   "secret":   boolean                          // optional, default false
 
   // type-specific:
@@ -1200,7 +1201,7 @@ A pack groups templates by id for display and sharing — it never owns or copie
 }
 \`\`\`
 
-\`calendarId\` references an entry in the top-level \`calendars\` array. When set, all of the entry's date-bearing fields (\`calendar-date\`, \`calendar-date-range\`, \`name-history\` rows, spouse \`marriedOn\`/\`endedOn\`, and group subfields recursively) reckon in that calendar. When null or absent, those fields reckon in primary. Per-field overrides aren't supported in v1.4.
+\`calendarId\` references an entry in the top-level \`calendars\` array. When set, all of the entry's date-bearing fields (\`calendar-date\`, \`calendar-date-range\`, \`name-history\` rows, spouse \`marriedOn\`/\`endedOn\`, and group subfields recursively) reckon in that calendar. When null or absent, those fields reckon in primary. Per-field overrides aren't supported.
 
 ---
 
@@ -1209,6 +1210,7 @@ A pack groups templates by id for display and sharing — it never owns or copie
 | Type | Value shape |
 |---|---|
 | \`text\`, \`textarea\` | string |
+| \`longform\` | string; a form feed (U+000C) on a line of its own is a divider |
 | \`tags\` | array of strings |
 | \`select\` | string (one of the field's \`options\`) |
 | \`multiselect\` | array of strings (a subset of the field's \`options\`) |
@@ -1224,8 +1226,11 @@ A pack groups templates by id for display and sharing — it never owns or copie
 | \`entry-ref\` (with relationKind, single) | \`{ id: string, label?: string, status?: "active" \\| "former" \\| "estranged", marriedOn?: calendar-date, endedOn?: calendar-date }\` |
 | \`entry-ref\` (with relationKind, multi) | array of the above objects |
 | \`group\` | array of objects, one per instance — each object keyed by the group's subfield IDs, with values of the corresponding subfield types |
+| \`grid\` | \`{ rowAxisLabel: string, colAxisLabel: string, rows: [ { id, label }, ... ], cols: [ { id, label }, ... ], cells: { [rowId]: { [colId]: { type, value } } } }\` |
 
 \`status\`, \`marriedOn\`, and \`endedOn\` only apply to \`relationKind: "spouse"\`. \`label\` is the user-typed override (per-side, not mirrored). \`status\`, \`marriedOn\`, and \`endedOn\` mirror to the partner on save.
+
+A \`grid\` keeps its rows, columns, and axis names on each entry, and binds every cell to a row id and a column id, so renaming or reordering rows and columns leaves the cells where they were. Each cell carries its own \`type\`, one of \`text\`, \`number\`, \`entry-ref\`, \`calendar-date\`, or \`calendar-date-range\`, and a \`value\` shaped as that type is above (an \`entry-ref\` cell holds one id). An empty text cell isn't stored. A grid is top-level only and is never a subfield of a group.
 
 ---
 
@@ -1475,7 +1480,7 @@ Migration mutates a defensive clone of the input — your original file is never
     "imageFolder": "world-images",
     "locked": false,
     "calendar": {
-      "name": "Gregorian",
+      "name": "Common Year",
       "months": [
         { "name": "January", "days": 31 },
         { "name": "February", "days": 28 }

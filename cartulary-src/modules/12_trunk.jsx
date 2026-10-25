@@ -908,7 +908,7 @@ function App() {
       `Date: ${dateLabel}`,
       metricLine ? `Metric: ${metricLine}` : null,
       "",
-      "Recurrence: this entry represents a single computed occurrence. If this alignment recurs, describe the recurrence here in prose (native recurrence support is not in v1.5).",
+      "Recurrence: this entry represents a single computed occurrence. If this alignment recurs, describe the recurrence here in prose (Cartulary doesn't support recurrence natively).",
     ].filter(s => s !== null).join("\n");
 
     const fields = {};

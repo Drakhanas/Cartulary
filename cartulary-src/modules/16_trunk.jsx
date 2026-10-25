@@ -123,7 +123,7 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
           marginTop: 8,
         }}>
           <div style={{ fontSize: 13, color: "var(--text-dim)" }}>
-            Primary calendar: <strong style={{ color: "var(--text)" }}>{world.calendar?.name || "Gregorian"}</strong>
+            Primary calendar: <strong style={{ color: "var(--text)" }}>{world.calendar?.name || "(unnamed)"}</strong>
             {" · "}
             {world.calendar?.months?.length || 0} month{(world.calendar?.months?.length || 0) === 1 ? "" : "s"}
             {" · "}

@@ -1,6 +1,9 @@
 
 const DEFAULT_CALENDAR = {
-  name: "Gregorian",
+  // v1.7 r001: named Common Year, not Gregorian. It has the Gregorian months
+  // but no leap rule (Kalendarium has none), so every year is a common year
+  // of 365 days. Worlds saved before keep the name they stored.
+  name: "Common Year",
   months: [
     { name: "January", days: 31 },
     { name: "February", days: 28 },
@@ -1082,7 +1085,7 @@ function CalendarEditor({ calendar, onChange, entries, templates, currentMoment,
     <div className="cal-editor">
       <div className="form-field">
         <label className="form-label">Calendar Name</label>
-        <input className="input" value={cal.name || ""} onChange={e => onChange({ ...cal, name: e.target.value })} placeholder="e.g. Gregorian, Julian, Islamic, Hebrew" />
+        <input className="input" value={cal.name || ""} onChange={e => onChange({ ...cal, name: e.target.value })} placeholder="e.g. Imperial Reckoning, Dwarven Calendar, Faerie Year" />
       </div>
 
       <div className="section-hdr" style={{ marginTop: 18 }}>Months <span style={{ fontWeight: 400, letterSpacing: 0, color: "var(--text-dim)", textTransform: "none", marginLeft: 8 }}>{cal.months.length} months · {totalDays} days/year</span></div>

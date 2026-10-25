@@ -1029,7 +1029,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
 
           {field.type === "grid" && (
             <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
-              Rows, columns, and each cell's type (text, number, entry reference, or calendar date) are set per entry. Reference cells can point at any entry.
+              Rows, columns, and each cell's type (text, number, entry reference, calendar date, or calendar date range) are set per entry. Reference cells can point at any entry.
             </div>
           )}
 
