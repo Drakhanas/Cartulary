@@ -107,7 +107,7 @@ MODULE_GLOB = '[0-9][0-9]_*.jsx'
 
 # Output filenames derive from VERSION (finals mode only). Working files are named
 # Cartulary_v{VERSION}_Working_r###_(carve_name_##).html and staged by hand.
-VERSION = '1.6.1'
+VERSION = '1.7'
 
 JS_LIBS_BASE = [
     ('react/18.2.0/umd/react.production.min.js',
