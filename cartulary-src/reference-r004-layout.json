@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "b1b07ff195a9e7960bbd99f67b676f5398f3b2ac3647756dcc4b3bbb1133018c",
+  "anchor_sha256": "16337a1350d7e7e60414354317b7babac757ea7709b695f2f2fe2469fa2df022",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -8,7 +8,7 @@
     ],
     [
       "01_builtin-templates.jsx",
-      1043
+      1044
     ],
     [
       "02_trunk.jsx",
@@ -44,7 +44,7 @@
     ],
     [
       "10_migrate.jsx",
-      5950
+      6113
     ],
     [
       "11_io-utils.jsx",

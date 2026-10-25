@@ -1098,8 +1098,9 @@ const resolveTemplateRefs = (templates) => {
 // it derived then (migrate()'s pass).
 //
 // Per entry-ref field, group subfields included:
-//   - A field holding an id that resolves to nothing (a deleted template, or a
-//     v1.4 world's retired Astronomical Body template) is left alone.
+//   - A field holding an id that resolves to nothing (a deleted template, say)
+//     is left alone. migrate() mends one the v1.5 conversions retired, just
+//     after its own call here (v1.7 r004).
 //   - Multi-target (a non-empty id list): a name whose target is listed keeps
 //     its place; a name whose target isn't listed goes; a name that resolves
 //     to nothing stays, so a restored built-in is targeted again; a listed
@@ -1109,8 +1110,8 @@ const resolveTemplateRefs = (templates) => {
 //   - Cleared (an empty id list): the names go if any of them resolves.
 //   - Switched back to a single target (the id list and refFilters both null,
 //     as the builder's toggle leaves them): the names go. An id list that's
-//     null without that is the v1.5 Language / Glossary supersede waiting on
-//     a resolve, and stays for the v1.4 path to repair.
+//     null without that is left from the v1.5 Language / Glossary supersede,
+//     and stays for migrate() to mend (v1.7 r004).
 //   - Single target: the name follows the id. Set to any template (the id
 //     null), a name that resolves goes and one that doesn't stays. A name
 //     with no id at all hasn't been resolved yet, and stays.
@@ -6122,6 +6123,36 @@ const normalizeEntryFields = (fields, valueMap) => {
 
 // ─── Migration ─────────────────────────────────────────────────────────────────
 
+// v1.7 r004: point a reference field that lists a retired template at the
+// source the template's records moved to, names and ids together.
+// `retired.isId` says which ids are the retired template's; `single` and
+// `singleName` replace it in a single-target field, `multi` and
+// `multiNames` in a multi-target one, which can take more than one. In the
+// name list the retired template's names (`names`) give way to the new
+// ones, a new name missing from it is added, and none is listed twice.
+// Group subfields are the caller's to walk.
+const retargetRetired = (f, retired) => {
+  if (!f || f.type !== "entry-ref") return;
+  if (f.refTemplateId && retired.isId(f.refTemplateId)) {
+    f.refTemplateId = retired.single;
+    f.refTemplate = retired.singleName;
+  }
+  if (Array.isArray(f.refTemplatesId) && f.refTemplatesId.some(retired.isId)) {
+    const ids = [];
+    f.refTemplatesId.forEach(id => (retired.isId(id) ? retired.multi : [id]).forEach(x => {
+      if (!ids.includes(x)) ids.push(x);
+    }));
+    f.refTemplatesId = ids;
+    if (Array.isArray(f.refTemplates)) {
+      const names = [];
+      const add = (n) => { if (!names.includes(n)) names.push(n); };
+      f.refTemplates.forEach(n => (retired.names.includes(n) ? retired.multiNames : [n]).forEach(add));
+      retired.multiNames.forEach(add);
+      f.refTemplates = names;
+    }
+  }
+};
+
 const migrate = (state) => {
   // Currently only schemaVersion 1 exists. Future migrations go here.
   if (!state || typeof state !== "object") return null;
@@ -6142,6 +6173,13 @@ const migrate = (state) => {
   // name, id, mapData carry verbatim; any custom field from a user-made map
   // template is preserved under its original id and recorded in Notes.
   if (!Array.isArray(state.cartographia)) state.cartographia = [];
+  // v1.7 r004: the map templates this load retires, noted before the block
+  // below removes them, for the repair after r002's name sync to point the
+  // reference fields that list them at the maps. Pointed there before that
+  // sync, a field would come out of it with Map listed twice.
+  const promotedMapTemplates = state.templates
+    .filter(t => t && t.kind === "map")
+    .map(t => ({ id: t.id, name: t.name }));
   {
     const mapTpls = state.templates.filter(t => t && t.kind === "map");
     const mapTplIds = new Set(mapTpls.map(t => t.id));
@@ -6394,6 +6432,108 @@ const migrate = (state) => {
   if (!state.migrations.refTargetNamesSyncedV17) {
     syncRefTargetNames(state.templates, null, true);
     state.migrations.refTargetNamesSyncedV17 = true;
+  }
+
+  // v1.7 r004: the templates that v1.5's conversions and v1.6's map
+  // promotion retired, and the sources their records moved to
+  // (retargetRetired). The Astronomical Body names include "Celestial
+  // Body", the body label a v1.5 build before r077 wrote in their place;
+  // the map entry carries the map templates this load promotes, of the
+  // user's own as well as the built-in, by id and name. The conversions
+  // below use the first two with the template's own id.
+  const RETIRED_TEMPLATE_TARGETS = [
+    {
+      slug: "astronomical-body", names: ["Astronomical Body", "Celestial Body"],
+      single: BODY_REF_SENTINEL, singleName: BODY_REF_LABEL,
+      multi: [BODY_REF_SENTINEL], multiNames: [BODY_REF_LABEL],
+    },
+    {
+      slug: "language-glossary", names: ["Language / Glossary"],
+      single: SYNTH_TPL_CONLANG, singleName: CONLANG_REF_LABEL,
+      multi: [SYNTH_TPL_CONLANG, SYNTH_TPL_LEXEME], multiNames: [CONLANG_REF_LABEL, LEXEME_REF_LABEL],
+    },
+    {
+      slug: "map", names: [MAP_REF_LABEL, ...promotedMapTemplates.map(t => t.name)],
+      ids: promotedMapTemplates.map(t => t.id),
+      single: SYNTH_TPL_MAP, singleName: MAP_REF_LABEL,
+      multi: [SYNTH_TPL_MAP], multiNames: [MAP_REF_LABEL],
+    },
+  ];
+
+  // v1.7 r004: repair the reference fields of a world upgraded before
+  // r004, once per world. Two things were left behind. (1) A retired
+  // template's id, wherever a field listed it: the Astronomical Body
+  // conversion and the map promotion left every one, and the Language /
+  // Glossary supersede one it couldn't find by name (an id the template
+  // builder had added alone). Matching nothing, it gave the field a picker
+  // with none of the records that had moved, and the cleanup at the end of
+  // migrate() deleted every reference to one from a multi-target field
+  // (Location › Parent, Historical Event › Location). The id is
+  // retargeted. A built-in template's id is tpl-<slug of its name>-<four
+  // characters>, and none of the three was ever renamed, so a retired one
+  // is known by that shape once nothing has it; a map template of the
+  // user's own is known only in the load that promotes it, so one promoted
+  // before r004 keeps its id. (2) A multi-target field
+  // that targeted Language / Glossary: the supersede renamed it to ConLang
+  // in the names and cleared the id list, so the field has taken any
+  // template since. Its list is rebuilt from its names, with Lexeme added
+  // for the words that became lexemes, and with every template or source
+  // the field already points at, so the cleanup deletes nothing; a field
+  // set to one target since keeps it, and its stale names go. This runs
+  // after r002's name sync, which resolves names as they resolved before
+  // r002, when Lexeme and Map didn't, and so would list either twice in a
+  // list mended here; and before the duplicate merge and the backfills,
+  // whose resolves would rebuild a cleared list without Lexeme. A
+  // reference the cleanup already deleted doesn't come back.
+  if (!state.migrations.retiredTargetsRepairedV17) {
+    const { byName, nameById } = refTargetIndex(state.templates);
+    const retired = RETIRED_TEMPLATE_TARGETS.map(r => {
+      const prefix = `tpl-${r.slug}-`;
+      const isId = (id) => typeof id === "string" && !nameById.has(id)
+        && ((r.ids || []).includes(id) || (id.length === prefix.length + 4 && id.startsWith(prefix)));
+      return { ...r, isId };
+    });
+    const entryById = new Map(state.entries.filter(e => e && e.id).map(e => [e.id, e]));
+    const sourceById = new Map(getRegisteredGraphNodes(state).map(n => [n.id, n.templateId]));
+    // What the field's references point at, across the template's entries:
+    // an entry's template, or a record's source.
+    const heldTargets = (tpl, f) => {
+      const out = [];
+      state.entries.forEach(e => {
+        if (!e || e.templateId !== tpl.id || !e.fields) return;
+        const v = e.fields[f.id];
+        (Array.isArray(v) ? v : [v]).forEach(x => {
+          const id = typeof x === "string" ? x : (x && typeof x === "object" && typeof x.id === "string" ? x.id : null);
+          if (!id) return;
+          const target = entryById.get(id);
+          const src = target ? target.templateId : sourceById.get(id);
+          if (src && nameById.has(src) && !out.includes(src)) out.push(src);
+        });
+      });
+      return out;
+    };
+    // topLevel: the cleanup judges only top-level fields, so only they need
+    // the held targets.
+    const repair = (tpl, f, topLevel) => {
+      if (!f || typeof f !== "object") return;
+      if (f.type === "group" && Array.isArray(f.subfields)) f.subfields.forEach(sf => repair(tpl, sf, false));
+      if (f.type !== "entry-ref") return;
+      retired.forEach(r => retargetRetired(f, r));
+      if (f.refTemplatesId !== null || !Array.isArray(f.refTemplates) || !f.refTemplates.includes(CONLANG_REF_LABEL)) return;
+      if (f.refTemplateId) { delete f.refTemplates; return; }
+      const ids = [];
+      const add = (id) => { if (id && !ids.includes(id)) ids.push(id); };
+      f.refTemplates.forEach(n => { add(byName[n]); if (n === CONLANG_REF_LABEL) add(SYNTH_TPL_LEXEME); });
+      if (topLevel) heldTargets(tpl, f).forEach(add);
+      const names = [...f.refTemplates];
+      ids.forEach(id => { if (!names.some(n => byName[n] === id)) names.push(nameById.get(id)); });
+      f.refTemplatesId = ids;
+      f.refTemplates = names;
+      if ("refTemplateId" in f) f.refTemplateId = null;
+      if ("refTemplate" in f) delete f.refTemplate;
+    };
+    state.templates.forEach(t => { if (t && Array.isArray(t.fields)) t.fields.forEach(f => repair(t, f, true)); });
+    state.migrations.retiredTargetsRepairedV17 = true;
   }
 
   // Deduplication pass: heal worlds that already received the duplicate from
@@ -11194,18 +11334,32 @@ const migrate = (state) => {
     }
 
     // Rewrite refTemplates / refTemplate / refFilters across surviving
-    // templates: "Astronomical Body" → BODY_REF_LABEL ("Celestial Body").
+    // templates: "Astronomical Body" → BODY_REF_LABEL ("Celestial Body"
+    // when this was written, "Astronomical Body" again since r077).
     // Drops refFilters keyed by "Astronomical Body" — the v1.4 Type-field
     // filter doesn't map to v1.5's body kind enum, so per-kind ref filtering
     // is deferred to v1.6 if it's ever needed. User templates with the same
     // name string get the same rewrite — author-friendly: existing refs
     // continue to resolve to bodies; the picker switches behavior on the
     // sentinel.
+    //
+    // v1.7 r004: the template's id goes too, wherever a field lists it
+    // (retargetRetired). Before r004 the ids were left for
+    // resolveTemplateRefs, which runs only when a later pass needs it, so a
+    // field kept an id that matched nothing once the template was gone: its
+    // picker offered no bodies, and the cleanup at the end of migrate()
+    // deleted every reference to one (Location › Parent, Historical Event ›
+    // Location). The repair pass after the template renames mends a world
+    // converted before r004.
+    const astroRetired = astroTemplate
+      ? { ...RETIRED_TEMPLATE_TARGETS.find(r => r.slug === "astronomical-body"), isId: (id) => id === astroTemplate.id }
+      : null;
     const rewriteRefsOnFields = (fields) => {
       if (!Array.isArray(fields)) return;
       fields.forEach(f => {
         if (!f) return;
         if (f.type === "entry-ref") {
+          if (astroRetired) retargetRetired(f, astroRetired);
           if (f.refTemplate === "Astronomical Body") f.refTemplate = BODY_REF_LABEL;
           if (Array.isArray(f.refTemplates)) {
             f.refTemplates = f.refTemplates.map(n => n === "Astronomical Body" ? BODY_REF_LABEL : n);
@@ -11215,8 +11369,6 @@ const migrate = (state) => {
             delete next["Astronomical Body"];
             f.refFilters = next;
           }
-          // refTemplateId / refTemplatesId get re-resolved downstream by
-          // resolveTemplateRefs on every load; leave them for now.
         }
         if (f.subfields) rewriteRefsOnFields(f.subfields);
       });
@@ -11358,8 +11510,12 @@ const migrate = (state) => {
     }
 
     // Re-point ref fields naming the retired template: "Language / Glossary" ->
-    // "ConLang". resolveTemplateRefs maps the name to SYNTH_TPL_CONLANG on load;
-    // existing ref values keep resolving via the ConLang node-source (ids kept).
+    // "ConLang". resolveTemplateRefs maps the name to SYNTH_TPL_CONLANG when it
+    // runs; existing ref values keep resolving via the ConLang node-source (ids
+    // kept).
+    const lgRetired = lgTemplate
+      ? { ...RETIRED_TEMPLATE_TARGETS.find(r => r.slug === "language-glossary"), isId: (id) => id === lgTemplate.id }
+      : null;
     const repoint = (fields) => {
       if (!Array.isArray(fields)) return;
       fields.forEach(f => {
@@ -11369,11 +11525,19 @@ const migrate = (state) => {
           // only fills refTemplateId when it's absent, so the stale id from the
           // retired template would otherwise survive and leave a dead picker.
           if (f.refTemplate === "Language / Glossary") { f.refTemplate = CONLANG_REF_LABEL; f.refTemplateId = SYNTH_TPL_CONLANG; }
-          // Multi ref: rewrite the name and clear the id list; resolveTemplateRefs
-          // re-derives refTemplatesId from names unconditionally on load.
+          // v1.7 r004: by id as well, and a multi-target field keeps its ids:
+          // the template's id becomes ConLang and Lexeme, since its words
+          // became lexemes (retargetRetired). Before r004 the id list was
+          // cleared for resolveTemplateRefs to rebuild from the names, which
+          // happens only when a later pass needs it: the field took any
+          // template meanwhile, and the rebuilt list would have left out
+          // Lexeme, so the cleanup would have deleted the references to the
+          // words. A name the ids don't back is still renamed. The repair
+          // pass after the template renames mends a world converted before
+          // r004.
+          if (lgRetired) retargetRetired(f, lgRetired);
           if (Array.isArray(f.refTemplates) && f.refTemplates.includes("Language / Glossary")) {
             f.refTemplates = f.refTemplates.map(n => n === "Language / Glossary" ? CONLANG_REF_LABEL : n);
-            f.refTemplatesId = null;
           }
         }
         if (f.subfields) repoint(f.subfields);
