@@ -1352,6 +1352,8 @@ function App() {
       cleaned.id = `tpl-${slugify(cleaned.name)}-${genId().slice(-4)}`;
       cleaned.origin = TEMPLATE_ORIGIN.USER;
       ensureIds(cleaned.fields);
+      // v1.7 r002: target names follow target ids (see syncRefTargetNames).
+      syncRefTargetNames([...state.templates, cleaned], [cleaned]);
       updateState(s => ({ ...s, templates: [...s.templates, cleaned] }));
       setActiveTemplateId(cleaned.id);
     } else {
@@ -1360,6 +1362,7 @@ function App() {
       // future canonical migrations). If they're editing their own template,
       // it stays user-origin.
       ensureIds(cleaned.fields);
+      syncRefTargetNames(state.templates.map(t => t.id === activeTemplateId ? cleaned : t), [cleaned]);
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === activeTemplateId ? cleaned : t) }));
     }
     clearDraftAndStorage(); setView("list");

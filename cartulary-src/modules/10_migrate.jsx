@@ -415,6 +415,21 @@ const migrate = (state) => {
     state.world.templateRenames[migKey] = true;
   });
 
+  // v1.7 r002: each reference field's target names brought into line with its
+  // ids, once per world, before anything below re-resolves them (the
+  // duplicate merge, the built-in backfills, the showWhen repair). A world
+  // saved before r002 holds the template builder's target edits in the ids
+  // alone, and resolving the stale names would undo them. After the template
+  // renames, so the names come out current. Names resolve as they did before
+  // r002, when the stored ids were derived: a name only r002 resolves (Lexeme,
+  // Map) dropped out then and reads as a name that resolves to nothing, kept
+  // for the next resolve to pick up. See syncRefTargetNames.
+  if (!state.migrations || typeof state.migrations !== "object") state.migrations = {};
+  if (!state.migrations.refTargetNamesSyncedV17) {
+    syncRefTargetNames(state.templates, null, true);
+    state.migrations.refTargetNamesSyncedV17 = true;
+  }
+
   // Deduplication pass: heal worlds that already received the duplicate from
   // the buggy migration order (rename ran AFTER backfill, producing two templates
   // with the same name). For each duplicate name, keep the template that has
@@ -5603,6 +5618,76 @@ const migrate = (state) => {
   // Future per-world view preferences (default sort, disabled-template
   // toggles, etc.) land in the same object as additional keys.
   if (!state.viewPrefs || typeof state.viewPrefs !== "object") state.viewPrefs = {};
+
+  // v1.7 r002: the entry-ref audit's flags 1 to 5 (docs/entry-ref-audit.md;
+  // Drak, 2026-10-24). Eleven built-in fields gain targets in worlds made
+  // before r002 (BUILTIN_TEMPLATES carries them for new worlds), once per world
+  // and field, names and ids together, never removing one. A single-target
+  // field becomes multi-target, as the builder's toggle makes it; a field open
+  // to every template stays open; a field holding an id that resolves to
+  // nothing is left alone, as syncRefTargetNames leaves it; a target template
+  // the user deleted isn't added, nor one whose name a template of the user's
+  // own holds; a field the user relabelled isn't found. The lists are edited
+  // here directly, because calling resolveTemplateRefs would re-derive every
+  // field in the world. After the v1.5 conversions, so the body target is the
+  // body source and not a v1.4 template about to be removed. Tracked per world
+  // (state.world.refTargetUpdates), as OPTIONS_UPDATES is.
+  {
+    const FAC = "Faction / Government / Organization";
+    const HOUSE = "House / Dynasty / Clan / Bloodline";
+    const REF_TARGET_ADDITIONS = [
+      { template: "Artifact / Object / Currency", field: "Current Owner", rev: "v1.7-r002", add: [FAC, HOUSE] },
+      { template: "Character", field: "Ally / Mentor", rev: "v1.7-r002", add: [FAC, "Culture / People", "Deity / Entity"] },
+      { template: "Character", field: "Enemies", rev: "v1.7-r002", add: [FAC, "Culture / People", "Deity / Entity"] },
+      { template: "Character", field: "Possessions", rev: "v1.7-r002", add: ["Weapon / Armor", "Vehicle"] },
+      { template: HOUSE, field: "Heirlooms", rev: "v1.7-r002", add: ["Weapon / Armor"] },
+      { template: "Religion / Belief System", field: "Founder", rev: "v1.7-r002", add: ["Deity / Entity"] },
+      { template: "Substance / Material", field: "Source / Where Found", rev: "v1.7-r002", add: ["Creature", BODY_REF_LABEL] },
+      { template: "Theme / Motif", field: "Associated Objects", rev: "v1.7-r002", add: ["Weapon / Armor", "Vehicle"] },
+      { template: "Vehicle", field: "Owner / Faction", rev: "v1.7-r002", add: ["Character", HOUSE] },
+      { template: "Vehicle", field: "Power Source", rev: "v1.7-r002", add: ["Substance / Material"] },
+      { template: "Weapon / Armor", field: "Previous Owners", rev: "v1.7-r002", add: [FAC, HOUSE] },
+    ];
+    if (!state.world.refTargetUpdates || typeof state.world.refTargetUpdates !== "object") {
+      state.world.refTargetUpdates = {};
+    }
+    const { byName, nameById } = refTargetIndex(state.templates);
+    const targetIdFor = (name) => {
+      const builtin = state.templates.find(t => t.name === name && t.origin === TEMPLATE_ORIGIN.BUILTIN);
+      if (builtin) return builtin.id;
+      if (state.templates.some(t => t.name === name)) return null;
+      const src = NODE_SOURCE_REGISTRY.find(s => s.name === name);
+      return src ? src.id : null;
+    };
+    REF_TARGET_ADDITIONS.forEach(({ template: tplName, field: fieldLabel, rev, add }) => {
+      const migKey = `${tplName}:${fieldLabel}:targets:${rev}`;
+      if (state.world.refTargetUpdates[migKey]) return;
+      state.world.refTargetUpdates[migKey] = true;
+      const tpl = state.templates.find(t => t.name === tplName && t.origin === TEMPLATE_ORIGIN.BUILTIN);
+      const f = tpl && (tpl.fields || []).find(x => x && x.label === fieldLabel && x.type === "entry-ref");
+      if (!f) return;
+      const multi = Array.isArray(f.refTemplatesId) && f.refTemplatesId.length > 0;
+      // A single target never resolved yet (no id key at all) counts by its name.
+      const single = f.refTemplateId
+        || ((f.refTemplate && !("refTemplateId" in f)) ? byName[f.refTemplate] : undefined);
+      const ids = multi ? [...f.refTemplatesId] : (single ? [single] : []);
+      if (ids.length === 0) return;
+      if (ids.some(id => !nameById.has(id))) return;
+      const names = (multi && Array.isArray(f.refTemplates)) ? [...f.refTemplates] : ids.map(id => nameById.get(id));
+      add.forEach(name => {
+        const id = targetIdFor(name);
+        if (!id || ids.includes(id)) return;
+        ids.push(id);
+        names.push(name);
+      });
+      f.refTemplatesId = ids;
+      f.refTemplates = names;
+      if (!multi) {
+        f.refTemplateId = null;
+        if ("refTemplate" in f) delete f.refTemplate;
+      }
+    });
+  }
 
   // Normalize each entry's field values via the shared helper. This catches
   // legacy entry-ref shapes, array-shaped tags fields, malformed name-history
