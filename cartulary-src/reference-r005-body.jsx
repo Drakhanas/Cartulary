@@ -18312,35 +18312,65 @@ function FieldLabelText({ field, templates }) {
 // `tags` field). Value is an array of option strings. Options removed from
 // the set after an entry picked them ("stale") still render so the pick is
 // never silently dropped; they can be toggled off but not re-added.
+// v1.7 r005: with otherTextField on, an Other box under the options takes
+// values of the user's own, each saved as one more string in the same list
+// (Drak's call, 2026-10-25), so nothing that reads the value changes. A
+// typed value matching an option, or a value already picked, ignoring
+// case, picks that instead. While the setting is on, a listed value that
+// isn't an option is the user's own: a chip like the options', removed
+// the same way. With it off, such a value shows dashed, as a pick whose
+// option was deleted does.
 function MultiSelectEditor({ field, value, onChange }) {
   const selected = Array.isArray(value)
     ? value.filter(v => v != null && String(v).trim() !== "").map(v => String(v).trim())
     : [];
   const options = Array.isArray(field.options) ? field.options : [];
+  const allowOwn = !!field.otherTextField;
   const stale = selected.filter(v => !options.includes(v));
   const chips = [...options, ...stale];
+  const [own, setOwn] = useState("");
   const toggle = (opt) => {
     if (selected.includes(opt)) onChange(selected.filter(v => v !== opt));
     else onChange([...selected, opt]);
   };
-  if (chips.length === 0) return <div className="field-hint">No options defined for this field.</div>;
+  const addOwn = () => {
+    const typed = own.trim();
+    setOwn("");
+    if (!typed) return;
+    const same = (x) => x.toLowerCase() === typed.toLowerCase();
+    if (selected.some(same)) return;
+    onChange([...selected, options.find(same) || typed]);
+  };
+  if (chips.length === 0 && !allowOwn) return <div className="field-hint">No options defined for this field.</div>;
   return (
     <div className="multiselect-editor">
       {chips.map(opt => {
         const on = selected.includes(opt);
-        const isStale = stale.includes(opt);
+        const offList = stale.includes(opt);
+        const isStale = offList && !allowOwn;
         return (
           <button
             type="button"
             key={opt}
             className={`multiselect-chip${on ? " multiselect-chip-on" : ""}${isStale ? " multiselect-chip-stale" : ""}`}
             onClick={() => toggle(opt)}
-            title={isStale ? "No longer in this field's option set — click to remove" : undefined}
+            title={isStale ? "No longer in this field's option set; click to remove" : (offList ? "Your own value; click to remove" : undefined)}
           >
             {opt}
           </button>
         );
       })}
+      {allowOwn && (
+        <input
+          className="input"
+          value={own}
+          onChange={e => setOwn(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addOwn(); } }}
+          onBlur={addOwn}
+          placeholder={`Other ${(field.label || "value").toLowerCase()}: type your own, Enter adds it`}
+          maxLength={80}
+        />
+      )}
     </div>
   );
 }
@@ -19753,7 +19783,7 @@ function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
 // any subfield that's itself a group, until MAX_GROUP_DEPTH. Type selector
 // at the deepest allowed depth omits "group" so users can't bypass the cap.
 // Each subfield row exposes the same authoring capabilities as a top-level
-// field: required, secret, otherTextField (select), multi/multi-template/
+// field: required, secret, otherTextField (select, multiselect), multi/multi-template/
 // refTemplate/relationKind (entry-ref), cascade dependsOn + per-parent
 // options matrix (select), showWhen visibility config.
 // Cascade and showWhen candidates are restricted to other subfields at
@@ -19809,8 +19839,8 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                   <input type="checkbox" checked={!!sf.required} onChange={e => onUpdate(parentPath, sf.id, { required: e.target.checked })} />
                   Required
                 </label>
-                {sf.type === "select" && (
-                  <label title="Adds an 'Other' option that lets users type a custom value">
+                {(sf.type === "select" || sf.type === "multiselect") && (
+                  <label title={sf.type === "select" ? "Adds an 'Other' option that lets users type a custom value" : "Adds an Other box where users type values of their own"}>
                     <input type="checkbox" checked={!!sf.otherTextField} onChange={e => onUpdate(parentPath, sf.id, { otherTextField: e.target.checked })} />
                     Allow custom "Other" text
                   </label>
@@ -19863,6 +19893,11 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
               {sf.type === "select" && sf.otherTextField && (
                 <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
                   "Other" will be auto-added to the dropdown at runtime.
+                </div>
+              )}
+              {sf.type === "multiselect" && sf.otherTextField && (
+                <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+                  An Other box goes under the options; each value typed there is saved with the picked ones.
                 </div>
               )}
 
@@ -20454,8 +20489,8 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               <input type="checkbox" checked={!!field.required} onChange={e => updateField(field.id, { required: e.target.checked })} />
               Required
             </label>
-            {field.type === "select" && (
-              <label title="Adds an 'Other' option that lets users type a custom value">
+            {(field.type === "select" || field.type === "multiselect") && (
+              <label title={field.type === "select" ? "Adds an 'Other' option that lets users type a custom value" : "Adds an Other box where users type values of their own"}>
                 <input type="checkbox" checked={!!field.otherTextField} onChange={e => updateField(field.id, { otherTextField: e.target.checked })} />
                 Allow custom "Other" text
               </label>
@@ -20515,6 +20550,11 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
           {field.type === "select" && field.otherTextField && (
             <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
               "Other" will be auto-added to the dropdown at runtime.
+            </div>
+          )}
+          {field.type === "multiselect" && field.otherTextField && (
+            <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+              An Other box goes under the options; each value typed there is saved with the picked ones.
             </div>
           )}
 
@@ -42552,7 +42592,7 @@ Beyond per-field configuration, the builder has structural options:
 
 - **Show-when conditions.** A field can be set to render only when another field has a specific value — e.g. a "Manner of Death" field that appears only when Status is "Deceased." Conditions chain (A shows if B equals X; C shows if A is non-empty). The layout engine respects this when laying out half-width pairs so you don't get a stranded empty slot.
 - **Half-width pair layout.** Eligible field types can be marked half-width. The builder auto-pairs contiguous half-width fields onto the same row in the rendered entry form. Pairing happens after show-when evaluation, so dynamically-hidden fields don't disrupt pairing.
-- **Other-text reveal on select.** A select field can be configured so picking "Other" reveals a free-text input for the actual value. Useful for fields where you want canonical options plus an escape hatch.
+- **Other-text reveal on select.** A select field can be configured so picking "Other" reveals a free-text input for the actual value. Useful for fields where you want canonical options plus an escape hatch. A multi-select can carry the same setting: an Other box under its options takes values of your own, and each one is saved beside the options picked.
 - **Cascade chains.** Two select fields can be chained so the second's options depend on the first's value (e.g. Type → Subtype). Define the chain in the Template Builder; the entry form filters the second dropdown based on what's picked in the first.
 - **Entry-ref scope and filters.** An entry-ref field can be restricted to one or more templates' entries. Filter further via field-value criteria if needed (e.g. an entry-ref to Characters where Status is "Living").
 
@@ -43686,8 +43726,8 @@ A pack groups templates by id for display and sharing — it never owns or copie
 | \`text\`, \`textarea\` | string |
 | \`longform\` | string; a form feed (U+000C) on a line of its own is a divider |
 | \`tags\` | array of strings |
-| \`select\` | string (one of the field's \`options\`) |
-| \`multiselect\` | array of strings (a subset of the field's \`options\`) |
+| \`select\` | string (one of the field's \`options\`); with Allow custom "Other" text, \`{ value, customText }\`, where \`customText\` holds what was typed when \`value\` is "Other" |
+| \`multiselect\` | array of strings: the field's \`options\` picked, plus any values typed under Other when the field allows them |
 | \`number\` | number |
 | \`date\` | ISO-8601 date string |
 | \`url\`, \`color\` | string |

@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "16337a1350d7e7e60414354317b7babac757ea7709b695f2f2fe2469fa2df022",
+  "anchor_sha256": "e70e86fef21544cdcda6cd8294fd02f7b5e565e473b8c75ff251d7d30942f611",
   "shell_sha256": "43ce867aeda23d03546b99b34e3d991e2f1a7cc80ebe6240198fd32eb9e97649",
   "files": [
     [
@@ -60,11 +60,11 @@
     ],
     [
       "14_form-engine-edit.jsx",
-      1777
+      1807
     ],
     [
       "15_template-builder.jsx",
-      1111
+      1121
     ],
     [
       "16_trunk.jsx",
