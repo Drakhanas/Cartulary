@@ -36,6 +36,13 @@ function App() {
   const [activeCorpusId, setActiveCorpusId] = useState(null);
   const [corpusDraft, setCorpusDraft] = useState(null);
   const initialCorpusDraftRef = useRef(null);
+  // v1.7 r008: a story's page. activeStoryId null = no story open, an id =
+  // that story's page, drawn over the Fabula page it was opened from
+  // (activeCorpusId: a corpus's page, or the index), which its Back returns
+  // to. storyDraft is the Story record in edit, committed on Save.
+  const [activeStoryId, setActiveStoryId] = useState(null);
+  const [storyDraft, setStoryDraft] = useState(null);
+  const initialStoryDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -167,6 +174,7 @@ function App() {
     templatesCollapsed: false,
     sidebarWidth: 236,
     mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
+    fabulaFolds: {}, // v1.7 r008: the Story tab's folded panels, one set for every story
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -219,6 +227,7 @@ function App() {
               ? Math.max(200, Math.min(500, stored.sidebarWidth))
               : 236,
             mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
+            fabulaFolds: stored.fabulaFolds && typeof stored.fabulaFolds === "object" && !Array.isArray(stored.fabulaFolds) ? stored.fabulaFolds : {},
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -761,22 +770,24 @@ function App() {
     if (tplDraft && JSON.stringify(tplDraft) !== initialTplDraftRef.current) return true;
     if (mapDraft && JSON.stringify(mapDraft) !== initialMapDraftRef.current) return true;
     if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
+    if (storyDraft && JSON.stringify(storyDraft) !== initialStoryDraftRef.current) return true;
     return false;
   };
 
   draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
-    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : entryDraft ? "this entry" : "this template";
+    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : storyDraft ? "this story" : entryDraft ? "this entry" : "this template";
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
     initialCorpusDraftRef.current = null;
+    initialStoryDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -796,7 +807,7 @@ function App() {
   const selectView = (v) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null);
+    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
     clearDraftAndStorage(); setSearch(""); setView(v);
   };
 
@@ -830,16 +841,18 @@ function App() {
       setView("cartographia");
       return;
     }
-    // v1.7 r007: Fabula fallback. A corpus opens on its page; a story, whose
-    // page comes in r008, opens its corpus's page, or the index when it's in
-    // no corpus.
+    // v1.7 r007: Fabula fallback. A corpus opens on its page, and since r008
+    // a story on its own, drawn over its corpus's page (or the index, when
+    // it's in no corpus), which the story's Back returns to.
     const fabCorpora = (state.fabula && Array.isArray(state.fabula.corpora)) ? state.fabula.corpora : [];
     const fabStory = (state.fabula && Array.isArray(state.fabula.stories)) ? state.fabula.stories.find(st => st && st.id === id) : null;
     if (fabStory || fabCorpora.some(c => c && c.id === id)) {
       const home = fabStory ? fabCorpora.find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(id)) : null;
       setActiveTagFilter(null);
       setCorpusDraft(null); initialCorpusDraftRef.current = null;
+      setStoryDraft(null); initialStoryDraftRef.current = null;
       setActiveCorpusId(fabStory ? (home ? home.id : null) : id);
+      setActiveStoryId(fabStory ? id : null);
       setView("fabula");
       return;
     }
@@ -1282,6 +1295,60 @@ function App() {
       }),
     }));
   };
+
+  // v1.7 r008: a story's page (docs/fabula-spec.md, section 4). It opens over
+  // the Fabula page it was opened from, which Back returns to, and the Story
+  // record changes through Edit, Save, and Cancel, as a corpus's fields do.
+  const openStory = (id) => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(id);
+    setView("fabula");
+  };
+
+  const closeStory = () => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(null);
+  };
+
+  const editStory = () => {
+    const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
+    if (!rec || isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = { id: rec.id, name: rec.name || "", fields: JSON.parse(JSON.stringify(rec.fields || {})) };
+    setStoryDraft(draft);
+    initialStoryDraftRef.current = JSON.stringify(draft);
+  };
+
+  const saveStory = () => {
+    if (!storyDraft || isLocked) return;
+    const name = (storyDraft.name || "").trim();
+    if (!name) return;
+    const now = isoNow();
+    updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === storyDraft.id ? { ...st, name, fields: storyDraft.fields || {}, updatedAt: now } : st) }));
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    flash("Saved");
+  };
+
+  const cancelStoryEdit = () => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+  };
+
+  // Delete, from the story's own page: asks first, then goes back.
+  const deleteOpenStory = () => {
+    const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
+    if (!rec || isLocked) return;
+    if (!confirm(`Delete the story "${rec.name || "untitled story"}"?`)) return;
+    deleteStory(rec.id);
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(null);
+  };
+
+  // The Story tab's folds belong to the browser, one set for every story
+  // (Drak, 2026-10-25), so they live with the display settings.
+  const toggleFabulaFold = (panelId) => setPrefs(p => ({ ...p, fabulaFolds: { ...(p.fabulaFolds || {}), [panelId]: !(p.fabulaFolds || {})[panelId] } }));
 
   const openEditEntry = () => {
     if (!activeEntry) return;
@@ -3586,7 +3653,11 @@ function App() {
     } else headerTitle = "Cartographia";
   }
   else if (view === "fabula") {
-    if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
+    if (activeStoryId) {
+      const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
+      headerTitle = storyDraft ? ((storyDraft.name && storyDraft.name.trim()) ? storyDraft.name : "Story") : (rec?.name || "Story");
+    }
+    else if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
     else if (activeCorpusId) {
       const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
       headerTitle = rec?.name || "Corpus";
@@ -3728,11 +3799,20 @@ function App() {
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
               </>}
+              {view === "fabula" && activeStoryId && storyDraft && <>
+                <button className="btn btn-ghost" onClick={cancelStoryEdit}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveStory} disabled={!storyDraft?.name?.trim()}>Save</button>
+              </>}
+              {view === "fabula" && activeStoryId && !storyDraft && <>
+                {!isLocked && <button className="btn btn-danger" onClick={deleteOpenStory}>Delete</button>}
+                {!isLocked && <button className="btn btn-ghost" onClick={editStory}>Edit</button>}
+                <button className="btn btn-ghost" onClick={closeStory}>← Back</button>
+              </>}
               {view === "fabula" && corpusDraft && <>
                 <button className="btn btn-ghost" onClick={cancelCorpusEdit}>Cancel</button>
                 <button className="btn btn-accent" onClick={saveCorpus} disabled={!corpusDraft?.name?.trim()}>Save</button>
               </>}
-              {view === "fabula" && activeCorpusId && !corpusDraft && <>
+              {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
                   if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
@@ -4015,7 +4095,7 @@ function App() {
           {view === "ephemeris" && (
             <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
           )}
-          {view === "fabula" && !activeCorpusId && !corpusDraft && (
+          {view === "fabula" && !activeCorpusId && !corpusDraft && !activeStoryId && (
             <FabulaIndexView
               state={state}
               isLocked={isLocked}
@@ -4025,6 +4105,7 @@ function App() {
               onRenameStory={renameStory}
               onDeleteStory={deleteStory}
               onSetStoryCorpus={setStoryCorpus}
+              onOpenStory={openStory}
             />
           )}
           {view === "fabula" && corpusDraft && (
@@ -4048,7 +4129,7 @@ function App() {
               hideTags
             />
           )}
-          {view === "fabula" && activeCorpusId && !corpusDraft && (() => {
+          {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && (() => {
             const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
             if (!rec) {
               return (
@@ -4082,8 +4163,41 @@ function App() {
                     onMoveStory={moveCorpusStory}
                     onCreateStory={createStory}
                     onRenameStory={renameStory}
+                    onOpenStory={openStory}
                   />
                 }
+              />
+            );
+          })()}
+          {view === "fabula" && activeStoryId && (() => {
+            const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
+            if (!rec) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--text-dim)" }}>
+                  This story no longer exists.
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-ghost" onClick={closeStory}>← Back</button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <FabulaStoryPage
+                state={state}
+                story={rec}
+                draft={storyDraft}
+                onDraftChange={setStoryDraft}
+                isLocked={isLocked}
+                folds={prefs.fabulaFolds}
+                onToggleFold={toggleFabulaFold}
+                onRestoreTemplate={(name) => restoreBuiltinTemplates([name])}
+                showSecrets={showSecrets}
+                allTags={allTags}
+                dirHandle={dirHandle}
+                flash={flash}
+                onOpenEntry={openEntryFromAnywhere}
+                onSelectTag={selectTag}
+                onUpdateViewPrefs={updateViewPrefs}
               />
             );
           })()}

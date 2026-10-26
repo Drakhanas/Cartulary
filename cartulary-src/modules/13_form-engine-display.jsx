@@ -64,7 +64,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -123,8 +123,11 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
       )}
       <div className="divider" />
       {canvasSlot}
-      {buildFieldLayoutUnits(
-        template.fields,
+      {fieldPanelSegments(template.fields, panels).map(seg => {
+        // v1.7 r008: fields under panels, each heading folding its own; a
+        // template without panels is one segment, drawn as before.
+        const units = buildFieldLayoutUnits(
+        seg.fields,
         (f) => isFieldVisibleDisplay(f, entry.fields || {}, showSecrets)
       ).map(unit => {
         if (unit.kind === "full") {
@@ -163,8 +166,52 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
             </div>
           </div>
         );
+      });
+        if (!seg.panel) return <React.Fragment key="fields">{units}</React.Fragment>;
+        const folded = !!(foldedPanels && foldedPanels[seg.panel.id]);
+        // An empty field doesn't show here, so an open panel with none filled
+        // in says so rather than leaving its heading bare.
+        return (
+          <React.Fragment key={`panel-${seg.panel.id}`}>
+            <FieldPanelHeading panel={seg.panel} folded={folded} onToggle={onTogglePanel} />
+            {!folded && (units.length > 0 ? units : <div className="field-hint field-panel-empty" style={{ marginTop: -8, marginBottom: 22 }}>Nothing in {seg.panel.label} yet.</div>)}
+          </React.Fragment>
+        );
       })}
     </div>
+  );
+}
+
+// v1.7 r008: a template's fields as segments for drawing, the fields that
+// belong to no panel first and then each panel's own, in the panels' order,
+// so a half-width pair never straddles a heading. Without panels the whole
+// list is one segment, drawn as it always was. A field names its panel by id
+// (field.panel); panels are [{ id, label }], given by the caller.
+const fieldPanelSegments = (fields, panels) => {
+  const all = Array.isArray(fields) ? fields : [];
+  if (!Array.isArray(panels) || panels.length === 0) return [{ panel: null, fields: all }];
+  const known = new Set(panels.map(p => p.id));
+  return [
+    { panel: null, fields: all.filter(f => !(f && known.has(f.panel))) },
+    ...panels.map(p => ({ panel: p, fields: all.filter(f => f && f.panel === p.id) })),
+  ];
+};
+
+// A panel's heading, which folds the panel away and back (v1.7 r008). The
+// folds are the caller's to keep.
+function FieldPanelHeading({ panel, folded, onToggle }) {
+  return (
+    <button
+      type="button"
+      className="field-panel-heading"
+      aria-expanded={!folded}
+      onClick={() => { if (onToggle) onToggle(panel.id); }}
+      title={folded ? `Show the ${panel.label} panel` : `Fold the ${panel.label} panel away`}
+      style={{ display: "flex", alignItems: "baseline", gap: 10, width: "100%", margin: "30px 0 18px", padding: "0 0 8px", background: "transparent", border: "none", borderBottom: "1px solid var(--border)", color: "var(--text-bright)", fontFamily: "'Cormorant Garamond', serif", fontSize: "calc(22px * var(--font-scale))", fontWeight: 500, textAlign: "left", cursor: "pointer" }}
+    >
+      <span aria-hidden="true" style={{ color: "var(--accent)", fontFamily: "'DM Sans', sans-serif", fontSize: "calc(12px * var(--font-scale))", width: 12, flexShrink: 0 }}>{folded ? "\u25B8" : "\u25BE"}</span>
+      <span>{panel.label}</span>
+    </button>
   );
 }
 
@@ -406,11 +453,13 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
 }
 
 // v1.7 r003: what a reference value points at, for display: an entry, a body,
-// or another registered record (a Glossopoeia record, a map), or null when
-// nothing has its id. `open` says whether a click can take you there:
-// openEntryFromAnywhere knows entries, maps, and bodies, and a Glossopoeia
-// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24).
-// `kind` names the record's type for a chip that can't be opened.
+// or another registered record (a Glossopoeia record, a map, and since r007 a
+// Fabula record), or null when nothing has its id. `open` says whether a
+// click can take you there: entries, maps, and bodies open; a Glossopoeia
+// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24),
+// and a Fabula record shows as one too until People settles whether a
+// reference opens it (v1.7 r008). `kind` names the record's type for a chip
+// that can't be opened.
 const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   if (!id) return null;
   const e = (entries || []).find(x => x && x.id === id);

@@ -439,6 +439,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   overflow:hidden;
   text-overflow:ellipsis;
 }
+/* v1.7 r008: room under a half-width label for its help line's dotted
+   underline, which the clipping above cut off; the spacing is unchanged. */
+.form-row .form-label{padding-bottom:4px;margin-bottom:calc(var(--s-2) - 4px)}
 textarea.input{resize:none;min-height:60px;line-height:1.55;font-family:'DM Sans',sans-serif;overflow:hidden}
 select.input{
   cursor:pointer;-webkit-appearance:none;appearance:none;

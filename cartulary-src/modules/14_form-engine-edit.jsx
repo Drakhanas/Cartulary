@@ -144,7 +144,7 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
@@ -217,8 +217,11 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
           if (myIdx == null || parentIdx == null) return false;
           return myIdx - parentIdx === 1;
         };
-        return buildFieldLayoutUnits(
-          template.fields,
+        // v1.7 r008: fields under panels, each heading folding its own, as
+        // EntryView draws them; a template without panels is one segment.
+        return fieldPanelSegments(template.fields, panels).map(seg => {
+        const units = buildFieldLayoutUnits(
+          seg.fields,
           (f) => isFieldVisibleEdit(f, draft.fields, showSecrets)
         ).map(unit => {
         if (unit.kind === "full") {
@@ -236,7 +239,7 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {field.required && <span className="required-mark" title="Required">*</span>}
                 {field.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={field} value={draft.fields[field.id]} onChange={(v) => updateField(field.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={field} value={draft.fields[field.id]} onChange={(v) => updateField(field.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
           );
         }
@@ -257,7 +260,7 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {a.required && <span className="required-mark" title="Required">*</span>}
                 {a.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={a} value={draft.fields[a.id]} onChange={(v) => updateField(a.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={a} value={draft.fields[a.id]} onChange={(v) => updateField(a.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
             <div className={`form-field ${b.secret ? "secret" : ""}${bIsCascadeChild ? " cascade-child-row" : ""}`}>
               <label className="form-label" title={b.label}>
@@ -265,9 +268,18 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {b.required && <span className="required-mark" title="Required">*</span>}
                 {b.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={b} value={draft.fields[b.id]} onChange={(v) => updateField(b.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={b} value={draft.fields[b.id]} onChange={(v) => updateField(b.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
           </div>
+        );
+        });
+        if (!seg.panel) return <React.Fragment key="fields">{units}</React.Fragment>;
+        const folded = !!(foldedPanels && foldedPanels[seg.panel.id]);
+        return (
+          <React.Fragment key={`panel-${seg.panel.id}`}>
+            <FieldPanelHeading panel={seg.panel} folded={folded} onToggle={onTogglePanel} />
+            {!folded && units}
+          </React.Fragment>
         );
         });
       })()}
@@ -674,7 +686,7 @@ function IpaTextInput({ value, onChange, placeholder, ipaSymbols, className, aut
   );
 }
 
-function FieldEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, allFieldValues, tplFields, flash, ipaSymbols }) {
+function FieldEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, allFieldValues, tplFields, flash, ipaSymbols, onRestoreTemplate }) {
   const ftype = field.type;
 
   if (ftype === "text" && field.ipa) return <IpaTextInput value={value} onChange={onChange} placeholder={field.label} ipaSymbols={ipaSymbols} />;
@@ -792,9 +804,9 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
   if (ftype === "textarea") return <RichTextEditor value={value || ""} onChange={onChange} entries={entries} templates={templates} bodies={bodies} dirHandle={dirHandle} placeholder={field.label} flash={flash} />;
   if (ftype === "longform") return <LongformEditor value={value || ""} onChange={onChange} placeholder={field.label} />;
   if (ftype === "image") return <ImageFieldEditor value={value} onChange={onChange} imageFolder={imageFolder} dirHandle={dirHandle} flash={flash} />;
-  if (ftype === "entry-ref") return <EntryRefEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} />;
+  if (ftype === "entry-ref") return <EntryRefEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} onRestoreTemplate={onRestoreTemplate} />;
   if (ftype === "grid") return <GridEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} />;
-  if (ftype === "group") return <GroupEditor field={field} value={value || []} onChange={onChange} entries={entries} templates={templates} bodies={bodies} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} flash={flash} ipaSymbols={ipaSymbols} />;
+  if (ftype === "group") return <GroupEditor field={field} value={value || []} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />;
   return <input className="input" value={value || ""} onChange={e => onChange(e.target.value)} />;
 }
 
@@ -809,7 +821,7 @@ function AutoTextarea({ value, onChange, placeholder }) {
   return <textarea ref={ref} className="input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} />;
 }
 
-function EntryRefEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar }) {
+function EntryRefEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar, onRestoreTemplate }) {
   // v1.3: candidate set considers:
   //   - field.refTemplateId (legacy, single template) — filter entries to that template
   //   - field.refTemplatesId (v1.3, array) — filter to entries whose templateId is in the set
@@ -828,6 +840,9 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     [templates]
   );
   const candidates = useMemo(() => {
+    // v1.7 r008: a field none of whose templates the world has offers
+    // nothing, where an empty target list would read as any template.
+    if (Array.isArray(field.refMissing) && field.refMissing.length > 0) return [];
     let pool = entries;
     const synthBodies = () => (bodies || []).map(b => ({
       id: b.id,
@@ -874,10 +889,25 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
       });
     }
     return pool.filter(e => e.id !== selfEntryId);  // self-references are never legitimate
-  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, selfEntryId, tplById]);
+  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, field.refMissing, selfEntryId, tplById]);
   const sorted = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
   const isRelation = !!field.relationKind;
   const isSpouse = field.relationKind === SPOUSE_KIND;
+  // v1.7 r008: what the picker says in place of its list. A field none of
+  // whose templates the world has names them, with a Restore button for each
+  // missing built-in (refMissing and refRestorable, which Fabula's
+  // fabulaLiveFields sets); a field with nothing to offer yet can say why
+  // (emptyNote).
+  const missing = Array.isArray(field.refMissing) ? field.refMissing : [];
+  const restorable = Array.isArray(field.refRestorable) ? field.refRestorable : [];
+  const refNote = missing.length > 0 ? (
+    <div className="field-hint ref-missing-note" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      <span>{missing.length === 1 ? `This world has no ${missing[0]} template.` : `This world has none of this field's templates: ${missing.join(", ")}.`}</span>
+      {onRestoreTemplate && restorable.map(name => (
+        <button key={name} type="button" className="btn" style={{ padding: "2px 8px", fontSize: 12, fontStyle: "normal" }} onClick={() => onRestoreTemplate(name)} title={`Bring back the built-in ${name} template, as Restore Built-ins in the sidebar does`}>Restore {name}</button>
+      ))}
+    </div>
+  ) : (sorted.length === 0 && field.emptyNote ? <div className="field-hint ref-empty-note">{field.emptyNote}</div> : null);
   // v1.3: show template-name badge when this field can target multiple templates,
   // so the user can disambiguate "Eastwatch (Location)" from "Eastwatch (Astronomical Body)".
   // If the field also has a cascade pair on the target template, the badge surfaces
@@ -996,10 +1026,12 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
             </div>
           );
         })}
+        {refNote || (
         <select className="input" value="" onChange={e => addOne(e.target.value)}>
           <option value="">+ Add reference...</option>
           {available.map(e => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>)}
         </select>
+        )}
       </>
     );
   }
@@ -1008,6 +1040,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
   if (isRelation) {
     const item = (value && typeof value === "object" && value.id) ? value
                 : (typeof value === "string" && value ? { id: value } : null);
+    if (refNote && !item) return refNote;
     return (
       <div className="ref-pick-row" style={{ flexWrap: "wrap" }}>
         <select
@@ -1037,6 +1070,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     );
   }
 
+  if (refNote && !value) return refNote;
   return (
     <select className="input" value={value || ""} onChange={e => onChange(e.target.value)}>
       <option value="">— None —</option>
@@ -1198,7 +1232,10 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
   );
 }
 
-function GroupEditor({ field, value, onChange, entries, templates, bodies, imageFolder, dirHandle, calendar, selfEntryId, flash, ipaSymbols }) {
+// v1.7 r008: the subfields get the registered records and the restore too, so
+// a reference subfield can offer a language, a map, or a Fabula record, as a
+// top-level reference field can.
+function GroupEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, flash, ipaSymbols, onRestoreTemplate }) {
   const instances = Array.isArray(value) ? value : [];
   const subfields = field.subfields || [];
 
@@ -1238,7 +1275,7 @@ function GroupEditor({ field, value, onChange, entries, templates, bodies, image
                 <FieldLabelText field={sf} templates={templates} />
                 {sf.required && <span className="required-mark" title="Required">*</span>}
               </label>
-              <FieldEditor field={sf} value={inst[sf.id]} onChange={(v) => updateAt(i, sf.id, v)} entries={entries} templates={templates} bodies={bodies} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={inst} tplFields={field.subfields || []} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={sf} value={inst[sf.id]} onChange={(v) => updateAt(i, sf.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={inst} tplFields={field.subfields || []} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
             );
           })}
