@@ -56,6 +56,9 @@ function App() {
   // what it holds ({ kind, id }), while its modal is open.
   const [fabulaHoldsAsk, setFabulaHoldsAsk] = useState(null);
   const [fabulaBack, setFabulaBack] = useState([]);
+  // v1.7 r016: the section of Fabula's index to scroll to, Plot Threads or
+  // Themes & Motifs, set where a page of theirs lands there.
+  const [fabulaFocus, setFabulaFocus] = useState(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -622,7 +625,10 @@ function App() {
         .filter(t => t.origin === TEMPLATE_ORIGIN.BUILTIN)
         .map(t => t.name)
     );
+    // v1.7 r016: Plot Thread and Theme / Motif aren't offered here; Fabula's
+    // index restores them.
     return BUILTIN_TEMPLATES
+      .filter(b => !b.fabulaRole)
       .map(b => b.name)
       .filter(name => !presentBuiltinNames.has(name));
   }, [state]);
@@ -707,6 +713,20 @@ function App() {
     return entries;
   }, [state, activeTagFilter, activeTemplateId, search, sortBy, variantAxisInfo]);
 
+  // v1.7 r016: Plot Thread and Theme / Motif live under Fabula, so whatever
+  // would land on one's list page (Back with nothing behind it, Delete, a new
+  // entry's Cancel, the builder's Save and Cancel, the home page's row) lands
+  // on its section of Fabula's index instead (docs/fabula-spec.md, section
+  // 4). Before the paint, so the list page never shows.
+  React.useLayoutEffect(() => {
+    if (view !== "list" || activeTagFilter || !state) return;
+    const t = (state.templates || []).find(x => x && x.id === activeTemplateId);
+    if (!t || !t.fabulaRole) return;
+    setActiveTemplateId(null); setActiveEntryId(null);
+    setActiveCorpusId(null); setActiveStoryId(null); setActiveRecord(null); setFabulaBack([]);
+    setFabulaFocus(t.fabulaRole); setView("fabula");
+  }, [view, activeTemplateId, activeTagFilter, state]);
+
   if (loaded && loadError) {
     const exportRaw = () => {
       if (!loadError.rawData) return;
@@ -748,6 +768,12 @@ function App() {
   const isLocked = state.world.locked;
   const activeTemplate = state.templates.find(t => t.id === activeTemplateId);
   const activeEntry = state.entries.find(e => e.id === activeEntryId);
+  // v1.7 r016: on an entry page, a new entry, or the builder of Plot Thread
+  // or Theme / Motif, the sidebar lights Fabula, which holds them.
+  const pageTemplate = (view === "entry" || view === "entry-edit")
+    ? (activeEntry ? state.templates.find(t => t.id === activeEntry.templateId) : null)
+    : (view === "entry-new" || view === "tpl-edit") ? activeTemplate : null;
+  const sidebarView = pageTemplate && pageTemplate.fabulaRole ? "fabula" : view;
 
   // Backup-reminder gate: 2h since last JSON export AND there are unbacked edits.
   // reminderTick is included in the deps surface implicitly via render — every
@@ -863,8 +889,9 @@ function App() {
     // page over its story's (Drak, 2026-10-25), since r011 an act, a chapter,
     // or a scene, since r013 a plot point or a promise, and since r014 a
     // research note. From a Fabula page, Back returns to the page the click
-    // came from; from anywhere else, such as Concordance, to the story's tab
-    // that lists it (fabulaTabOf).
+    // came from, and since r016 from an entry's page to the entry; from
+    // anywhere else, such as Concordance, to the story's tab that lists it
+    // (fabulaTabOf).
     const fabRec = fabulaFindRecord(state, id);
     if (fabRec) {
       const onFabulaPage = view === "fabula" && activeStoryId && activeStoryId === fabRec.record.storyId;
@@ -879,7 +906,8 @@ function App() {
         setActiveStoryId(fabRec.record.storyId);
         setStoryTab(fabulaTabOf(fabRec.kind));
       }
-      setFabulaBack(b => from ? [...b, from] : [{ kind: "story", tab: fabulaTabOf(fabRec.kind) }]);
+      const fromEntry = (view === "entry" || view === "entry-edit") && activeEntryId ? { kind: "entry", id: activeEntryId } : null;
+      setFabulaBack(b => from ? [...b, from] : [fromEntry || { kind: "story", tab: fabulaTabOf(fabRec.kind) }]);
       setActiveRecord({ kind: fabRec.kind, id });
       setView("fabula");
       return;
@@ -1356,11 +1384,69 @@ function App() {
     setView("fabula");
   };
 
+  // v1.7 r016: back from Fabula to the entry's page a story or a record was
+  // opened from, or Fabula's index when the entry is gone.
+  const returnToEntry = (id) => {
+    const ent = state.entries.find(e => e && e.id === id);
+    setActiveRecord(null); setActiveStoryId(null); setActiveCorpusId(null); setFabulaBack([]);
+    if (!ent) { setView("fabula"); return; }
+    setActiveTemplateId(ent.templateId); setActiveTagFilter(null); setActiveEntryId(id); setView("entry");
+  };
+
   const closeStory = () => {
     if (!confirmDiscardDraft()) return;
     setStoryDraft(null); initialStoryDraftRef.current = null;
+    // v1.7 r016: a story opened from an entry's page goes back to the entry.
+    const frame = fabulaBack[fabulaBack.length - 1];
+    if (frame && frame.kind === "entry") { returnToEntry(frame.id); return; }
     setActiveRecord(null); setFabulaBack([]);
     setActiveStoryId(null);
+  };
+
+  // v1.7 r016: a story opened from an entry's list of the stories that use
+  // it opens on the tab that lists the entry, Plot or Meaning, and Back
+  // returns to the entry (docs/fabula-spec.md, 5.12).
+  const openStoryFromEntry = (storyId, tab) => {
+    if (!confirmDiscardDraft()) return;
+    const fab = state.fabula || {};
+    if (!fabArr(fab, "stories").some(st => st && st.id === storyId)) return;
+    const home = fabArr(fab, "corpora").find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(storyId));
+    const from = (view === "entry" || view === "entry-edit") && activeEntryId ? [{ kind: "entry", id: activeEntryId }] : [];
+    clearDraftAndStorage();
+    setActiveTagFilter(null);
+    setCorpusDraft(null); initialCorpusDraftRef.current = null;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    setActiveCorpusId(home ? home.id : null);
+    setActiveStoryId(storyId);
+    setStoryTab(tab || "story"); setActiveRecord(null); setFabulaBack(from);
+    setView("fabula");
+  };
+
+  // v1.7 r016: Fabula's index, scrolled to Plot Threads or Themes & Motifs.
+  const landOnFabulaSection = (role) => {
+    setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
+    setActiveCorpusId(null); setActiveStoryId(null); setActiveRecord(null); setFabulaBack([]);
+    setFabulaFocus(role); setView("fabula");
+  };
+
+  // v1.7 r016: the index sections' Edit Template and + New Entry. A new
+  // entry's Back returns to the index.
+  const editFabulaTemplate = (tpl) => {
+    if (isLocked || !tpl) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = JSON.parse(JSON.stringify(tpl));
+    setActiveTemplateId(tpl.id); setActiveTagFilter(null); setActiveEntryId(null);
+    setTplDraft(draft);
+    initialTplDraftRef.current = JSON.stringify(draft);
+    initialEntryDraftRef.current = null;
+    setView("tpl-edit");
+  };
+
+  const newFabulaEntry = (tpl) => {
+    if (isLocked || !tpl) return;
+    setEntryNavStack([{ view: "fabula", entryId: null }]);
+    openNewEntry(tpl);
   };
 
   // The story page's tabs; the Story record's edit keeps its tab.
@@ -1443,6 +1529,7 @@ function App() {
   const popFabulaBack = () => {
     const frame = fabulaBack[fabulaBack.length - 1];
     setFabulaBack(b => b.slice(0, -1));
+    if (frame && frame.kind === "entry") { returnToEntry(frame.id); return; }
     if (frame && frame.kind !== "story") { setActiveRecord({ kind: frame.kind, id: frame.id }); return; }
     setActiveRecord(null);
     setStoryTab((frame && frame.tab) || "people");
@@ -1848,7 +1935,8 @@ function App() {
   // and relationKinds. Wrapped in an envelope with version+timestamp.
   const exportTemplateJson = (template) => {
     if (!template) return;
-    const { id, ...rest } = template;
+    // v1.7 r016: the file never carries Fabula's flag.
+    const { id, fabulaRole, ...rest } = template;
     const payload = {
       cartulary_template_export: 1,
       exported_at: new Date().toISOString(),
@@ -2218,9 +2306,14 @@ function App() {
       origin: TEMPLATE_ORIGIN.USER,
       fields: JSON.parse(JSON.stringify(tpl.fields || [])),
     };
+    // v1.7 r016: an import never brings Fabula's flag, and one imported over
+    // Plot Thread or Theme / Motif keeps the flag that template had.
+    delete newTpl.fabulaRole;
     ensureIds(newTpl.fields);
     if (mode === "replace" && existingId) {
       newTpl.id = existingId;
+      const was = state.templates.find(t => t.id === existingId);
+      if (was && was.fabulaRole) newTpl.fabulaRole = was.fabulaRole;
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === existingId ? newTpl : t) }));
     } else {
       newTpl.id = `tpl-${slugify(newTpl.name) || "imported"}-${genId().slice(-4)}`;
@@ -2230,6 +2323,7 @@ function App() {
 
   const deleteTemplate = () => {
     if (!activeTemplate) return;
+    const fabRole = activeTemplate.fabulaRole || null;
     const count = templateCounts[activeTemplateId] || 0;
     const msg = count > 0
       ? `Delete template "${activeTemplate.name}" and its ${count} ${count === 1 ? "entry" : "entries"}?`
@@ -2250,7 +2344,10 @@ function App() {
         fabula: scrubFabulaRefs(s, deletedEntryIds, names),
       };
     });
-    setActiveTemplateId(null); clearDraftAndStorage(); setView("home");
+    setActiveTemplateId(null); clearDraftAndStorage();
+    // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section of
+    // Fabula's index, which then offers Restore.
+    if (fabRole) landOnFabulaSection(fabRole); else setView("home");
     flash("Template deleted");
   };
 
@@ -3629,7 +3726,8 @@ function App() {
     // even if they happen to share a name with a built-in. The UI Reset button
     // is already gated on origin, but defense-in-depth here too.
     if (userTpl.origin !== TEMPLATE_ORIGIN.BUILTIN) return null;
-    const builtin = BUILTIN_TEMPLATES.find(b => b.name === userTpl.name);
+    // v1.7 r016: Plot Thread and Theme / Motif by their flag, renamed or not.
+    const builtin = (userTpl.fabulaRole && fabulaRoleBuiltin(userTpl.fabulaRole)) || BUILTIN_TEMPLATES.find(b => b.name === userTpl.name);
     if (!builtin) return null;
 
     const userLabels = new Set(userTpl.fields.map(f => f.label));
@@ -3690,6 +3788,10 @@ function App() {
       names.forEach(name => {
         const builtinIdx = BUILTIN_TEMPLATES.findIndex(b => b.name === name);
         if (builtinIdx === -1) return;
+        // v1.7 r016: Plot Thread or Theme / Motif comes back only when no
+        // template holds its place in Fabula, a renamed one included.
+        const role = BUILTIN_TEMPLATES[builtinIdx].fabulaRole;
+        if (role && newTemplates.some(t => t && t.fabulaRole === role)) { seeded.delete(name); return; }
         // Skip if the user already has the built-in version back. A user-origin
         // template with the same name does NOT block restoration — they can
         // coexist (the dedup pass now keys on origin too, so they won't merge).
@@ -3718,7 +3820,8 @@ function App() {
       // means programmatic calls (e.g. future bulk-reset feature) can't
       // accidentally clobber a user template.
       if (userTpl.origin !== TEMPLATE_ORIGIN.BUILTIN) return s;
-      const builtin = BUILTIN_TEMPLATES.find(b => b.name === userTpl.name);
+      // v1.7 r016: Plot Thread and Theme / Motif by their flag, renamed or not.
+      const builtin = (userTpl.fabulaRole && fabulaRoleBuiltin(userTpl.fabulaRole)) || BUILTIN_TEMPLATES.find(b => b.name === userTpl.name);
       if (!builtin) return s;
 
       // Build a fresh copy of the built-in but preserve the existing template ID
@@ -3859,7 +3962,7 @@ function App() {
         state={state}
         activeTemplateId={activeTemplateId}
         activeTagFilter={activeTagFilter}
-        activeView={view}
+        activeView={sidebarView}
         templateCounts={templateCounts}
         tagCounts={tagCounts}
         allTags={allTags}
@@ -4294,6 +4397,15 @@ function App() {
               onDeleteStory={deleteStory}
               onSetStoryCorpus={setStoryCorpus}
               onOpenStory={openStory}
+              sections={{
+                focus: fabulaFocus,
+                onFocused: () => setFabulaFocus(null),
+                onOpenEntry: openEntryFromAnywhere,
+                onNewEntry: newFabulaEntry,
+                onEditTemplate: editFabulaTemplate,
+                onExportTemplate: (tpl, fmt) => (fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
+                onRestoreTemplate: (name) => restoreBuiltinTemplates([name]),
+              }}
             />
           )}
           {view === "fabula" && corpusDraft && (
@@ -4483,6 +4595,7 @@ function App() {
               onExportEntry={exportEntryMarkdown}
               state={state}
               onUpdateViewPrefs={updateViewPrefs}
+              footSlot={pageTemplate && pageTemplate.fabulaRole ? <FabulaEntryStories state={state} entry={activeEntry} role={pageTemplate.fabulaRole} onOpenEntry={openEntryFromAnywhere} onOpenStory={openStoryFromEntry} /> : undefined}
             />
           )}
           {(view === "entry-edit" || view === "entry-new") && entryDraft && (() => {
@@ -4522,6 +4635,7 @@ function App() {
                 additionalCalendars={state.calendars}
                 selfEntryId={activeEntryId}
                 flash={flash}
+                footSlot={view === "entry-edit" && activeEntry && editorTpl.fabulaRole ? <FabulaEntryStories state={state} entry={activeEntry} role={editorTpl.fabulaRole} editing onOpenEntry={openEntryFromAnywhere} onOpenStory={openStoryFromEntry} /> : undefined}
               />
             );
           })()}
@@ -5245,9 +5359,11 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
   const packedTemplateIds = new Set(
     (packs || []).flatMap(p => Array.isArray(p.templateIds) ? p.templateIds : [])
   );
+  // v1.7 r016: Plot Thread and Theme / Motif leave it too; they live under
+  // Fabula (fabulaRole).
   const displayedTemplates = state.templates
     .map((t, originalIdx) => ({ t, originalIdx }))
-    .filter(({ t }) => t.kind !== "map" && (t.origin === "builtin" || !packedTemplateIds.has(t.id)));
+    .filter(({ t }) => t.kind !== "map" && !t.fabulaRole && (t.origin === "builtin" || !packedTemplateIds.has(t.id)));
 
   const orderedViews = (viewOrder || ["family", "fabula", "stemma", "ephemeris", "kalendarium", "glossopoeia", "cartographia", "graph", "timeline", "chronometrics"])
     .map(id => VIEW_DEFS[id])
@@ -5482,9 +5598,10 @@ function PackDetailView({ pack, templates, isLocked, onRename, onSetDescription,
   }, [templates]);
   const members = (pack.templateIds || []).map(id => byId[id]).filter(Boolean);
   // Eligible to add: user (non-builtin) templates, not map-kind (those live in
-  // Cartographia), not already in this pack.
+  // Cartographia), not Fabula's (fabulaRole, v1.7 r016), not already in this
+  // pack.
   const addable = (templates || []).filter(t =>
-    t.origin !== "builtin" && t.kind !== "map" && !(pack.templateIds || []).includes(t.id));
+    t.origin !== "builtin" && t.kind !== "map" && !t.fabulaRole && !(pack.templateIds || []).includes(t.id));
 
   return (
     <div className="pack-detail" style={{ padding: "4px 2px", maxWidth: 720 }}>

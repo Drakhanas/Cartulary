@@ -411,7 +411,7 @@ const BUILTIN_TEMPLATES = [
       { label: "Origin / History", type: "textarea" },
       { label: "Notes", type: "textarea" },
     ]},
-  { name: "Plot Thread", icon: "◑", color: "#c86ea8",
+  { name: "Plot Thread", icon: "◑", color: "#c86ea8", fabulaRole: "threads",
     fields: [
       { label: "POV Character", type: "entry-ref", refTemplate: "Character", halfWidth: true },
       { label: "Genre", type: "select", otherTextField: true, halfWidth: true,
@@ -721,7 +721,7 @@ const BUILTIN_TEMPLATES = [
       { label: "Cultural Significance", type: "textarea" },
       { label: "Notes", type: "textarea" },
     ]},
-  { name: "Theme / Motif", icon: "◐", color: "#b0a8c8",
+  { name: "Theme / Motif", icon: "◐", color: "#b0a8c8", fabulaRole: "themes",
     fields: [
       { label: "Other Names", type: "text", halfWidth: true },
       { label: "Tone / Mood", type: "select", otherTextField: true, halfWidth: true,
@@ -1031,6 +1031,9 @@ const makeTemplateFromBuiltin = (bt) => ({
   color: bt.color,
   kind: bt.kind || "standard",
   origin: TEMPLATE_ORIGIN.BUILTIN,
+  // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, which finds
+  // them by this flag (docs/fabula-spec.md, section 4).
+  ...(bt.fabulaRole ? { fabulaRole: bt.fabulaRole } : {}),
   fields: bt.fields.map(f => ({
     id: `fld-${slugify(f.label)}-${genId().slice(-4)}`,
     ...f,

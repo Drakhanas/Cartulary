@@ -598,6 +598,10 @@ const migrate = (state) => {
       let keepIdx = 0;
       let bestCount = -1;
       counts.forEach((c, i) => { if (c > bestCount) { bestCount = c; keepIdx = i; } });
+      // v1.7 r016: a template Fabula holds (fabulaRole) is the keeper, so its
+      // place in Fabula and its id survive, and the others' entries join it.
+      const held = dupes.findIndex(t => t && t.fabulaRole);
+      if (held >= 0) keepIdx = held;
       const keeper = dupes[keepIdx];
       // Merge fields from each non-keeper duplicate into the keeper.
       const keeperLabels = new Set(keeper.fields.map(f => f.label));
@@ -5934,6 +5938,12 @@ const migrate = (state) => {
   // now blocks self-refs at input time; this catches anything from older world
   // files where they were previously allowed.
   state.entries = scrubSelfRefs(state.entries, state.templates);
+
+  // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, each world's
+  // copy flagged by fabulaRole (docs/fabula-spec.md, section 4). A world with
+  // no template flagged for one flags one (fabulaFlagTemplates), every load,
+  // since a load that finds them flagged changes nothing.
+  fabulaFlagTemplates(state);
 
   // v1.7 r006: Fabula's slice and its seeded schemas (docs/fabula-spec.md,
   // section 3). Last, so the templates the schemas point at are final.
