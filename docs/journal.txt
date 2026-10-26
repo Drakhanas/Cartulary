@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, and r014's Notes) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, and r015's Meaning) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -712,3 +712,16 @@ the note's row does too. The control could only fail T1 again, the Notes tab gre
 r013, so three planted defects did the real proving, each failing where it should. r014
 also cleared one of the two things r013's turnover filed, the comment that listed what
 opens, since notes open through the same code. Drak passed it just before ten.
+
+r015 was Meaning, and its three calls came in four minutes: the theme list edits in place
+the way Plot's threads do, a theme's row shows where it runs through the book, and themes
+group by Type. A grid that laid each theme's gaps out on the page was the strongest tool
+and the most work, and I recommended the row of positions instead; Drak took the row, and
+the grid can come later from the same data if he finds he wants it. The cut reads a
+theme's run from the scenes' Motifs, so nothing new is stored. The screenshots found the
+positions reading as plain text, though a click on one opens its scene, which is r011's
+lesson about what answers a click, met again; they're underlined now, dotted. The probe's
+first run failed one check, and it was mine: I expected the Motifs picker's options to
+carry their template's name, which a picker adds only when its field takes more than one
+template. r012's first run tripped on the same thing from the other side, so it's in the
+handoff now. Drak passed it at twenty to eleven.
