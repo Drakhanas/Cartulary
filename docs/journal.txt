@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, and r012's positions) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, and r013's Plot) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -675,3 +675,26 @@ at the next line, which picked a scene by a label that no longer exists, so thir
 never ran. A copy adapted at that one check ran all 109. Nine probes at once were too many
 for the sandbox, too: two crashed under the load, and both ran clean alone. Drak passed
 the first staging at half past six in the morning.
+
+r013 was Plot, the biggest cut since the Outline, and its calls were made before r012 was
+cut: four of Drak's, one per message, and my defaults for the rest of the tab, named in
+the spec. I built the data first. A plot point's heading is its Slot, so nothing about
+where it sits needs storing but the order, and a custom turn keeps the slot it follows, so
+a turn survives a change of structure and lands after the last slot when its own is gone.
+Every move is worked out against Fabula as it stands, the way r011's outline does it. The
+screen took several rounds before staging. The screenshots found a marked thread's button
+as bright as the section's own, a picker's arrow over its text, and a line offering to
+fill the slot under every empty one, so the fill went onto the heading. Then the longest
+plot point pushed its arrows onto a line of their own, and once that was fixed, its
+details wrapped ragged on the left, because I'd right-aligned them, and a promise's short
+details, dropped under its long title, sat off at the right edge by themselves. The last
+fix gives whatever comes before the details nearly all the slack on its line, which reads
+oddly in a sentence and works on the screen. The probe has 70 checks, and its control
+proved almost nothing: on r012 the Plot tab is greyed, so it failed T1 and stopped, as
+r011's had. So I broke three rules in copies of the build, the unpaid rule, a turn's
+anchor, and the pickers' groups, and each copy failed where it should. Two things cost me
+time. The file tool turned the escapes in my cut's source into the characters, and I had
+to put them back. And a loop I'd left waiting for the three mutants' totals never ended,
+because the turn's mutant crashed before printing one, which is what a mutant may do;
+that's the second wait in two cuts to hang, and a shell waiting on its own children is the
+wait that ends when they do. Drak passed it at a quarter to nine in the morning.
