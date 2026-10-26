@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "f4d73f0a51c06190975f85b06b16b36bb9b6603b2ce794d720b03af0f4bfabda",
+  "anchor_sha256": "8d11c4834e6424f779956d9b43fa0618e6f36c70354c6c4889ea563bb05f8d6a",
   "shell_sha256": "65714755efa11c91036354e5c78f38fdddb46bc9c27a38dd1838823ce9fd59b2",
   "files": [
     [
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      5542
+      5583
     ],
     [
       "13_form-engine-display.jsx",
@@ -172,7 +172,7 @@
     ],
     [
       "28_fabula.jsx",
-      970
+      1724
     ],
     [
       "29_modals.jsx",
