@@ -206,7 +206,7 @@ function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
 // top-level field from inside a group instance) aren't supported because
 // the runtime evaluation has access only to the instance's values, not the
 // outer entry.
-function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate, onRemove, packs }) {
+function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate, onRemove, packs, fabula }) {
   const allowedTypes = subfieldTypesAtDepth(depth);
   return (
     <div className="tpl-subfields">
@@ -214,7 +214,10 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
         Subfields{depth > 1 ? ` (level ${depth})` : ""}
       </div>
       {subfields.map(sf => {
-        const isMultiRef = Array.isArray(sf.refTemplatesId) && sf.refTemplatesId.length > 0;
+        // v1.7 r017: on one of Fabula's kinds a subfield can point at one of
+        // the story's kinds, which isn't a multi-template target.
+        const sfKind = fabula ? fabulaRefKindOf(sf) : null;
+        const isMultiRef = !sfKind && Array.isArray(sf.refTemplatesId) && sf.refTemplatesId.length > 0;
         const cascadeCandidates = subfields.filter(s =>
           s.id !== sf.id && s.type === "select" && !s.dependsOn
         );
@@ -244,6 +247,9 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                 </select>
                 <button className="del-field-btn" onClick={() => onRemove(parentPath, sf.id)}>×</button>
               </div>
+              {fabula && (
+                <input className="input tpl-field-help" style={{ marginTop: 4, fontSize: 12 }} placeholder="Help line: what goes in this subfield..." value={sf.help || ""} onChange={e => onUpdate(parentPath, sf.id, { help: e.target.value })} />
+              )}
 
               <div className="tpl-field-flags">
                 <label>
@@ -269,6 +275,7 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                     <input
                       type="checkbox"
                       checked={isMultiRef}
+                      disabled={!!sfKind}
                       onChange={e => {
                         if (e.target.checked) {
                           const seed = sf.refTemplateId ? [sf.refTemplateId] : [];
@@ -282,17 +289,22 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                     Multi-template
                   </label>
                   {!isMultiRef && (
-                    <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={sf.refTemplateId || ""} onChange={e => onUpdate(parentPath, sf.id, { refTemplateId: e.target.value || null })}>
+                    <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={sfKind ? sfKind.id : (sf.refTemplateId || "")} onChange={e => onUpdate(parentPath, sf.id, fabula ? fabulaTargetPatch(e.target.value) : { refTemplateId: e.target.value || null })}>
                       <option value="">Any template</option>
                       {(templates || []).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                       {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                      {fabula && fabulaStoryKinds(fabula.kind).length > 0 && (
+                        <optgroup label="This story's records">
+                          {fabulaStoryKinds(fabula.kind).map(k => <option key={k.id} value={k.id}>{k.label} (this story)</option>)}
+                        </optgroup>
+                      )}
                     </select>
                   )}
-                  <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={sf.relationKind || ""} onChange={e => onUpdate(parentPath, sf.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
+                  {!fabula && <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={sf.relationKind || ""} onChange={e => onUpdate(parentPath, sf.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
                     <option value="">No family role</option>
                     <option value="parent">Parent of this</option>
                     <option value="spouse">Spouse of this</option>
-                  </select>
+                  </select>}
                 </>}
               </div>
 
@@ -367,6 +379,7 @@ function SubfieldList({ subfields, parentPath, depth, templates, onAdd, onUpdate
                   onUpdate={onUpdate}
                   onRemove={onRemove}
                   packs={packs}
+                  fabula={fabula}
                 />
               )}
 
@@ -619,7 +632,42 @@ function TemplatePreviewBody({ template, entries, templates, calendar, imageFold
   );
 }
 
-function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar, imageFolder, dirHandle, allTags, packs }) {
+// v1.7 r017: the head of the builder on one of Fabula's kinds, in place of a
+// template's name, icon, color, and type, which are Fabula's: the help line
+// of the records' name, the user's to change (docs/fabula-spec.md, section
+// 4).
+function FabulaBuilderHead({ draft, onChange, fabula }) {
+  return (
+    <div className="form-field fabula-builder-head">
+      <label className="form-label">Help line for the name</label>
+      <input className="input" placeholder="What the name holds..." value={draft.nameHelp || ""} onChange={e => onChange({ ...draft, nameHelp: e.target.value })} />
+      <div className="tpl-cascade-hint" style={{ marginTop: 8 }}>
+        These are the fields of every {(FABULA_NOUNS[fabula.kind] || { one: fabula.label }).one} in this world. Fabula reads the fields marked Core, so what it reads of each is locked; the rest of them, and every other field, is yours to change. A Core tag's tooltip says what reads its field.
+      </div>
+    </div>
+  );
+}
+
+// v1.7 r017: a core group's subfields on one of Fabula's kinds, which Fabula
+// reads, shown as they are and not editable.
+function FabulaLockedRows({ field }) {
+  const typeLabel = (t) => (FIELD_TYPES.find(ft => ft.value === t) || {}).label || t;
+  return (
+    <div className="tpl-subfields fabula-locked-rows">
+      <div style={{ fontSize: 10, color: "var(--text-dim)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 6 }}>Subfields, locked</div>
+      {(field.subfields || []).map(sf => (
+        <div key={sf.id} className="tpl-subfield-row" style={{ color: "var(--text-dim)", fontSize: "calc(13px * var(--font-scale))" }}>
+          <span style={{ flex: 2 }}>{sf.label}</span>
+          <span style={{ flex: 1.4 }}>{typeLabel(sf.type)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// v1.7 r017: fabula, when set ({ kind, label }), puts the builder in its
+// mode for one of Fabula's kinds (docs/fabula-spec.md, section 4).
+function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar, imageFolder, dirHandle, allTags, packs, fabula }) {
   const updateField = (id, patch) => onChange({ ...draft, fields: draft.fields.map(f => f.id === id ? { ...f, ...patch } : f) });
   const removeField = (id) => onChange({ ...draft, fields: draft.fields.filter(f => f.id !== id) });
   const addField = () => onChange({ ...draft, fields: [...draft.fields, { id: genId(), label: "", type: "text", secret: false }] });
@@ -632,6 +680,15 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
     onChange({ ...draft, fields: next });
   };
   const fieldDrag = useDragReorder(reorderField);
+  // v1.7 r017: one of Fabula's kinds opens at the top of its page, wherever
+  // Fabula's index stood when its Edit Template was clicked.
+  const builderRef = useRef(null);
+  React.useLayoutEffect(() => {
+    if (!fabula) return;
+    for (let el = builderRef.current && builderRef.current.parentElement; el; el = el.parentElement) {
+      if (el.scrollHeight > el.clientHeight && /(auto|scroll)/.test(getComputedStyle(el).overflowY)) { el.scrollTop = 0; break; }
+    }
+  }, [fabula && fabula.kind]);
 
   // ─── Template preview popup state ───────────────────────────────────────
   // popupRef holds the Window handle returned by window.open. popupSessionRef
@@ -822,7 +879,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
 
   return (
     <>
-      <div className="tpl-builder-toolbar">
+      {!fabula && <div className="tpl-builder-toolbar">
         <button
           className={`btn btn-ghost preview-toggle-btn${popupOpen ? " active" : ""}`}
           onClick={togglePreview}
@@ -830,8 +887,9 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
         >
           👁 Template Preview
         </button>
-      </div>
-      <div className="tpl-builder">
+      </div>}
+      <div className="tpl-builder" ref={builderRef}>
+        {fabula ? <FabulaBuilderHead draft={draft} onChange={onChange} fabula={fabula} /> : <>
         <div className="form-field">
           <label className="form-label">Template Name</label>
           <input className="input" style={{ fontSize: 16 }} placeholder="Name this template..." value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
@@ -861,6 +919,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
           <option value="standard">Standard — text fields and references</option>
         </select>
       </div>
+        </>}
 
       <div className="section-hdr">Fields</div>
 
@@ -869,6 +928,13 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
         const isOver = fieldDrag.overIdx === idx;
         const showBefore = isOver && fieldDrag.dropPosition === "before" && !isDragged;
         const showAfter = isOver && fieldDrag.dropPosition === "after" && !isDragged;
+        // v1.7 r017: on one of Fabula's kinds a core field keeps what Fabula
+        // reads (docs/fabula-spec.md, section 3): its label, help line,
+        // Secret, and options, unless the seed locks them, are the user's.
+        const core = !!(fabula && field.core);
+        const fabKind = fabula ? fabulaRefKindOf(field) : null;
+        const multiTpl = !fabKind && Array.isArray(field.refTemplatesId) && field.refTemplatesId.length > 0;
+        const optionsLocked = core && !!field.optionsLocked;
         return (
         <div
           key={field.id}
@@ -882,7 +948,8 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               {...fieldDrag.handleProps(idx)}
             >⋮⋮</span>
             <input className="input tpl-field-lbl" placeholder="Field name..." value={field.label} onChange={e => updateField(field.id, { label: e.target.value })} />
-            <select className="input tpl-field-type" value={field.type} onChange={e => {
+            {core && <span className="fabula-core-tag" title={fabulaCoreTitle(field)} style={{ fontSize: "calc(10px * var(--font-scale))", letterSpacing: ".08em", textTransform: "uppercase", color: "var(--accent)", border: "1px solid var(--accent-dim)", borderRadius: 3, padding: "1px 6px", whiteSpace: "nowrap", cursor: "help" }}>Core</span>}
+            <select className="input tpl-field-type" value={field.type} disabled={core} onChange={e => {
               const newType = e.target.value;
               const patch = { type: newType };
               if ((newType === "select" || newType === "multiselect") && !field.options) patch.options = [];
@@ -892,8 +959,11 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
             }}>
               {FIELD_TYPES.map(ft => <option key={ft.value} value={ft.value}>{ft.label}</option>)}
             </select>
-            <button className="del-field-btn" onClick={() => removeField(field.id)} title="Remove field">×</button>
+            {!core && <button className="del-field-btn" onClick={() => removeField(field.id)} title="Remove field">×</button>}
           </div>
+          {fabula && (
+            <input className="input tpl-field-help" style={{ marginTop: 5, fontSize: 12 }} placeholder="Help line: what goes in this field..." value={field.help || ""} onChange={e => updateField(field.id, { help: e.target.value })} />
+          )}
 
           <div className="tpl-field-flags">
             <label>
@@ -901,24 +971,25 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               Secret
             </label>
             <label>
-              <input type="checkbox" checked={!!field.required} onChange={e => updateField(field.id, { required: e.target.checked })} />
+              <input type="checkbox" checked={!!field.required} disabled={core} onChange={e => updateField(field.id, { required: e.target.checked })} />
               Required
             </label>
             {(field.type === "select" || field.type === "multiselect") && (
               <label title={field.type === "select" ? "Adds an 'Other' option that lets users type a custom value" : "Adds an Other box where users type values of their own"}>
-                <input type="checkbox" checked={!!field.otherTextField} onChange={e => updateField(field.id, { otherTextField: e.target.checked })} />
+                <input type="checkbox" checked={!!field.otherTextField} disabled={optionsLocked} onChange={e => updateField(field.id, { otherTextField: e.target.checked })} />
                 Allow custom "Other" text
               </label>
             )}
             {field.type === "entry-ref" && <>
               <label>
-                <input type="checkbox" checked={!!field.multi} onChange={e => updateField(field.id, { multi: e.target.checked })} />
+                <input type="checkbox" checked={!!field.multi} disabled={core} onChange={e => updateField(field.id, { multi: e.target.checked })} />
                 Multiple
               </label>
               <label title="When on, this field can reference entries from multiple template types (with optional per-template filtering)">
                 <input
                   type="checkbox"
-                  checked={Array.isArray(field.refTemplatesId) && field.refTemplatesId.length > 0}
+                  checked={multiTpl}
+                  disabled={core || !!fabKind}
                   onChange={e => {
                     if (e.target.checked) {
                       // Seed multi-template list with the current single pick (if any)
@@ -933,36 +1004,51 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
                 />
                 Multi-template
               </label>
-              {!(Array.isArray(field.refTemplatesId) && field.refTemplatesId.length > 0) && (
-                <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={field.refTemplateId || ""} onChange={e => updateField(field.id, { refTemplateId: e.target.value || null })}>
+              {!multiTpl && (
+                <select className="input" style={{ flex: 1, fontSize: 11, padding: "3px 8px" }} value={fabKind ? fabKind.id : (field.refTemplateId || "")} disabled={core} onChange={e => updateField(field.id, fabula ? fabulaTargetPatch(e.target.value) : { refTemplateId: e.target.value || null })}>
                   <option value="">Any template</option>
                   {templates.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
                   {getRegisteredSyntheticTemplates().filter(t => t.refEligible).map(t => <option key={t.id} value={t.id}>{t.icon} {t.name} only</option>)}
+                  {fabula && fabulaStoryKinds(fabula.kind).length > 0 && (
+                    <optgroup label="This story's records">
+                      {fabulaStoryKinds(fabula.kind).map(k => <option key={k.id} value={k.id}>{k.label} (this story)</option>)}
+                    </optgroup>
+                  )}
                 </select>
               )}
-              <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={field.relationKind || ""} onChange={e => updateField(field.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
+              {!fabula && <select className="input" style={{ flex: "0 0 130px", fontSize: 11, padding: "3px 8px" }} value={field.relationKind || ""} onChange={e => updateField(field.id, { relationKind: e.target.value || null })} title="Family tree builds itself from these">
                 <option value="">No family role</option>
                 <option value="parent">Parent of this</option>
                 <option value="spouse">Spouse of this</option>
-              </select>
+              </select>}
             </>}
+            {fabula && fabula.kind === "story" && (
+              <select className="input fabula-panel-pick" style={{ flex: "0 0 150px", fontSize: 11, padding: "3px 8px", marginLeft: "auto" }} value={field.panel || ""} onChange={e => updateField(field.id, { panel: e.target.value || undefined })} title="Which panel of the Story tab the field sits in">
+                <option value="">No panel</option>
+                {FABULA_STORY_PANELS.map(p => <option key={p.id} value={p.id}>{p.label} panel</option>)}
+              </select>
+            )}
           </div>
 
-          {field.type === "entry-ref" && Array.isArray(field.refTemplatesId) && field.refTemplatesId.length >= 0 && (
+          {field.type === "entry-ref" && !fabKind && Array.isArray(field.refTemplatesId) && field.refTemplatesId.length >= 0 && (
             // Show the multi-template UI whenever multi-template is the active mode
             // (toggled on above). Empty refTemplatesId is still "multi-template mode
             // with nothing picked yet" — the UI prompts the user to pick.
-            Array.isArray(field.refTemplatesId) && (
+            Array.isArray(field.refTemplatesId) && (core ? (
+              <div className="tpl-cascade-hint fabula-locked-targets" style={{ marginLeft: 0 }}>
+                Points at {(field.refTemplates || []).join(", ") || "any template"}; that stays as it is.
+              </div>
+            ) : (
               <MultiTemplateRefConfig
                 field={field}
                 templates={templates}
                 onChange={(patch) => updateField(field.id, patch)}
                 packs={packs}
               />
-            )
+            ))
           )}
 
-          {field.type === "select" && field.otherTextField && (
+          {field.type === "select" && field.otherTextField && !optionsLocked && (
             <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
               "Other" will be auto-added to the dropdown at runtime.
             </div>
@@ -973,13 +1059,17 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
             </div>
           )}
 
-          {field.type === "select" && (
+          {field.type === "select" && (optionsLocked ? (
+            <div className="tpl-cascade-hint fabula-locked-options" style={{ marginLeft: 0 }}>
+              {field.optionsFrom ? `Its options come from the story's structure${field.otherTextField ? ", with Other after them" : ""}.` : `Options: ${(field.options || []).join(" | ")}. Fabula reads these names, so they stay as they are.`}
+            </div>
+          ) : (
             <>
               {/* Cascade-select: pick a parent select field on the same template. When set,
                   this field's options become per-parent-value via optionsByParent.
                   Excludes self and other cascade children (only top-level selects can be
                   parents — no two-level cascades). */}
-              {(() => {
+              {!core && (() => {
                 const candidateParents = draft.fields.filter(f =>
                   f.id !== field.id && f.type === "select" && !f.dependsOn
                 );
@@ -1015,7 +1105,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
                 />
               )}
             </>
-          )}
+          ))}
 
           {field.type === "multiselect" && (
             <SelectOptionsInput
@@ -1025,7 +1115,9 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
             />
           )}
 
-          {field.type === "group" && (
+          {field.type === "group" && (core ? (
+            <FabulaLockedRows field={field} />
+          ) : (
             <SubfieldList
               subfields={field.subfields || []}
               parentPath={[field.id]}
@@ -1035,8 +1127,9 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               onUpdate={updateSubfieldAt}
               onRemove={removeSubfieldAt}
               packs={packs}
+              fabula={fabula}
             />
-          )}
+          ))}
 
           {field.type === "grid" && (
             <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
@@ -1048,7 +1141,9 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
               on this template and which values reveal this field. Available on
               every field type. Empty values list = field hidden everywhere
               (UI warns); to make a field always visible, set parent to "—". */}
-          {(() => {
+          {core ? (field.showWhen ? (
+            <div className="tpl-cascade-hint fabula-locked-when" style={{ marginLeft: 0 }}>{fabulaShowWhenText(field, draft.fields)}</div>
+          ) : null) : (() => {
             const showWhenCandidates = draft.fields.filter(f =>
               f.id !== field.id && (f.type === "select" || f.type === "multiselect") && !f.dependsOn
             );

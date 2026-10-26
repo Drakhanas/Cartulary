@@ -59,6 +59,10 @@ function App() {
   // v1.7 r016: the section of Fabula's index to scroll to, Plot Threads or
   // Themes & Motifs, set where a page of theirs lands there.
   const [fabulaFocus, setFabulaFocus] = useState(null);
+  // v1.7 r017: one of Fabula's kinds open in the template builder (its
+  // schema's draft), and the kind whose Reset to Default asks first.
+  const [schemaDraft, setSchemaDraft] = useState(null);
+  const [resetSchemaKind, setResetSchemaKind] = useState(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -146,6 +150,7 @@ function App() {
   const draftSaveTimerRef = useRef(null);
   const initialEntryDraftRef = useRef(null);
   const initialTplDraftRef = useRef(null);
+  const initialSchemaDraftRef = useRef(null);
   const draftRestoredRef = useRef(false);
   const draftRestoreAttemptedRef = useRef(false);
 
@@ -813,6 +818,7 @@ function App() {
     if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
     if (storyDraft && JSON.stringify(storyDraft) !== initialStoryDraftRef.current) return true;
     if (recordDraft && JSON.stringify(recordDraft) !== initialRecordDraftRef.current) return true;
+    if (schemaDraft && JSON.stringify(schemaDraft) !== initialSchemaDraftRef.current) return true;
     return false;
   };
 
@@ -824,13 +830,14 @@ function App() {
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null); setRecordDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null); setRecordDraft(null); setSchemaDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
     initialCorpusDraftRef.current = null;
     initialStoryDraftRef.current = null;
     initialRecordDraftRef.current = null;
+    initialSchemaDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -1447,6 +1454,46 @@ function App() {
     if (isLocked || !tpl) return;
     setEntryNavStack([{ view: "fabula", entryId: null }]);
     openNewEntry(tpl);
+  };
+
+  // v1.7 r017: one of Fabula's kinds in the template builder (docs/fabula-
+  // spec.md, section 4). Edit Template on the index's Templates section opens
+  // a copy of the kind's schema over Fabula; Cancel, Save, and a confirmed
+  // Reset to Default return to the index at that section.
+  const openFabulaSchema = (kind) => {
+    if (isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    clearDraftAndStorage();
+    setActiveCorpusId(null); setActiveStoryId(null); setActiveRecord(null); setFabulaBack([]);
+    const draft = fabulaSchemaDraft(state, kind);
+    setSchemaDraft(draft);
+    initialSchemaDraftRef.current = JSON.stringify(draft);
+    setView("fabula");
+  };
+
+  const saveFabulaSchema = () => {
+    if (!schemaDraft || isLocked) return;
+    const draft = schemaDraft;
+    updateState(s => ({ ...s, fabula: fabulaSchemaSave(s, draft.kind, draft) }));
+    clearDraftAndStorage();
+    setFabulaFocus("templates");
+    flash("Template saved");
+  };
+
+  const cancelFabulaSchema = () => {
+    if (!confirmDiscardDraft()) return;
+    clearDraftAndStorage();
+    setFabulaFocus("templates");
+  };
+
+  const confirmFabulaReset = () => {
+    const kind = resetSchemaKind;
+    setResetSchemaKind(null);
+    if (!kind || isLocked) return;
+    updateState(s => ({ ...s, fabula: fabulaResetSchema(s, kind) }));
+    clearDraftAndStorage();
+    setFabulaFocus("templates");
+    flash("Template reset to default");
   };
 
   // The story page's tabs; the Story record's edit keeps its tab.
@@ -3930,7 +3977,12 @@ function App() {
     } else headerTitle = "Cartographia";
   }
   else if (view === "fabula") {
-    if (activeStoryId && activeRecord) {
+    if (schemaDraft) {
+      const k = FABULA_KINDS.find(x => x.kind === schemaDraft.kind);
+      headerTitle = `Edit: ${k ? k.label : "Template"}`;
+      headerIcon = { icon: fabulaTemplate(state, schemaDraft.kind).icon, color: k ? k.color : undefined };
+    }
+    else if (activeStoryId && activeRecord) {
       const k = FABULA_KINDS.find(x => x.kind === activeRecord.kind);
       const rec = fabArr(state.fabula || {}, k.slice).find(r => r.id === activeRecord.id);
       headerTitle = recordDraft ? ((recordDraft.name && recordDraft.name.trim()) ? recordDraft.name : `New ${k.label}`) : (rec?.name || k.label);
@@ -4080,6 +4132,11 @@ function App() {
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
+              </>}
+              {view === "fabula" && schemaDraft && <>
+                {!isLocked && <button className="btn btn-ghost" onClick={() => setResetSchemaKind(schemaDraft.kind)} title="Put back this template's seeded fields, labels, help lines, options, and order">Reset to Default</button>}
+                <button className="btn btn-ghost" onClick={cancelFabulaSchema}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveFabulaSchema} disabled={isLocked}>Save Template</button>
               </>}
               {view === "fabula" && activeRecord && recordDraft && <>
                 <button className="btn btn-ghost" onClick={cancelFabulaRecordEdit}>Cancel</button>
@@ -4386,7 +4443,7 @@ function App() {
           {view === "ephemeris" && (
             <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
           )}
-          {view === "fabula" && !activeCorpusId && !corpusDraft && !activeStoryId && (
+          {view === "fabula" && !schemaDraft && !activeCorpusId && !corpusDraft && !activeStoryId && (
             <FabulaIndexView
               state={state}
               isLocked={isLocked}
@@ -4405,7 +4462,23 @@ function App() {
                 onEditTemplate: editFabulaTemplate,
                 onExportTemplate: (tpl, fmt) => (fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
                 onRestoreTemplate: (name) => restoreBuiltinTemplates([name]),
+                onEditKind: openFabulaSchema,
               }}
+            />
+          )}
+          {view === "fabula" && schemaDraft && (
+            <TemplateBuilder
+              draft={schemaDraft}
+              templates={state.templates}
+              onChange={setSchemaDraft}
+              flash={flash}
+              entries={state.entries}
+              calendar={state.world.calendar}
+              imageFolder={state.world.imageFolder}
+              dirHandle={dirHandle}
+              allTags={allTags}
+              packs={state.packs}
+              fabula={{ kind: schemaDraft.kind, label: (FABULA_KINDS.find(x => x.kind === schemaDraft.kind) || {}).label || "record" }}
             />
           )}
           {view === "fabula" && corpusDraft && (
@@ -4710,6 +4783,14 @@ function App() {
               setView(activeTemplateId === tplId ? "list" : "home");
             }
           }}
+        />
+      )}
+
+      {resetSchemaKind && (
+        <FabulaResetModal
+          analysis={fabulaResetAnalysis(state, resetSchemaKind)}
+          onCancel={() => setResetSchemaKind(null)}
+          onConfirm={confirmFabulaReset}
         />
       )}
 

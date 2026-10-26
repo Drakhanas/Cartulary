@@ -9,11 +9,15 @@
 // file, which every Fabula cut edits until Fabula is finished and the file
 // splits into a folder at its section headers (Drak, 2026-10-25). The seed's
 // number rises when the seed changes, so a world's unedited schemas follow
-// it: 2 at v1.7's r009, when an arc's Cast took more than one, and 3 since
-// r011, when a beat took What Happens and the fields the outline reads, a
+// it: 2 at v1.7's r009, when an arc's Cast took more than one, 3 at r011,
+// when a beat took What Happens and the fields the outline reads, a
 // chapter's and a scene's Status and a scene's Beats, became core (Drak, at
-// r009's pass, 2026-10-25, and r011's, 2026-10-26).
-const FABULA_SCHEMA_SEED = 3;
+// r009's pass, 2026-10-25, and r011's, 2026-10-26), and 4 since r017, when
+// the core list caught up with what r007 through r015 read, a row's details
+// included, each core field took the line the builder shows for what reads
+// it, and the plot point's name help stopped saying a structure makes one
+// (Drak, at r017's plan, 2026-10-26).
+const FABULA_SCHEMA_SEED = 4;
 
 // The seeded schemas, one per kind, resolved against this world's templates.
 // Field ids are stable and unique within a kind, subfields included, as
@@ -25,10 +29,13 @@ const FABULA_SCHEMA_SEED = 3;
 // keeps its name and gets no id. A reference to Fabula's own records carries
 // its kind's sentinel and fabulaScope "story", for a picker that will offer
 // the record's own story only. core marks a field a feature reads (spec,
-// section 5.0), which the builder will let a user relabel but not delete or
-// retype; panel puts a Story field in one of its four panels. A help line
-// shows on its field's label, as Glossopoeia's do. Slot's options come from
-// the story's structure, so its seed holds Other alone.
+// section 5.0), with reads, the line the builder shows for what reads it, and
+// optionsLocked where a feature reads its options' names. Since v1.7's r017
+// the builder lets a user relabel a core field and change its help line,
+// Secret, and other options, and the seed keeps the rest (fabulaRefreshCore).
+// panel puts a Story field in one of its four panels. A help line shows on
+// its field's label, as Glossopoeia's do. Slot's options come from the
+// story's structure, so its seed holds Other alone.
 const fabulaSeedSchemas = (templates) => {
   const { byName } = refTargetIndex(templates, false);
   const target = (name) => {
@@ -51,12 +58,12 @@ const fabulaSeedSchemas = (templates) => {
   const area = (id, label, help, more) => f(id, label, "textarea", help, more);
   const pick = (id, label, help, options, more = {}) => f(id, label, "select", help, { options, ...more });
   const pickOther = (id, label, help, options, more = {}) => pick(id, label, help, [...options, "Other"], { otherTextField: true, ...more });
-  const multiOther = (id, label, help, options) => f(id, label, "multiselect", help, { options, otherTextField: true });
+  const multiOther = (id, label, help, options, more = {}) => f(id, label, "multiselect", help, { options, otherTextField: true, ...more });
   const ref = (id, label, help, names, more = {}) => f(id, label, "entry-ref", help, { ...refsTo(names), ...more });
   const kref = (id, label, help, kind, more = {}) => f(id, label, "entry-ref", help, { ...kindRef(kind), ...more });
   const group = (id, label, help, subfields, more = {}) => f(id, label, "group", help, { subfields, ...more });
   const MANY = { multi: true };
-  const CORE = { core: true };
+  const core = (reads, more = {}) => ({ core: true, reads, ...more });
   const inPanel = (panel, fields) => fields.map(x => ({ ...x, panel }));
   const schema = (kind, nameLabel, nameHelp, fields) => ({ kind, seed: FABULA_SCHEMA_SEED, nameLabel, nameHelp, fields });
   const OUTLINE_STATUS = ["Idea", "Planned", "Outlined", "Drafted", "Revised", "Final", "Cut"];
@@ -64,28 +71,28 @@ const fabulaSeedSchemas = (templates) => {
   const BEINGS = ["Character", "Deity / Entity"];
   return {
     corpus: schema("corpus", "Name", "The corpus's name: a series title, or whatever ties these stories together.", [
-      pickOther("kind", "Kind", "What holds these stories together.", ["Series", "Shared World", "Anthology", "Collection"]),
-      pick("status", "Status", "Where the corpus stands as a whole.", ["Planning", "Active", "Complete", "Shelved"]),
+      pickOther("kind", "Kind", "What holds these stories together.", ["Series", "Shared World", "Anthology", "Collection"], core("Fabula's index shows it.")),
+      pick("status", "Status", "Where the corpus stands as a whole.", ["Planning", "Active", "Complete", "Shelved"], core("Fabula's index shows it.")),
       area("description", "Description", "What the corpus is, in a paragraph."),
       area("notes", "Notes", "Anything else about the corpus."),
     ]),
     story: schema("story", "Title", "The story's title, working or final.", [
-      pick("status", "Status", "Where the story stands; Fabula's index shows it.", ["Idea", "Planning", "Drafting", "Revising", "Done", "Shelved"], CORE),
+      pick("status", "Status", "Where the story stands; Fabula's index shows it.", ["Idea", "Planning", "Drafting", "Revising", "Done", "Shelved"], core("Fabula's index shows it.")),
       pickOther("form", "Form", "What shape the finished work takes.", ["Novel", "Novella", "Short Story", "Serial", "Screenplay", "Campaign"]),
       pick("audience", "Audience", "Who it's written for.", ["Adult", "New Adult", "Young Adult", "Middle Grade", "Children's"]),
       f("targetLength", "Target Length", "number", "A planning number, in words."),
-      pick("structure", "Structure", "The structure whose turning points seed this story's plot points.", ["Three-Act", "Freytag", "Hero's Journey", "Seven-Point", "Kishotenketsu", "Custom", "None"], CORE),
+      pick("structure", "Structure", "The structure whose turning points seed this story's plot points.", ["Three-Act", "Freytag", "Hero's Journey", "Seven-Point", "Kishotenketsu", "Custom", "None"], core("Its turning points are the Plot tab's headings.", { optionsLocked: true })),
       group("customSlots", "Custom Slots", "Your own structure's turning points, one per row, in order.", [
         text("slot", "Slot", "One turning point's name."),
-      ], { core: true, showWhen: { fieldId: "structure", values: ["Custom"] } }),
-      ref("threads", "Threads", "The plot threads this story carries; one thread can run through several stories.", ["Plot Thread"], { multi: true, core: true }),
+      ], core("A Custom structure's turning points, the Plot tab's headings.", { showWhen: { fieldId: "structure", values: ["Custom"] } })),
+      ref("threads", "Threads", "The plot threads this story carries; one thread can run through several stories.", ["Plot Thread"], core("The Plot tab lists them.", MANY)),
       area("notes", "Notes", "Anything else about the story."),
       ...inPanel("premise", [
         area("why", "Why", "Why you're writing this story."),
         area("whatIf", "What If", "The idea, in a sentence or two."),
         text("logline", "Logline", "Who, what they want, and what's in the way, in one sentence."),
-        area("themeStatement", "Theme Statement", "What the story argues."),
-        ref("themes", "Themes", "The themes and motifs it works with; the Meaning tab lists them.", ["Theme / Motif"], { multi: true, core: true }),
+        area("themeStatement", "Theme Statement", "What the story argues.", core("The Meaning tab opens with it.")),
+        ref("themes", "Themes", "The themes and motifs it works with; the Meaning tab lists them.", ["Theme / Motif"], core("The Meaning tab lists them.", MANY)),
         area("centralConflict", "Central Conflict", "The struggle the story turns on."),
         multiOther("conflictKinds", "Conflict Kinds", "What the conflict sets its people against.", ["vs Character", "vs Self", "vs Society", "vs Nature", "vs Technology", "vs the Supernatural", "vs Fate"]),
         area("stakes", "Stakes", "What's lost if they fail."),
@@ -124,10 +131,10 @@ const fabulaSeedSchemas = (templates) => {
       ]),
     ]),
     cast: schema("cast", "Name", "The character as this story knows them; filled from the entry you pick.", [
-      ref("character", "Character", "The world entry this cast record is for: a character, or a god or other being.", BEINGS, { core: true, required: true }),
-      pick("importance", "Importance", "How large a part they play in this story.", ["Main", "Secondary", "Minor"]),
+      ref("character", "Character", "The world entry this cast record is for: a character, or a god or other being.", BEINGS, core("A cast record is this entry, in this story.", { required: true })),
+      pick("importance", "Importance", "How large a part they play in this story.", ["Main", "Secondary", "Minor"], core("The People tab orders the cast by it.", { optionsLocked: true })),
       kref("firstAppears", "First Appears", "The scene they first turn up in.", "scene"),
-      multiOther("role", "Role", "The parts they play in this story; there can be more than one.", ["Protagonist", "Antagonist", "Deuteragonist", "Tritagonist", "Confidant", "Mentor", "Love Interest", "Foil", "Antihero", "Supporting"]),
+      multiOther("role", "Role", "The parts they play in this story; there can be more than one.", ["Protagonist", "Antagonist", "Deuteragonist", "Tritagonist", "Confidant", "Mentor", "Love Interest", "Foil", "Antihero", "Supporting"], core("The People tab shows it.")),
       ref("beliefSystems", "Belief Systems", "The faiths and philosophies they hold.", ["Religion / Belief System"], MANY),
       area("motive", "Motive", "Why they act; for an antagonist, the aims."),
       area("fear", "Fear", "Their vulnerabilities."),
@@ -137,9 +144,9 @@ const fabulaSeedSchemas = (templates) => {
       area("notes", "Notes", "Anything else about them in this story."),
     ]),
     arc: schema("arc", "Name", "A name for the arc, such as \"Mira's fall\".", [
-      kref("cast", "Cast", "Whose arc this is; there can be more than one.", "cast", { ...CORE, ...MANY }),
-      pickOther("arcType", "Arc Type", "The shape of the change.", ["Positive Change", "Flat", "Negative Change", "Disillusionment", "Corruption", "Fall"]),
-      pick("status", "Status", "Where the arc stands in your plan.", ["Idea", "Planned", "Underway", "Resolved", "Abandoned"]),
+      kref("cast", "Cast", "Whose arc this is; there can be more than one.", "cast", core("The People tab names whose arc it is.", MANY)),
+      pickOther("arcType", "Arc Type", "The shape of the change.", ["Positive Change", "Flat", "Negative Change", "Disillusionment", "Corruption", "Fall"], core("The People tab shows it.")),
+      pick("status", "Status", "Where the arc stands in your plan.", ["Idea", "Planned", "Underway", "Resolved", "Abandoned"], core("The People tab shows it.")),
       area("want", "Want", "The external goal."),
       area("need", "Need", "The internal need."),
       area("lie", "Lie", "The misbelief standing in the need's way."),
@@ -149,13 +156,13 @@ const fabulaSeedSchemas = (templates) => {
       group("turningPoints", "Turning Points", "Where the arc turns, and how; one per row.", [
         kref("turnScene", "Scene", "The scene where it turns.", "scene"),
         text("turnShift", "Shift", "What shifts there."),
-      ], CORE),
+      ], core("The timeline will mark them.")),
       area("notes", "Notes", "Anything else about the arc."),
     ]),
     relationship: schema("relationship", "Name", "A name for the pair, such as \"Mira and Tomas\".", [
-      kref("castA", "Cast A", "One side of the relationship.", "cast", CORE),
-      kref("castB", "Cast B", "The other side.", "cast", CORE),
-      multiOther("kind", "Kind", "What kind of bond it is; there can be more than one.", ["Alliance", "Rivalry", "Romance", "Friendship", "Mentorship", "Family", "Enmity"]),
+      kref("castA", "Cast A", "One side of the relationship.", "cast", core("The People tab names the pair from it.")),
+      kref("castB", "Cast B", "The other side.", "cast", core("The People tab names the pair from it.")),
+      multiOther("kind", "Kind", "What kind of bond it is; there can be more than one.", ["Alliance", "Rivalry", "Romance", "Friendship", "Mentorship", "Family", "Enmity"], core("The People tab shows it.")),
       area("startsAs", "Starts As", "Where the two stand at the start."),
       area("endsAs", "Ends As", "Where they stand at the end."),
       group("turningPoints", "Turning Points", "Where it turns, and how; one per row.", [
@@ -164,19 +171,19 @@ const fabulaSeedSchemas = (templates) => {
       ]),
       area("notes", "Notes", "Anything else about the two of them."),
     ]),
-    plotPoint: schema("plotPoint", "Name", "The slot's name when a structure made this plot point, or your own.", [
-      pickOther("slot", "Slot", "The turning point in the story's structure this plot point fills.", [], { core: true, optionsFrom: "structure" }),
-      kref("deliveredIn", "Delivered In", "The scene where it happens.", "scene", CORE),
-      ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], MANY),
+    plotPoint: schema("plotPoint", "Name", "Its name; one added under a slot without a title takes the slot's name.", [
+      pickOther("slot", "Slot", "The turning point in the story's structure this plot point fills.", [], core("The Plot tab files the plot point under it.", { optionsFrom: "structure", optionsLocked: true })),
+      kref("deliveredIn", "Delivered In", "The scene where it happens.", "scene", core("The Plot tab shows its scene.")),
+      ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], core("The Plot tab's marks and a thread's page read it.", MANY)),
       area("description", "Description", "What happens."),
       area("notes", "Notes", "Anything else about this plot point."),
     ]),
     promise: schema("promise", "Label", "A short label for what's promised.", [
-      pickOther("kind", "Kind", "What kind of promise it is.", ["Foreshadowing", "Chekhov's Gun", "Open Question", "Red Herring", "Prophecy", "Callback", "Running Gag"]),
-      pick("status", "Status", "Where the promise stands.", ["Idea", "Planned", "Planted", "Paid Off", "Subverted", "Dropped"]),
-      kref("setupIn", "Setup In", "The scenes that make the promise.", "scene", { multi: true, core: true }),
-      kref("payoffIn", "Payoff In", "The scenes that keep it.", "scene", { multi: true, core: true }),
-      ref("threads", "Threads", "The threads it belongs to.", ["Plot Thread"], MANY),
+      pickOther("kind", "Kind", "What kind of promise it is.", ["Foreshadowing", "Chekhov's Gun", "Open Question", "Red Herring", "Prophecy", "Callback", "Running Gag"], core("The Plot tab shows it.")),
+      pick("status", "Status", "Where the promise stands.", ["Idea", "Planned", "Planted", "Paid Off", "Subverted", "Dropped"], core("The Plot tab shows it.")),
+      kref("setupIn", "Setup In", "The scenes that make the promise.", "scene", core("The unpaid flag and the order of promises read it.", MANY)),
+      kref("payoffIn", "Payoff In", "The scenes that keep it.", "scene", core("The unpaid flag reads it.", MANY)),
+      ref("threads", "Threads", "The threads it belongs to.", ["Plot Thread"], core("The Plot tab's marks and a thread's page read it.", MANY)),
       area("promise", "Promise", "What the reader is owed."),
       area("notes", "Notes", "Anything else about the promise."),
     ]),
@@ -186,41 +193,41 @@ const fabulaSeedSchemas = (templates) => {
       area("notes", "Notes", "Anything else about the part."),
     ]),
     chapter: schema("chapter", "Title", "The chapter's title.", [
-      kref("pov", "POV", "Whose point of view the chapter keeps; a scene with no POV of its own takes this one.", "cast", CORE),
-      pick("status", "Status", "Where the chapter stands.", OUTLINE_STATUS, CORE),
+      kref("pov", "POV", "Whose point of view the chapter keeps; a scene with no POV of its own takes this one.", "cast", core("A scene with no POV of its own takes it.")),
+      pick("status", "Status", "Where the chapter stands.", OUTLINE_STATUS, core("The outline shows it.")),
       f("targetLength", "Target Length", "number", "A planning number, in words."),
       area("purpose", "Purpose", "What the chapter does for the story."),
       area("summary", "Summary", "What happens in it."),
       area("notes", "Notes", "Anything else about the chapter."),
     ]),
     scene: schema("scene", "Title", "The scene's title.", [
-      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", CORE),
+      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", core("The outline shows it, and the timeline will lane scenes by it.")),
       ref("setting", "Setting", "Where the scene happens.", PLACES),
       text("goal", "Goal", "What the POV character wants here."),
       text("conflict", "Conflict", "What's in the way."),
       pickOther("outcome", "Outcome", "How the goal comes out.", ["Yes", "No", "Yes, but", "No, and"]),
       text("turn", "Turn", "What has changed by the end."),
-      pick("status", "Status", "Where the scene stands.", OUTLINE_STATUS, CORE),
-      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", CORE),
+      pick("status", "Status", "Where the scene stands.", OUTLINE_STATUS, core("The outline shows it.")),
+      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", core("The timeline will place the scene by it.")),
       kref("participants", "Participants", "Who from the cast is in it.", "cast", MANY),
       ref("walkOns", "Walk-ons", "Anyone in it without a cast record.", BEINGS, MANY),
-      ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], { multi: true, core: true }),
-      ref("motifs", "Motifs", "The themes and motifs it carries.", ["Theme / Motif"], MANY),
+      ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], core("The Plot tab's marks and a thread's page read it.", MANY)),
+      ref("motifs", "Motifs", "The themes and motifs it carries.", ["Theme / Motif"], core("The Meaning tab's runs and a theme's page read it.", MANY)),
       group("beats", "Beats", "The scene's beats, one per row, in order.", [
         text("beat", "Beat", "The beat in a line."),
         area("whatHappens", "What Happens", "What needs to happen in the beat."),
-      ], CORE),
+      ], core("The outline lists and edits them.")),
       area("notes", "Notes", "What you're thinking about the scene; never the draft."),
     ]),
     research: schema("research", "Topic", "What the research is about.", [
-      f("appliesTo", "Applies To", "entry-ref", "The world entries the research is about.", MANY),
-      kref("usedIn", "Used In", "The scenes that need it.", "scene", MANY),
+      f("appliesTo", "Applies To", "entry-ref", "The world entries the research is about.", core("The Notes tab says what a note is about from it.", MANY)),
+      kref("usedIn", "Used In", "The scenes that need it.", "scene", core("A scene's research list reads it.", MANY)),
       group("sources", "Sources", "Where the research came from, one source per row.", [
         text("sourceTitle", "Title", "The source's title."),
         f("sourceLink", "Link", "url", "Where to find it."),
       ]),
       area("findings", "Findings", "What you found."),
-      area("openQuestions", "Open Questions", "What you still need to find out."),
+      area("openQuestions", "Open Questions", "What you still need to find out.", core("Any text in it flags the note open.")),
       area("notes", "Notes", "Anything else about the research."),
     ]),
   };
@@ -230,13 +237,14 @@ const fabulaSeedSchemas = (templates) => {
 // seeded schemas point at are final. Each kind gets an empty array where it
 // has none, and a seeded schema where its schema is missing, malformed, or
 // older than FABULA_SCHEMA_SEED, unless the schema is marked edited. A kind's
-// schema that nobody has edited follows the seed (spec, section 3): until the
-// template builder learns Fabula nothing can mark one, so a later seed
-// replaces it whole, and the cut that teaches the builder adds the rule for
-// giving an edited schema new core fields. A schema from a newer seed is left
-// alone. A reference the replacing seed takes more than one of keeps what it
-// held, as a list of one (seed 2: an arc's Cast). Idempotent: a second load
-// changes nothing.
+// schema that nobody has edited follows the seed (spec, section 3), so a
+// later seed replaces it whole. Since v1.7's r017 the template builder marks
+// a schema it changes edited, and each load brings an edited schema's core
+// fields up to the seed (fabulaRefreshCore), leaving what the user owns. A
+// schema from a newer seed is left alone. A reference the seed takes more
+// than one of keeps what it held, as a list of one (seed 2: an arc's Cast),
+// in an edited schema only where the field is core. Idempotent: a second
+// load changes nothing.
 const ensureFabulaSlice = (state) => {
   const isObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
   if (!isObj(state.fabula)) state.fabula = {};
@@ -246,11 +254,14 @@ const ensureFabulaSlice = (state) => {
   let seeded = null;
   FABULA_KINDS.forEach(k => {
     const have = fab.schemas[k.kind];
-    if (isObj(have) && Array.isArray(have.fields)
-      && (have.edited === true || (typeof have.seed === "number" && have.seed >= FABULA_SCHEMA_SEED))) return;
+    const kept = isObj(have) && Array.isArray(have.fields);
+    const stamp = kept && typeof have.seed === "number" ? have.seed : 0;
+    if (kept && stamp > FABULA_SCHEMA_SEED) return;
+    const edited = kept && have.edited === true;
+    if (kept && !edited && stamp === FABULA_SCHEMA_SEED) return;
     if (!seeded) seeded = fabulaSeedSchemas(Array.isArray(state.templates) ? state.templates : []);
-    fab.schemas[k.kind] = seeded[k.kind];
-    const lists = seeded[k.kind].fields.filter(fl => fl.type === "entry-ref" && fl.multi).map(fl => fl.id);
+    fab.schemas[k.kind] = edited ? fabulaRefreshCore(have, seeded[k.kind]) : seeded[k.kind];
+    const lists = seeded[k.kind].fields.filter(fl => (!edited || fl.core) && fl.type === "entry-ref" && fl.multi).map(fl => fl.id);
     fab[k.slice].forEach(r => {
       if (!r || !isObj(r.fields)) return;
       lists.forEach(id => { if (typeof r.fields[id] === "string") r.fields[id] = r.fields[id] ? [r.fields[id]] : []; });
@@ -282,7 +293,6 @@ const fabulaRegistryEdges = (state, k) => {
       if (!c || !c.id || !Array.isArray(c.storyIds)) return;
       c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
     });
-    return edges;
   }
   // v1.7 r009: the links that exist so far (spec, section 9), each labeled as
   // its field is: a story to its threads and themes, a cast record to its
@@ -292,9 +302,17 @@ const fabulaRegistryEdges = (state, k) => {
   // promise to its setup and payoff scenes and its threads, and since r014 a
   // research note to the entries it applies to and the scenes it's used in.
   // Concordance drops an edge whose other end isn't drawn.
-  const links = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads", "motifs"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"], research: ["appliesTo", "usedIn"] }[k.kind];
-  if (!links) return edges;
+  const seeded = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads", "motifs"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"], research: ["appliesTo", "usedIn"] }[k.kind] || [];
+  // Since v1.7's r017 a link field of the user's own draws its edges too,
+  // labeled as the field is (spec, section 9): any reference whose id no
+  // seed uses, a corpus's included. A seeded link the user has deleted, or
+  // made something other than a reference, draws none: its values stay in
+  // the records unseen, as a template's deleted field's do.
   const fields = fabulaKindFields(state, k.kind);
+  const seedIds = fabulaSeedIds(k.kind);
+  const refIds = new Set(fields.filter(f => f && f.id && f.type === "entry-ref").map(f => f.id));
+  const links = [...seeded.filter(id => refIds.has(id)), ...[...refIds].filter(id => !seedIds.has(id))];
+  if (links.length === 0) return edges;
   (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => {
     if (!r || !r.id) return;
     links.forEach(fid => {
@@ -430,6 +448,8 @@ function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRename
 
 // v1.7 r016: the index ends with the world's plot threads and themes, two
 // sections (FabulaTemplateSections) whose handlers App hands in as sections.
+// Since r017 the Templates section comes after them (FabulaKindTemplates),
+// and sections carries its Edit Template too (onEditKind).
 function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCreateStory, onRenameStory, onDeleteStory, onSetStoryCorpus, onOpenStory, sections }) {
   const [justMade, setJustMade] = useState(null);
   const fab = state.fabula || {};
@@ -523,6 +543,7 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
       )}
 
       {sections && <FabulaTemplateSections state={state} isLocked={isLocked} sections={sections} />}
+      {sections && sections.onEditKind && <FabulaKindTemplates state={state} isLocked={isLocked} focus={sections.focus} onFocused={sections.onFocused} onEditKind={sections.onEditKind} />}
     </div>
   );
 }
@@ -3102,6 +3123,302 @@ function FabulaEntryStories({ state, entry, role, editing, onOpenEntry, onOpenSt
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Fabula: templates (v1.7 r017) ─────────────────────────────────────────────
+// Fabula's kinds in the template builder (docs/fabula-spec.md, sections 3,
+// 4, and 5.0, Drak's calls of 2026-10-26). The index's Templates section
+// lists the eleven kinds, each with Edit Template, which opens the builder on
+// a copy of the kind's schema. The seed owns every part of a core field a
+// feature reads, which the builder locks and each load brings up to the seed
+// (fabulaRefreshCore); a core field's label, help line, Secret, and panel are
+// the user's, and its options unless the seed locks them, and every other
+// field is the user's whole. Save marks a schema edited; Reset to Default
+// puts the seed back and clears the values the seed has no field for.
+
+// The ids a kind's seed uses at its top level, which a field of the user's
+// own never takes. They don't depend on the world's templates.
+const fabulaSeedIds = (() => {
+  let cache = null;
+  return (kind) => {
+    if (!cache) {
+      const all = fabulaSeedSchemas([]);
+      cache = {};
+      Object.keys(all).forEach(kk => { cache[kk] = new Set(all[kk].fields.map(f => f.id)); });
+    }
+    return cache[kind] || new Set();
+  };
+})();
+
+// An edited schema's core fields brought up to the seed (spec, section 3).
+// Each takes the seed's field with the user's label, help line, Secret, and
+// panel, and the user's options and Other unless the seed locks them
+// (optionsLocked); a blank label keeps the seed's. A core field the schema
+// lacks comes back where the seed puts it, after the nearest field before it
+// that the schema has, and a field the seed doesn't count core loses the
+// mark. The rest is the user's and stays as it is. Idempotent.
+const fabulaRefreshCore = (stored, seed) => {
+  const coreSeed = seed.fields.filter(f => f && f.core);
+  const byId = new Map(coreSeed.map(f => [f.id, f]));
+  const mine = (sf, f) => {
+    const out = { ...sf };
+    if (typeof f.label === "string" && f.label.trim()) out.label = f.label;
+    const keys = sf.optionsLocked ? ["help", "secret", "panel"] : ["help", "secret", "panel", "options", "otherTextField"];
+    keys.forEach(key => { if (f[key] !== undefined) out[key] = f[key]; else delete out[key]; });
+    return out;
+  };
+  const fields = [];
+  (Array.isArray(stored.fields) ? stored.fields : []).forEach(f => {
+    if (!f || typeof f !== "object") return;
+    if (byId.has(f.id)) { if (!fields.some(x => x.id === f.id)) fields.push(mine(byId.get(f.id), f)); return; }
+    if ("core" in f || "reads" in f || "optionsLocked" in f) {
+      const { core, reads, optionsLocked, ...rest } = f;
+      fields.push(rest);
+      return;
+    }
+    fields.push(f);
+  });
+  coreSeed.forEach(sf => {
+    if (fields.some(f => f.id === sf.id)) return;
+    const idx = seed.fields.findIndex(x => x.id === sf.id);
+    let at = 0;
+    for (let i = idx - 1; i >= 0; i--) {
+      const j = fields.findIndex(x => x.id === seed.fields[i].id);
+      if (j !== -1) { at = j + 1; break; }
+    }
+    fields.splice(at, 0, sf);
+  });
+  return { ...stored, kind: seed.kind, seed: FABULA_SCHEMA_SEED, nameHelp: typeof stored.nameHelp === "string" ? stored.nameHelp : seed.nameHelp, fields };
+};
+
+// A kind's schema as the world keeps it, or the seed's where it has none.
+const fabulaSchemaOf = (state, kind) => {
+  const stored = state.fabula && state.fabula.schemas && state.fabula.schemas[kind];
+  return stored && Array.isArray(stored.fields) ? stored : fabulaSeedSchemas(state.templates || [])[kind];
+};
+
+// What the builder edits for one of Fabula's kinds: a copy of its fields and
+// the help line of its records' names, with the kind they belong to.
+const fabulaSchemaDraft = (state, kind) => {
+  const s = fabulaSchemaOf(state, kind);
+  return JSON.parse(JSON.stringify({ kind, nameHelp: typeof s.nameHelp === "string" ? s.nameHelp : "", fields: s.fields }));
+};
+
+// The builder's Save for one of Fabula's kinds (spec, section 4). A field
+// with no label is dropped, as a template's is, except a core field, which
+// takes its seeded label back; a field of the user's own gets an id no seed
+// uses; and a reference's target names follow its ids, as a template's do.
+// The schema is marked edited, unless the Save changes nothing. Returns
+// Fabula.
+const fabulaSchemaSave = (state, kind, draft) => {
+  const fab = state.fabula || {};
+  const base = fabulaSchemaOf(state, kind);
+  const seeded = new Map(fabulaSeedSchemas(state.templates || [])[kind].fields.map(f => [f.id, f.label]));
+  const named = (f) => typeof f.label === "string" && f.label.trim() !== "";
+  const clean = (list, top) => (Array.isArray(list) ? list : []).filter(f => f && typeof f === "object" && ((top && f.core) || named(f))).map(f => {
+    const out = { ...f };
+    if (top && out.core && !named(out)) out.label = seeded.get(out.id) || out.label || "";
+    if (!out.id) out.id = genId();
+    if (out.type === "group" && Array.isArray(out.subfields)) out.subfields = clean(out.subfields, false);
+    return out;
+  });
+  const fields = clean(JSON.parse(JSON.stringify((draft && draft.fields) || [])), true);
+  const nameHelp = draft && typeof draft.nameHelp === "string" ? draft.nameHelp : "";
+  if (JSON.stringify(fields) === JSON.stringify(base.fields) && nameHelp === (base.nameHelp || "")) return fab;
+  syncRefTargetNames(state.templates || [], [{ fields }]);
+  return { ...fab, schemas: { ...(fab.schemas || {}), [kind]: { ...base, kind, nameHelp, fields, edited: true } } };
+};
+
+// What Reset to Default would do to one of Fabula's kinds, for its
+// confirmation: the seeded fields it brings back, the user's own it removes,
+// the labels that go back, and how many of the kind's records hold values
+// under fields the seed doesn't have, fields deleted earlier included.
+const fabulaResetAnalysis = (state, kind) => {
+  const k = FABULA_KINDS.find(x => x.kind === kind);
+  const fab = state.fabula || {};
+  const have = fabulaSchemaOf(state, kind);
+  const seed = fabulaSeedSchemas(state.templates || [])[kind];
+  const seedIds = new Set(seed.fields.map(f => f.id));
+  const haveById = new Map(have.fields.filter(f => f && f.id).map(f => [f.id, f]));
+  const filled = (v) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0);
+  const records = fabulaArr(fab, k.slice).filter(r => r && r.id);
+  return {
+    kind,
+    label: k.label,
+    color: k.color,
+    edited: have.edited === true,
+    missing: seed.fields.filter(f => !haveById.has(f.id)).map(f => f.label),
+    custom: have.fields.filter(f => f && !seedIds.has(f.id)).map(f => f.label || "(unnamed)"),
+    relabeled: seed.fields.filter(f => haveById.has(f.id) && haveById.get(f.id).label !== f.label).map(f => ({ from: haveById.get(f.id).label, to: f.label })),
+    total: records.length,
+    affected: records.filter(r => Object.keys(r.fields || {}).some(fid => !seedIds.has(fid) && filled(r.fields[fid]))).length,
+  };
+};
+
+// Reset to Default for one of Fabula's kinds: the seed's schema, unedited,
+// and every value its records hold under a field the seed doesn't have
+// cleared, as a built-in template's reset clears its entries'. A reference
+// the seed takes more than one of keeps what it held, as a list of one.
+// Returns Fabula.
+const fabulaResetSchema = (state, kind) => {
+  const k = FABULA_KINDS.find(x => x.kind === kind);
+  const fab = state.fabula || {};
+  const seed = fabulaSeedSchemas(state.templates || [])[kind];
+  const seedIds = new Set(seed.fields.map(f => f.id));
+  const lists = new Set(seed.fields.filter(f => f.type === "entry-ref" && f.multi).map(f => f.id));
+  const now = isoNow();
+  const records = fabulaArr(fab, k.slice).map(r => {
+    if (!r || !r.fields || typeof r.fields !== "object") return r;
+    const fields = {};
+    let changed = false;
+    Object.keys(r.fields).forEach(fid => {
+      const v = r.fields[fid];
+      if (!seedIds.has(fid)) { changed = true; return; }
+      if (lists.has(fid) && typeof v === "string") { fields[fid] = v ? [v] : []; changed = true; return; }
+      fields[fid] = v;
+    });
+    return changed ? { ...r, fields, updatedAt: now } : r;
+  });
+  return { ...fab, [k.slice]: records, schemas: { ...(fab.schemas || {}), [kind]: seed } };
+};
+
+// Fabula's kinds a field on kind can point at, as the seeded links do: the
+// nine a story holds, from any kind but a corpus, which has no story.
+const fabulaStoryKinds = (kind) => (kind && kind !== "corpus" ? FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story") : []);
+
+// The Fabula kind a reference field points at within its story, or null.
+const fabulaRefKindOf = (f) => (f && f.fabulaScope ? FABULA_KINDS.find(k => (Array.isArray(f.refTemplatesId) ? f.refTemplatesId : []).includes(k.id)) || null : null);
+
+// A target picked in the builder on one of Fabula's kinds: one of the
+// story's kinds makes the field a link to its story's records, one kind to a
+// field, and anything else is a template's target, as on any template.
+const fabulaTargetPatch = (v) => {
+  const k = FABULA_KINDS.find(x => x.id === v);
+  return k
+    ? { refTemplateId: null, refTemplatesId: [k.id], refTemplates: [k.name], refFilters: null, fabulaScope: "story" }
+    : { refTemplateId: v || null, refTemplatesId: null, refTemplates: undefined, refFilters: null, fabulaScope: undefined };
+};
+
+// A core field's tag, on its tooltip: what reads it, and what the builder
+// locks.
+const fabulaCoreTitle = (f) => {
+  const locked = ["its type", f.type === "entry-ref" ? "what it points at" : null, f.optionsLocked ? "its options" : null, f.type === "group" ? "its subfields" : null].filter(Boolean);
+  return `${f.reads || "Fabula reads this field."} You can rename it and change its help line; ${fabulaJoin(locked)} ${locked.length === 1 ? "is" : "are"} locked.`;
+};
+
+// A core field's Show only when, as the builder shows it, locked.
+const fabulaShowWhenText = (f, fields) => {
+  const sw = f.showWhen || {};
+  const p = (fields || []).find(x => x && x.id === sw.fieldId);
+  return `Shows only when ${p ? p.label : "another field"} is ${(sw.values || []).join(" or ")}; that stays as it is.`;
+};
+
+// The index's Templates section (spec, section 4, Drak's call at r017's
+// plan): Fabula's eleven kinds in order, each with how many records of it the
+// world holds, marked edited when its schema is, and Edit Template, which
+// opens the builder. Scrolled into view when the builder closes back to it;
+// in Lock Mode it shows no buttons.
+function FabulaKindTemplates({ state, isLocked, focus, onFocused, onEditKind }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (focus !== "templates") return;
+    if (ref.current && ref.current.scrollIntoView) ref.current.scrollIntoView({ block: "start" });
+    if (onFocused) onFocused();
+  }, [focus]);
+  const fab = state.fabula || {};
+  return (
+    <div ref={ref} className="fabula-kind-templates" style={{ marginTop: 28 }}>
+      <div className="field-label" style={{ marginBottom: 8 }}><span>Templates</span></div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+        {FABULA_KINDS.map(k => {
+          const n = fabulaArr(fab, k.slice).filter(r => r && r.id).length;
+          const edited = !!(fab.schemas && fab.schemas[k.kind] && fab.schemas[k.kind].edited === true);
+          return (
+            <div key={k.kind} className="fabula-kind-row" data-kind={k.kind} style={{ padding: "7px 12px 7px 16px", background: "var(--surf)", display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 12, rowGap: 4 }}>
+              <span className="fabula-kind-name" style={{ flex: "1 1 auto", minWidth: 0, fontSize: 14.5, fontWeight: 500 }}>{k.label}</span>
+              <span className="fabula-kind-meta" style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
+                {fabulaCount(k.kind, n)}
+                {edited && <span className="fabula-kind-edited" style={{ color: "var(--accent)" }}> · edited</span>}
+              </span>
+              {!isLocked && onEditKind && <button className="btn btn-ghost" style={{ padding: "3px 10px", fontSize: 12 }} onClick={() => onEditKind(k.kind)}>Edit Template</button>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Reset to Default's confirmation for one of Fabula's kinds, as a built-in
+// template's: what comes back, what goes, and the records whose values in
+// the fields that go are cleared, with the same acknowledgment before it
+// runs. A kind that follows the seed has nothing to reset.
+function FabulaResetModal({ analysis, onCancel, onConfirm }) {
+  const [ack, setAck] = useState(false);
+  const { kind, label, color, edited, missing, custom, relabeled, total, affected } = analysis;
+  const nothing = !edited && affected === 0 && missing.length === 0 && custom.length === 0 && relabeled.length === 0;
+  const s = (n) => (n === 1 ? "" : "s");
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal modal-wide fabula-reset-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr"><span style={{ color }}>{label}</span>: reset to default?</div>
+        <div className="modal-body">
+          {nothing ? (
+            <div className="modal-notice modal-notice-info">This template already follows the seed. Nothing would change.</div>
+          ) : (
+            <>
+              <div className="modal-notice modal-notice-warning">
+                <strong>This action cannot be undone.</strong> Make sure you've exported your world (.json) recently if you want a backup.
+              </div>
+              <div className="modal-section">
+                <div className="modal-section-hdr">Changes that will happen:</div>
+                <ul className="modal-list">
+                  {missing.length > 0 && (
+                    <li><strong>{missing.length}</strong> field{s(missing.length)} will be added back:
+                      <ul className="modal-list-nested">{missing.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                    </li>
+                  )}
+                  {custom.length > 0 && (
+                    <li className="modal-list-warn"><strong>{custom.length}</strong> field{s(custom.length)} of your own will be removed:
+                      <ul className="modal-list-nested">{custom.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                    </li>
+                  )}
+                  {relabeled.length > 0 && (
+                    <li><strong>{relabeled.length}</strong> label{s(relabeled.length)} will go back:
+                      <ul className="modal-list-nested">{relabeled.map((r, i) => <li key={i}>{r.from} → {r.to}</li>)}</ul>
+                    </li>
+                  )}
+                  <li>Every seeded field's type, help line, options, and place will go back to the seed's</li>
+                </ul>
+              </div>
+              {total > 0 && (
+                <div className="modal-section">
+                  <div className="modal-section-hdr">Impact on existing records:</div>
+                  {affected > 0 ? (
+                    <div className="modal-notice modal-notice-warning">
+                      <strong>{affected}</strong> of <strong>{fabulaCount(kind, total)}</strong> {affected === 1 ? "holds" : "hold"} data in fields the seed doesn't have. <strong>That data will be permanently deleted.</strong> Their other fields are kept.
+                    </div>
+                  ) : (
+                    <div className="modal-notice modal-notice-info">
+                      {fabulaCount(kind, total)} {total === 1 ? "exists, but it holds no data" : "exist, but none holds data"} in fields the seed doesn't have, so no record data will be lost.
+                    </div>
+                  )}
+                </div>
+              )}
+              <label className="modal-ack">
+                <input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} />
+                <span>I understand this will permanently remove the changes listed above and cannot be undone.</span>
+              </label>
+            </>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+          {!nothing && <button className="btn btn-danger" onClick={onConfirm} disabled={!ack}>Reset Template</button>}
+        </div>
+      </div>
     </div>
   );
 }
