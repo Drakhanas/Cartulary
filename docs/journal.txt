@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, and r011's Outline) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, and r012's positions) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -660,3 +660,18 @@ the seed at 3, the same lesson r009's arc taught about a field list's first use,
 folded the outline's core marks into that bump rather than spend another one at the
 builder. The spec took his answer before the cut was revised, and he passed the second
 staging a little after one in the morning.
+
+r012 was Drak's addition, a position on every act's, chapter's, and scene's page and in
+every reference to one, and it was small enough to build in a sitting. Most of the
+thinking went into where a position lives. It isn't stored: the outline already numbers
+everything from where it sits, so the paths come off the same walk, and a move renumbers
+every page and chip at once. I read the first screenshots the way r011 taught me, for what
+they say. A scene at the story's own level read "A Prologue" in its chip, an article and a
+word, so the position went quieter than the title, the way the outline dims its numbers,
+and the text stayed what Drak had approved. A picker can't do that, since a native option
+is plain text, and I told him so rather than invent a separator he hadn't asked for. The
+regression run nearly fooled me. r011's probe failed R6a, as it should, and then stopped
+at the next line, which picked a scene by a label that no longer exists, so thirty checks
+never ran. A copy adapted at that one check ran all 109. Nine probes at once were too many
+for the sandbox, too: two crashed under the load, and both ran clean alone. Drak passed
+the first staging at half past six in the morning.

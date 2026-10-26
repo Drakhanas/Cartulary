@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 47068,
-    "raw_body_lines": 47068,
-    "canonical_lines": 44760,
-    "decl_count": 581,
+    "total_lines": 47121,
+    "raw_body_lines": 47121,
+    "canonical_lines": 44812,
+    "decl_count": 582,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r011-body.jsx"
+    "active_anchor": "reference-r012-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 47068,
+      "value": 47121,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 581,
+      "value": 582,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 44760,
+      "value": 44812,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 47068,
+      "value": 47121,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2467313,
+      "value": 2471185,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-eight",
-        38
+        "thirty-nine",
+        39
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -115,34 +115,34 @@
       "value": 82,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
-    "working_hash_r011": {
-      "value": "819c23d2f11cb58c",
-      "pattern": "working[^\\n]{0,40}at r011 hashes to sha256 `([0-9a-f]{16})`"
-    },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
+    },
+    "working_hash_r012": {
+      "value": "880886f26451d22e",
+      "pattern": "working[^\\n]{0,40}at r012 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1293,
+      "line": 1295,
       "contains": "Longform + rich text editor"
     },
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1295,
+      "line": 1297,
       "contains": "function LongformEditor"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 314,
+      "line": 318,
       "contains": "Longform + markdown display"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 316,
+      "line": 320,
       "contains": "function LongformDisplay"
     },
     {
@@ -547,12 +547,12 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 732,
+      "line": 747,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 990,
+      "line": 1013,
       "contains": "Fabula: Outline (v1.7 r011)"
     }
   ],
@@ -738,16 +738,22 @@
       "as a list of one",
       "v1.7_r010",
       "28_fabula",
-      "reference-r011-body.jsx",
-      "reference-r011-layout.json",
-      "8d11c4834e6424f7",
-      "819c23d2f11cb58c",
       "v1.7_r011",
       "FabulaOutlineTab",
       "prefs.fabulaOutlineFolds",
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
-      "for what the screen says as well as for what it clips"
+      "for what the screen says as well as for what it clips",
+      "reference-r012-body.jsx",
+      "reference-r012-layout.json",
+      "dfdb4a8f0e05eebc",
+      "880886f26451d22e",
+      "v1.7_r012",
+      "fabulaOutlinePlaces",
+      "keepOrder",
+      "badgeExtra",
+      "Nine browser probes at once",
+      "runs that probe from a copy adapted at those checks"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -844,11 +850,16 @@
       "On v1.7 r010 verification",
       "28_fabula.jsx",
       "reference-r011-body.jsx",
-      "reference-r011-layout.json",
       "8d11c4834e6424f7",
       "819c23d2f11cb58c",
       "On v1.7 r011 verification",
-      "FabulaOutlineTab"
+      "FabulaOutlineTab",
+      "reference-r012-body.jsx",
+      "reference-r012-layout.json",
+      "dfdb4a8f0e05eebc",
+      "880886f26451d22e",
+      "On v1.7 r012 verification",
+      "fabulaOutlinePlaces"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -901,7 +912,12 @@
       "819c23d2f11cb58c",
       "8d11c4834e6424f7",
       "FabulaOutlineTab",
-      "01f168a"
+      "01f168a",
+      "v1.7_r012",
+      "880886f26451d22e",
+      "dfdb4a8f0e05eebc",
+      "fabulaOutlinePlaces",
+      "4a48dfe"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -939,7 +955,9 @@
       "v1.7_r010",
       "v1.7_r011",
       "The outline's keyboard moves rows, not the focus",
-      "the auto-save's last 250 ms"
+      "the auto-save's last 250 ms",
+      "v1.7_r012",
+      "A scene picker's option reads its position as plain text"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -983,7 +1001,8 @@
       "A fork that says what the app does is checked against the app",
       "A field list's real review is the first use of the form it draws",
       "A screenshot is read for what the screen says",
-      "A probe reads the saved world only after the save has run"
+      "A probe reads the saved world only after the save has run",
+      "An older probe that stops at a check the cut changed on purpose"
     ],
     "journal.txt": [
       "r030",
@@ -1020,7 +1039,8 @@
       "r008",
       "r009",
       "r010",
-      "r011"
+      "r011",
+      "r012"
     ]
   }
 }
