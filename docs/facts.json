@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 46273,
-    "raw_body_lines": 46273,
-    "canonical_lines": 44004,
-    "decl_count": 554,
+    "total_lines": 47068,
+    "raw_body_lines": 47068,
+    "canonical_lines": 44760,
+    "decl_count": 581,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r009-body.jsx"
+    "active_anchor": "reference-r011-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 46273,
+      "value": 47068,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 554,
+      "value": 581,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 44004,
+      "value": 44760,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 46273,
+      "value": 47068,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 81,
+      "value": 82,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2424875,
+      "value": 2467313,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-seven",
-        37
+        "thirty-eight",
+        38
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,16 +108,20 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 81,
+      "value": 82,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 81,
+      "value": 82,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
-    "working_hash_r010": {
-      "value": "aa89edb8519e3604",
-      "pattern": "working[^\\n]{0,40}at r010 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r011": {
+      "value": "819c23d2f11cb58c",
+      "pattern": "working[^\\n]{0,40}at r011 hashes to sha256 `([0-9a-f]{16})`"
+    },
+    "module_files_cold_start": {
+      "value": 45,
+      "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     }
   },
   "assertions": [
@@ -533,18 +537,23 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 258,
+      "line": 261,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 554,
+      "line": 558,
       "contains": "Fabula: the story page (v1.7 r008)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 722,
+      "line": 732,
       "contains": "Fabula: People (v1.7 r009)"
+    },
+    {
+      "file": "28_fabula.jsx",
+      "line": 990,
+      "contains": "Fabula: Outline (v1.7 r011)"
     }
   ],
   "spans": {
@@ -682,10 +691,6 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r009-body.jsx",
-      "reference-r009-layout.json",
-      "f4d73f0a51c06190",
-      "aa89edb8519e3604",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -732,7 +737,17 @@
       "fabulaRecordOpens",
       "as a list of one",
       "v1.7_r010",
-      "28_fabula"
+      "28_fabula",
+      "reference-r011-body.jsx",
+      "reference-r011-layout.json",
+      "8d11c4834e6424f7",
+      "819c23d2f11cb58c",
+      "v1.7_r011",
+      "FabulaOutlineTab",
+      "prefs.fabulaOutlineFolds",
+      "whatHappens",
+      "The auto-save writes 250 ms after the last change",
+      "for what the screen says as well as for what it clips"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -822,13 +837,18 @@
       "On v1.7 r008 verification",
       "FabulaStoryPage",
       "reference-r009-body.jsx",
-      "reference-r009-layout.json",
       "f4d73f0a51c06190",
       "aa89edb8519e3604",
       "On v1.7 r009 verification",
       "FabulaPeopleTab",
       "On v1.7 r010 verification",
-      "28_fabula.jsx"
+      "28_fabula.jsx",
+      "reference-r011-body.jsx",
+      "reference-r011-layout.json",
+      "8d11c4834e6424f7",
+      "819c23d2f11cb58c",
+      "On v1.7 r011 verification",
+      "FabulaOutlineTab"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -876,7 +896,12 @@
       "aa89edb8519e3604",
       "f4d73f0a51c06190",
       "scrubFabulaRefs",
-      "v1.7_r010"
+      "v1.7_r010",
+      "v1.7_r011",
+      "819c23d2f11cb58c",
+      "8d11c4834e6424f7",
+      "FabulaOutlineTab",
+      "01f168a"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -911,7 +936,10 @@
       "v1.7_r007",
       "v1.7_r008",
       "v1.7_r009",
-      "v1.7_r010"
+      "v1.7_r010",
+      "v1.7_r011",
+      "The outline's keyboard moves rows, not the focus",
+      "the auto-save's last 250 ms"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -953,7 +981,9 @@
       "The control decides how far a defect reaches",
       "A new screen gets looked at before it's staged",
       "A fork that says what the app does is checked against the app",
-      "A field list's real review is the first use of the form it draws"
+      "A field list's real review is the first use of the form it draws",
+      "A screenshot is read for what the screen says",
+      "A probe reads the saved world only after the save has run"
     ],
     "journal.txt": [
       "r030",
@@ -989,7 +1019,8 @@
       "r007",
       "r008",
       "r009",
-      "r010"
+      "r010",
+      "r011"
     ]
   }
 }

@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, and r010's carve) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, and r011's Outline) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -640,3 +640,23 @@ do was fix its own description: the comment at the head of the new file still sa
 code grows here until the view is in, written when here was the trunk. A cut that
 changes no byte can't change a comment either, so it waits for the next cut that
 touches that block.
+
+r011 was Outline, and its plan took six of Drak's calls, one message each: the builder
+after Outline, Plot, and Notes, four arrows on every row, titles typed in place, every
+number worked out from position, folds the browser keeps, and beats edited where they sit.
+My first screenshots caught a long beat breaking its row into three lines, and arrows
+drawn as bright white squares that made the tree look like a control panel. The probe
+found nothing of the app's, but its first full run failed thirteen checks, and every one
+was mine: the app saves a quarter of a second after the last change, and my probe read the
+saved world, and once reloaded the page, before the save had run. The reload was worse
+than a stale read. It threw away three drags, and eight checks after it failed on what it
+lost, which would happen to anyone who closes the tab that fast. Drak's pass found what
+neither the probe nor my reading of the screenshots caught: the rows lit up under the
+pointer and only their titles did anything, so nothing said they opened, and the beats sat
+at exactly the scene's indent, because the scene's fold arrow took the step I'd given the
+beat. I had read the screenshots for overflow and wrapping, and those two were neither. He
+also wanted a beat to say what happens in it, which put a second field in every beat and
+the seed at 3, the same lesson r009's arc taught about a field list's first use, and I
+folded the outline's core marks into that bump rather than spend another one at the
+builder. The spec took his answer before the cut was revised, and he passed the second
+staging a little after one in the morning.
