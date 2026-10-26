@@ -144,7 +144,7 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate, footSlot }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
@@ -283,6 +283,8 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
         );
         });
       })()}
+      {/* v1.7 r014: what the caller draws under the fields, as a scene's page draws its research. */}
+      {footSlot}
     </div>
   );
 }

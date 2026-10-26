@@ -287,11 +287,12 @@ const fabulaRegistryEdges = (state, k) => {
   // v1.7 r009: the links that exist so far (spec, section 9), each labeled as
   // its field is: a story to its threads and themes, a cast record to its
   // character, an arc to its cast, a relationship to its two, since r011
-  // a scene to its POV, participants, setting, and threads, and since r013 a
+  // a scene to its POV, participants, setting, and threads, since r013 a
   // plot point to its scene and threads and a promise to its setup and payoff
-  // scenes and its threads. Concordance drops an edge whose other end isn't
-  // drawn.
-  const links = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"] }[k.kind];
+  // scenes and its threads, and since r014 a research note to the entries it
+  // applies to and the scenes it's used in. Concordance drops an edge whose
+  // other end isn't drawn.
+  const links = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"], research: ["appliesTo", "usedIn"] }[k.kind];
   if (!links) return edges;
   const fields = fabulaKindFields(state, k.kind);
   (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => {
@@ -594,7 +595,7 @@ const FABULA_STORY_TABS = [
   { id: "plot", label: "Plot", built: true, holds: "the story's plot threads, plot points, and promises and payoffs" },
   { id: "outline", label: "Outline", built: true, holds: "the story's parts, chapters, and scenes, as one ordered tree" },
   { id: "meaning", label: "Meaning", built: false, holds: "the themes and motifs the Premise panel lists" },
-  { id: "notes", label: "Notes", built: false, holds: "the story's research notes" },
+  { id: "notes", label: "Notes", built: true, holds: "the story's research notes" },
   { id: "timeline", label: "Timeline", built: false, holds: "the story's own timeline, kept apart from Chronometric" },
 ];
 
@@ -691,8 +692,8 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
   const active = draft ? "story" : (tab || "story");
   const tabs = <FabulaStoryTabs active={active} onSelect={draft ? null : onSelectTab} />;
   // A tab other than Story: the story's title over the tabs and the tab's
-  // own content, People's lists (v1.7 r009), the Outline (r011), or Plot
-  // (r013).
+  // own content, People's lists (v1.7 r009), the Outline (r011), Plot
+  // (r013), or Notes (r014).
   const tabPage = (content) => (
     <EntryView
       entry={story}
@@ -718,6 +719,9 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
   }
   if (!draft && active === "plot") {
     return tabPage(<FabulaPlotTab state={state} story={story} isLocked={isLocked} onOpenRecord={onOpenRecord} onNewRecord={onNewRecord} onOpenEntry={onOpenEntry} onUpdateFabula={onUpdateFabula} onCreateThread={onCreateThread} onRestoreTemplate={isLocked ? undefined : onRestoreTemplate} />);
+  }
+  if (!draft && active === "notes") {
+    return tabPage(<FabulaNotesTab state={state} story={story} isLocked={isLocked} onOpenRecord={onOpenRecord} onNewRecord={onNewRecord} />);
   }
   const panelProps = { panels: FABULA_STORY_PANELS, foldedPanels: folds || {}, onTogglePanel: onToggleFold };
   if (draft) {
@@ -788,13 +792,14 @@ const FABULA_NOUNS = {
   part: { one: "part", many: "parts" },
   chapter: { one: "chapter", many: "chapters" },
   scene: { one: "scene", many: "scenes" },
-  research: { one: "research note", many: "research notes" },
+  research: { one: "research note", many: "research notes", add: "Note" },
 };
 
 // The kinds whose records have pages of their own, so a reference opens one:
-// People's since v1.7's r009, the Outline's since r011, and since r013 the
-// plot points and promises the Plot tab lists.
-const FABULA_PAGE_KINDS = ["cast", "arc", "relationship", "part", "chapter", "scene", "plotPoint", "promise"];
+// People's since v1.7's r009, the Outline's since r011, since r013 the plot
+// points and promises the Plot tab lists, and since r014 the research notes
+// the Notes tab lists.
+const FABULA_PAGE_KINDS = ["cast", "arc", "relationship", "part", "chapter", "scene", "plotPoint", "promise", "research"];
 
 // A cast list's order: by Importance, then by name.
 const FABULA_IMPORTANCE = ["Main", "Secondary", "Minor"];
@@ -971,7 +976,8 @@ function FabulaPeopleTab({ state, story, isLocked, onOpenRecord, onNewRecord }) 
 // A cast record whose character was deleted says so. Since r012 an act's, a
 // chapter's, or a scene's page says where it sits, between its kind and its
 // date (SCENE · II.4.A · UPDATED), and a page's references read as its
-// pickers offer them.
+// pickers offer them. Since r014 a scene's page lists, under its fields, the
+// research notes used in it.
 function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, isLocked, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
   const template = fabulaTemplate(state, kind, { storyId, recordId: record.id });
   const gone = kind === "cast" ? record.characterDeleted : null;
@@ -984,6 +990,8 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
       No POV of its own, so it takes its chapter's: {inherited.name || "(unnamed)"}.
     </div>
   ) : null;
+  // v1.7 r014: a scene's research, read-only, from the notes' Used In.
+  const research = kind === "scene" ? <FabulaSceneResearch state={state} storyId={storyId} sceneId={record.id} editing={!!draft} onOpenEntry={onOpenEntry} /> : null;
   const note = gone ? (
     <div className="fabula-character-deleted" style={{ margin: "0 0 18px", padding: "10px 14px", border: "1px solid var(--border)", borderLeft: "2px solid var(--danger)", borderRadius: 3, fontSize: 13, color: "var(--text)" }}>
       Character deleted{gone.name ? ` (was ${gone.name})` : ""}. {draft ? "Pick another below, or cancel and delete this cast record." : "Edit to pick another, or delete this cast record."}
@@ -1010,6 +1018,7 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
         flash={flash}
         hideTags
         canvasSlot={note || povNote}
+        footSlot={research}
         onRestoreTemplate={isLocked ? undefined : onRestoreTemplate}
       />
     );
@@ -1029,6 +1038,7 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
       state={state}
       onUpdateViewPrefs={onUpdateViewPrefs}
       canvasSlot={note || povNote}
+      footSlot={research}
       registeredNodes={nodes}
       badgeExtra={place ? place.path : null}
     />
@@ -1066,7 +1076,7 @@ const fabulaOutlineHolds = (parentKind, kind) => (
 );
 
 // The story page's tab that lists a kind's records.
-const fabulaTabOf = (kind) => (FABULA_OUTLINE_KINDS.includes(kind) ? "outline" : kind === "plotPoint" || kind === "promise" ? "plot" : "people");
+const fabulaTabOf = (kind) => (FABULA_OUTLINE_KINDS.includes(kind) ? "outline" : kind === "plotPoint" || kind === "promise" ? "plot" : kind === "research" ? "notes" : "people");
 
 // A story's outline as { id, kind, children } nodes: each stored node whose
 // record is the story's own and may sit where it's stored, once, and then the
@@ -2460,6 +2470,141 @@ function FabulaPlotTab({ state, story, isLocked, onOpenRecord, onNewRecord, onOp
       {threadsSection}
       {pointsSection}
       {promisesSection}
+    </div>
+  );
+}
+
+// ─── Fabula: Notes (v1.7 r014) ─────────────────────────────────────────────────
+// The Notes tab (docs/fabula-spec.md, sections 4 and 5.11, Drak's calls of
+// 2026-10-26): the story's research notes by topic, A to Z, each opening on
+// a page of its own. A note whose Open Questions holds any text is flagged
+// open wherever its row appears, in a color quieter than an unpaid promise's
+// red, and the tab's heading counts them; emptying the field clears the
+// flag. A scene's page lists, under its fields, the notes whose Used In
+// names it: read-only, changed from the note's side, and worked out each
+// time the page is drawn, so nothing is stored.
+
+// A note with open questions: its Open Questions holds any text.
+const fabulaNoteOpen = (rec) => {
+  const q = rec && rec.fields ? rec.fields.openQuestions : null;
+  return typeof q === "string" && q.trim() !== "";
+};
+
+// A story's research notes by topic, A to Z; given a scene, only the notes
+// whose Used In names it.
+const fabulaNotesOf = (state, storyId, sceneId) => {
+  const byName = (a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+  const usedIn = (r) => Array.isArray((r.fields || {}).usedIn) && r.fields.usedIn.includes(sceneId);
+  return fabulaArr((state && state.fabula) || {}, "research")
+    .filter(r => r && r.id && r.storyId === storyId && (!sceneId || usedIn(r)))
+    .slice().sort(byName);
+};
+
+// The open flag.
+const fabulaOpenFlag = () => (
+  <span className="fabula-note-open" title="This note has open questions" style={{ fontSize: 11, padding: "0 7px", border: "1px solid var(--accent)", borderRadius: 9, color: "var(--accent)", letterSpacing: ".04em" }}>open</span>
+);
+
+// The Notes tab.
+function FabulaNotesTab({ state, story, isLocked, onOpenRecord, onNewRecord }) {
+  const fab = state.fabula || {};
+  const notes = fabulaNotesOf(state, story.id);
+  const open = notes.filter(fabulaNoteOpen).length;
+  const places = fabulaOutlinePlaces(state, story.id);
+  const entryById = new Map((state.entries || []).filter(e => e && e.id).map(e => [e.id, e]));
+  const sceneById = new Map(fabulaArr(fab, "scenes").filter(s => s && s.id && s.storyId === story.id).map(s => [s.id, s]));
+  const ids = (v) => (Array.isArray(v) ? v : []).filter(x => typeof x === "string" && x);
+  // A row's details, each kept with the dot before it, and a list of names
+  // in the order the field holds them, as a promise's row lists its scenes;
+  // a scene names itself by its position, quieter, then its title.
+  const dotted = (parts) => parts.map((p, i) => <span key={i}>{i > 0 ? "\u00a0\u00b7 " : ""}{p}</span>);
+  const commas = (nodes) => nodes.map((n, i) => <span key={i}>{i > 0 ? ", " : ""}{n}</span>);
+  const about = (v) => ids(v).map(id => entryById.get(id)).filter(Boolean).map(e => e.name || "(unnamed)");
+  const usedIn = (v) => ids(v).filter(id => sceneById.has(id)).map(id => {
+    const p = places.get(id);
+    return <>{p && <span className="fabula-note-position" style={{ opacity: 0.6 }}>{p.path} </span>}{sceneById.get(id).name || "(untitled)"}</>;
+  });
+  // The title, then the flag, take the slack on their line, so the details
+  // sit at the right while they fit and drop under the title, flush left,
+  // when they don't, as the Plot tab's rows do.
+  const lead = (last) => ({ flex: last ? "1000 1 auto" : "0 1 auto", minWidth: 0 });
+  const metaStyle = { flex: "1 1 auto", minWidth: 0, fontSize: 12, fontWeight: 400, color: "var(--text-dim)", textAlign: "left", overflowWrap: "anywhere" };
+  const row = (r) => {
+    const f = r.fields || {};
+    const flagged = fabulaNoteOpen(r);
+    const a = about(f.appliesTo), u = usedIn(f.usedIn);
+    const parts = [a.length ? <>about {commas(a)}</> : null, u.length ? <>used in {commas(u)}</> : null].filter(Boolean);
+    return (
+      <div
+        key={r.id}
+        className="stemma-index-row fabula-note-row"
+        data-note={r.id}
+        data-open={flagged ? "true" : undefined}
+        role="button"
+        tabIndex={0}
+        title="Open this research note"
+        onClick={() => onOpenRecord("research", r.id)}
+        onKeyDown={e => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); onOpenRecord("research", r.id); } }}
+        style={{ padding: "9px 12px 9px 16px", background: "var(--surf)", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 12, rowGap: 2, cursor: "pointer" }}
+      >
+        <span className="fabula-note-title" style={{ ...lead(!flagged), fontSize: 14.5, fontWeight: 500, overflowWrap: "anywhere" }}>{r.name || "(untitled)"}</span>
+        {flagged && <span style={lead(true)}>{fabulaOpenFlag()}</span>}
+        {parts.length > 0 && <span className="fabula-note-meta" style={metaStyle}>{dotted(parts)}</span>}
+      </div>
+    );
+  };
+  return (
+    <div className="fabula-notes">
+      <div className="fabula-notes-section" style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
+          <div className="field-label">
+            <span>Research Notes</span>
+            {open > 0 && <span className="fabula-notes-open-count" style={{ textTransform: "none", letterSpacing: 0, fontSize: 12, color: "var(--accent)" }}>{"\u00b7 "}{open} open</span>}
+          </div>
+          {!isLocked && <button className="btn" style={{ padding: "3px 10px", fontSize: 12 }} onClick={() => onNewRecord("research")}>+ New {FABULA_NOUNS.research.add}</button>}
+        </div>
+        {notes.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>No research notes yet.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+            {notes.map(row)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// A scene's research, under its fields: the notes whose Used In names it,
+// by topic, each opening its note, and nothing at all when there are none.
+// In edit it says where the list is changed.
+function FabulaSceneResearch({ state, storyId, sceneId, editing, onOpenEntry }) {
+  const notes = fabulaNotesOf(state, storyId, sceneId);
+  if (notes.length === 0) return null;
+  return (
+    <div className="fabula-scene-research" style={{ marginTop: 26 }}>
+      <div className="field-label">
+        <span>Research</span>
+        {editing && <span style={{ textTransform: "none", letterSpacing: 0, fontSize: 12, color: "var(--text-dim)" }}>set by each note's Used In</span>}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+        {notes.map(r => (
+          <div
+            key={r.id}
+            className="stemma-index-row fabula-scene-note"
+            data-note={r.id}
+            role="button"
+            tabIndex={0}
+            title="Open this research note"
+            onClick={() => onOpenEntry(r.id)}
+            onKeyDown={e => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); onOpenEntry(r.id); } }}
+            style={{ padding: "8px 14px", background: "var(--surf)", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 10, rowGap: 2, cursor: "pointer" }}
+          >
+            <span className="fabula-note-title" style={{ fontSize: 14, minWidth: 0, overflowWrap: "anywhere" }}>{r.name || "(untitled)"}</span>
+            {fabulaNoteOpen(r) && fabulaOpenFlag()}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

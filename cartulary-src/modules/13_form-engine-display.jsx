@@ -64,7 +64,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -182,6 +182,8 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
           </React.Fragment>
         );
       })}
+      {/* v1.7 r014: what the caller draws under the fields, as a scene's page draws its research. */}
+      {footSlot}
     </div>
   );
 }

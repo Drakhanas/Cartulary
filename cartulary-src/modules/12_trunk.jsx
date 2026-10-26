@@ -860,10 +860,11 @@ function App() {
       return;
     }
     // v1.7 r009: a cast record, an arc, or a relationship opens on its own
-    // page over its story's (Drak, 2026-10-25), and since r011 an act, a
-    // chapter, or a scene. From a Fabula page, Back returns to the page the
-    // click came from; from anywhere else, such as Concordance, to the story's
-    // tab that lists it (fabulaTabOf).
+    // page over its story's (Drak, 2026-10-25), since r011 an act, a chapter,
+    // or a scene, since r013 a plot point or a promise, and since r014 a
+    // research note. From a Fabula page, Back returns to the page the click
+    // came from; from anywhere else, such as Concordance, to the story's tab
+    // that lists it (fabulaTabOf).
     const fabRec = fabulaFindRecord(state, id);
     if (fabRec) {
       const onFabulaPage = view === "fabula" && activeStoryId && activeStoryId === fabRec.record.storyId;
