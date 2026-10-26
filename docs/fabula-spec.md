@@ -66,7 +66,7 @@ fabula: {
   - **Story:** the Story's own fields and its four panels (Premise, Genre, Narration, Setting).
   - **People:** Cast, Arcs, Relationships.
   - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs.
-  - **Outline:** Parts, Chapters, and Scenes as one ordered tree.
+  - **Outline:** Parts, Chapters, and Scenes as one ordered tree (v1.7's r011; section 7).
   - **Meaning:** Themes & Motifs (entries, the ones the Premise panel's Themes lists).
   - **Notes:** Research Notes.
   - **Timeline:** section 8.
@@ -400,6 +400,12 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 - Telling order is the tree flattened; story time is each scene's When.
 - Moving a chapter moves its scenes with it.
 - Deleting a part or a chapter asks whether its children move up a level (the default) or go with it. No delete takes scenes silently.
+- **Reordering** (Drak, 2026-10-25, for v1.7's r011): four arrows on every row. ↑ and ↓ swap a record with its neighbor; ← moves it out to its part's or chapter's level, just after that part or chapter; → moves it into the part or chapter directly above it, at the end. An arrow is greyed where the move isn't allowed: parts never go inside anything, and chapters only inside parts. Alt and the same arrow do the same on a focused row, and drag does it with a pointer.
+- **New records** (Drak, 2026-10-25): in place, by title. Each part and chapter ends with its own + line, + Scene at the end of a chapter and + Chapter and + Scene at the end of a part, and the tab's top has + Part / Act, + Chapter, and + Scene for the story's own level. A + adds a row there with its title box open; Enter keeps it, and the details wait for its page.
+- **Numbering** (Drak, 2026-10-25): acts I, II, III through the story; chapters 1, 2, 3 through the whole story, not starting over in each act; scenes A, B, C within their chapter, or within their act or the story when they sit outside a chapter; beats i, ii, iii within their scene. Every number is worked out from the position and never stored, so a move renumbers what follows.
+- **Folding** (Drak, 2026-10-25): acts, chapters, and scenes fold, a scene folding away its beats, and a folded row keeps its number and counts. The browser keeps each fold with the app's display settings, and view and edit share them.
+- **Beats in the outline** (Drak, 2026-10-25): each scene's beats are rows under it, edited where they sit. + Beat at the end of each scene adds one with its text box open, ↑ and ↓ move a beat within its scene, and drag can move it to another scene. The scene's page shows the same beats in its Beats field.
+- Parts, chapters, and scenes open on pages of their own over the story's page, as People's records do, so a reference to a scene opens it (section 3).
 
 ## 8. The Fabula timeline
 
@@ -430,10 +436,10 @@ Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of
 1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries: done in v1.7's r006 (2026-10-25). The code grows inside `27_trunk` until the view is in, then a carve gives Fabula a module of its own (Drak's call), since the edit gate refuses a cut that adds a file. The view has been in since r008, and r009 went into `27_trunk` too. The carve, done as v1.7's r010 (2026-10-25), made it one file, `28_fabula.jsx`, which every later Fabula cut edits, to be split into a folder at its section headers once Fabula is finished (Drak, 2026-10-25).
 2. The view, before the builder (Drak, 2026-10-25: the help lines get reviewed in place while every schema still follows the seed), in two cuts. v1.7's r007, done (2026-10-25): the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1), with the sidebar entry, the index, and the corpus page. v1.7's r008, done (2026-10-25): the story page, its section tabs, and the Story tab's own fields and four panels (the calls are in sections 3 and 4).
 3. People: cast, arcs, relationships, ahead of the builder (Drak, 2026-10-25: the fields get some use first, and People's help lines are read in place while its schemas follow the seed). v1.7's r009, done (2026-10-25), with section 9's cleaning for a deleted entry (the calls are in sections 3, 4, and 9; the arc's Cast came in at its pass, section 1).
-4. The Template Builder learns Fabula's kinds and the core lock, once the fields have had some use.
-5. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard.
-6. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag.
-7. Notes, and Plot Thread and Theme / Motif moved under Fabula.
+4. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard. v1.7's r011 (planned 2026-10-25; the calls are in section 7).
+5. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag.
+6. Notes, and Plot Thread and Theme / Motif moved under Fabula.
+7. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson).
 8. Chronometric's math extracted, checked unchanged.
 9. The Fabula timeline.
 10. The kept cast records, Fabula's HTML and Markdown export, the help, and the site.
