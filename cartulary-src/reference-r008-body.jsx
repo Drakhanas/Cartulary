@@ -12162,6 +12162,13 @@ function App() {
   const [activeCorpusId, setActiveCorpusId] = useState(null);
   const [corpusDraft, setCorpusDraft] = useState(null);
   const initialCorpusDraftRef = useRef(null);
+  // v1.7 r008: a story's page. activeStoryId null = no story open, an id =
+  // that story's page, drawn over the Fabula page it was opened from
+  // (activeCorpusId: a corpus's page, or the index), which its Back returns
+  // to. storyDraft is the Story record in edit, committed on Save.
+  const [activeStoryId, setActiveStoryId] = useState(null);
+  const [storyDraft, setStoryDraft] = useState(null);
+  const initialStoryDraftRef = useRef(null);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -12293,6 +12300,7 @@ function App() {
     templatesCollapsed: false,
     sidebarWidth: 236,
     mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
+    fabulaFolds: {}, // v1.7 r008: the Story tab's folded panels, one set for every story
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -12345,6 +12353,7 @@ function App() {
               ? Math.max(200, Math.min(500, stored.sidebarWidth))
               : 236,
             mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
+            fabulaFolds: stored.fabulaFolds && typeof stored.fabulaFolds === "object" && !Array.isArray(stored.fabulaFolds) ? stored.fabulaFolds : {},
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -12887,22 +12896,24 @@ function App() {
     if (tplDraft && JSON.stringify(tplDraft) !== initialTplDraftRef.current) return true;
     if (mapDraft && JSON.stringify(mapDraft) !== initialMapDraftRef.current) return true;
     if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
+    if (storyDraft && JSON.stringify(storyDraft) !== initialStoryDraftRef.current) return true;
     return false;
   };
 
   draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
-    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : entryDraft ? "this entry" : "this template";
+    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : storyDraft ? "this story" : entryDraft ? "this entry" : "this template";
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
     initialCorpusDraftRef.current = null;
+    initialStoryDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -12922,7 +12933,7 @@ function App() {
   const selectView = (v) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null);
+    setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
     clearDraftAndStorage(); setSearch(""); setView(v);
   };
 
@@ -12956,16 +12967,18 @@ function App() {
       setView("cartographia");
       return;
     }
-    // v1.7 r007: Fabula fallback. A corpus opens on its page; a story, whose
-    // page comes in r008, opens its corpus's page, or the index when it's in
-    // no corpus.
+    // v1.7 r007: Fabula fallback. A corpus opens on its page, and since r008
+    // a story on its own, drawn over its corpus's page (or the index, when
+    // it's in no corpus), which the story's Back returns to.
     const fabCorpora = (state.fabula && Array.isArray(state.fabula.corpora)) ? state.fabula.corpora : [];
     const fabStory = (state.fabula && Array.isArray(state.fabula.stories)) ? state.fabula.stories.find(st => st && st.id === id) : null;
     if (fabStory || fabCorpora.some(c => c && c.id === id)) {
       const home = fabStory ? fabCorpora.find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(id)) : null;
       setActiveTagFilter(null);
       setCorpusDraft(null); initialCorpusDraftRef.current = null;
+      setStoryDraft(null); initialStoryDraftRef.current = null;
       setActiveCorpusId(fabStory ? (home ? home.id : null) : id);
+      setActiveStoryId(fabStory ? id : null);
       setView("fabula");
       return;
     }
@@ -13408,6 +13421,60 @@ function App() {
       }),
     }));
   };
+
+  // v1.7 r008: a story's page (docs/fabula-spec.md, section 4). It opens over
+  // the Fabula page it was opened from, which Back returns to, and the Story
+  // record changes through Edit, Save, and Cancel, as a corpus's fields do.
+  const openStory = (id) => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(id);
+    setView("fabula");
+  };
+
+  const closeStory = () => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(null);
+  };
+
+  const editStory = () => {
+    const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
+    if (!rec || isLocked) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = { id: rec.id, name: rec.name || "", fields: JSON.parse(JSON.stringify(rec.fields || {})) };
+    setStoryDraft(draft);
+    initialStoryDraftRef.current = JSON.stringify(draft);
+  };
+
+  const saveStory = () => {
+    if (!storyDraft || isLocked) return;
+    const name = (storyDraft.name || "").trim();
+    if (!name) return;
+    const now = isoNow();
+    updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === storyDraft.id ? { ...st, name, fields: storyDraft.fields || {}, updatedAt: now } : st) }));
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    flash("Saved");
+  };
+
+  const cancelStoryEdit = () => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+  };
+
+  // Delete, from the story's own page: asks first, then goes back.
+  const deleteOpenStory = () => {
+    const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
+    if (!rec || isLocked) return;
+    if (!confirm(`Delete the story "${rec.name || "untitled story"}"?`)) return;
+    deleteStory(rec.id);
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveStoryId(null);
+  };
+
+  // The Story tab's folds belong to the browser, one set for every story
+  // (Drak, 2026-10-25), so they live with the display settings.
+  const toggleFabulaFold = (panelId) => setPrefs(p => ({ ...p, fabulaFolds: { ...(p.fabulaFolds || {}), [panelId]: !(p.fabulaFolds || {})[panelId] } }));
 
   const openEditEntry = () => {
     if (!activeEntry) return;
@@ -15712,7 +15779,11 @@ function App() {
     } else headerTitle = "Cartographia";
   }
   else if (view === "fabula") {
-    if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
+    if (activeStoryId) {
+      const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
+      headerTitle = storyDraft ? ((storyDraft.name && storyDraft.name.trim()) ? storyDraft.name : "Story") : (rec?.name || "Story");
+    }
+    else if (corpusDraft) headerTitle = (corpusDraft.name && corpusDraft.name.trim()) ? corpusDraft.name : "New Corpus";
     else if (activeCorpusId) {
       const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
       headerTitle = rec?.name || "Corpus";
@@ -15854,11 +15925,20 @@ function App() {
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
               </>}
+              {view === "fabula" && activeStoryId && storyDraft && <>
+                <button className="btn btn-ghost" onClick={cancelStoryEdit}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveStory} disabled={!storyDraft?.name?.trim()}>Save</button>
+              </>}
+              {view === "fabula" && activeStoryId && !storyDraft && <>
+                {!isLocked && <button className="btn btn-danger" onClick={deleteOpenStory}>Delete</button>}
+                {!isLocked && <button className="btn btn-ghost" onClick={editStory}>Edit</button>}
+                <button className="btn btn-ghost" onClick={closeStory}>← Back</button>
+              </>}
               {view === "fabula" && corpusDraft && <>
                 <button className="btn btn-ghost" onClick={cancelCorpusEdit}>Cancel</button>
                 <button className="btn btn-accent" onClick={saveCorpus} disabled={!corpusDraft?.name?.trim()}>Save</button>
               </>}
-              {view === "fabula" && activeCorpusId && !corpusDraft && <>
+              {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
                   if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
@@ -16141,7 +16221,7 @@ function App() {
           {view === "ephemeris" && (
             <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
           )}
-          {view === "fabula" && !activeCorpusId && !corpusDraft && (
+          {view === "fabula" && !activeCorpusId && !corpusDraft && !activeStoryId && (
             <FabulaIndexView
               state={state}
               isLocked={isLocked}
@@ -16151,6 +16231,7 @@ function App() {
               onRenameStory={renameStory}
               onDeleteStory={deleteStory}
               onSetStoryCorpus={setStoryCorpus}
+              onOpenStory={openStory}
             />
           )}
           {view === "fabula" && corpusDraft && (
@@ -16174,7 +16255,7 @@ function App() {
               hideTags
             />
           )}
-          {view === "fabula" && activeCorpusId && !corpusDraft && (() => {
+          {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && (() => {
             const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
             if (!rec) {
               return (
@@ -16208,8 +16289,41 @@ function App() {
                     onMoveStory={moveCorpusStory}
                     onCreateStory={createStory}
                     onRenameStory={renameStory}
+                    onOpenStory={openStory}
                   />
                 }
+              />
+            );
+          })()}
+          {view === "fabula" && activeStoryId && (() => {
+            const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
+            if (!rec) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--text-dim)" }}>
+                  This story no longer exists.
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-ghost" onClick={closeStory}>← Back</button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <FabulaStoryPage
+                state={state}
+                story={rec}
+                draft={storyDraft}
+                onDraftChange={setStoryDraft}
+                isLocked={isLocked}
+                folds={prefs.fabulaFolds}
+                onToggleFold={toggleFabulaFold}
+                onRestoreTemplate={(name) => restoreBuiltinTemplates([name])}
+                showSecrets={showSecrets}
+                allTags={allTags}
+                dirHandle={dirHandle}
+                flash={flash}
+                onOpenEntry={openEntryFromAnywhere}
+                onSelectTag={selectTag}
+                onUpdateViewPrefs={updateViewPrefs}
               />
             );
           })()}
@@ -17417,7 +17531,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -17476,8 +17590,11 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
       )}
       <div className="divider" />
       {canvasSlot}
-      {buildFieldLayoutUnits(
-        template.fields,
+      {fieldPanelSegments(template.fields, panels).map(seg => {
+        // v1.7 r008: fields under panels, each heading folding its own; a
+        // template without panels is one segment, drawn as before.
+        const units = buildFieldLayoutUnits(
+        seg.fields,
         (f) => isFieldVisibleDisplay(f, entry.fields || {}, showSecrets)
       ).map(unit => {
         if (unit.kind === "full") {
@@ -17516,8 +17633,52 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
             </div>
           </div>
         );
+      });
+        if (!seg.panel) return <React.Fragment key="fields">{units}</React.Fragment>;
+        const folded = !!(foldedPanels && foldedPanels[seg.panel.id]);
+        // An empty field doesn't show here, so an open panel with none filled
+        // in says so rather than leaving its heading bare.
+        return (
+          <React.Fragment key={`panel-${seg.panel.id}`}>
+            <FieldPanelHeading panel={seg.panel} folded={folded} onToggle={onTogglePanel} />
+            {!folded && (units.length > 0 ? units : <div className="field-hint field-panel-empty" style={{ marginTop: -8, marginBottom: 22 }}>Nothing in {seg.panel.label} yet.</div>)}
+          </React.Fragment>
+        );
       })}
     </div>
+  );
+}
+
+// v1.7 r008: a template's fields as segments for drawing, the fields that
+// belong to no panel first and then each panel's own, in the panels' order,
+// so a half-width pair never straddles a heading. Without panels the whole
+// list is one segment, drawn as it always was. A field names its panel by id
+// (field.panel); panels are [{ id, label }], given by the caller.
+const fieldPanelSegments = (fields, panels) => {
+  const all = Array.isArray(fields) ? fields : [];
+  if (!Array.isArray(panels) || panels.length === 0) return [{ panel: null, fields: all }];
+  const known = new Set(panels.map(p => p.id));
+  return [
+    { panel: null, fields: all.filter(f => !(f && known.has(f.panel))) },
+    ...panels.map(p => ({ panel: p, fields: all.filter(f => f && f.panel === p.id) })),
+  ];
+};
+
+// A panel's heading, which folds the panel away and back (v1.7 r008). The
+// folds are the caller's to keep.
+function FieldPanelHeading({ panel, folded, onToggle }) {
+  return (
+    <button
+      type="button"
+      className="field-panel-heading"
+      aria-expanded={!folded}
+      onClick={() => { if (onToggle) onToggle(panel.id); }}
+      title={folded ? `Show the ${panel.label} panel` : `Fold the ${panel.label} panel away`}
+      style={{ display: "flex", alignItems: "baseline", gap: 10, width: "100%", margin: "30px 0 18px", padding: "0 0 8px", background: "transparent", border: "none", borderBottom: "1px solid var(--border)", color: "var(--text-bright)", fontFamily: "'Cormorant Garamond', serif", fontSize: "calc(22px * var(--font-scale))", fontWeight: 500, textAlign: "left", cursor: "pointer" }}
+    >
+      <span aria-hidden="true" style={{ color: "var(--accent)", fontFamily: "'DM Sans', sans-serif", fontSize: "calc(12px * var(--font-scale))", width: 12, flexShrink: 0 }}>{folded ? "\u25B8" : "\u25BE"}</span>
+      <span>{panel.label}</span>
+    </button>
   );
 }
 
@@ -17759,11 +17920,13 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
 }
 
 // v1.7 r003: what a reference value points at, for display: an entry, a body,
-// or another registered record (a Glossopoeia record, a map), or null when
-// nothing has its id. `open` says whether a click can take you there:
-// openEntryFromAnywhere knows entries, maps, and bodies, and a Glossopoeia
-// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24).
-// `kind` names the record's type for a chip that can't be opened.
+// or another registered record (a Glossopoeia record, a map, and since r007 a
+// Fabula record), or null when nothing has its id. `open` says whether a
+// click can take you there: entries, maps, and bodies open; a Glossopoeia
+// record has no route yet, so it shows as a plain chip (Drak, 2026-10-24),
+// and a Fabula record shows as one too until People settles whether a
+// reference opens it (v1.7 r008). `kind` names the record's type for a chip
+// that can't be opened.
 const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   if (!id) return null;
   const e = (entries || []).find(x => x && x.id === id);
@@ -18179,7 +18342,7 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
@@ -18252,8 +18415,11 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
           if (myIdx == null || parentIdx == null) return false;
           return myIdx - parentIdx === 1;
         };
-        return buildFieldLayoutUnits(
-          template.fields,
+        // v1.7 r008: fields under panels, each heading folding its own, as
+        // EntryView draws them; a template without panels is one segment.
+        return fieldPanelSegments(template.fields, panels).map(seg => {
+        const units = buildFieldLayoutUnits(
+          seg.fields,
           (f) => isFieldVisibleEdit(f, draft.fields, showSecrets)
         ).map(unit => {
         if (unit.kind === "full") {
@@ -18271,7 +18437,7 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {field.required && <span className="required-mark" title="Required">*</span>}
                 {field.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={field} value={draft.fields[field.id]} onChange={(v) => updateField(field.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={field} value={draft.fields[field.id]} onChange={(v) => updateField(field.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
           );
         }
@@ -18292,7 +18458,7 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {a.required && <span className="required-mark" title="Required">*</span>}
                 {a.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={a} value={draft.fields[a.id]} onChange={(v) => updateField(a.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={a} value={draft.fields[a.id]} onChange={(v) => updateField(a.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
             <div className={`form-field ${b.secret ? "secret" : ""}${bIsCascadeChild ? " cascade-child-row" : ""}`}>
               <label className="form-label" title={b.label}>
@@ -18300,9 +18466,18 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
                 {b.required && <span className="required-mark" title="Required">*</span>}
                 {b.secret && <span className="secret-tag">SECRET</span>}
               </label>
-              <FieldEditor field={b} value={draft.fields[b.id]} onChange={(v) => updateField(b.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={b} value={draft.fields[b.id]} onChange={(v) => updateField(b.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={draft.fields} tplFields={template.fields} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
           </div>
+        );
+        });
+        if (!seg.panel) return <React.Fragment key="fields">{units}</React.Fragment>;
+        const folded = !!(foldedPanels && foldedPanels[seg.panel.id]);
+        return (
+          <React.Fragment key={`panel-${seg.panel.id}`}>
+            <FieldPanelHeading panel={seg.panel} folded={folded} onToggle={onTogglePanel} />
+            {!folded && units}
+          </React.Fragment>
         );
         });
       })()}
@@ -18709,7 +18884,7 @@ function IpaTextInput({ value, onChange, placeholder, ipaSymbols, className, aut
   );
 }
 
-function FieldEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, allFieldValues, tplFields, flash, ipaSymbols }) {
+function FieldEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, allFieldValues, tplFields, flash, ipaSymbols, onRestoreTemplate }) {
   const ftype = field.type;
 
   if (ftype === "text" && field.ipa) return <IpaTextInput value={value} onChange={onChange} placeholder={field.label} ipaSymbols={ipaSymbols} />;
@@ -18827,9 +19002,9 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
   if (ftype === "textarea") return <RichTextEditor value={value || ""} onChange={onChange} entries={entries} templates={templates} bodies={bodies} dirHandle={dirHandle} placeholder={field.label} flash={flash} />;
   if (ftype === "longform") return <LongformEditor value={value || ""} onChange={onChange} placeholder={field.label} />;
   if (ftype === "image") return <ImageFieldEditor value={value} onChange={onChange} imageFolder={imageFolder} dirHandle={dirHandle} flash={flash} />;
-  if (ftype === "entry-ref") return <EntryRefEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} />;
+  if (ftype === "entry-ref") return <EntryRefEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} onRestoreTemplate={onRestoreTemplate} />;
   if (ftype === "grid") return <GridEditor field={field} value={value} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} selfEntryId={selfEntryId} calendar={calendar} />;
-  if (ftype === "group") return <GroupEditor field={field} value={value || []} onChange={onChange} entries={entries} templates={templates} bodies={bodies} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} flash={flash} ipaSymbols={ipaSymbols} />;
+  if (ftype === "group") return <GroupEditor field={field} value={value || []} onChange={onChange} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />;
   return <input className="input" value={value || ""} onChange={e => onChange(e.target.value)} />;
 }
 
@@ -18844,7 +19019,7 @@ function AutoTextarea({ value, onChange, placeholder }) {
   return <textarea ref={ref} className="input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} />;
 }
 
-function EntryRefEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar }) {
+function EntryRefEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar, onRestoreTemplate }) {
   // v1.3: candidate set considers:
   //   - field.refTemplateId (legacy, single template) — filter entries to that template
   //   - field.refTemplatesId (v1.3, array) — filter to entries whose templateId is in the set
@@ -18863,6 +19038,9 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     [templates]
   );
   const candidates = useMemo(() => {
+    // v1.7 r008: a field none of whose templates the world has offers
+    // nothing, where an empty target list would read as any template.
+    if (Array.isArray(field.refMissing) && field.refMissing.length > 0) return [];
     let pool = entries;
     const synthBodies = () => (bodies || []).map(b => ({
       id: b.id,
@@ -18909,10 +19087,25 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
       });
     }
     return pool.filter(e => e.id !== selfEntryId);  // self-references are never legitimate
-  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, selfEntryId, tplById]);
+  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, field.refMissing, selfEntryId, tplById]);
   const sorted = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
   const isRelation = !!field.relationKind;
   const isSpouse = field.relationKind === SPOUSE_KIND;
+  // v1.7 r008: what the picker says in place of its list. A field none of
+  // whose templates the world has names them, with a Restore button for each
+  // missing built-in (refMissing and refRestorable, which Fabula's
+  // fabulaLiveFields sets); a field with nothing to offer yet can say why
+  // (emptyNote).
+  const missing = Array.isArray(field.refMissing) ? field.refMissing : [];
+  const restorable = Array.isArray(field.refRestorable) ? field.refRestorable : [];
+  const refNote = missing.length > 0 ? (
+    <div className="field-hint ref-missing-note" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      <span>{missing.length === 1 ? `This world has no ${missing[0]} template.` : `This world has none of this field's templates: ${missing.join(", ")}.`}</span>
+      {onRestoreTemplate && restorable.map(name => (
+        <button key={name} type="button" className="btn" style={{ padding: "2px 8px", fontSize: 12, fontStyle: "normal" }} onClick={() => onRestoreTemplate(name)} title={`Bring back the built-in ${name} template, as Restore Built-ins in the sidebar does`}>Restore {name}</button>
+      ))}
+    </div>
+  ) : (sorted.length === 0 && field.emptyNote ? <div className="field-hint ref-empty-note">{field.emptyNote}</div> : null);
   // v1.3: show template-name badge when this field can target multiple templates,
   // so the user can disambiguate "Eastwatch (Location)" from "Eastwatch (Astronomical Body)".
   // If the field also has a cascade pair on the target template, the badge surfaces
@@ -19031,10 +19224,12 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
             </div>
           );
         })}
+        {refNote || (
         <select className="input" value="" onChange={e => addOne(e.target.value)}>
           <option value="">+ Add reference...</option>
           {available.map(e => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>)}
         </select>
+        )}
       </>
     );
   }
@@ -19043,6 +19238,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
   if (isRelation) {
     const item = (value && typeof value === "object" && value.id) ? value
                 : (typeof value === "string" && value ? { id: value } : null);
+    if (refNote && !item) return refNote;
     return (
       <div className="ref-pick-row" style={{ flexWrap: "wrap" }}>
         <select
@@ -19072,6 +19268,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     );
   }
 
+  if (refNote && !value) return refNote;
   return (
     <select className="input" value={value || ""} onChange={e => onChange(e.target.value)}>
       <option value="">— None —</option>
@@ -19233,7 +19430,10 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
   );
 }
 
-function GroupEditor({ field, value, onChange, entries, templates, bodies, imageFolder, dirHandle, calendar, selfEntryId, flash, ipaSymbols }) {
+// v1.7 r008: the subfields get the registered records and the restore too, so
+// a reference subfield can offer a language, a map, or a Fabula record, as a
+// top-level reference field can.
+function GroupEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, imageFolder, dirHandle, calendar, selfEntryId, flash, ipaSymbols, onRestoreTemplate }) {
   const instances = Array.isArray(value) ? value : [];
   const subfields = field.subfields || [];
 
@@ -19273,7 +19473,7 @@ function GroupEditor({ field, value, onChange, entries, templates, bodies, image
                 <FieldLabelText field={sf} templates={templates} />
                 {sf.required && <span className="required-mark" title="Required">*</span>}
               </label>
-              <FieldEditor field={sf} value={inst[sf.id]} onChange={(v) => updateAt(i, sf.id, v)} entries={entries} templates={templates} bodies={bodies} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={inst} tplFields={field.subfields || []} flash={flash} ipaSymbols={ipaSymbols} />
+              <FieldEditor field={sf} value={inst[sf.id]} onChange={(v) => updateAt(i, sf.id, v)} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} selfEntryId={selfEntryId} allFieldValues={inst} tplFields={field.subfields || []} flash={flash} ipaSymbols={ipaSymbols} onRestoreTemplate={onRestoreTemplate} />
             </div>
             );
           })}
@@ -31192,19 +31392,20 @@ const MAP_REF_LABEL = "Map";
 // targets, together with Concordance's single Fabula toggle and a template
 // builder that offers only eligible sources (Drak, 2026-10-25). label is the
 // kind's own name, where name says it's Fabula's; color is its node's in
-// Concordance.
+// Concordance; plural is the label in a sentence ("This story has no cast
+// yet.", v1.7 r008).
 const FABULA_KINDS = [
-  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)",           label: "Corpus",           color: "#d9a066" },
-  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)",            label: "Story",            color: "#e6c27a" },
-  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)",             label: "Cast",             color: "#d98f8f" },
-  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)",              label: "Arc",              color: "#c97b9b" },
-  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)",     label: "Relationship",     color: "#b98bc0" },
-  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)",       label: "Plot Point",       color: "#8fa8d9" },
-  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)", label: "Promise & Payoff", color: "#7fb8c2" },
-  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)",       label: "Part / Act",       color: "#a3b87f" },
-  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)",          label: "Chapter",          color: "#c2b47f" },
-  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)",            label: "Scene",            color: "#d6a07a" },
-  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)",    label: "Research Note",    color: "#a3a3ad" },
+  { kind: "corpus",       slice: "corpora",       id: "__fabula_corpora__",       name: "Corpus (Fabula)",           label: "Corpus",           color: "#d9a066", plural: "corpora" },
+  { kind: "story",        slice: "stories",       id: "__fabula_stories__",       name: "Story (Fabula)",            label: "Story",            color: "#e6c27a", plural: "stories" },
+  { kind: "cast",         slice: "cast",          id: "__fabula_cast__",          name: "Cast (Fabula)",             label: "Cast",             color: "#d98f8f", plural: "cast" },
+  { kind: "arc",          slice: "arcs",          id: "__fabula_arcs__",          name: "Arc (Fabula)",              label: "Arc",              color: "#c97b9b", plural: "arcs" },
+  { kind: "relationship", slice: "relationships", id: "__fabula_relationships__", name: "Relationship (Fabula)",     label: "Relationship",     color: "#b98bc0", plural: "relationships" },
+  { kind: "plotPoint",    slice: "plotPoints",    id: "__fabula_plotpoints__",    name: "Plot Point (Fabula)",       label: "Plot Point",       color: "#8fa8d9", plural: "plot points" },
+  { kind: "promise",      slice: "promises",      id: "__fabula_promises__",      name: "Promise & Payoff (Fabula)", label: "Promise & Payoff", color: "#7fb8c2", plural: "promises and payoffs" },
+  { kind: "part",         slice: "parts",         id: "__fabula_parts__",         name: "Part / Act (Fabula)",       label: "Part / Act",       color: "#a3b87f", plural: "parts" },
+  { kind: "chapter",      slice: "chapters",      id: "__fabula_chapters__",      name: "Chapter (Fabula)",          label: "Chapter",          color: "#c2b47f", plural: "chapters" },
+  { kind: "scene",        slice: "scenes",        id: "__fabula_scenes__",        name: "Scene (Fabula)",            label: "Scene",            color: "#d6a07a", plural: "scenes" },
+  { kind: "research",     slice: "research",      id: "__fabula_research__",      name: "Research Note (Fabula)",    label: "Research Note",    color: "#a3a3ad", plural: "research notes" },
 ];
 
 const NODE_SOURCE_REGISTRY = [
@@ -44877,12 +45078,13 @@ const fabulaRegistryEdges = (state, k) => {
 };
 
 // A kind's schema as the template EntryForm and EntryView take: the world's
-// stored schema, or the seed when the world has none.
+// stored schema, or the seed when the world has none, its reference fields
+// following their targets' names (fabulaLiveFields, v1.7 r008).
 const fabulaTemplate = (state, kind) => {
   const k = FABULA_KINDS.find(x => x.kind === kind);
   const stored = state.fabula && state.fabula.schemas && state.fabula.schemas[kind];
   const s = stored && Array.isArray(stored.fields) ? stored : fabulaSeedSchemas(state.templates || [])[kind];
-  return { id: k.id, name: k.label, icon: "\u2042", color: k.color, kind: `fabula-${kind}`, fields: s.fields, nameHelp: s.nameHelp };
+  return { id: k.id, name: k.label, icon: "\u2042", color: k.color, kind: `fabula-${kind}`, fields: fabulaLiveFields(s.fields, state.templates || []), nameHelp: s.nameHelp };
 };
 
 // A story's cast and scenes, for its row.
@@ -44900,11 +45102,19 @@ const fabulaCorpusDeleteMessage = (corpus) => {
     : `Delete the corpus "${name}"? Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`;
 };
 
-function FabulaStoryLine({ state, story }) {
+function FabulaStoryLine({ state, story, onOpen }) {
   const counts = fabulaStoryCounts(state, story.id);
   const status = formatSelectDisplay((story.fields || {}).status);
+  // v1.7 r008: a click on the line opens the story's page.
+  const open = onOpen ? {
+    role: "button",
+    tabIndex: 0,
+    title: "Open this story",
+    onClick: () => onOpen(story.id),
+    onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(story.id); } },
+  } : {};
   return (
-    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+    <div className="fabula-story-line" {...open} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, cursor: onOpen ? "pointer" : undefined }}>
       <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>{story.name || "(untitled story)"}</div>
       <div style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
         {status && <span>{status} · </span>}
@@ -44919,7 +45129,7 @@ function FabulaStoryLine({ state, story }) {
 // title for typing, for a story just made, and onRenameEnd tells the parent
 // the typing is over. leading comes before the title (the reading order's
 // number), actions before Rename, trailing after it.
-function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRenameEnd, leading, actions, trailing, rowProps }) {
+function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRenameEnd, onOpen, leading, actions, trailing, rowProps }) {
   const [renaming, setRenaming] = useState(!!autoRename);
   const [text, setText] = useState(story.name || "");
   useEffect(() => { if (autoRename) { setText(story.name || ""); setRenaming(true); } }, [autoRename]);
@@ -44948,7 +45158,7 @@ function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRename
           onBlur={commit}
           style={{ flex: 1 }}
         />
-      ) : <FabulaStoryLine state={state} story={story} />}
+      ) : <FabulaStoryLine state={state} story={story} onOpen={onOpen} />}
       {!isLocked && !renaming && (
         <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
           {actions}
@@ -44960,7 +45170,7 @@ function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRename
   );
 }
 
-function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCreateStory, onRenameStory, onDeleteStory, onSetStoryCorpus }) {
+function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCreateStory, onRenameStory, onDeleteStory, onSetStoryCorpus, onOpenStory }) {
   const [justMade, setJustMade] = useState(null);
   const fab = state.fabula || {};
   const byName = (a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
@@ -44982,6 +45192,7 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
       autoRename={justMade === st.id}
       onRename={onRenameStory}
       onRenameEnd={() => setJustMade(null)}
+      onOpen={onOpenStory}
       actions={
         <select className="input" value={corpusOf.get(st.id) || ""} onChange={e => onSetStoryCorpus(st.id, e.target.value || null)} title="The corpus this story belongs to" aria-label="Corpus" style={{ fontSize: 12, padding: "3px 28px 3px 8px", minWidth: 130, maxWidth: 220 }}>
           <option value="">No corpus</option>
@@ -45056,7 +45267,7 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
 
 // A corpus's stories in reading order, on its page: drag a row to a new
 // place, or move it with the arrows. A story made here starts at the end.
-function FabulaReadingOrder({ state, corpus, isLocked, onMoveStory, onCreateStory, onRenameStory }) {
+function FabulaReadingOrder({ state, corpus, isLocked, onMoveStory, onCreateStory, onRenameStory, onOpenStory }) {
   // The dragged story, in a ref as well as in state: a drop can arrive before
   // React has drawn the drag's start.
   const dragRef = useRef(null);
@@ -45087,6 +45298,7 @@ function FabulaReadingOrder({ state, corpus, isLocked, onMoveStory, onCreateStor
               autoRename={justMade === id}
               onRename={onRenameStory}
               onRenameEnd={() => setJustMade(null)}
+              onOpen={onOpenStory}
               rowProps={isLocked ? null : {
                 draggable: true,
                 onDragStart: (e) => { dragRef.current = id; setDragId(id); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", id); } catch (_) {} },
@@ -45105,6 +45317,149 @@ function FabulaReadingOrder({ state, corpus, isLocked, onMoveStory, onCreateStor
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Fabula: the story page (v1.7 r008) ────────────────────────────────────────
+// A story's page (docs/fabula-spec.md, section 4): its section tabs under its
+// title and, on the Story tab, the Story record, its own fields first and then
+// its four panels, each folding under its heading. The folds belong to the
+// browser, one set for every story, so App keeps them with its other display
+// settings (Drak, 2026-10-25). Every tab shows; one that isn't built yet is
+// greyed out until the cut that builds it turns it on.
+const FABULA_STORY_PANELS = [
+  { id: "premise", label: "Premise" },
+  { id: "genre", label: "Genre" },
+  { id: "narration", label: "Narration" },
+  { id: "setting", label: "Setting" },
+];
+
+// holds is what a tab will hold, which an unbuilt tab's tooltip says.
+const FABULA_STORY_TABS = [
+  { id: "story", label: "Story", built: true, holds: "the story's own fields and its four panels" },
+  { id: "people", label: "People", built: false, holds: "the story's cast, their arcs, and their relationships" },
+  { id: "plot", label: "Plot", built: false, holds: "the story's plot threads, plot points, and promises and payoffs" },
+  { id: "outline", label: "Outline", built: false, holds: "the story's parts, chapters, and scenes, as one ordered tree" },
+  { id: "meaning", label: "Meaning", built: false, holds: "the themes and motifs the Premise panel lists" },
+  { id: "notes", label: "Notes", built: false, holds: "the story's research notes" },
+  { id: "timeline", label: "Timeline", built: false, holds: "the story's own timeline, kept apart from Chronometric" },
+];
+
+// A schema's fields for a form, worked out each time one opens (Drak,
+// 2026-10-25). A reference field to world templates follows their names:
+// its targets are its stored ids that still exist plus whatever templates
+// its names find now, the rule r002 gave templates, so a template deleted
+// and brought back is found again, and nothing is written back to the
+// schema. A field that finds none of its targets gets refMissing (its
+// names) and refRestorable (the missing built-ins), for the picker to say so
+// and offer the restore. A link to Fabula's own records keeps its kind's
+// sentinel and gets the line its picker shows while the story has none of
+// the kind (emptyNote).
+const fabulaLiveFields = (fields, templates) => {
+  const { byName } = refTargetIndex(templates, false);
+  const live = new Set([...templates.map(t => t && t.id).filter(Boolean), ...NODE_SOURCE_REGISTRY.map(src => src.id)]);
+  const builtinHere = new Set(templates.filter(t => t && t.origin === TEMPLATE_ORIGIN.BUILTIN).map(t => t.name));
+  const walk = (list) => (Array.isArray(list) ? list : []).map(fl => {
+    if (!fl || typeof fl !== "object") return fl;
+    let out = fl;
+    if (fl.type === "entry-ref" && fl.fabulaScope) {
+      const k = FABULA_KINDS.find(x => (fl.refTemplatesId || []).includes(x.id));
+      if (k) out = { ...fl, emptyNote: `This story has no ${k.plural} yet.` };
+    } else if (fl.type === "entry-ref" && Array.isArray(fl.refTemplates) && fl.refTemplates.length > 0) {
+      const kept = (Array.isArray(fl.refTemplatesId) ? fl.refTemplatesId : []).filter(id => live.has(id));
+      const named = fl.refTemplates.map(n => byName[n]).filter(Boolean);
+      const ids = [...new Set([...kept, ...named])];
+      out = ids.length > 0
+        ? { ...fl, refTemplatesId: ids }
+        : { ...fl, refTemplatesId: [], refMissing: [...fl.refTemplates], refRestorable: fl.refTemplates.filter(n => BUILTIN_TEMPLATES.some(b => b.name === n) && !builtinHere.has(n)) };
+    }
+    if (Array.isArray(fl.subfields)) out = { ...out, subfields: walk(fl.subfields) };
+    return out;
+  });
+  return walk(fields);
+};
+
+// The registered records a story's pickers may offer: everything that isn't
+// Fabula's, and Fabula's own records from this story alone (spec, section 3).
+const fabulaStoryNodes = (state, storyId) => {
+  const fab = state.fabula || {};
+  const kindIds = new Set(FABULA_KINDS.map(k => k.id));
+  const inStory = new Set();
+  FABULA_KINDS.forEach(k => (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => { if (r && r.id && r.storyId === storyId) inStory.add(r.id); }));
+  return getRegisteredGraphNodes(state).filter(n => !kindIds.has(n.templateId) || inStory.has(n.id));
+};
+
+function FabulaStoryTabs({ active }) {
+  return (
+    <div role="tablist" aria-label="Story sections" style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid var(--border)", margin: "0 0 22px" }}>
+      {FABULA_STORY_TABS.map(t => {
+        const on = t.id === active;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            aria-disabled={t.built ? undefined : "true"}
+            title={t.built ? undefined : `Not built yet: ${t.holds}.`}
+            style={{ padding: "8px 14px", border: "none", background: "transparent", fontFamily: "inherit", fontSize: 13, color: on ? "var(--text)" : "var(--text-dim)", fontWeight: on ? 600 : 400, borderBottom: on ? "2px solid var(--accent)" : "2px solid transparent", marginBottom: -1, cursor: t.built ? "pointer" : "default", opacity: t.built ? 1 : 0.45 }}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// The page itself: the Story record in view or, with a draft, in edit.
+function FabulaStoryPage({ state, story, draft, onDraftChange, isLocked, folds, onToggleFold, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
+  const template = fabulaTemplate(state, "story");
+  const tabs = <FabulaStoryTabs active="story" />;
+  const panelProps = { panels: FABULA_STORY_PANELS, foldedPanels: folds || {}, onTogglePanel: onToggleFold };
+  if (draft) {
+    return (
+      <EntryForm
+        draft={draft}
+        template={template}
+        entries={state.entries}
+        templates={state.templates}
+        bodies={state.celestialBodies}
+        registeredNodes={fabulaStoryNodes(state, story.id)}
+        onChange={onDraftChange}
+        showSecrets={showSecrets}
+        imageFolder={state.world.imageFolder}
+        allTags={allTags}
+        dirHandle={dirHandle}
+        calendar={getCalendar(state, null)}
+        primaryCalendar={state.world.calendar}
+        additionalCalendars={[]}
+        selfEntryId={draft.id}
+        flash={flash}
+        hideTags
+        canvasSlot={tabs}
+        onRestoreTemplate={isLocked ? undefined : onRestoreTemplate}
+        {...panelProps}
+      />
+    );
+  }
+  return (
+    <EntryView
+      entry={story}
+      template={template}
+      templates={state.templates}
+      entries={state.entries}
+      onOpenEntry={onOpenEntry}
+      onSelectTag={onSelectTag}
+      showSecrets={showSecrets}
+      imageFolder={state.world.imageFolder}
+      dirHandle={dirHandle}
+      calendar={getCalendar(state, null)}
+      state={state}
+      onUpdateViewPrefs={onUpdateViewPrefs}
+      canvasSlot={tabs}
+      {...panelProps}
+    />
   );
 }
 
