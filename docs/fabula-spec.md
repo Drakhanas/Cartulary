@@ -1,6 +1,6 @@
 # Cartulary, Fabula Spec (v1.7, Letters)
 
-> **The build sheet, settled 2026-10-25.** Started 2026-10-23 (session 19) from Drak's calls that night; the field tables passed his review on 2026-10-25 (session 20), one table per message, and section 12's decisions are made but one, which waits for the Plot cut. The cuts work from this file, the way v1.6's first cut worked from `maps-promotion-spec.md`, and a change to a decision here is Drak's call and lands here before the cut that makes it. v1.7's r006 built the slice and the seeded schemas, r007 the index and a corpus's page, r008 the story page, r009 People, r010 carved the code into `28_fabula.jsx`, and r011 built the Outline.
+> **The build sheet, settled 2026-10-25.** Started 2026-10-23 (session 19) from Drak's calls that night; the field tables passed his review on 2026-10-25 (session 20), one table per message, and section 12's decisions are made, the last of them at the Plot cut's plan (2026-10-26). The cuts work from this file, the way v1.6's first cut worked from `maps-promotion-spec.md`, and a change to a decision here is Drak's call and lands here before the cut that makes it. v1.7's r006 built the slice and the seeded schemas, r007 the index and a corpus's page, r008 the story page, r009 People, r010 carved the code into `28_fabula.jsx`, and r011 built the Outline.
 
 ---
 
@@ -66,7 +66,7 @@ fabula: {
 - **A story** opens on its Story record, with section tabs across the top:
   - **Story:** the Story's own fields and its four panels (Premise, Genre, Narration, Setting).
   - **People:** Cast, Arcs, Relationships.
-  - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs.
+  - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs (v1.7's r013, planned 2026-10-26). Its thread list edits the Story's Threads in place (Drak, 2026-10-26): a picker adds any existing thread, × takes one off the story while the thread stays in the world, and + New Thread makes a Plot Thread entry by its title, in place, and adds it to the story. It also lists, marked, any other thread the story's scenes, plot points, or promises use, each with a button that adds it to the Story's Threads (section 12, item 7). A thread opens its entry until the Notes cut moves threads into Fabula.
   - **Outline:** Parts, Chapters, and Scenes as one ordered tree (v1.7's r011, done 2026-10-26; section 7).
   - **Meaning:** Themes & Motifs (entries, the ones the Premise panel's Themes lists).
   - **Notes:** Research Notes.
@@ -275,7 +275,7 @@ Description           textarea
 Notes                 textarea
 ```
 
-Slot's options come from the story's Structure (section 6), filled in by the view per story. Plot points sit in their structure's order; a custom turn goes where it's dragged.
+Slot's options come from the story's Structure (section 6), filled in by the view per story. Plot points sit under their slots in their structure's order, and a custom turn goes where it's dragged (section 6 has how).
 
 ### 5.7 Promise & Payoff
 
@@ -375,7 +375,7 @@ Their fields don't change. Each gains a read-only list of the stories and scenes
 
 ## 6. Structures
 
-Choosing a structure on a story seeds one empty plot point per slot, in order. Choosing another later adds the new structure's slots and keeps every existing plot point under its old slot name: a structure change deletes nothing.
+A story's structure gives the Plot tab's Plot Points its headings, one per slot, in order (Drak, 2026-10-26, for v1.7's r013, where this section had choosing a structure seed one empty plot point per slot). A slot is a row to fill, not a record: a plot point is made when you fill one, named for its slot unless you give it a title, so Concordance and the delete counts see only the plot points you've written. Each plot point sits under its slot's heading, and a slot holds as many as you make, in an order the arrows or a drag set; moving a plot point under another heading changes its Slot to that heading's. A custom turn, a plot point whose Slot you type yourself through Other, is a heading of its own, dragged anywhere among the structure's slots. Choosing another structure shows its slots and deletes nothing: a plot point whose slot the new structure lacks keeps it, as a heading at the end, marked as not part of this structure, until you move it. A story whose Structure was set before r013 shows its slots the first time its Plot tab opens.
 
 ```
 Structure        Slots
@@ -395,6 +395,8 @@ None             no seeded slots
 
 Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Custom covers them.
 
+**The rest of the Plot tab** (Claude's defaults, named before the cut, 2026-10-26): it runs Threads, then Plot Points, then Promises & Payoffs; an empty slot fills by a title typed in place, a blank title taking the slot's name; a + under a filled slot adds another plot point to it, and + Custom turn adds a heading of your own at the end; with Custom the headings are the Story's Custom Slots, and with None only the plot points made, under their slots; a plot point's row shows its scene and threads, and a promise's its kind, status, and setup and payoff scenes; promises are listed in the outline's order of their first setup scene, those with none after, by name; the unpaid flag goes on every promise with a setup scene and no payoff scene, whatever its Status, and the section's heading counts them; plot points and promises open on pages of their own; Concordance draws a plot point to its scene and threads, and a promise to its setup and payoff scenes and its threads; and in Lock Mode nothing adds or moves.
+
 ## 7. The outline
 
 - Each story's outline is one tree: parts, then chapters, then scenes. Parts and chapters are optional, so a scene can sit under a chapter, under a part, or directly under the story.
@@ -409,6 +411,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 - **Beats in the outline** (Drak, 2026-10-25): each scene's beats are rows under it, edited where they sit. + Beat at the end of each scene adds one with its text box open, ↑ and ↓ move a beat within its scene, and drag can move it to another scene. The scene's page shows the same beats in its Beats field. At r011's pass (Drak, 2026-10-26) a beat took What Happens, what needs to happen in it: the outline shows it under the beat's line, and a click on a beat opens both for editing in place. Beats sit in under their scene's title, with a rule down their left side, so they don't read as scenes.
 - **A row opens its record** (r011's pass, 2026-10-26): a click anywhere on an act's, a chapter's, or a scene's row, outside its fold and its arrows, opens the record's page, as a click on People's rows does, and Enter or Space does the same on a focused row.
 - Parts, chapters, and scenes open on pages of their own over the story's page, as People's records do, so a reference to a scene opens it (section 3).
+- **A record's position** (Drak, 2026-10-26, for v1.7's r012): an act's, a chapter's, or a scene's page says where it sits, between its kind and its updated date (SCENE · II.4.A · UPDATED), the act in Roman numerals, then the chapter, then the scene's letter, joined by dots. A chapter reads II.4 and an act II; a scene straight under an act reads II.A, one at the story's own level A, and a chapter outside any act 4. A reference to one reads the same way ("II.4.A dddd"), and a picker that offers scenes lists them in the outline's order, each with its position, where it listed them by name. The position is worked out from the outline each time it's drawn, as every number is.
 - **What r011's staging chose, passed by Drak** (2026-10-26): the story-level button reads + Part / Act, and the delete's messages call the record a part; a row shows its details to the right of its title, an act its chapters and scenes, a chapter its POV, status, and scenes, and a scene its POV, status, and beats, with a POV taken from the chapter marked (chapter's); a beat's × and a beat emptied of both its line and its What Happens delete it at once, with no question; a record comes in by its title alone, with no draft, and its details wait for its page; deleting an act or a chapter that holds anything also says what points at what it holds, which Delete everything clears; Esc and a click outside cancel that question, and Enter takes Move up; in What Happens Enter starts a new line and Ctrl+Enter keeps the edit; and a scene with no beats still shows its + Beat.
 
 ## 8. The Fabula timeline
@@ -440,8 +443,8 @@ Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of
 1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries: done in v1.7's r006 (2026-10-25). The code grows inside `27_trunk` until the view is in, then a carve gives Fabula a module of its own (Drak's call), since the edit gate refuses a cut that adds a file. The view has been in since r008, and r009 went into `27_trunk` too. The carve, done as v1.7's r010 (2026-10-25), made it one file, `28_fabula.jsx`, which every later Fabula cut edits, to be split into a folder at its section headers once Fabula is finished (Drak, 2026-10-25).
 2. The view, before the builder (Drak, 2026-10-25: the help lines get reviewed in place while every schema still follows the seed), in two cuts. v1.7's r007, done (2026-10-25): the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1), with the sidebar entry, the index, and the corpus page. v1.7's r008, done (2026-10-25): the story page, its section tabs, and the Story tab's own fields and four panels (the calls are in sections 3 and 4).
 3. People: cast, arcs, relationships, ahead of the builder (Drak, 2026-10-25: the fields get some use first, and People's help lines are read in place while its schemas follow the seed). v1.7's r009, done (2026-10-25), with section 9's cleaning for a deleted entry (the calls are in sections 3, 4, and 9; the arc's Cast came in at its pass, section 1).
-4. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard. v1.7's r011, done (2026-10-26; the calls are in section 7, and its pass's in section 1).
-5. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag.
+4. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard. v1.7's r011, done (2026-10-26; the calls are in section 7, and its pass's in section 1). A record's position, on its page, in a reference, and in a picker, comes next as v1.7's r012 (Drak, 2026-10-26; section 7).
+5. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag. v1.7's r013 (planned 2026-10-26; the calls are in sections 4, 6, and 12).
 6. Notes, and Plot Thread and Theme / Motif moved under Fabula.
 7. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson).
 8. Chronometric's math extracted, checked unchanged.
@@ -471,7 +474,7 @@ About ten cuts. The extraction and the timeline are the least certain.
 4. **A deleted entry:** Drak leans toward cleaning the references out (2026-10-24). Claude's case against cleaning everything: a cast record is defined by its Character link, so cleaning it leaves a husk with a role, a voice, and arcs but no character, or deletes the record and the arcs, relationships, and scene POVs that hang off it; and today's entry delete is a bare confirmation that already cleans entries' references without a count. Claude's middle path: clean, but the delete confirmation first says what it will clean ("removes her from 2 cast records and 9 scenes"), counted by the same scan as backlinks, and a cast record whose character is deleted stays, marked as such, so its story work can be relinked or deleted by hand. Drak took the middle path (2026-10-24); section 9.
 5. **Exports:** decided, Fabula's own, HTML and Markdown (section 9).
 6. **The field lists:** decided (Drak, 2026-10-25), all fifteen tables passed one per message, in his format; section 1 has what the review changed. Five calls came first (section 1): Other on multi-selects, built for every template; built first, as r005; typed values saved as more strings in the same list; Brainstorm out until Stemma v2; and the registry entries with the first screen.
-7. **Thread pickers** (open, for the Plot cut): with the Story's Threads a field of its own (2026-10-25), a scene's, a plot point's, and a promise's Threads could offer every Plot Thread, only the story's, or every one with a pick from outside the story's list added to it. Claude leans to the last: nothing is hidden, and the Plot tab stays complete.
+7. **Thread pickers:** decided (Drak, 2026-10-26, for the Plot cut). A scene's, a plot point's, and a promise's Threads offer every Plot Thread, the story's own listed first, and the Plot tab lists, marked, any thread the story's records use that the Story's Threads doesn't, with a button that adds it there, so nothing changes the Story without a click. The other ways were only the story's threads; every one, with a pick from outside the story's list added to it, Claude's first lean, which has a scene's save write to the Story; and every one as before, which leaves the Plot tab short of what the story uses.
 
 ## Sources
 
