@@ -55,7 +55,7 @@ fabula: {
 
   A story's `outline` is its ordered tree of part, chapter, and scene ids (section 7), so the order lives in one place. A story's corpus is the corpus whose `storyIds` lists it, stored nowhere else (2026-10-25: a `corpusId` beside the list would be the same fact twice).
 - **`migrate()` adds an empty slice** when it's missing, as it does for `cartographia`. A world from v1.6.1 loads with an empty Fabula and nothing else changes. `SCHEMA_VERSION` stays 1, because the change only adds.
-- **Schemas seeded from code, then the world's to edit.** Each kind's schema starts the way Glossopoeia's are built (`23_glossopoeia/00_schemas.jsx`): stable field ids, a help line on every field, and entry-ref fields that find the world's template ids by name, since every world seeds its built-ins with ids of its own. Fabula then stores the schemas per world, in `state.fabula.schemas`, one per kind, out of every template list, and the Template Builder edits them. Core fields (section 5.0) can be relabeled but not deleted or retyped; every other field is editable, and every kind takes the user's own fields. A kind's schema follows the seed until someone edits it (Drak, 2026-10-25): a later seed replaces an unedited schema whole, and an edited one keeps the user's version. Drak refined that at v1.7's r017 plan (2026-10-26): the seed owns every part of a core field a feature reads, its type, its targets, one or many, Structure's names, and a core group's rows, which the builder shows locked, and each load brings those parts of an edited schema's core fields up to the current seed and adds any core field it lacks. The user owns a core field's label, help line, Secret, and options other than Structure's, and no load touches them, so no upgrade merges with anything a user can change (section 4 has the builder). When a later seed replaces a schema, a reference the new seed takes more than one of keeps what it held, as a list of one: the seed went to 2 at v1.7's r009, when an arc's Cast took more than one, went to 3 at r011, when a beat took What Happens and the fields the outline reads became core (section 1), and goes to 4 at r017, when the core list catches up with what features read (section 5.0). The seeded reference fields keep names and ids as a template's do, but nothing that re-resolves templates' fields (`resolveTemplateRefs`, `syncRefTargetNames`, v1.7 r004's retarget repair) reaches them yet: a migration that renames or retires a template has to treat Fabula's schemas itself. A reference field to world templates follows their names (Drak, 2026-10-25, for the story page): whenever a form opens, its targets are its stored ids that still exist plus whatever templates its names find now, the rule r002 gave templates, so a template deleted and brought back is found again. A field that finds none of its targets offers nothing, where an empty id list would otherwise read as any template, and says which template the world lacks, with a Restore button that brings a missing built-in back as the sidebar's Restore Built-ins does. Records render through the shared `EntryForm`, so every field type behaves as it does in an entry and no form code is new.
+- **Schemas seeded from code, then the world's to edit.** Each kind's schema starts the way Glossopoeia's are built (`23_glossopoeia/00_schemas.jsx`): stable field ids, a help line on every field, and entry-ref fields that find the world's template ids by name, since every world seeds its built-ins with ids of its own. Fabula then stores the schemas per world, in `state.fabula.schemas`, one per kind, out of every template list, and the Template Builder edits them. Core fields (section 5.0) can be relabeled but not deleted or retyped; every other field is editable, and every kind takes the user's own fields. A kind's schema follows the seed until someone edits it (Drak, 2026-10-25): a later seed replaces an unedited schema whole, and an edited one keeps the user's version. Drak refined that at v1.7's r017 plan (2026-10-26): the seed owns every part of a core field a feature reads, its type, its targets, one or many, the option names a feature reads (Structure's, and Importance's, which order the cast; Importance's were added before the cut), and a core group's rows, which the builder shows locked, and each load brings those parts of an edited schema's core fields up to the current seed and adds any core field it lacks. The user owns a core field's label, help line, Secret, and options other than those two's, and no load touches them, so no upgrade merges with anything a user can change (section 4 has the builder). When a later seed replaces a schema, a reference the new seed takes more than one of keeps what it held, as a list of one: the seed went to 2 at v1.7's r009, when an arc's Cast took more than one, went to 3 at r011, when a beat took What Happens and the fields the outline reads became core (section 1), and goes to 4 at r017, when the core list catches up with what features read (section 5.0). The seeded reference fields keep names and ids as a template's do, but nothing that re-resolves templates' fields (`resolveTemplateRefs`, `syncRefTargetNames`, v1.7 r004's retarget repair) reaches them yet: a migration that renames or retires a template has to treat Fabula's schemas itself. A reference field to world templates follows their names (Drak, 2026-10-25, for the story page): whenever a form opens, its targets are its stored ids that still exist plus whatever templates its names find now, the rule r002 gave templates, so a template deleted and brought back is found again. A field that finds none of its targets offers nothing, where an empty id list would otherwise read as any template, and says which template the world lacks, with a Restore button that brings a missing built-in back as the sidebar's Restore Built-ins does. Records render through the shared `EntryForm`, so every field type behaves as it does in an entry and no form code is new.
 - **Links between Fabula records** (a scene's POV pointing at a cast record) go through the node-source registry (`22_trunk`) with a sentinel id per kind, like Glossopoeia's `__conlangs__`, so `EntryForm`'s pickers can offer them. Registering a kind also makes it a Concordance node and a reference target in every template builder. Each registered kind is its own toggle in Concordance's filter today, and Fabula would add eleven, so Fabula's kinds sit behind one Fabula toggle, off until selected like everything in that filter. The registry entries, the toggle, and a builder that offers only sources marked eligible landed together, with the first cut that shows Fabula, v1.7's r007 (section 1). A link picker offers only records from the record's own story, and until the story has any of the kind it says so ("This story has no cast yet."); such a field shows from the first cut that renders it, before its kind's records can be made (Drak, 2026-10-25). A link to a Fabula record opens that record's page, as a link to an entry opens the entry, and Back returns to the page it was clicked from; a click on one in Concordance opens it too, and a link to a scene stays plain until Outline gives scenes pages (Drak, 2026-10-25, for People).
 - **Downgrade.** `migrate()` deep-clones the state and keeps keys it doesn't know, so a v1.7 world opened in v1.6.1 should keep `state.fabula` untouched through a save. Section 11 tests it rather than assuming it.
 
@@ -99,7 +99,7 @@ fabula: {
   - Edit Template opens the template builder with Fabula lit in the sidebar, headed with the kind's name, with Reset to Default, Cancel, and Save Template; a kind can't be deleted, so there's no Delete Template. Cancel, Save, and a confirmed reset return to the index at the Templates section. Leaving with unsaved changes asks first, as a template's draft does.
   - A kind's name, icon, color, and type are Fabula's, so the builder doesn't show them. In their place is the help line for the record's name, the user's, since the name is core by construction; the title box shows it as its tooltip. The name has no label to edit: a record's title box names its kind ("Scene name..."), as r014's staging has every Fabula form do, and the seed's name labels (Title, Name, Topic, Label) aren't drawn anywhere. Corrected before the cut (2026-10-26); this default first offered the label too.
   - Every field's row gains its help line under the label, and on the Story each field gets a Panel picker, none or one of the four panels; the panels themselves stay as they are. The family role picker doesn't show, since Linea reads entries only.
-  - A core field's row carries a Core tag whose tooltip says what reads it. Its type, target, Multiple, and Multi-template controls are locked, and so are Structure's options, a plot point's Slot options (they come from the structure), a core group's rows, shown but not editable, a core field's Show only when, and Character's Required; it has no ×. Its label, help line, Secret, and other options stay editable.
+  - A core field's row carries a Core tag whose tooltip says what reads it. Its type, target, Multiple, and Multi-template controls are locked, and so are Structure's and Importance's options, a plot point's Slot options (they come from the structure), a core group's rows, shown but not editable, a core field's Show only when, and Character's Required; it has no ×. Its label, help line, Secret, and other options stay editable.
   - A field of the user's own takes any type a template's field can, and an id no seed will use, a generated one.
   - Save writes the kind's schema and marks it edited, unless nothing changed. A field with no label is dropped, as a template's is, and a reference's target names follow its ids, as a template's do on save.
   - A field deleted in the builder leaves its values in the records, unseen, as a template's does, so a seeded one comes back with them at Reset to Default.
@@ -117,18 +117,18 @@ The tables are in Drak's format: Label / Type / Notes, one line per field. Type 
 
 A field is core when a feature reads it by meaning, not just by being a field. Concordance's edges, backlinks, and the export read any link or field generically, so they don't make a field core. Core fields can be relabeled but not deleted or retyped:
 
-- **Corpus:** the reading order, which is the corpus's `storyIds` and not a field.
+- **Corpus:** Kind and Status (the index shows them), and the reading order, which is the corpus's `storyIds` and not a field.
 - **Story:** Status (the index shows it), Structure and Custom Slots (they give the Plot tab its headings), Threads (the Plot tab lists them), and the Premise panel's Themes (the Meaning tab lists them) and Theme Statement (the Meaning tab opens with it).
-- **Cast:** Character, Importance (the People tab orders the cast by it).
-- **Arc:** Cast, Turning Points (the timeline marks them).
-- **Relationship:** Cast A, Cast B.
+- **Cast:** Character, Importance (the People tab orders the cast by it), Role (the People tab shows it).
+- **Arc:** Cast, Arc Type and Status (the People tab shows them), Turning Points (the timeline marks them).
+- **Relationship:** Cast A, Cast B, Kind (the People tab shows it).
 - **Plot Point:** Slot, Delivered In, Threads (the Plot tab's marks and a thread's page).
-- **Promise & Payoff:** Setup In, Payoff In (the unpaid-promise flag), Threads (the Plot tab's marks and a thread's page).
+- **Promise & Payoff:** Kind and Status (the Plot tab shows them), Setup In, Payoff In (the unpaid-promise flag), Threads (the Plot tab's marks and a thread's page).
 - **Chapter:** POV (a scene with no POV of its own takes it), Status (the outline shows it).
 - **Scene:** POV, When, Threads (the timeline's lanes and placement), Status (the outline shows it), Beats (the outline lists and edits them), Motifs (Meaning's runs and a theme's page).
-- **Research Note:** Used In (a scene's research list), Open Questions (the open flag).
+- **Research Note:** Applies To (the Notes tab says what a note is about from it), Used In (a scene's research list), Open Questions (the open flag).
 
-Every record's name is core by construction. Part / Act has no core fields beyond it. The Story's Theme Statement, a cast record's Importance, a plot point's and a promise's Threads, a scene's Motifs, and a note's Used In and Open Questions became core at v1.7's r017 plan (2026-10-26): r009, r013, r014, and r015 each built a feature that reads one without marking it, and the seed goes to 4 with them, which costs nothing while no world can have edited a schema.
+Every record's name is core by construction. Part / Act has no core fields beyond it. The Story's Theme Statement, a cast record's Importance, a plot point's and a promise's Threads, a scene's Motifs, and a note's Used In and Open Questions became core at v1.7's r017 plan (2026-10-26): r009, r013, r014, and r015 each built a feature that reads one without marking it, and the seed goes to 4 with them, which costs nothing while no world can have edited a schema. Building r017 found that census short (2026-10-26): a row's details read fields by meaning too, as the index's Status does, so a corpus's Kind and Status (the index, since r007), a cast record's Role, an arc's Arc Type and Status, and a relationship's Kind (the People tab, since r009), a promise's Kind and Status (the Plot tab, since r013), and a note's Applies To (the Notes tab, since r014) are core in the same seed, and Importance's options are locked as Structure's are, since the People tab orders the cast by their names.
 
 ### 5.1 Corpus
 
@@ -136,8 +136,8 @@ Name: the corpus's name.
 
 ```
 Label                 Type                         Notes
-Kind                  select otherTextField        half-eligible · Other + · {Series, Shared World, Anthology, Collection}
-Status                select                       half-eligible · {Planning, Active, Complete, Shelved}
+Kind                  select otherTextField        half-eligible · Other + · core · {Series, Shared World, Anthology, Collection}
+Status                select                       half-eligible · core · {Planning, Active, Complete, Shelved}
 
 Description           textarea
 Notes                 textarea
@@ -239,7 +239,7 @@ Character             entry-ref                    half-eligible · core · requ
 Importance            select                       half-eligible · core · {Main, Secondary, Minor}; the People tab orders by it
 First Appears         entry-ref                    half-eligible · -> Scene (Fabula), this story
 
-Role                  multiselect otherTextField   Other + · {Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Supporting}
+Role                  multiselect otherTextField   Other + · core · {Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Supporting}
 Belief Systems        entry-ref multi              -> Religion / Belief System
 
 Motive                textarea                     why they act; for an antagonist, the aims
@@ -261,8 +261,8 @@ Name: the arc's name, such as "Mira's fall".
 ```
 Label                 Type                         Notes
 Cast                  entry-ref multi              core · -> Cast (Fabula), this story; whose arc, one or more
-Arc Type              select otherTextField        half-eligible · Other + · {Positive Change, Flat, Negative Change, Disillusionment, Corruption, Fall}
-Status                select                       half-eligible · {Idea, Planned, Underway, Resolved, Abandoned}
+Arc Type              select otherTextField        half-eligible · Other + · core · {Positive Change, Flat, Negative Change, Disillusionment, Corruption, Fall}
+Status                select                       half-eligible · core · {Idea, Planned, Underway, Resolved, Abandoned}
 
 Want                  textarea                     the external goal (Gilbo 5)
 Need                  textarea                     the internal need
@@ -285,7 +285,7 @@ Label                 Type                         Notes
 Cast A                entry-ref                    half-eligible · core · -> Cast (Fabula), this story
 Cast B                entry-ref                    half-eligible · core · -> Cast (Fabula), this story
 
-Kind                  multiselect otherTextField   Other + · {Alliance, Rivalry, Romance, Friendship, Mentorship, Family, Enmity}
+Kind                  multiselect otherTextField   Other + · core · {Alliance, Rivalry, Romance, Friendship, Mentorship, Family, Enmity}
 Starts As             textarea
 Ends As               textarea
 Turning Points        group                        where it turns, and how; one per row
@@ -316,8 +316,8 @@ Name: a short label for what's promised.
 
 ```
 Label                 Type                         Notes
-Kind                  select otherTextField        half-eligible · Other + · {Foreshadowing, Chekhov's Gun, Open Question, Red Herring, Prophecy, Callback, Running Gag}
-Status                select                       half-eligible · {Idea, Planned, Planted, Paid Off, Subverted, Dropped}
+Kind                  select otherTextField        half-eligible · Other + · core · {Foreshadowing, Chekhov's Gun, Open Question, Red Herring, Prophecy, Callback, Running Gag}
+Status                select                       half-eligible · core · {Idea, Planned, Planted, Paid Off, Subverted, Dropped}
 
 Setup In              entry-ref multi              core · -> Scene (Fabula), this story
 Payoff In             entry-ref multi              core · -> Scene (Fabula), this story
@@ -390,7 +390,7 @@ Name: the topic.
 
 ```
 Label                 Type                         Notes
-Applies To            entry-ref multi              -> any template
+Applies To            entry-ref multi              core · -> any template; the Notes tab's rows say what a note is about
 Used In               entry-ref multi              core · -> Scene (Fabula), this story; where the research lands
 Sources               group                        one source per row
     · Title           text
