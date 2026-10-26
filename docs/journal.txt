@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, and r013's Plot) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, and r014's Notes) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -698,3 +698,17 @@ to put them back. And a loop I'd left waiting for the three mutants' totals neve
 because the turn's mutant crashed before printing one, which is what a mutant may do;
 that's the second wait in two cuts to hang, and a shell waiting on its own children is the
 wait that ends when they do. Drak passed it at a quarter to nine in the morning.
+
+r014 was Notes, and its plan's calls took twenty minutes. Drak gave Meaning a cut of its
+own as soon as I'd said the spec had none for it, so item 6 split three ways, Notes, then
+Meaning, then the two templates' move with a plan of its own; then notes by topic, a flag
+for open questions, and a scene's page listing its research. The cut was small next to
+Plot. The one thing it needed outside Fabula was a place under a page's fields, since the
+entry view and the form only had a slot above them, so both take a footSlot now, which
+nothing else uses. The screenshots found one thing: the Notes tab listed a note's scenes
+in the outline's order and the note's page listed them as the note holds them, the same
+two scenes the other way round on two screens. Plot's rows already follow the record, so
+the note's row does too. The control could only fail T1 again, the Notes tab greyed on
+r013, so three planted defects did the real proving, each failing where it should. r014
+also cleared one of the two things r013's turnover filed, the comment that listed what
+opens, since notes open through the same code. Drak passed it just before ten.

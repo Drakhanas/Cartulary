@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 47832,
-    "raw_body_lines": 47832,
-    "canonical_lines": 45490,
-    "decl_count": 607,
+    "total_lines": 47982,
+    "raw_body_lines": 47982,
+    "canonical_lines": 45634,
+    "decl_count": 612,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r013-body.jsx"
+    "active_anchor": "reference-r014-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 47832,
+      "value": 47982,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 607,
+      "value": 612,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 45490,
+      "value": 45634,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 47832,
+      "value": 47982,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 83,
+      "value": 84,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2513467,
+      "value": 2522389,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty",
-        40
+        "forty-one",
+        41
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,41 +108,41 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 83,
+      "value": 84,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 83,
+      "value": 84,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r013": {
-      "value": "061f90388538cfeb",
-      "pattern": "working[^\\n]{0,40}at r013 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r014": {
+      "value": "5f6ccdc961669baf",
+      "pattern": "working[^\\n]{0,40}at r014 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1309,
+      "line": 1311,
       "contains": "Longform + rich text editor"
     },
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1311,
+      "line": 1313,
       "contains": "function LongformEditor"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 318,
+      "line": 320,
       "contains": "Longform + markdown display"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 320,
+      "line": 322,
       "contains": "function LongformDisplay"
     },
     {
@@ -542,23 +542,28 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 576,
+      "line": 577,
       "contains": "Fabula: the story page (v1.7 r008)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 770,
+      "line": 774,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1038,
+      "line": 1048,
       "contains": "Fabula: Outline (v1.7 r011)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1796,
+      "line": 1806,
       "contains": "Fabula: Plot (v1.7 r013)"
+    },
+    {
+      "file": "28_fabula.jsx",
+      "line": 2477,
+      "contains": "Fabula: Notes (v1.7 r014)"
     }
   ],
   "spans": {
@@ -749,10 +754,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r013-body.jsx",
-      "reference-r013-layout.json",
-      "041fba079f455cd6",
-      "061f90388538cfeb",
+      "reference-r014-body.jsx",
+      "reference-r014-layout.json",
+      "274e570b491549df",
+      "5f6ccdc961669baf",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -765,7 +770,11 @@
       "firstIds",
       "fabulaUnpaid",
       "Wait for probes by their processes",
-      "plant a defect for each of the cut's main rules"
+      "plant a defect for each of the cut's main rules",
+      "v1.7_r014",
+      "FabulaNotesTab",
+      "footSlot",
+      "fabulaNoteOpen"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -867,7 +876,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r013-layout.json",
+      "reference-r014-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -876,7 +885,12 @@
       "041fba079f455cd6",
       "061f90388538cfeb",
       "On v1.7 r013 verification",
-      "FabulaPlotTab"
+      "FabulaPlotTab",
+      "reference-r014-body.jsx",
+      "274e570b491549df",
+      "5f6ccdc961669baf",
+      "On v1.7 r014 verification",
+      "FabulaNotesTab"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -938,7 +952,12 @@
       "v1.7_r013",
       "061f90388538cfeb",
       "041fba079f455cd6",
-      "FabulaPlotTab"
+      "FabulaPlotTab",
+      "v1.7_r014",
+      "5f6ccdc961669baf",
+      "274e570b491549df",
+      "FabulaNotesTab",
+      "26652cb"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -980,7 +999,8 @@
       "v1.7_r012",
       "A scene picker's option reads its position as plain text",
       "v1.7_r013",
-      "The plot point's name help still says a structure makes it"
+      "The plot point's name help still says a structure makes it",
+      "v1.7_r014"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1026,7 +1046,8 @@
       "A screenshot is read for what the screen says",
       "A probe reads the saved world only after the save has run",
       "An older probe that stops at a check the cut changed on purpose",
-      "A control that can't get past its first check"
+      "A control that can't get past its first check",
+      "The same values shown in two places come in the same order"
     ],
     "journal.txt": [
       "r030",
@@ -1065,7 +1086,8 @@
       "r010",
       "r011",
       "r012",
-      "r013"
+      "r013",
+      "r014"
     ]
   }
 }
