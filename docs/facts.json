@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 44846,
-    "raw_body_lines": 44846,
-    "canonical_lines": 42645,
-    "decl_count": 521,
+    "total_lines": 45400,
+    "raw_body_lines": 45400,
+    "canonical_lines": 43173,
+    "decl_count": 530,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r006-body.jsx"
+    "active_anchor": "reference-r007-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 44846,
+      "value": 45400,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 521,
+      "value": 530,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 42645,
+      "value": 43173,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 44846,
+      "value": 45400,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 78,
+      "value": 79,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2348701,
+      "value": 2377522,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-four",
-        34
+        "thirty-five",
+        35
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -107,17 +107,17 @@
       "value": 5241,
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
-    "working_hash_r006": {
-      "value": "046261e6caccc29f",
-      "pattern": "working[^\\n]{0,40}at r006 hashes to sha256 `([0-9a-f]{16})`"
-    },
     "header_pairs_cold_start": {
-      "value": 78,
+      "value": 79,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 78,
+      "value": 79,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
+    },
+    "working_hash_r007": {
+      "value": "c723fa573f160881",
+      "pattern": "working[^\\n]{0,40}at r007 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -233,7 +233,7 @@
     },
     {
       "file": "17_concordance.jsx",
-      "line": 1032,
+      "line": 1054,
       "contains": "}"
     },
     {
@@ -523,13 +523,18 @@
     },
     {
       "file": "22_trunk.jsx",
-      "line": 87,
+      "line": 88,
       "contains": "const FABULA_KINDS"
     },
     {
       "file": "27_trunk.jsx",
       "line": 250,
       "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
+    },
+    {
+      "file": "27_trunk.jsx",
+      "line": 496,
+      "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     }
   ],
   "spans": {
@@ -543,7 +548,7 @@
     "17_concordance.jsx": [
       [
         1,
-        1032,
+        1054,
         "concordance"
       ]
     ],
@@ -667,10 +672,10 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r006-body.jsx",
-      "reference-r006-layout.json",
-      "b2a8ba4e362f54bd",
-      "046261e6caccc29f",
+      "reference-r007-body.jsx",
+      "reference-r007-layout.json",
+      "9d42ce11a6c8002e",
+      "c723fa573f160881",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -698,7 +703,12 @@
       "v1.7_r006",
       "ensureFabulaSlice",
       "FABULA_KINDS",
-      "d9125ed013be5641"
+      "d9125ed013be5641",
+      "v1.7_r007",
+      "fabulaTemplate",
+      "corpusDraft",
+      "its shortest value and its longest",
+      "resolveRefTarget` opens maps and bodies alone"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -773,11 +783,16 @@
       "cd6875aa3a5295db",
       "On v1.7 r005 verification",
       "reference-r006-body.jsx",
-      "reference-r006-layout.json",
       "b2a8ba4e362f54bd",
       "046261e6caccc29f",
       "On v1.7 r006 verification",
-      "FABULA_KINDS"
+      "FABULA_KINDS",
+      "reference-r007-body.jsx",
+      "reference-r007-layout.json",
+      "9d42ce11a6c8002e",
+      "c723fa573f160881",
+      "On v1.7 r007 verification",
+      "FabulaReadingOrder"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -811,7 +826,12 @@
       "v1.7_r006",
       "046261e6caccc29f",
       "b2a8ba4e362f54bd",
-      "ensureFabulaSlice"
+      "ensureFabulaSlice",
+      "v1.7_r007",
+      "c723fa573f160881",
+      "9d42ce11a6c8002e",
+      "FabulaIndexView",
+      "3c7279a8d9c3875a"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -842,7 +862,8 @@
       "v1.7_r005",
       "Other on multi-selects: done in r005",
       "CI's two warnings",
-      "v1.7_r006"
+      "v1.7_r006",
+      "v1.7_r007"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -881,7 +902,8 @@
       "Judge stored data by the rules that produced it",
       "A user's world carries every upgrade it has been through",
       "A migration that retires something other records point at by id",
-      "The control decides how far a defect reaches"
+      "The control decides how far a defect reaches",
+      "A new screen gets looked at before it's staged"
     ],
     "journal.txt": [
       "r030",
@@ -913,7 +935,8 @@
       "r003",
       "r004",
       "r005",
-      "r006"
+      "r006",
+      "r007"
     ]
   }
 }

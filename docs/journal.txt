@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, and r006's slice) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, and r007's first screen) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -586,3 +586,15 @@ expectations from the tables Drak passed, not from my code, and it opens an r006
 v1.6.1 final, which rebuilt from its tag to the shipped hash, to show the way back keeps
 Fabula's data. Thirty-five checks passed, and r005 failed thirty. Drak passed it a little
 before six.
+
+r007 was the first time Fabula showed anything, and Drak's calls set its shape before I
+cut a line of it: the view before the builder, so he could read the help lines where
+they'd be used; the screen in two cuts; Fabula after Linea, and while he was in the sidebar,
+Kalendarium below Ephemeris. The probe had twenty-eight checks and all of them passed, and
+the first thing Drak reported was a dropdown he couldn't read, the corpus name running
+under its arrow. I'd given it padding of its own, which threw away the room every other
+dropdown in the app keeps for the arrow, and nothing I checked looked at how anything
+looked. The map editor taught that lesson in v1.6 and I'd filed it under the canvas. One
+line fixed it, a twenty-ninth check fails on the build he saw, and the handoff now says a
+new screen gets looked at before it goes out. He passed the second staging a little
+before seven.
