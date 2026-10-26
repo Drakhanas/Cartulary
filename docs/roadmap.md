@@ -230,4 +230,4 @@ Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (th
 
 === ADDED 2026-10-26 (session 20, later: r014) ===
 
-**r014 is in**, passed by Drak and frozen; its tag, `v1.7_r014`, goes on its turnover. **What it struck from this file:** the comment in `openEntryFromAnywhere` that stopped at r011, which r014's cut rewrote. **What it filed:** nothing. **What it changed:** the Letters entry and the line's order say Notes is in, with Meaning and the two templates' move after it. Next: r015, Meaning, its plan first.
+**r014 is in**, passed by Drak and frozen; its tag, `v1.7_r014`, goes on its turnover. **What it struck from this file:** the comment in `openEntryFromAnywhere` that stopped at r011, which r014's cut rewrote. **What it filed:** nothing. **What it changed:** the Letters entry and the line's order say Notes is in, with Meaning and the two templates' move after it. Next: r015, Meaning, its calls made at its plan and in the spec.
