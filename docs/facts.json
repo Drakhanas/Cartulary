@@ -1,16 +1,16 @@
 {
   "derived": {
-    "module_file_count": 44,
+    "module_file_count": 45,
     "total_lines": 46273,
     "raw_body_lines": 46273,
     "canonical_lines": 44004,
     "decl_count": 554,
-    "no_trailing_newline": 36,
+    "no_trailing_newline": 37,
     "active_anchor": "reference-r009-body.jsx"
   },
   "published": {
     "module_file_count": {
-      "value": 44,
+      "value": 45,
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
@@ -18,12 +18,12 @@
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
-      "value": 30,
+      "value": 31,
       "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
     },
     "no_trailing_nl": {
-      "value": 36,
-      "pattern": "(\\d+) of the 44 files have no trailing newline"
+      "value": 37,
+      "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
       "value": 554,
@@ -64,10 +64,10 @@
     },
     "named_modules": {
       "value": [
-        "twenty-one",
-        21
+        "twenty-two",
+        22
       ],
-      "pattern": "(?i)(twenty-one|\\d+) named modules"
+      "pattern": "(?i)(twenty-two|\\d+) named modules"
     },
     "trunk_arcs": {
       "value": [
@@ -77,7 +77,7 @@
       "pattern": "(?i)(nine|\\d+) trunk arcs"
     },
     "carves_proven": {
-      "value": 21,
+      "value": 22,
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
@@ -115,9 +115,9 @@
       "value": 81,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
-    "working_hash_r009": {
+    "working_hash_r010": {
       "value": "aa89edb8519e3604",
-      "pattern": "working[^\\n]{0,40}at r009 hashes to sha256 `([0-9a-f]{16})`"
+      "pattern": "working[^\\n]{0,40}at r010 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -477,17 +477,17 @@
       "contains": "Version History panel"
     },
     {
-      "file": "28_modals.jsx",
+      "file": "29_modals.jsx",
       "line": 2,
       "contains": "Destructive Op confirmation modal"
     },
     {
-      "file": "28_modals.jsx",
+      "file": "29_modals.jsx",
       "line": 98,
       "contains": "Reset Template confirmation modal"
     },
     {
-      "file": "28_modals.jsx",
+      "file": "29_modals.jsx",
       "line": 100,
       "contains": "function ResetTemplateModal"
     },
@@ -527,23 +527,23 @@
       "contains": "const FABULA_KINDS"
     },
     {
-      "file": "27_trunk.jsx",
-      "line": 250,
+      "file": "28_fabula.jsx",
+      "line": 2,
       "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
     },
     {
-      "file": "27_trunk.jsx",
-      "line": 506,
+      "file": "28_fabula.jsx",
+      "line": 258,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     },
     {
-      "file": "27_trunk.jsx",
-      "line": 802,
+      "file": "28_fabula.jsx",
+      "line": 554,
       "contains": "Fabula: the story page (v1.7 r008)"
     },
     {
-      "file": "27_trunk.jsx",
-      "line": 970,
+      "file": "28_fabula.jsx",
+      "line": 722,
       "contains": "Fabula: People (v1.7 r009)"
     }
   ],
@@ -730,7 +730,9 @@
       "scrubFabulaRefs",
       "excludeIds",
       "fabulaRecordOpens",
-      "as a list of one"
+      "as a list of one",
+      "v1.7_r010",
+      "28_fabula"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -824,7 +826,9 @@
       "f4d73f0a51c06190",
       "aa89edb8519e3604",
       "On v1.7 r009 verification",
-      "FabulaPeopleTab"
+      "FabulaPeopleTab",
+      "On v1.7 r010 verification",
+      "28_fabula.jsx"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -871,7 +875,8 @@
       "v1.7_r009",
       "aa89edb8519e3604",
       "f4d73f0a51c06190",
-      "scrubFabulaRefs"
+      "scrubFabulaRefs",
+      "v1.7_r010"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -905,7 +910,8 @@
       "v1.7_r006",
       "v1.7_r007",
       "v1.7_r008",
-      "v1.7_r009"
+      "v1.7_r009",
+      "v1.7_r010"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -982,7 +988,8 @@
       "r006",
       "r007",
       "r008",
-      "r009"
+      "r009",
+      "r010"
     ]
   }
 }

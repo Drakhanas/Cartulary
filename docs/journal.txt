@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, and r009's People) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, and r010's carve) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -630,3 +630,13 @@ a list, and there was no edited schema to merge with. Writing this turnover I al
 noticed that the carve giving Fabula a module of its own has been due since r008, by the
 spec's own order, and r009 went into the trunk anyway. It goes to the next plan. He
 passed it at half past ten.
+
+r010 was the carve, and it was short. Drak took one file over a folder split at the four
+headers, since the edit gate won't let a later cut add a file, and over waiting until
+Fabula is finished. A pure carve moves code without changing it, so the gate's
+byte-identity and the rebuilt file's hash, the same as the r009 he passed, were the
+whole check, and there was nothing for him to look at. The one thing the carve couldn't
+do was fix its own description: the comment at the head of the new file still says the
+code grows here until the view is in, written when here was the trunk. A cut that
+changes no byte can't change a comment either, so it waits for the next cut that
+touches that block.
