@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 45400,
-    "raw_body_lines": 45400,
-    "canonical_lines": 43173,
-    "decl_count": 530,
+    "total_lines": 45755,
+    "raw_body_lines": 45755,
+    "canonical_lines": 43513,
+    "decl_count": 538,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r007-body.jsx"
+    "active_anchor": "reference-r008-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 45400,
+      "value": 45755,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 530,
+      "value": 538,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 43173,
+      "value": 43513,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 45400,
+      "value": 45755,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 79,
+      "value": 80,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2377522,
+      "value": 2397145,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-five",
-        35
+        "thirty-six",
+        36
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,37 +108,37 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 79,
+      "value": 80,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 79,
+      "value": 80,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
-    "working_hash_r007": {
-      "value": "c723fa573f160881",
-      "pattern": "working[^\\n]{0,40}at r007 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r008": {
+      "value": "1d0b64c4f9cb8dcb",
+      "pattern": "working[^\\n]{0,40}at r008 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1253,
+      "line": 1290,
       "contains": "Longform + rich text editor"
     },
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1255,
+      "line": 1292,
       "contains": "function LongformEditor"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 267,
+      "line": 314,
       "contains": "Longform + markdown display"
     },
     {
       "file": "13_form-engine-display.jsx",
-      "line": 269,
+      "line": 316,
       "contains": "function LongformDisplay"
     },
     {
@@ -523,7 +523,7 @@
     },
     {
       "file": "22_trunk.jsx",
-      "line": 88,
+      "line": 89,
       "contains": "const FABULA_KINDS"
     },
     {
@@ -535,6 +535,11 @@
       "file": "27_trunk.jsx",
       "line": 496,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
+    },
+    {
+      "file": "27_trunk.jsx",
+      "line": 766,
+      "contains": "Fabula: the story page (v1.7 r008)"
     }
   ],
   "spans": {
@@ -672,10 +677,10 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r007-body.jsx",
-      "reference-r007-layout.json",
-      "9d42ce11a6c8002e",
-      "c723fa573f160881",
+      "reference-r008-body.jsx",
+      "reference-r008-layout.json",
+      "0d683c6de47f37c3",
+      "1d0b64c4f9cb8dcb",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -708,7 +713,12 @@
       "fabulaTemplate",
       "corpusDraft",
       "its shortest value and its longest",
-      "offers a Restore button for it"
+      "v1.7_r008",
+      "fabulaLiveFields",
+      "fabulaStoryNodes",
+      "prefs.fabulaFolds",
+      "fieldPanelSegments",
+      "is checked against the app before it's sent"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -788,11 +798,16 @@
       "On v1.7 r006 verification",
       "FABULA_KINDS",
       "reference-r007-body.jsx",
-      "reference-r007-layout.json",
       "9d42ce11a6c8002e",
       "c723fa573f160881",
       "On v1.7 r007 verification",
-      "FabulaReadingOrder"
+      "FabulaReadingOrder",
+      "reference-r008-body.jsx",
+      "reference-r008-layout.json",
+      "0d683c6de47f37c3",
+      "1d0b64c4f9cb8dcb",
+      "On v1.7 r008 verification",
+      "FabulaStoryPage"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -831,7 +846,11 @@
       "c723fa573f160881",
       "9d42ce11a6c8002e",
       "FabulaIndexView",
-      "3c7279a8d9c3875a"
+      "3c7279a8d9c3875a",
+      "v1.7_r008",
+      "1d0b64c4f9cb8dcb",
+      "0d683c6de47f37c3",
+      "fabulaLiveFields"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -863,7 +882,8 @@
       "Other on multi-selects: done in r005",
       "CI's two warnings",
       "v1.7_r006",
-      "v1.7_r007"
+      "v1.7_r007",
+      "v1.7_r008"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -903,7 +923,8 @@
       "A user's world carries every upgrade it has been through",
       "A migration that retires something other records point at by id",
       "The control decides how far a defect reaches",
-      "A new screen gets looked at before it's staged"
+      "A new screen gets looked at before it's staged",
+      "A fork that says what the app does is checked against the app"
     ],
     "journal.txt": [
       "r030",
@@ -936,7 +957,8 @@
       "r004",
       "r005",
       "r006",
-      "r007"
+      "r007",
+      "r008"
     ]
   }
 }

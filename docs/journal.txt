@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, and r007's first screen) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, and r008's story page) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -598,3 +598,16 @@ looked. The map editor taught that lesson in v1.6 and I'd filed it under the can
 line fixed it, a twenty-ninth check fails on the build he saw, and the handoff now says a
 new screen gets looked at before it goes out. He passed the second staging a little
 before seven.
+
+r008 was the story page, and this time I looked before Drak did. The screenshots earned
+their keep at once: the view showed four panel headings with nothing under them, and the
+half-width labels had been hiding their help lines' underline since help lines began.
+Both were fixed before he saw the build. The first one was also my mistake from earlier
+in the evening. When I put the layout fork to him I said a new story's page would show
+every field, empty, the way an entry's does, and an entry's page hides empty fields. He'd
+chosen folding after reading that. Folding still holds up, since edit mode is
+where the page runs long, but I'd described the screen from memory instead of from the
+code that draws it, which is the same mistake as trusting a comment about what runs on
+load. The Restore button was his idea, not mine: he asked whether Fabula could bring a
+missing template back without a trip to the sidebar, and it could. He passed it a little
+before nine.

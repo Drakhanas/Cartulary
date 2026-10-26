@@ -1,6 +1,6 @@
 # Cartulary, Fabula Spec (v1.7, Letters)
 
-> **The build sheet, settled 2026-10-25.** Started 2026-10-23 (session 19) from Drak's calls that night; the field tables passed his review on 2026-10-25 (session 20), one table per message, and section 12's decisions are made but one, which waits for the Plot cut. The cuts work from this file, the way v1.6's first cut worked from `maps-promotion-spec.md`, and a change to a decision here is Drak's call and lands here before the cut that makes it. v1.7's r006 built the slice and the seeded schemas, and r007 the index and a corpus's page.
+> **The build sheet, settled 2026-10-25.** Started 2026-10-23 (session 19) from Drak's calls that night; the field tables passed his review on 2026-10-25 (session 20), one table per message, and section 12's decisions are made but one, which waits for the Plot cut. The cuts work from this file, the way v1.6's first cut worked from `maps-promotion-spec.md`, and a change to a decision here is Drak's call and lands here before the cut that makes it. v1.7's r006 built the slice and the seeded schemas, r007 the index and a corpus's page, and r008 the story page.
 
 ---
 
@@ -70,7 +70,7 @@ fabula: {
   - **Notes:** Research Notes.
   - **Timeline:** section 8.
 
-  Every tab shows from the story page's first cut, v1.7's r008; one that isn't built yet is greyed out and can't be opened, and its tooltip says what it will hold, until the cut that builds it turns it on (Drak, 2026-10-25). On the Story tab the Story's own fields come first, then each panel under a heading that folds it. The folds belong to the browser, kept with the app's other display settings, one set for every story and the same in view and edit mode, so they never reach the world file (Drak, 2026-10-25).
+  Every tab shows from the story page's first cut, v1.7's r008; one that isn't built yet is greyed out and can't be opened, and its tooltip says what it will hold, until the cut that builds it turns it on (Drak, 2026-10-25). On the Story tab the Story's own fields come first, then each panel under a heading that folds it. The folds belong to the browser, kept with the app's other display settings, one set for every story and the same in view and edit mode, so they never reach the world file (Drak, 2026-10-25). In view an empty field doesn't show, as on an entry's page, so an open panel with nothing filled in says so.
 - **A corpus** opens on its own page: its fields, edited the way an entry's are, its stories in reading order, reordered by drag or by arrow buttons with no edit step, and the corpus timeline.
 - **Plot Thread and Theme / Motif** leave the sidebar's template list through a flag on the template that the sidebar honors. They stay in `BUILTIN_TEMPLATES`, Restore Built-ins and Reset Template keep working, and they open inside Fabula in the normal entry form. Which stories use a thread is recorded on the Story (its Threads field), not on the thread, so one thread can run through several books.
 
@@ -426,7 +426,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of the field lists use it.
 
 1. The slice, `migrate()`'s empty default, and the seeded schemas, with no UI and no registry entries: done in v1.7's r006 (2026-10-25). The code grows inside `27_trunk` until the view is in, then a carve gives Fabula a module of its own (Drak's call), since the edit gate refuses a cut that adds a file.
-2. The view, before the builder (Drak, 2026-10-25: the help lines get reviewed in place while every schema still follows the seed), in two cuts. v1.7's r007, done (2026-10-25): the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1), with the sidebar entry, the index, and the corpus page. v1.7's r008: the story page, its section tabs, and the Story tab's own fields and four panels (planned 2026-10-25; the calls are in sections 3 and 4).
+2. The view, before the builder (Drak, 2026-10-25: the help lines get reviewed in place while every schema still follows the seed), in two cuts. v1.7's r007, done (2026-10-25): the registry entries, Concordance's single Fabula toggle, and a builder that offers only sources marked eligible (section 1), with the sidebar entry, the index, and the corpus page. v1.7's r008, done (2026-10-25): the story page, its section tabs, and the Story tab's own fields and four panels (the calls are in sections 3 and 4).
 3. The Template Builder learns Fabula's kinds and the core lock, once the fields have had some use.
 4. People: cast, arcs, relationships.
 5. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard.
