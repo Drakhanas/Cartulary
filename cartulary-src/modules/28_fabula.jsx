@@ -589,7 +589,9 @@ const FABULA_STORY_TABS = [
 // names) and refRestorable (the missing built-ins), for the picker to say so
 // and offer the restore. A link to Fabula's own records keeps its kind's
 // sentinel and gets the line its picker shows while the story has none of
-// the kind (emptyNote).
+// the kind (emptyNote). Since v1.7's r012 a link to acts, chapters, or
+// scenes keeps the order its records come in (keepOrder), the outline's
+// (fabulaStoryNodes), where other pickers sort by name.
 const fabulaLiveFields = (fields, templates) => {
   const { byName } = refTargetIndex(templates, false);
   const live = new Set([...templates.map(t => t && t.id).filter(Boolean), ...NODE_SOURCE_REGISTRY.map(src => src.id)]);
@@ -599,7 +601,7 @@ const fabulaLiveFields = (fields, templates) => {
     let out = fl;
     if (fl.type === "entry-ref" && fl.fabulaScope) {
       const k = FABULA_KINDS.find(x => (fl.refTemplatesId || []).includes(x.id));
-      if (k) out = { ...fl, emptyNote: `This story has no ${k.plural} yet.` };
+      if (k) out = { ...fl, emptyNote: `This story has no ${k.plural} yet.`, ...(FABULA_OUTLINE_KINDS.includes(k.kind) ? { keepOrder: true } : {}) };
     } else if (fl.type === "entry-ref" && Array.isArray(fl.refTemplates) && fl.refTemplates.length > 0) {
       const kept = (Array.isArray(fl.refTemplatesId) ? fl.refTemplatesId : []).filter(id => live.has(id));
       const named = fl.refTemplates.map(n => byName[n]).filter(Boolean);
@@ -616,12 +618,24 @@ const fabulaLiveFields = (fields, templates) => {
 
 // The registered records a story's pickers may offer: everything that isn't
 // Fabula's, and Fabula's own records from this story alone (spec, section 3).
+// Since v1.7's r012 its pages' references read from it too, and its acts,
+// chapters, and scenes come last, in the outline's order, each named with
+// where it sits ("II.4.A The gate"), so a reference says where it points and
+// a picker that keeps this order lists them as the outline does. Each keeps
+// its position and its own name apart too (place), for a chip to draw the
+// position quieter than the name, as the outline draws its numbers, so a
+// scene at the story's own level doesn't read as "A Prologue".
 const fabulaStoryNodes = (state, storyId) => {
   const fab = state.fabula || {};
   const kindIds = new Set(FABULA_KINDS.map(k => k.id));
   const inStory = new Set();
   FABULA_KINDS.forEach(k => (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => { if (r && r.id && r.storyId === storyId) inStory.add(r.id); }));
-  return getRegisteredGraphNodes(state).filter(n => !kindIds.has(n.templateId) || inStory.has(n.id));
+  const nodes = getRegisteredGraphNodes(state).filter(n => !kindIds.has(n.templateId) || inStory.has(n.id));
+  const places = fabulaOutlinePlaces(state, storyId);
+  const placed = nodes.filter(n => places.has(n.id))
+    .sort((a, b) => places.get(a.id).index - places.get(b.id).index)
+    .map(n => { const path = places.get(n.id).path; return { ...n, name: `${path} ${n.name}`, place: { path, name: n.name } }; });
+  return [...nodes.filter(n => !places.has(n.id)), ...placed];
 };
 
 // A built tab switches the page (v1.7 r009); while the Story record is in
@@ -723,6 +737,7 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
       calendar={getCalendar(state, null)}
       state={state}
       onUpdateViewPrefs={onUpdateViewPrefs}
+      registeredNodes={fabulaStoryNodes(state, story.id)}
       canvasSlot={tabs}
       {...panelProps}
     />
@@ -925,12 +940,18 @@ function FabulaPeopleTab({ state, story, isLocked, onOpenRecord, onNewRecord }) 
   );
 }
 
-// A cast record's, an arc's, or a relationship's page, over its story's: its
-// fields in view or, with a draft, in edit, its pickers offering the story's
-// own records. A cast record whose character was deleted says so.
+// A record's page, over its story's (a cast record's, an arc's, or a
+// relationship's since v1.7's r009; an act's, a chapter's, or a scene's
+// since r011): its fields in view or, with a draft, in edit, its pickers
+// offering the story's own records. A cast record whose character was
+// deleted says so. Since r012 an act's, a chapter's, or a scene's page says
+// where it sits, between its kind and its date (SCENE · II.4.A · UPDATED),
+// and a page's references read as its pickers offer them.
 function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, isLocked, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
   const template = fabulaTemplate(state, kind, { storyId, recordId: record.id });
   const gone = kind === "cast" ? record.characterDeleted : null;
+  const nodes = fabulaStoryNodes(state, storyId);
+  const place = FABULA_OUTLINE_KINDS.includes(kind) ? fabulaOutlinePlaces(state, storyId).get(record.id) : null;
   // v1.7 r011: a scene with no POV of its own takes its chapter's, and says so.
   const inherited = kind === "scene" ? fabulaInheritedPov(state, storyId, draft || record) : null;
   const povNote = inherited ? (
@@ -951,7 +972,7 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
         entries={state.entries}
         templates={state.templates}
         bodies={state.celestialBodies}
-        registeredNodes={fabulaStoryNodes(state, storyId)}
+        registeredNodes={nodes}
         onChange={(d) => onDraftChange(kind === "cast" ? fabulaCastNameFill(state, draft, d) : d)}
         showSecrets={showSecrets}
         imageFolder={state.world.imageFolder}
@@ -983,6 +1004,8 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
       state={state}
       onUpdateViewPrefs={onUpdateViewPrefs}
       canvasSlot={note || povNote}
+      registeredNodes={nodes}
+      badgeExtra={place ? place.path : null}
     />
   );
 }
@@ -1175,6 +1198,28 @@ const fabulaOutlineNumbers = (tree) => {
   };
   walk(tree);
   return numbers;
+};
+
+// Where each of a story's acts, chapters, and scenes sits (Drak, 2026-10-26;
+// v1.7 r012): its path, the act's number, then the chapter's, then the
+// scene's letter, joined by dots, so a scene reads II.4.A, a chapter II.4,
+// an act II, a scene straight under an act II.A, one at the story's own level
+// A, and a chapter outside any act 4; and its index in the outline's order.
+// Worked out from the outline each time, as the numbers are.
+const fabulaOutlinePlaces = (state, storyId) => {
+  const fab = (state && state.fabula) || {};
+  const story = (Array.isArray(fab.stories) ? fab.stories : []).find(st => st && st.id === storyId);
+  const places = new Map();
+  if (!story) return places;
+  const tree = fabulaOutlineTree(state, story);
+  const numbers = fabulaOutlineNumbers(tree);
+  const walk = (nodes, prefix) => nodes.forEach(n => {
+    const path = prefix ? `${prefix}.${numbers.get(n.id)}` : numbers.get(n.id);
+    places.set(n.id, { path, index: places.size });
+    walk(n.children, path);
+  });
+  walk(tree, "");
+  return places;
 };
 
 // Fabula with a story's outline written back.

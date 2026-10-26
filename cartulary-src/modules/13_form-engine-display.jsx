@@ -64,7 +64,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -76,8 +76,10 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
     return calendarDateToAbsoluteDay(state.world.calendar, cm);
   })();
   // v1.7 r003: the records that aren't entries (bodies, Glossopoeia records,
-  // maps), so a reference to one shows its name (resolveRefTarget).
-  const registeredNodes = state ? getRegisteredGraphNodes(state) : [];
+  // maps), so a reference to one shows its name (resolveRefTarget). Since
+  // r012 a caller can give its own, named as its form names them, as a
+  // Fabula page gives its story's (fabulaStoryNodes).
+  const registeredNodes = nodesGiven || (state ? getRegisteredGraphNodes(state) : []);
   return (
     <div className="entry-view">
       <div className="entry-header-row">
@@ -95,6 +97,8 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
       <div className="entry-badge">
         <span style={{ color: template.color, fontVariantEmoji: "text" }}>{template.icon}</span>
         {template.name}
+        {/* v1.7 r012: a word between the kind and the date, as an act's, a chapter's, or a scene's place in its outline (II.4.A). */}
+        {badgeExtra && <><span style={{ color: "var(--border2)" }}>·</span><span className="entry-badge-position">{badgeExtra}</span></>}
         <span style={{ color: "var(--border2)" }}>·</span>
         <span>Updated {fmtDate(entry.updatedAt)}</span>
       </div>
@@ -460,7 +464,9 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
 // and since v1.7's r009 a Fabula record with a page of its own opens too
 // (fabulaRecordOpens; Drak, 2026-10-25), and since r011 an act, a chapter,
 // or a scene does as well. `kind` names the record's type for a chip that
-// can't be opened.
+// can't be opened. Since r012 `place` is an act's, a chapter's, or a scene's
+// position and its own name, apart, when the nodes given carry them
+// (fabulaStoryNodes), for a chip to draw the position quieter than the name.
 const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   if (!id) return null;
   const e = (entries || []).find(x => x && x.id === id);
@@ -470,7 +476,7 @@ const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   const n = (registeredNodes || []).find(x => x && x.id === id);
   if (!n) return null;
   const src = getRegisteredSourceById(n.templateId);
-  return { name: n.name, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
+  return { name: n.name, place: n.place || null, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
 };
 
 function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
@@ -600,7 +606,7 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, registere
           }
           return (
             <a key={i} className="entry-ref-chip" onClick={(e) => { e.preventDefault(); onOpenEntry(it.id); }} href="#">
-              <span className="entry-ref-chip-icon">→</span>{ref.name}
+              <span className="entry-ref-chip-icon">→</span>{ref.place ? <><span className="entry-ref-chip-position" style={{ opacity: 0.6 }}>{ref.place.path}</span>{" "}{ref.place.name}</> : ref.name}
               {it.label && <span className="entry-ref-chip-label"> ({it.label})</span>}
               {spouseMeta && <span className="entry-ref-chip-spouse-meta"> — {spouseMeta}</span>}
             </a>
@@ -645,7 +651,7 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, registere
         if (!ref.open) return <span className="entry-ref-chip" style={{ cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" }} title={ref.kind}>{ref.name}</span>;
         return (
           <a className="entry-ref-chip" href="#" onClick={(e) => { e.preventDefault(); onOpenEntry(cv); }}>
-            <span className="entry-ref-chip-icon">→</span>{ref.name}
+            <span className="entry-ref-chip-icon">→</span>{ref.place ? <><span className="entry-ref-chip-position" style={{ opacity: 0.6 }}>{ref.place.path}</span>{" "}{ref.place.name}</> : ref.name}
           </a>
         );
       }

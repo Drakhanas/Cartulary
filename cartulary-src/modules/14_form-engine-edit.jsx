@@ -893,7 +893,9 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     const excluded = Array.isArray(field.excludeIds) && field.excludeIds.length > 0 ? new Set(field.excludeIds) : null;
     return pool.filter(e => e.id !== selfEntryId && !(excluded && excluded.has(e.id)));  // self-references are never legitimate
   }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, field.refMissing, field.excludeIds, selfEntryId, tplById]);
-  const sorted = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
+  // v1.7 r012: a field can keep its candidates in the order they come
+  // (keepOrder), as a Fabula picker of scenes keeps the outline's.
+  const sorted = field.keepOrder ? [...candidates] : [...candidates].sort((a, b) => a.name.localeCompare(b.name));
   const isRelation = !!field.relationKind;
   const isSpouse = field.relationKind === SPOUSE_KIND;
   // v1.7 r008: what the picker says in place of its list. A field none of
