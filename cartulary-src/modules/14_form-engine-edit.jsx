@@ -888,8 +888,11 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
         return filterCfg.allowedValues.includes(targetVal);
       });
     }
-    return pool.filter(e => e.id !== selfEntryId);  // self-references are never legitimate
-  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, field.refMissing, selfEntryId, tplById]);
+    // v1.7 r009: a field can leave out given records (excludeIds), as a cast
+    // record's Character leaves out the characters the story has cast.
+    const excluded = Array.isArray(field.excludeIds) && field.excludeIds.length > 0 ? new Set(field.excludeIds) : null;
+    return pool.filter(e => e.id !== selfEntryId && !(excluded && excluded.has(e.id)));  // self-references are never legitimate
+  }, [entries, bodies, registeredNodes, field.refTemplatesId, field.refTemplateId, field.refFilters, field.refMissing, field.excludeIds, selfEntryId, tplById]);
   const sorted = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
   const isRelation = !!field.relationKind;
   const isSpouse = field.relationKind === SPOUSE_KIND;

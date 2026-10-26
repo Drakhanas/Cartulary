@@ -300,6 +300,8 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
         // does for a deleted entry. Intentional deletion is not data loss, so
         // no dead label — the reference just clears.
         entries: scrubEntryRefs(s.entries, s.templates, new Set([bodyId])),
+        // v1.7 r009: and Fabula's references to it, the same way.
+        fabula: scrubFabulaRefs(s, new Set([bodyId])),
         celestialBodies: remaining,
         world: nextWorld,
         calendars: nextCalendars,

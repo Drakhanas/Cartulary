@@ -255,8 +255,11 @@ function ProjectView({ state, onOpenEntry, dirHandle, onSelectTemplate, onChange
 // registry), and each world keeps one schema per kind in
 // state.fabula.schemas, seeded here from the field tables Drak passed on
 // 2026-10-25 (spec, section 5). The code grows here until the view is in,
-// then moves to a module of its own by a carve.
-const FABULA_SCHEMA_SEED = 1;
+// then moves to a module of its own by a carve. The seed's number rises when
+// the seed changes, so a world's unedited schemas follow it: 2 since v1.7's
+// r009, when an arc's Cast took more than one (Drak, 2026-10-25, at r009's
+// pass).
+const FABULA_SCHEMA_SEED = 2;
 
 // The seeded schemas, one per kind, resolved against this world's templates.
 // Field ids are stable and unique within a kind, subfields included, as
@@ -380,7 +383,7 @@ const fabulaSeedSchemas = (templates) => {
       area("notes", "Notes", "Anything else about them in this story."),
     ]),
     arc: schema("arc", "Name", "A name for the arc, such as \"Mira's fall\".", [
-      kref("cast", "Cast", "Whose arc this is.", "cast", CORE),
+      kref("cast", "Cast", "Whose arc this is; there can be more than one.", "cast", { ...CORE, ...MANY }),
       pickOther("arcType", "Arc Type", "The shape of the change.", ["Positive Change", "Flat", "Negative Change", "Disillusionment", "Corruption", "Fall"]),
       pick("status", "Status", "Where the arc stands in your plan.", ["Idea", "Planned", "Underway", "Resolved", "Abandoned"]),
       area("want", "Want", "The external goal."),
@@ -476,7 +479,9 @@ const fabulaSeedSchemas = (templates) => {
 // template builder learns Fabula nothing can mark one, so a later seed
 // replaces it whole, and the cut that teaches the builder adds the rule for
 // giving an edited schema new core fields. A schema from a newer seed is left
-// alone. Idempotent: a second load changes nothing.
+// alone. A reference the replacing seed takes more than one of keeps what it
+// held, as a list of one (seed 2: an arc's Cast). Idempotent: a second load
+// changes nothing.
 const ensureFabulaSlice = (state) => {
   const isObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
   if (!isObj(state.fabula)) state.fabula = {};
@@ -490,6 +495,11 @@ const ensureFabulaSlice = (state) => {
       && (have.edited === true || (typeof have.seed === "number" && have.seed >= FABULA_SCHEMA_SEED))) return;
     if (!seeded) seeded = fabulaSeedSchemas(Array.isArray(state.templates) ? state.templates : []);
     fab.schemas[k.kind] = seeded[k.kind];
+    const lists = seeded[k.kind].fields.filter(fl => fl.type === "entry-ref" && fl.multi).map(fl => fl.id);
+    fab[k.slice].forEach(r => {
+      if (!r || !isObj(r.fields)) return;
+      lists.forEach(id => { if (typeof r.fields[id] === "string") r.fields[id] = r.fields[id] ? [r.fields[id]] : []; });
+    });
   });
 };
 
@@ -509,13 +519,30 @@ const fabulaRegistryInstances = (state, k) =>
     .map(r => ({ id: r.id, name: r.name || "(untitled)", kind: k.kind }));
 
 const fabulaRegistryEdges = (state, k) => {
-  if (k.kind !== "corpus") return [];
   const fab = (state && state.fabula) || {};
-  const storyIds = new Set((Array.isArray(fab.stories) ? fab.stories : []).map(st => st && st.id).filter(Boolean));
   const edges = [];
-  (Array.isArray(fab.corpora) ? fab.corpora : []).forEach(c => {
-    if (!c || !c.id || !Array.isArray(c.storyIds)) return;
-    c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
+  if (k.kind === "corpus") {
+    const storyIds = new Set((Array.isArray(fab.stories) ? fab.stories : []).map(st => st && st.id).filter(Boolean));
+    (Array.isArray(fab.corpora) ? fab.corpora : []).forEach(c => {
+      if (!c || !c.id || !Array.isArray(c.storyIds)) return;
+      c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
+    });
+    return edges;
+  }
+  // v1.7 r009: the links that exist so far (spec, section 9), each labeled as
+  // its field is: a story to its threads and themes, a cast record to its
+  // character, an arc to its cast, a relationship to its two. Concordance
+  // drops an edge whose other end isn't drawn.
+  const links = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"] }[k.kind];
+  if (!links) return edges;
+  const fields = fabulaKindFields(state, k.kind);
+  (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => {
+    if (!r || !r.id) return;
+    links.forEach(fid => {
+      const f = fields.find(x => x.id === fid);
+      const v = (r.fields || {})[fid];
+      (Array.isArray(v) ? v : [v]).forEach(t => { if (typeof t === "string" && t) edges.push({ source: r.id, target: t, label: f ? f.label : fid, kind: "directed" }); });
+    });
   });
   return edges;
 };
@@ -523,11 +550,20 @@ const fabulaRegistryEdges = (state, k) => {
 // A kind's schema as the template EntryForm and EntryView take: the world's
 // stored schema, or the seed when the world has none, its reference fields
 // following their targets' names (fabulaLiveFields, v1.7 r008).
-const fabulaTemplate = (state, kind) => {
+const fabulaTemplate = (state, kind, ctx) => {
   const k = FABULA_KINDS.find(x => x.kind === kind);
   const stored = state.fabula && state.fabula.schemas && state.fabula.schemas[kind];
   const s = stored && Array.isArray(stored.fields) ? stored : fabulaSeedSchemas(state.templates || [])[kind];
-  return { id: k.id, name: k.label, icon: "\u2042", color: k.color, kind: `fabula-${kind}`, fields: fabulaLiveFields(s.fields, state.templates || []), nameHelp: s.nameHelp };
+  let fields = fabulaLiveFields(s.fields, state.templates || []);
+  // v1.7 r009: one cast record per character per story (spec, section 5.3),
+  // so a cast record's Character leaves out the characters the story's other
+  // cast records have (ctx: the story and the record).
+  if (kind === "cast" && ctx && ctx.storyId) {
+    const cast = (state.fabula && Array.isArray(state.fabula.cast)) ? state.fabula.cast : [];
+    const taken = cast.filter(c => c && c.storyId === ctx.storyId && c.id !== ctx.recordId).map(c => (c.fields || {}).character).filter(v => typeof v === "string" && v);
+    fields = fields.map(fl => fl.id === "character" ? { ...fl, excludeIds: taken } : fl);
+  }
+  return { id: k.id, name: k.label, icon: "\u2042", color: k.color, kind: `fabula-${kind}`, fields, nameHelp: s.nameHelp };
 };
 
 // A story's cast and scenes, for its row.
@@ -644,7 +680,7 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
       }
       trailing={
         <button className="btn" style={{ ...smallBtn, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }} onClick={() => {
-          if (confirm(`Delete the story "${st.name || "untitled story"}"?`)) onDeleteStory(st.id);
+          if (confirm(fabulaStoryDeleteMessage(state, st))) onDeleteStory(st.id);
         }} title="Delete this story">Delete</button>
       }
     />
@@ -780,7 +816,7 @@ const FABULA_STORY_PANELS = [
 // holds is what a tab will hold, which an unbuilt tab's tooltip says.
 const FABULA_STORY_TABS = [
   { id: "story", label: "Story", built: true, holds: "the story's own fields and its four panels" },
-  { id: "people", label: "People", built: false, holds: "the story's cast, their arcs, and their relationships" },
+  { id: "people", label: "People", built: true, holds: "the story's cast, their arcs, and their relationships" },
   { id: "plot", label: "Plot", built: false, holds: "the story's plot threads, plot points, and promises and payoffs" },
   { id: "outline", label: "Outline", built: false, holds: "the story's parts, chapters, and scenes, as one ordered tree" },
   { id: "meaning", label: "Meaning", built: false, holds: "the themes and motifs the Premise panel lists" },
@@ -832,20 +868,24 @@ const fabulaStoryNodes = (state, storyId) => {
   return getRegisteredGraphNodes(state).filter(n => !kindIds.has(n.templateId) || inStory.has(n.id));
 };
 
-function FabulaStoryTabs({ active }) {
+// A built tab switches the page (v1.7 r009); while the Story record is in
+// edit there's no onSelect, and the other tabs wait for Save or Cancel.
+function FabulaStoryTabs({ active, onSelect }) {
   return (
     <div role="tablist" aria-label="Story sections" style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid var(--border)", margin: "0 0 22px" }}>
       {FABULA_STORY_TABS.map(t => {
         const on = t.id === active;
+        const usable = t.built && (on || !!onSelect);
         return (
           <button
             key={t.id}
             type="button"
             role="tab"
             aria-selected={on}
-            aria-disabled={t.built ? undefined : "true"}
-            title={t.built ? undefined : `Not built yet: ${t.holds}.`}
-            style={{ padding: "8px 14px", border: "none", background: "transparent", fontFamily: "inherit", fontSize: 13, color: on ? "var(--text)" : "var(--text-dim)", fontWeight: on ? 600 : 400, borderBottom: on ? "2px solid var(--accent)" : "2px solid transparent", marginBottom: -1, cursor: t.built ? "pointer" : "default", opacity: t.built ? 1 : 0.45 }}
+            aria-disabled={usable ? undefined : "true"}
+            title={!t.built ? `Not built yet: ${t.holds}.` : !usable ? "Save or cancel the Story's edit first." : undefined}
+            onClick={usable && !on ? () => onSelect(t.id) : undefined}
+            style={{ padding: "8px 14px", border: "none", background: "transparent", fontFamily: "inherit", fontSize: 13, color: on ? "var(--text)" : "var(--text-dim)", fontWeight: on ? 600 : 400, borderBottom: on ? "2px solid var(--accent)" : "2px solid transparent", marginBottom: -1, cursor: usable && !on ? "pointer" : "default", opacity: usable ? 1 : 0.45 }}
           >
             {t.label}
           </button>
@@ -855,10 +895,31 @@ function FabulaStoryTabs({ active }) {
   );
 }
 
-// The page itself: the Story record in view or, with a draft, in edit.
-function FabulaStoryPage({ state, story, draft, onDraftChange, isLocked, folds, onToggleFold, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
+// The page itself: the Story record in view or, with a draft, in edit, and
+// since v1.7's r009 the People tab.
+function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab, onOpenRecord, onNewRecord, isLocked, folds, onToggleFold, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
   const template = fabulaTemplate(state, "story");
-  const tabs = <FabulaStoryTabs active="story" />;
+  const active = draft ? "story" : (tab || "story");
+  const tabs = <FabulaStoryTabs active={active} onSelect={draft ? null : onSelectTab} />;
+  if (!draft && active === "people") {
+    return (
+      <EntryView
+        entry={story}
+        template={{ ...template, fields: [] }}
+        templates={state.templates}
+        entries={state.entries}
+        onOpenEntry={onOpenEntry}
+        onSelectTag={onSelectTag}
+        showSecrets={showSecrets}
+        imageFolder={state.world.imageFolder}
+        dirHandle={dirHandle}
+        calendar={getCalendar(state, null)}
+        state={state}
+        onUpdateViewPrefs={onUpdateViewPrefs}
+        canvasSlot={<>{tabs}<FabulaPeopleTab state={state} story={story} isLocked={isLocked} onOpenRecord={onOpenRecord} onNewRecord={onNewRecord} /></>}
+      />
+    );
+  }
   const panelProps = { panels: FABULA_STORY_PANELS, foldedPanels: folds || {}, onTogglePanel: onToggleFold };
   if (draft) {
     return (
@@ -902,6 +963,256 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, isLocked, folds, 
       onUpdateViewPrefs={onUpdateViewPrefs}
       canvasSlot={tabs}
       {...panelProps}
+    />
+  );
+}
+
+// ─── Fabula: People (v1.7 r009) ────────────────────────────────────────────────
+// People (docs/fabula-spec.md, section 4, Drak's calls of 2026-10-25): the
+// story's cast, arcs, and relationships, each opening on a page of its own
+// over the story's page, a reference to one opening it as a reference to an
+// entry opens the entry. A delete never takes another record with it: it
+// counts what points at the record and clears those references. A deleted
+// world entry is cleaned out of Fabula the way it's cleaned out of entries,
+// and a cast record whose character it was stays, marked (spec, section 9).
+
+// A kind's record in a sentence, one or many; add names its + New button.
+const FABULA_NOUNS = {
+  corpus: { one: "corpus", many: "corpora" },
+  story: { one: "story", many: "stories" },
+  cast: { one: "cast record", many: "cast records", add: "Cast" },
+  arc: { one: "arc", many: "arcs", add: "Arc" },
+  relationship: { one: "relationship", many: "relationships", add: "Relationship" },
+  plotPoint: { one: "plot point", many: "plot points" },
+  promise: { one: "promise and payoff", many: "promises and payoffs" },
+  part: { one: "part", many: "parts" },
+  chapter: { one: "chapter", many: "chapters" },
+  scene: { one: "scene", many: "scenes" },
+  research: { one: "research note", many: "research notes" },
+};
+
+// The kinds whose records have pages of their own, so a reference opens one.
+const FABULA_PAGE_KINDS = ["cast", "arc", "relationship"];
+
+// A cast list's order: by Importance, then by name.
+const FABULA_IMPORTANCE = ["Main", "Secondary", "Minor"];
+
+const fabulaCount = (kind, n) => `${n} ${n === 1 ? FABULA_NOUNS[kind].one : FABULA_NOUNS[kind].many}`;
+
+const fabulaJoin = (parts) => parts.length <= 1 ? (parts[0] || "")
+  : parts.length === 2 ? `${parts[0]} and ${parts[1]}`
+  : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+
+// A kind's fields as stored, or the seed's: what the cleaning and the
+// counting walk. Neither needs the targets worked out.
+const fabulaKindFields = (state, kind) => {
+  const stored = state && state.fabula && state.fabula.schemas && state.fabula.schemas[kind];
+  if (stored && Array.isArray(stored.fields)) return stored.fields;
+  const seeded = fabulaSeedSchemas((state && state.templates) || [])[kind];
+  return seeded ? seeded.fields : [];
+};
+
+// Fabula with every reference to deletedIds cleared, through the same walk
+// scrubEntryRefs gives entries (groups and grids included). names maps a
+// deleted entry's id to its name, for a cast record whose character it was:
+// that record stays, its Character cleared and marked characterDeleted.
+const scrubFabulaRefs = (state, deletedIds, names) => {
+  const fab = state && state.fabula;
+  if (!fab || !deletedIds || deletedIds.size === 0) return fab;
+  const next = { ...fab };
+  FABULA_KINDS.forEach(k => {
+    const arr = Array.isArray(fab[k.slice]) ? fab[k.slice] : null;
+    if (!arr || arr.length === 0) return;
+    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
+    const marked = k.kind !== "cast" ? arr : arr.map(r => {
+      const c = r && r.fields && r.fields.character;
+      return typeof c === "string" && deletedIds.has(c) ? { ...r, characterDeleted: { name: (names && names.get(c)) || "" } } : r;
+    });
+    next[k.slice] = scrubEntryRefs(marked.map(r => ({ ...r, templateId: k.id })), [tpl], deletedIds).map(({ templateId, ...r }) => r);
+  });
+  return next;
+};
+
+// How many of each kind's records point at id: [[kind, n]], for a delete's
+// confirmation.
+const fabulaInboundCounts = (state, id) => {
+  const fab = (state && state.fabula) || {};
+  return FABULA_KINDS.map(k => {
+    const arr = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.id !== id);
+    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
+    return [k.kind, countInboundEntryRefs(arr.map(r => ({ ...r, templateId: k.id })), [tpl], id)];
+  }).filter(([, n]) => n > 0);
+};
+
+const fabulaRecordDeleteMessage = (state, kind, rec) => {
+  const head = `Delete the ${FABULA_NOUNS[kind].one} "${rec.name || "untitled"}"?`;
+  const counts = fabulaInboundCounts(state, rec.id);
+  if (counts.length === 0) return head;
+  const total = counts.reduce((a, [, n]) => a + n, 0);
+  const said = fabulaJoin(counts.map(([kk, n]) => kk === "story" ? "the story" : fabulaCount(kk, n)));
+  return `${head} ${said.charAt(0).toUpperCase()}${said.slice(1)} ${total === 1 ? "points" : "point"} at it; ${total === 1 ? "it stays" : "they stay"}, without it.`;
+};
+
+// What deleting a story takes with it: its own records, by kind.
+const fabulaStoryDeleteMessage = (state, story) => {
+  const fab = (state && state.fabula) || {};
+  const counts = FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
+    .map(k => [k.kind, (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.storyId === story.id).length])
+    .filter(([, n]) => n > 0);
+  const head = `Delete the story "${story.name || "untitled story"}"?`;
+  if (counts.length === 0) return head;
+  const one = counts.length === 1 && counts[0][1] === 1;
+  return `${head} Its ${fabulaJoin(counts.map(([kk, n]) => fabulaCount(kk, n)))} ${one ? "goes" : "go"} with it.`;
+};
+
+// Fabula's slices below the story level without one story's records.
+const fabulaDropStoryRecords = (fab, storyId) => Object.fromEntries(
+  FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
+    .map(k => [k.slice, (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => !r || r.storyId !== storyId)])
+);
+
+// A record with a page of its own, found by id: { kind, record } or null.
+const fabulaFindRecord = (state, id) => {
+  const fab = (state && state.fabula) || {};
+  for (const kind of FABULA_PAGE_KINDS) {
+    const k = FABULA_KINDS.find(x => x.kind === kind);
+    const record = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).find(r => r && r.id === id);
+    if (record) return { kind, record };
+  }
+  return null;
+};
+
+// Whether a reference to a record of this source opens it (resolveRefTarget).
+const fabulaRecordOpens = (sourceId) => FABULA_KINDS.some(k => k.id === sourceId && FABULA_PAGE_KINDS.includes(k.kind));
+
+// A cast record's name follows the character picked while it's still blank or
+// still the last character's name; a name of the user's own stays.
+const fabulaCastNameFill = (state, prev, next) => {
+  const was = (prev.fields || {}).character, now = (next.fields || {}).character;
+  if (!now || now === was) return next;
+  const nameOf = (id) => { const e = (state.entries || []).find(x => x.id === id); return e ? e.name : ""; };
+  const prevName = (prev.name || "").trim();
+  if (prevName && prevName !== nameOf(was)) return next;
+  return { ...next, name: nameOf(now) || next.name };
+};
+
+// The People tab: the story's cast, by importance and then name, its arcs,
+// and its relationships, each list with its + New. A row's details sit to
+// the right of its name and drop under it when the two don't fit, each dot
+// kept with the detail before it.
+function FabulaPeopleTab({ state, story, isLocked, onOpenRecord, onNewRecord }) {
+  const fab = state.fabula || {};
+  const mine = (slice) => (Array.isArray(fab[slice]) ? fab[slice] : []).filter(r => r && r.id && r.storyId === story.id);
+  const byName = (a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+  const castById = new Map(mine("cast").map(c => [c.id, c]));
+  const castName = (id) => { const c = typeof id === "string" && castById.get(id); return c ? (c.name || "(unnamed)") : null; };
+  const rank = (c) => { const i = FABULA_IMPORTANCE.indexOf(formatSelectDisplay((c.fields || {}).importance)); return i === -1 ? FABULA_IMPORTANCE.length : i; };
+  const many = (v) => (Array.isArray(v) ? v : []).filter(Boolean).join(", ");
+  const cast = mine("cast").slice().sort((a, b) => rank(a) - rank(b) || byName(a, b));
+  const arcs = mine("arcs").slice().sort(byName);
+  const rels = mine("relationships").slice().sort(byName);
+  const meta = {
+    cast: (c) => [formatSelectDisplay((c.fields || {}).importance), many((c.fields || {}).role), c.characterDeleted ? "character deleted" : null],
+    arc: (a) => {
+      const f = a.fields || {};
+      const names = (Array.isArray(f.cast) ? f.cast : []).map(castName).filter(Boolean);
+      return [names.length ? fabulaJoin(names) : "no cast", formatSelectDisplay(f.arcType), formatSelectDisplay(f.status)];
+    },
+    relationship: (r) => {
+      const f = r.fields || {};
+      const a = castName(f.castA), b = castName(f.castB);
+      return [a || b ? `${a || "?"} and ${b || "?"}` : "no cast", many(f.kind)];
+    },
+  };
+  const section = (title, kind, items, empty) => (
+    <div className="fabula-people-section" data-kind={kind} style={{ marginBottom: 28 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+        <div className="field-label"><span>{title}</span></div>
+        {!isLocked && <button className="btn" style={{ padding: "3px 10px", fontSize: 12 }} onClick={() => onNewRecord(kind)}>+ New {FABULA_NOUNS[kind].add}</button>}
+      </div>
+      {items.length === 0 ? (
+        <div style={{ fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>{empty}</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+          {items.map(r => (
+            <div
+              key={r.id}
+              className="stemma-index-row fabula-record-row"
+              role="button"
+              tabIndex={0}
+              title={`Open this ${FABULA_NOUNS[kind].one}`}
+              onClick={() => onOpenRecord(kind, r.id)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpenRecord(kind, r.id); } }}
+              style={{ padding: "10px 16px", background: "var(--surf)", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 12, rowGap: 2, cursor: "pointer" }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 500, minWidth: 0, overflowWrap: "anywhere" }}>{r.name || "(untitled)"}</div>
+              <div style={{ fontSize: 12, color: "var(--text-dim)", marginLeft: "auto", minWidth: 0, textAlign: "right", overflowWrap: "anywhere" }}>{meta[kind](r).filter(Boolean).join("\u00a0\u00b7 ")}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+  return (
+    <div className="fabula-people">
+      {section("Cast", "cast", cast, "No cast yet.")}
+      {section("Arcs", "arc", arcs, "No arcs yet.")}
+      {section("Relationships", "relationship", rels, "No relationships yet.")}
+    </div>
+  );
+}
+
+// A cast record's, an arc's, or a relationship's page, over its story's: its
+// fields in view or, with a draft, in edit, its pickers offering the story's
+// own records. A cast record whose character was deleted says so.
+function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, isLocked, onRestoreTemplate, showSecrets, allTags, dirHandle, flash, onOpenEntry, onSelectTag, onUpdateViewPrefs }) {
+  const template = fabulaTemplate(state, kind, { storyId, recordId: record.id });
+  const gone = kind === "cast" ? record.characterDeleted : null;
+  const note = gone ? (
+    <div className="fabula-character-deleted" style={{ margin: "0 0 18px", padding: "10px 14px", border: "1px solid var(--border)", borderLeft: "2px solid var(--danger)", borderRadius: 3, fontSize: 13, color: "var(--text)" }}>
+      Character deleted{gone.name ? ` (was ${gone.name})` : ""}. {draft ? "Pick another below, or cancel and delete this cast record." : "Edit to pick another, or delete this cast record."}
+    </div>
+  ) : null;
+  if (draft) {
+    return (
+      <EntryForm
+        draft={draft}
+        template={template}
+        entries={state.entries}
+        templates={state.templates}
+        bodies={state.celestialBodies}
+        registeredNodes={fabulaStoryNodes(state, storyId)}
+        onChange={(d) => onDraftChange(kind === "cast" ? fabulaCastNameFill(state, draft, d) : d)}
+        showSecrets={showSecrets}
+        imageFolder={state.world.imageFolder}
+        allTags={allTags}
+        dirHandle={dirHandle}
+        calendar={getCalendar(state, null)}
+        primaryCalendar={state.world.calendar}
+        additionalCalendars={[]}
+        selfEntryId={draft.id}
+        flash={flash}
+        hideTags
+        canvasSlot={note}
+        onRestoreTemplate={isLocked ? undefined : onRestoreTemplate}
+      />
+    );
+  }
+  return (
+    <EntryView
+      entry={record}
+      template={template}
+      templates={state.templates}
+      entries={state.entries}
+      onOpenEntry={onOpenEntry}
+      onSelectTag={onSelectTag}
+      showSecrets={showSecrets}
+      imageFolder={state.world.imageFolder}
+      dirHandle={dirHandle}
+      calendar={getCalendar(state, null)}
+      state={state}
+      onUpdateViewPrefs={onUpdateViewPrefs}
+      canvasSlot={note}
     />
   );
 }

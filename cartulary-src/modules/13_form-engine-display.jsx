@@ -457,9 +457,10 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
 // Fabula record), or null when nothing has its id. `open` says whether a
 // click can take you there: entries, maps, and bodies open; a Glossopoeia
 // record has no route yet, so it shows as a plain chip (Drak, 2026-10-24),
-// and a Fabula record shows as one too until People settles whether a
-// reference opens it (v1.7 r008). `kind` names the record's type for a chip
-// that can't be opened.
+// and since v1.7's r009 a Fabula record with a page of its own opens too
+// (fabulaRecordOpens; Drak, 2026-10-25), where a scene stays a plain chip
+// until it has one. `kind` names the record's type for a chip that can't be
+// opened.
 const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   if (!id) return null;
   const e = (entries || []).find(x => x && x.id === id);
@@ -469,7 +470,7 @@ const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   const n = (registeredNodes || []).find(x => x && x.id === id);
   if (!n) return null;
   const src = getRegisteredSourceById(n.templateId);
-  return { name: n.name, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL, kind: src ? src.name : "" };
+  return { name: n.name, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
 };
 
 function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {

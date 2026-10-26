@@ -43,6 +43,16 @@ function App() {
   const [activeStoryId, setActiveStoryId] = useState(null);
   const [storyDraft, setStoryDraft] = useState(null);
   const initialStoryDraftRef = useRef(null);
+  // v1.7 r009: People. storyTab is the story page's open tab; activeRecord
+  // ({ kind, id }) is a cast record's, an arc's, or a relationship's page,
+  // drawn over its story's page; recordDraft is that record in edit (one
+  // whose id isn't in its slice is new); fabulaBack holds the pages the
+  // record was opened from, a story's tab or another record, for Back.
+  const [storyTab, setStoryTab] = useState("story");
+  const [activeRecord, setActiveRecord] = useState(null);
+  const [recordDraft, setRecordDraft] = useState(null);
+  const initialRecordDraftRef = useRef(null);
+  const [fabulaBack, setFabulaBack] = useState([]);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
   // value "__primary__" routes the editor to state.world.calendar without
@@ -771,23 +781,25 @@ function App() {
     if (mapDraft && JSON.stringify(mapDraft) !== initialMapDraftRef.current) return true;
     if (corpusDraft && JSON.stringify(corpusDraft) !== initialCorpusDraftRef.current) return true;
     if (storyDraft && JSON.stringify(storyDraft) !== initialStoryDraftRef.current) return true;
+    if (recordDraft && JSON.stringify(recordDraft) !== initialRecordDraftRef.current) return true;
     return false;
   };
 
   draftDirtyRef.current = isDraftDirty;
   const confirmDiscardDraft = () => {
     if (!isDraftDirty()) return true;
-    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : storyDraft ? "this story" : entryDraft ? "this entry" : "this template";
+    const which = mapDraft ? "this map" : corpusDraft ? "this corpus" : storyDraft ? "this story" : recordDraft && activeRecord ? `this ${FABULA_NOUNS[activeRecord.kind].one}` : entryDraft ? "this entry" : "this template";
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
   const clearDraftAndStorage = () => {
-    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null);
+    setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null); setRecordDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
     initialMapDraftRef.current = null;
     initialCorpusDraftRef.current = null;
     initialStoryDraftRef.current = null;
+    initialRecordDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
@@ -808,6 +820,7 @@ function App() {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
+    setActiveRecord(null); setFabulaBack([]);
     clearDraftAndStorage(); setSearch(""); setView(v);
   };
 
@@ -841,6 +854,29 @@ function App() {
       setView("cartographia");
       return;
     }
+    // v1.7 r009: a cast record, an arc, or a relationship opens on its own
+    // page over its story's (Drak, 2026-10-25). From a Fabula page, Back
+    // returns to the page the click came from; from anywhere else, such as
+    // Concordance, to its story's People tab.
+    const fabRec = fabulaFindRecord(state, id);
+    if (fabRec) {
+      const onFabulaPage = view === "fabula" && activeStoryId && activeStoryId === fabRec.record.storyId;
+      const from = onFabulaPage ? (activeRecord ? { kind: activeRecord.kind, id: activeRecord.id } : { kind: "story", tab: storyTab }) : null;
+      setActiveTagFilter(null);
+      setCorpusDraft(null); initialCorpusDraftRef.current = null;
+      setStoryDraft(null); initialStoryDraftRef.current = null;
+      setRecordDraft(null); initialRecordDraftRef.current = null;
+      if (!onFabulaPage) {
+        const home = ((state.fabula && state.fabula.corpora) || []).find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(fabRec.record.storyId));
+        setActiveCorpusId(home ? home.id : null);
+        setActiveStoryId(fabRec.record.storyId);
+        setStoryTab("people");
+      }
+      setFabulaBack(b => from ? [...b, from] : [{ kind: "story", tab: "people" }]);
+      setActiveRecord({ kind: fabRec.kind, id });
+      setView("fabula");
+      return;
+    }
     // v1.7 r007: Fabula fallback. A corpus opens on its page, and since r008
     // a story on its own, drawn over its corpus's page (or the index, when
     // it's in no corpus), which the story's Back returns to.
@@ -853,6 +889,8 @@ function App() {
       setStoryDraft(null); initialStoryDraftRef.current = null;
       setActiveCorpusId(fabStory ? (home ? home.id : null) : id);
       setActiveStoryId(fabStory ? id : null);
+      setStoryTab("story"); setActiveRecord(null); setFabulaBack([]);
+      setRecordDraft(null); initialRecordDraftRef.current = null;
       setView("fabula");
       return;
     }
@@ -1257,10 +1295,13 @@ function App() {
     updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === id ? { ...st, name: n, updatedAt: isoNow() } : st) }));
   };
 
+  // v1.7 r009: a story's own records (cast, arcs, and the rest, each with the
+  // story's storyId) go with it; the confirmation says how many.
   const deleteStory = (id) => {
     if (isLocked) return;
     updateFabula(fab => ({
       ...fab,
+      ...fabulaDropStoryRecords(fab, id),
       stories: fabArr(fab, "stories").filter(st => st.id !== id),
       corpora: fabArr(fab, "corpora").map(c => (c.storyIds || []).includes(id) ? { ...c, storyIds: c.storyIds.filter(x => x !== id) } : c),
     }));
@@ -1302,6 +1343,8 @@ function App() {
   const openStory = (id) => {
     if (!confirmDiscardDraft()) return;
     setStoryDraft(null); initialStoryDraftRef.current = null;
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    setStoryTab("story"); setActiveRecord(null); setFabulaBack([]);
     setActiveStoryId(id);
     setView("fabula");
   };
@@ -1309,8 +1352,12 @@ function App() {
   const closeStory = () => {
     if (!confirmDiscardDraft()) return;
     setStoryDraft(null); initialStoryDraftRef.current = null;
+    setActiveRecord(null); setFabulaBack([]);
     setActiveStoryId(null);
   };
+
+  // The story page's tabs; the Story record's edit keeps its tab.
+  const selectStoryTab = (tab) => { if (!storyDraft) setStoryTab(tab); };
 
   const editStory = () => {
     const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
@@ -1340,7 +1387,7 @@ function App() {
   const deleteOpenStory = () => {
     const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
     if (!rec || isLocked) return;
-    if (!confirm(`Delete the story "${rec.name || "untitled story"}"?`)) return;
+    if (!confirm(fabulaStoryDeleteMessage(state, rec))) return;
     deleteStory(rec.id);
     setStoryDraft(null); initialStoryDraftRef.current = null;
     setActiveStoryId(null);
@@ -1349,6 +1396,103 @@ function App() {
   // The Story tab's folds belong to the browser, one set for every story
   // (Drak, 2026-10-25), so they live with the display settings.
   const toggleFabulaFold = (panelId) => setPrefs(p => ({ ...p, fabulaFolds: { ...(p.fabulaFolds || {}), [panelId]: !(p.fabulaFolds || {})[panelId] } }));
+
+  // v1.7 r009: People (docs/fabula-spec.md, section 4). A cast record, an arc,
+  // or a relationship opens on a page of its own over its story's page, and
+  // Back walks fabulaBack. A new record is a draft until Save, as a new
+  // corpus is, and Save asks for the schema's required fields.
+  const fabulaSliceOf = (kind) => (FABULA_KINDS.find(k => k.kind === kind) || {}).slice;
+  const fabulaRecordOf = (kind, id) => fabArr(state.fabula || {}, fabulaSliceOf(kind)).find(r => r && r.id === id) || null;
+  const fabulaHere = () => (activeRecord ? { kind: activeRecord.kind, id: activeRecord.id } : { kind: "story", tab: storyTab });
+
+  const openFabulaRecord = (kind, id) => {
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    setFabulaBack(b => [...b, fabulaHere()]);
+    setActiveRecord({ kind, id });
+  };
+
+  const newFabulaRecord = (kind) => {
+    if (isLocked || !activeStoryId) return;
+    if (!confirmDiscardDraft()) return;
+    const id = `fab-${kind}-${genId()}`;
+    const draft = { id, name: "", fields: {} };
+    setFabulaBack(b => [...b, fabulaHere()]);
+    setActiveRecord({ kind, id });
+    setRecordDraft(draft);
+    initialRecordDraftRef.current = JSON.stringify(draft);
+  };
+
+  // The page a record was opened from, without asking.
+  const popFabulaBack = () => {
+    const frame = fabulaBack[fabulaBack.length - 1];
+    setFabulaBack(b => b.slice(0, -1));
+    if (frame && frame.kind !== "story") { setActiveRecord({ kind: frame.kind, id: frame.id }); return; }
+    setActiveRecord(null);
+    setStoryTab((frame && frame.tab) || "people");
+  };
+
+  const closeFabulaRecord = () => {
+    if (!confirmDiscardDraft()) return;
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    popFabulaBack();
+  };
+
+  const editFabulaRecord = () => {
+    if (!activeRecord || isLocked) return;
+    const rec = fabulaRecordOf(activeRecord.kind, activeRecord.id);
+    if (!rec) return;
+    if (!confirmDiscardDraft()) return;
+    const draft = { id: rec.id, name: rec.name || "", fields: JSON.parse(JSON.stringify(rec.fields || {})) };
+    setRecordDraft(draft);
+    initialRecordDraftRef.current = JSON.stringify(draft);
+  };
+
+  const saveFabulaRecord = () => {
+    if (!recordDraft || !activeRecord || isLocked) return;
+    const name = (recordDraft.name || "").trim();
+    if (!name) return;
+    const requiredErrors = validateRequiredFields(fabulaTemplate(state, activeRecord.kind), recordDraft.fields || {});
+    if (requiredErrors.length > 0) { flash(requiredErrors.join(" \u00b7 ")); return; }
+    const slice = fabulaSliceOf(activeRecord.kind);
+    const kind = activeRecord.kind;
+    const now = isoNow();
+    updateFabula(fab => {
+      const arr = fabArr(fab, slice);
+      const old = arr.find(r => r.id === recordDraft.id);
+      const rec = { ...(old || { storyId: activeStoryId, createdAt: now }), id: recordDraft.id, name, fields: recordDraft.fields || {}, updatedAt: now };
+      // A cast record given a character again is no longer marked.
+      if (kind === "cast" && rec.fields.character) delete rec.characterDeleted;
+      return { ...fab, [slice]: old ? arr.map(r => r.id === rec.id ? rec : r) : [...arr, rec] };
+    });
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    flash("Saved");
+  };
+
+  const cancelFabulaRecordEdit = () => {
+    if (!confirmDiscardDraft()) return;
+    const existed = !!(activeRecord && fabulaRecordOf(activeRecord.kind, activeRecord.id));
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    if (!existed) popFabulaBack(); // a new record, never saved: back where it began
+  };
+
+  // Delete asks first, counting what points at the record, then clears those
+  // references; nothing else is deleted with it (Drak, 2026-10-25).
+  const deleteFabulaRecord = () => {
+    if (!activeRecord || isLocked) return;
+    const rec = fabulaRecordOf(activeRecord.kind, activeRecord.id);
+    if (!rec) return;
+    if (!confirm(fabulaRecordDeleteMessage(state, activeRecord.kind, rec))) return;
+    const slice = fabulaSliceOf(activeRecord.kind);
+    updateState(s => {
+      const fab = s.fabula || {};
+      const without = { ...fab, [slice]: fabArr(fab, slice).filter(r => r.id !== rec.id) };
+      return { ...s, fabula: scrubFabulaRefs({ ...s, fabula: without }, new Set([rec.id])) };
+    });
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    popFabulaBack();
+  };
 
   const openEditEntry = () => {
     if (!activeEntry) return;
@@ -1505,7 +1649,10 @@ function App() {
     updateState(s => {
       const deletedIds = new Set([activeEntryId]);
       const remaining = s.entries.filter(e => e.id !== activeEntryId);
-      return { ...s, entries: scrubEntryRefs(remaining, s.templates, deletedIds) };
+      // v1.7 r009: Fabula's references to it go too, and a cast record whose
+      // character it was stays, marked (spec, section 9).
+      const names = new Map([[activeEntryId, activeEntry ? activeEntry.name : ""]]);
+      return { ...s, entries: scrubEntryRefs(remaining, s.templates, deletedIds), fabula: scrubFabulaRefs(s, deletedIds, names) };
     });
     setActiveEntryId(null); clearDraftAndStorage(); setView("list");
     flash("Deleted");
@@ -2070,10 +2217,13 @@ function App() {
       );
       const remainingTemplates = s.templates.filter(t => t.id !== activeTemplateId);
       const remainingEntries = s.entries.filter(e => e.templateId !== activeTemplateId);
+      // v1.7 r009: Fabula's references to its entries go too (spec, section 9).
+      const names = new Map(s.entries.filter(e => deletedEntryIds.has(e.id)).map(e => [e.id, e.name]));
       return {
         ...s,
         templates: remainingTemplates,
         entries: scrubEntryRefs(remainingEntries, remainingTemplates, deletedEntryIds),
+        fabula: scrubFabulaRefs(s, deletedEntryIds, names),
       };
     });
     setActiveTemplateId(null); clearDraftAndStorage(); setView("home");
@@ -3653,7 +3803,12 @@ function App() {
     } else headerTitle = "Cartographia";
   }
   else if (view === "fabula") {
-    if (activeStoryId) {
+    if (activeStoryId && activeRecord) {
+      const k = FABULA_KINDS.find(x => x.kind === activeRecord.kind);
+      const rec = fabArr(state.fabula || {}, k.slice).find(r => r.id === activeRecord.id);
+      headerTitle = recordDraft ? ((recordDraft.name && recordDraft.name.trim()) ? recordDraft.name : `New ${k.label}`) : (rec?.name || k.label);
+    }
+    else if (activeStoryId) {
       const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
       headerTitle = storyDraft ? ((storyDraft.name && storyDraft.name.trim()) ? storyDraft.name : "Story") : (rec?.name || "Story");
     }
@@ -3799,13 +3954,22 @@ function App() {
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
               </>}
-              {view === "fabula" && activeStoryId && storyDraft && <>
+              {view === "fabula" && activeRecord && recordDraft && <>
+                <button className="btn btn-ghost" onClick={cancelFabulaRecordEdit}>Cancel</button>
+                <button className="btn btn-accent" onClick={saveFabulaRecord} disabled={!recordDraft?.name?.trim()}>Save</button>
+              </>}
+              {view === "fabula" && activeRecord && !recordDraft && <>
+                {!isLocked && <button className="btn btn-danger" onClick={deleteFabulaRecord}>Delete</button>}
+                {!isLocked && <button className="btn btn-ghost" onClick={editFabulaRecord}>Edit</button>}
+                <button className="btn btn-ghost" onClick={closeFabulaRecord}>← Back</button>
+              </>}
+              {view === "fabula" && activeStoryId && !activeRecord && storyDraft && <>
                 <button className="btn btn-ghost" onClick={cancelStoryEdit}>Cancel</button>
                 <button className="btn btn-accent" onClick={saveStory} disabled={!storyDraft?.name?.trim()}>Save</button>
               </>}
-              {view === "fabula" && activeStoryId && !storyDraft && <>
+              {view === "fabula" && activeStoryId && !activeRecord && !storyDraft && <>
                 {!isLocked && <button className="btn btn-danger" onClick={deleteOpenStory}>Delete</button>}
-                {!isLocked && <button className="btn btn-ghost" onClick={editStory}>Edit</button>}
+                {!isLocked && storyTab === "story" && <button className="btn btn-ghost" onClick={editStory}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeStory}>← Back</button>
               </>}
               {view === "fabula" && corpusDraft && <>
@@ -4169,7 +4333,40 @@ function App() {
               />
             );
           })()}
-          {view === "fabula" && activeStoryId && (() => {
+          {view === "fabula" && activeStoryId && activeRecord && (() => {
+            const k = FABULA_KINDS.find(x => x.kind === activeRecord.kind);
+            const rec = fabArr(state.fabula || {}, k.slice).find(r => r.id === activeRecord.id) || (recordDraft && recordDraft.id === activeRecord.id ? recordDraft : null);
+            if (!rec) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--text-dim)" }}>
+                  This {FABULA_NOUNS[activeRecord.kind].one} no longer exists.
+                  <div style={{ marginTop: 16 }}>
+                    <button className="btn btn-ghost" onClick={closeFabulaRecord}>← Back</button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <FabulaRecordPage
+                state={state}
+                kind={activeRecord.kind}
+                record={rec}
+                draft={recordDraft}
+                onDraftChange={setRecordDraft}
+                storyId={activeStoryId}
+                isLocked={isLocked}
+                onRestoreTemplate={(name) => restoreBuiltinTemplates([name])}
+                showSecrets={showSecrets}
+                allTags={allTags}
+                dirHandle={dirHandle}
+                flash={flash}
+                onOpenEntry={openEntryFromAnywhere}
+                onSelectTag={selectTag}
+                onUpdateViewPrefs={updateViewPrefs}
+              />
+            );
+          })()}
+          {view === "fabula" && activeStoryId && !activeRecord && (() => {
             const rec = ((state.fabula && state.fabula.stories) || []).find(st => st.id === activeStoryId);
             if (!rec) {
               return (
@@ -4187,6 +4384,10 @@ function App() {
                 story={rec}
                 draft={storyDraft}
                 onDraftChange={setStoryDraft}
+                tab={storyTab}
+                onSelectTab={selectStoryTab}
+                onOpenRecord={openFabulaRecord}
+                onNewRecord={newFabulaRecord}
                 isLocked={isLocked}
                 folds={prefs.fabulaFolds}
                 onToggleFold={toggleFabulaFold}
