@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 48610,
-    "raw_body_lines": 48610,
-    "canonical_lines": 46232,
-    "decl_count": 630,
+    "total_lines": 49103,
+    "raw_body_lines": 49103,
+    "canonical_lines": 46703,
+    "decl_count": 646,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r016-body.jsx"
+    "active_anchor": "reference-r017-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 48610,
+      "value": 49103,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 630,
+      "value": 646,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 46232,
+      "value": 46703,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 48610,
+      "value": 49103,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 86,
+      "value": 87,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2563875,
+      "value": 2593929,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty-three",
-        43
+        "forty-four",
+        44
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,20 +108,27 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 86,
+      "value": 87,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 86,
+      "value": 87,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r016": {
-      "value": "3b354a21f2a02a36",
-      "pattern": "working[^\\n]{0,40}at r016 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r017": {
+      "value": "3efc9fffa2c65b6a",
+      "pattern": "working[^\\n]{0,40}at r017 hashes to sha256 `([0-9a-f]{16})`"
+    },
+    "anchor_rotations_made": {
+      "value": [
+        "forty-four",
+        44
+      ],
+      "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
   },
   "assertions": [
@@ -537,43 +544,48 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 261,
+      "line": 272,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 585,
+      "line": 606,
       "contains": "Fabula: the story page (v1.7 r008)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 787,
+      "line": 808,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1061,
+      "line": 1082,
       "contains": "Fabula: Outline (v1.7 r011)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1819,
+      "line": 1840,
       "contains": "Fabula: Plot (v1.7 r013)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2492,
+      "line": 2513,
       "contains": "Fabula: Notes (v1.7 r014)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2627,
+      "line": 2648,
       "contains": "Fabula: Meaning (v1.7 r015)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2854,
+      "line": 2875,
       "contains": "Fabula: threads and themes (v1.7 r016)"
+    },
+    {
+      "file": "28_fabula.jsx",
+      "line": 3130,
+      "contains": "Fabula: templates (v1.7 r017)"
     }
   ],
   "spans": {
@@ -764,10 +776,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r016-body.jsx",
-      "reference-r016-layout.json",
-      "8133242d2b3d5212",
-      "3b354a21f2a02a36",
+      "reference-r017-body.jsx",
+      "reference-r017-layout.json",
+      "36b5e4ae0b1eb9b1",
+      "3efc9fffa2c65b6a",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -791,7 +803,12 @@
       "A picker's option is an entry's bare name",
       "v1.7_r016",
       "fabulaFlagTemplates",
-      "setDefaultNavigationTimeout"
+      "setDefaultNavigationTimeout",
+      "v1.7_r017",
+      "fabulaRefreshCore",
+      "FabulaKindTemplates",
+      "schemaDraft",
+      "passing for the wrong reason"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -893,7 +910,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r016-layout.json",
+      "reference-r017-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -917,7 +934,12 @@
       "8133242d2b3d5212",
       "3b354a21f2a02a36",
       "On v1.7 r016 verification",
-      "FabulaEntryStories"
+      "FabulaEntryStories",
+      "reference-r017-body.jsx",
+      "36b5e4ae0b1eb9b1",
+      "3efc9fffa2c65b6a",
+      "On v1.7 r017 verification",
+      "FabulaResetModal"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -994,7 +1016,13 @@
       "3b354a21f2a02a36",
       "8133242d2b3d5212",
       "fabulaFlagTemplates",
-      "5387bf6"
+      "5387bf6",
+      "v1.7_r017",
+      "3efc9fffa2c65b6a",
+      "36b5e4ae0b1eb9b1",
+      "fabulaRefreshCore",
+      "61df82c",
+      "ededabe"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1036,11 +1064,13 @@
       "v1.7_r012",
       "A scene picker's option reads its position as plain text",
       "v1.7_r013",
-      "The plot point's name help still says a structure makes it",
       "v1.7_r014",
       "v1.7_r015",
       "v1.7_r016",
-      "Fabula's index squeezes a long story title"
+      "Fabula's index squeezes a long story title",
+      "v1.7_r017",
+      "A disabled danger button looks like an enabled one",
+      "A field deleted from one of Fabula's kinds keeps its values"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1088,7 +1118,8 @@
       "An older probe that stops at a check the cut changed on purpose",
       "A control that can't get past its first check",
       "The same values shown in two places come in the same order",
-      "A flag added to a stored record has to come through every pass that writes the record"
+      "A flag added to a stored record has to come through every pass that writes the record",
+      "A census of what reads a field is taken from the code"
     ],
     "journal.txt": [
       "r030",
@@ -1130,7 +1161,8 @@
       "r013",
       "r014",
       "r015",
-      "r016"
+      "r016",
+      "r017"
     ]
   }
 }

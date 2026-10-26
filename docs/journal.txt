@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, and r016's threads and themes) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, and r017's templates) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -747,3 +747,22 @@ first expectations were mine and wrong, written from memory of labels and paths 
 checked, and the mutant runs failed at their first page load until I found that
 Playwright's default timeout covers navigation too. Then all fourteen planted defects
 failed where they should. Drak passed it in the early afternoon.
+
+r017 taught the template builder Fabula's kinds. Drak made the plan's four calls in four
+messages, each the first option, and I wrote the defaults for the rest. One default was
+wrong from the start: it had the builder offer each kind's name label, which nothing draws,
+and it came out of the spec in a commit of its own before the cut. The worse miss was the
+census. The plan made seven fields core, the ones I remembered features reading. While
+building, I searched for every read of a record's field by its id and found nine more, all
+of them values a row shows in its details, and the People tab ordering the cast by
+Importance's option names. Drak's rule had always covered them. I corrected the spec before
+the cut, told him so, and left him the other reading to choose at his pass. The same search
+turned up Concordance drawing a seeded link after the user had deleted it. The screenshots
+found two more: the builder, opened from the foot of the index, kept the index's scroll and
+opened halfway down its page, and a Slot stacked two notes where one would do. Neither
+would have failed a check I had written, so I wrote the checks and then the fixes. Of the
+defects I planted, twenty-four at first and twenty-six in the end, one got past the first
+run, Cancel not landing on the Templates section, because the section showed on screen
+whether or not anything had scrolled to it; the check asks now whether the page scrolled as
+far toward it as it can, and the rerun caught all twenty-six. Drak passed it in the late
+afternoon, in one word.
