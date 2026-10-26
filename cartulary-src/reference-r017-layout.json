@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "8133242d2b3d5212bbd001dd29163175eb824b34ed9041386f35a5a33e92303a",
+  "anchor_sha256": "36b5e4ae0b1eb9b10d94d9bad05562f8e56eff7cc49cfde41302bf1aa225708e",
   "shell_sha256": "65714755efa11c91036354e5c78f38fdddb46bc9c27a38dd1838823ce9fd59b2",
   "files": [
     [
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      5703
+      5784
     ],
     [
       "13_form-engine-display.jsx",
@@ -64,7 +64,7 @@
     ],
     [
       "15_template-builder.jsx",
-      1122
+      1217
     ],
     [
       "16_trunk.jsx",
@@ -172,7 +172,7 @@
     ],
     [
       "28_fabula.jsx",
-      3107
+      3424
     ],
     [
       "29_modals.jsx",
