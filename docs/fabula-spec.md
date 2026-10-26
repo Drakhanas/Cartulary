@@ -55,7 +55,7 @@ fabula: {
 
   A story's `outline` is its ordered tree of part, chapter, and scene ids (section 7), so the order lives in one place. A story's corpus is the corpus whose `storyIds` lists it, stored nowhere else (2026-10-25: a `corpusId` beside the list would be the same fact twice).
 - **`migrate()` adds an empty slice** when it's missing, as it does for `cartographia`. A world from v1.6.1 loads with an empty Fabula and nothing else changes. `SCHEMA_VERSION` stays 1, because the change only adds.
-- **Schemas seeded from code, then the world's to edit.** Each kind's schema starts the way Glossopoeia's are built (`23_glossopoeia/00_schemas.jsx`): stable field ids, a help line on every field, and entry-ref fields that find the world's template ids by name, since every world seeds its built-ins with ids of its own. Fabula then stores the schemas per world, in `state.fabula.schemas`, one per kind, out of every template list, and the Template Builder edits them. Core fields (section 5.0) can be relabeled but not deleted or retyped; every other field is editable, and every kind takes the user's own fields. A kind's schema follows the seed until someone edits it (Drak, 2026-10-25): a later seed replaces an unedited schema whole, and an edited one keeps the user's version and only gains core fields by id, so no upgrade ever merges with a user's edits. When a later seed replaces a schema, a reference the new seed takes more than one of keeps what it held, as a list of one: the seed went to 2 at v1.7's r009, when an arc's Cast took more than one, and goes to 3 at r011, when a beat takes What Happens and the fields the outline reads become core (section 1). The seeded reference fields keep names and ids as a template's do, but nothing that re-resolves templates' fields (`resolveTemplateRefs`, `syncRefTargetNames`, v1.7 r004's retarget repair) reaches them yet: a migration that renames or retires a template has to treat Fabula's schemas itself. A reference field to world templates follows their names (Drak, 2026-10-25, for the story page): whenever a form opens, its targets are its stored ids that still exist plus whatever templates its names find now, the rule r002 gave templates, so a template deleted and brought back is found again. A field that finds none of its targets offers nothing, where an empty id list would otherwise read as any template, and says which template the world lacks, with a Restore button that brings a missing built-in back as the sidebar's Restore Built-ins does. Records render through the shared `EntryForm`, so every field type behaves as it does in an entry and no form code is new.
+- **Schemas seeded from code, then the world's to edit.** Each kind's schema starts the way Glossopoeia's are built (`23_glossopoeia/00_schemas.jsx`): stable field ids, a help line on every field, and entry-ref fields that find the world's template ids by name, since every world seeds its built-ins with ids of its own. Fabula then stores the schemas per world, in `state.fabula.schemas`, one per kind, out of every template list, and the Template Builder edits them. Core fields (section 5.0) can be relabeled but not deleted or retyped; every other field is editable, and every kind takes the user's own fields. A kind's schema follows the seed until someone edits it (Drak, 2026-10-25): a later seed replaces an unedited schema whole, and an edited one keeps the user's version. Drak refined that at v1.7's r017 plan (2026-10-26): the seed owns every part of a core field a feature reads, its type, its targets, one or many, Structure's names, and a core group's rows, which the builder shows locked, and each load brings those parts of an edited schema's core fields up to the current seed and adds any core field it lacks. The user owns a core field's label, help line, Secret, and options other than Structure's, and no load touches them, so no upgrade merges with anything a user can change (section 4 has the builder). When a later seed replaces a schema, a reference the new seed takes more than one of keeps what it held, as a list of one: the seed went to 2 at v1.7's r009, when an arc's Cast took more than one, went to 3 at r011, when a beat took What Happens and the fields the outline reads became core (section 1), and goes to 4 at r017, when the core list catches up with what features read (section 5.0). The seeded reference fields keep names and ids as a template's do, but nothing that re-resolves templates' fields (`resolveTemplateRefs`, `syncRefTargetNames`, v1.7 r004's retarget repair) reaches them yet: a migration that renames or retires a template has to treat Fabula's schemas itself. A reference field to world templates follows their names (Drak, 2026-10-25, for the story page): whenever a form opens, its targets are its stored ids that still exist plus whatever templates its names find now, the rule r002 gave templates, so a template deleted and brought back is found again. A field that finds none of its targets offers nothing, where an empty id list would otherwise read as any template, and says which template the world lacks, with a Restore button that brings a missing built-in back as the sidebar's Restore Built-ins does. Records render through the shared `EntryForm`, so every field type behaves as it does in an entry and no form code is new.
 - **Links between Fabula records** (a scene's POV pointing at a cast record) go through the node-source registry (`22_trunk`) with a sentinel id per kind, like Glossopoeia's `__conlangs__`, so `EntryForm`'s pickers can offer them. Registering a kind also makes it a Concordance node and a reference target in every template builder. Each registered kind is its own toggle in Concordance's filter today, and Fabula would add eleven, so Fabula's kinds sit behind one Fabula toggle, off until selected like everything in that filter. The registry entries, the toggle, and a builder that offers only sources marked eligible landed together, with the first cut that shows Fabula, v1.7's r007 (section 1). A link picker offers only records from the record's own story, and until the story has any of the kind it says so ("This story has no cast yet."); such a field shows from the first cut that renders it, before its kind's records can be made (Drak, 2026-10-25). A link to a Fabula record opens that record's page, as a link to an entry opens the entry, and Back returns to the page it was clicked from; a click on one in Concordance opens it too, and a link to a scene stays plain until Outline gives scenes pages (Drak, 2026-10-25, for People).
 - **Downgrade.** `migrate()` deep-clones the state and keeps keys it doesn't know, so a v1.7 world opened in v1.6.1 should keep `state.fabula` untouched through a save. Section 11 tests it rather than assuming it.
 
@@ -92,6 +92,22 @@ fabula: {
   - The help's Templates topic says the two are in the sidebar and in Restore Built-ins; it's rewritten with Fabula's help (section 9).
 
   **What r016's staging chose, passed by Drak** (2026-10-26): the load's merge of same-named templates, a repair that runs on every load, keeps the one Fabula holds, so its id and its place in Fabula survive and the other's entries join it, where it kept the one with the most entries, which let a template imported over Plot Thread merge away into a packed one of the same name and leave Fabula (the probe found it); the sections' buttons run Export, Edit Template, and + New Entry, the old list page's order, with + New Entry a plain button, since + New Story above already takes the accent; a row's stories are plain text, and a click anywhere on the row opens the entry, whose page has the links; a story's title on an entry's page is underlined, dotted, as a position is, since a click on it opens the story; and a thread opened from a tag's list still goes Back to that list.
+- **Fabula's templates** (v1.7's r017, planned 2026-10-26). Drak's calls at its plan, one per message. The builder opens a kind from a Templates section at the end of Fabula's index, after Themes & Motifs, which lists the eleven kinds in order, Corpus through Research Note, each with Edit Template and marked when the world's fields differ from the seed (option a). The lock on a core field covers every part a feature reads, and the seed keeps those parts current, as section 3 says (option a). Reset to Default works as a built-in template's: a confirmation lists what changes and counts the records holding values in fields that go; the seed's fields come back with their labels, help lines, options, and order, a seeded field the user deleted returning with its values; the user's own fields go, their values cleared from the kind's records; and the kind follows the seed again (option a). A field of the user's own on any kind but Corpus can point at one of the nine kinds a story holds, Cast through Research Note, as the seeded links do: its picker offers that story's records only, and deleting a record clears it from the field and counts it in the confirmation. One Fabula kind to a field, never mixed with world templates, and world templates still can't point at Fabula's records (option a; r007's call stands).
+
+  **The rest of the builder** (Claude's defaults, named before the cut, 2026-10-26):
+  - A row of the Templates section shows the kind's name, how many records of it the world holds, and edited when its schema is marked so, with Edit Template on the right. In Lock Mode the section shows no buttons.
+  - Edit Template opens the template builder with Fabula lit in the sidebar, headed with the kind's name, with Reset to Default, Cancel, and Save Template; a kind can't be deleted, so there's no Delete Template. Cancel, Save, and a confirmed reset return to the index at the Templates section. Leaving with unsaved changes asks first, as a template's draft does.
+  - A kind's name, icon, color, and type are Fabula's, so the builder doesn't show them. In their place is the record's name field: its label (Title, Name, Topic, or Label) and its help line, both the user's, since the name is core by construction.
+  - Every field's row gains its help line under the label, and on the Story each field gets a Panel picker, none or one of the four panels; the panels themselves stay as they are. The family role picker doesn't show, since Linea reads entries only.
+  - A core field's row carries a Core tag whose tooltip says what reads it. Its type, target, Multiple, and Multi-template controls are locked, and so are Structure's options, a plot point's Slot options (they come from the structure), a core group's rows, shown but not editable, a core field's Show only when, and Character's Required; it has no ×. Its label, help line, Secret, and other options stay editable.
+  - A field of the user's own takes any type a template's field can, and an id no seed will use, a generated one.
+  - Save writes the kind's schema and marks it edited, unless nothing changed. A field with no label is dropped, as a template's is, and a reference's target names follow its ids, as a template's do on save.
+  - A field deleted in the builder leaves its values in the records, unseen, as a template's does, so a seeded one comes back with them at Reset to Default.
+  - Reset to Default counts the records holding values under any field the seed doesn't have, the user's own fields deleted earlier included.
+  - The preview popup isn't offered for Fabula's kinds, whose forms need a story to fill their pickers.
+  - The seed goes to 4, with the core fields section 5.0 adds and the plot point's name help: "Its name; one added under a slot without a title takes the slot's name."
+  - The help and the site learn Fabula's templates with the rest of Fabula's help (section 10, item 12).
+
 
 ## 5. Record types and fields
 
@@ -102,16 +118,17 @@ The tables are in Drak's format: Label / Type / Notes, one line per field. Type 
 A field is core when a feature reads it by meaning, not just by being a field. Concordance's edges, backlinks, and the export read any link or field generically, so they don't make a field core. Core fields can be relabeled but not deleted or retyped:
 
 - **Corpus:** the reading order, which is the corpus's `storyIds` and not a field.
-- **Story:** Status (the index shows it), Structure and Custom Slots (they give the Plot tab its headings), Threads (the Plot tab lists them), and the Premise panel's Themes (the Meaning tab lists them).
-- **Cast:** Character.
+- **Story:** Status (the index shows it), Structure and Custom Slots (they give the Plot tab its headings), Threads (the Plot tab lists them), and the Premise panel's Themes (the Meaning tab lists them) and Theme Statement (the Meaning tab opens with it).
+- **Cast:** Character, Importance (the People tab orders the cast by it).
 - **Arc:** Cast, Turning Points (the timeline marks them).
 - **Relationship:** Cast A, Cast B.
-- **Plot Point:** Slot, Delivered In.
-- **Promise & Payoff:** Setup In, Payoff In (the unpaid-promise flag).
+- **Plot Point:** Slot, Delivered In, Threads (the Plot tab's marks and a thread's page).
+- **Promise & Payoff:** Setup In, Payoff In (the unpaid-promise flag), Threads (the Plot tab's marks and a thread's page).
 - **Chapter:** POV (a scene with no POV of its own takes it), Status (the outline shows it).
-- **Scene:** POV, When, Threads (the timeline's lanes and placement), Status (the outline shows it), Beats (the outline lists and edits them).
+- **Scene:** POV, When, Threads (the timeline's lanes and placement), Status (the outline shows it), Beats (the outline lists and edits them), Motifs (Meaning's runs and a theme's page).
+- **Research Note:** Used In (a scene's research list), Open Questions (the open flag).
 
-Every record's name is core by construction. Part / Act and Research Note have no core fields beyond it.
+Every record's name is core by construction. Part / Act has no core fields beyond it. The Story's Theme Statement, a cast record's Importance, a plot point's and a promise's Threads, a scene's Motifs, and a note's Used In and Open Questions became core at v1.7's r017 plan (2026-10-26): r009, r013, r014, and r015 each built a feature that reads one without marking it, and the seed goes to 4 with them, which costs nothing while no world can have edited a schema.
 
 ### 5.1 Corpus
 
@@ -157,7 +174,7 @@ Label                 Type                         Notes
 Why                   textarea                     why you're writing it
 What If               textarea                     the idea in a sentence or two
 Logline               text                         half-eligible · who, what they want, what's in the way
-Theme Statement       textarea                     what the story argues
+Theme Statement       textarea                     core · what the story argues; the Meaning tab opens with it
 Themes                entry-ref multi              core · -> Theme / Motif; the Meaning tab lists them
 Central Conflict      textarea
 Conflict Kinds        multiselect otherTextField   Other + · {vs Character, vs Self, vs Society, vs Nature, vs Technology, vs the Supernatural, vs Fate}
@@ -219,7 +236,7 @@ Name: the character as this story knows them; filled from the entry picked, and 
 ```
 Label                 Type                         Notes
 Character             entry-ref                    half-eligible · core · required · -> Character, Deity / Entity
-Importance            select                       half-eligible · {Main, Secondary, Minor}
+Importance            select                       half-eligible · core · {Main, Secondary, Minor}; the People tab orders by it
 First Appears         entry-ref                    half-eligible · -> Scene (Fabula), this story
 
 Role                  multiselect otherTextField   Other + · {Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Supporting}
@@ -286,7 +303,7 @@ Label                 Type                         Notes
 Slot                  select otherTextField        half-eligible · Other + · core · options from the story's Structure, filled in per story
 Delivered In          entry-ref                    half-eligible · core · -> Scene (Fabula), this story; where it happens
 
-Threads               entry-ref multi              -> Plot Thread
+Threads               entry-ref multi              core · -> Plot Thread
 Description           textarea
 Notes                 textarea
 ```
@@ -304,7 +321,7 @@ Status                select                       half-eligible · {Idea, Plann
 
 Setup In              entry-ref multi              core · -> Scene (Fabula), this story
 Payoff In             entry-ref multi              core · -> Scene (Fabula), this story
-Threads               entry-ref multi              -> Plot Thread
+Threads               entry-ref multi              core · -> Plot Thread
 
 Promise               textarea                     what the reader is owed
 Notes                 textarea
@@ -359,7 +376,7 @@ When                  calendar-date-range          core · story time, in your c
 Participants          entry-ref multi              -> Cast (Fabula), this story
 Walk-ons              entry-ref multi              -> Character, Deity / Entity; anyone without a cast record
 Threads               entry-ref multi              core · -> Plot Thread; the threads it moves
-Motifs                entry-ref multi              -> Theme / Motif
+Motifs                entry-ref multi              core · -> Theme / Motif; Meaning's runs
 
 Beats                 group                        core · one beat per row, in order; the outline lists and edits them
     · Beat            text                         the beat in a line
@@ -374,12 +391,12 @@ Name: the topic.
 ```
 Label                 Type                         Notes
 Applies To            entry-ref multi              -> any template
-Used In               entry-ref multi              -> Scene (Fabula), this story; where the research lands
+Used In               entry-ref multi              core · -> Scene (Fabula), this story; where the research lands
 Sources               group                        one source per row
     · Title           text
     · Link            url
 Findings              textarea
-Open Questions        textarea
+Open Questions        textarea                     core · any text in it flags the note open
 Notes                 textarea
 ```
 
@@ -453,7 +470,7 @@ Methods sold under a trademarked name (Save the Cat!) don't ship as presets; Cus
 - **Wiki-links** resolve to entries and celestial bodies (`InlineWikiLinkText`), so Fabula's records aren't wiki-link targets in v1.7. Threads and motifs, as entries, are.
 - **Backlinks** (Pipes item 1): an entry's Referenced by list includes the Fabula records that point at it, so a character shows its cast records and scenes.
 - **Search and the query layer** cover entries. Fabula filters its own lists by status, POV, thread, and the like.
-- **Concordance:** behind one Fabula toggle in its filter (section 3), with edges for the links: a story to its threads and themes, a cast record to its character, a scene to its POV, participants, setting, threads, and motifs, an arc or a relationship to its cast, a plot point or a promise to its scenes, a research note to what it applies to and the scenes it's used in. Since v1.7's r009 a story's, a cast record's, an arc's, and a relationship's edges are drawn, since r011 a scene's, since r013 a plot point's and a promise's, and since r014 a research note's, and since r015 a scene's motifs.
+- **Concordance:** behind one Fabula toggle in its filter (section 3), with edges for the links: a story to its threads and themes, a cast record to its character, a scene to its POV, participants, setting, threads, and motifs, an arc or a relationship to its cast, a plot point or a promise to its scenes, a research note to what it applies to and the scenes it's used in. Since v1.7's r009 a story's, a cast record's, an arc's, and a relationship's edges are drawn, since r011 a scene's, since r013 a plot point's and a promise's, and since r014 a research note's, and since r015 a scene's motifs. From v1.7's r017 a link field of the user's own draws its edges too, labeled as the field is.
 - **A deleted entry:** the delete confirmation first says what the delete will remove, counted by the same scan as backlinks, across entries and Fabula alike ("removes her from 4 entries, 2 cast records, and 9 scenes"); today it's a bare `Delete "Aria"?` prompt. Then Fabula's references to the entry are cleaned out the way entries' are (`scrubEntryRefs`), with one exception: a cast record whose character is deleted stays, marked "character deleted", with its role, voice, arcs, and relationships intact, to relink or delete by hand. Stemma's linked nodes still turn orphan as they do now. The cleaning and the kept cast record came with People, v1.7's r009, and cover deleting a template with its entries as well (Drak, 2026-10-25), and a deleted body leaves Fabula's fields the same way; the count waits for backlinks.
 - **Exports:** the world JSON carries `state.fabula`, as the save file must. Fabula's records stay out of the world's HTML and Markdown exports. Fabula has its own export instead, in HTML and in Markdown, for one story or a whole corpus, with the include-secrets choice the other exports offer: the panels, cast, arcs, relationships, outline with its beats, plot points, and promises. The Markdown version is the story bible.
 - **Entry import and export** (Pipes item 9) moves entries only; Fabula's records don't ride in `cartulary_entries_export`.
@@ -472,10 +489,10 @@ Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of
 6. Notes: the story's research notes. v1.7's r014, done (2026-10-26; the calls are in section 4, and the defaults and its staging's in 5.11). This item held Plot Thread's and Theme / Motif's move under Fabula as well until the plan split it out (Drak, 2026-10-26).
 7. Meaning: the themes and motifs the Premise panel lists, a cut of its own (Drak, 2026-10-26), v1.7's r015, done (2026-10-26; the calls, the defaults, and its staging's are in section 4).
 8. Plot Thread and Theme / Motif moved under Fabula, with a plan of its own (Drak, 2026-10-26), v1.7's r016, done (2026-10-26; the calls, the defaults, and its staging's are in section 4, and the entry's list in 5.12).
-9. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson).
+9. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson), v1.7's r017 (planned 2026-10-26; the calls and the defaults are in sections 3, 4, and 5.0).
 10. Chronometric's math extracted, checked unchanged.
 11. The Fabula timeline.
-12. The kept cast records, Fabula's HTML and Markdown export, the help, and the site.
+12. Fabula's HTML and Markdown export, the help, and the site. Until r017's plan this item also listed the kept cast records, which came with People, v1.7's r009.
 
 Letters comes before Pipes in v1.7 (Drak, 2026-10-24), so the two pieces of this spec that ride on backlinks' scan of incoming references, an entry's Referenced by list showing its Fabula records and the delete confirmation's count, land with backlinks (Pipes item 1), which is then built once over entries and Fabula together. Until then a delete cleans Fabula's references and keeps cast records as section 9 says, without the count.
 
@@ -496,7 +513,7 @@ About ten cuts, the first estimate; r006 through r016 took eleven, with r012's a
 ## 12. Open decisions (Drak)
 
 1. **Corpora:** decided, several per world (section 1).
-2. **Schemas:** Drak leans editable (2026-10-24). Claude's case against fully editable: Fabula's features read particular fields (the timeline reads a scene's When, POV, and Threads; the unpaid-promise flag reads Setup In and Payoff In; a cast record is defined by its Character link; plot points carry their structure's slots; the export walks known fields), so every one of them would need a branch for a field that's gone or retyped, and a later version's schema change would have to merge with each user's edits, the machinery built-in templates already carry. Claude's middle path: the fields a feature reads are core, relabelable but not deletable or retypable; every other field is editable, and every type takes the user's own added fields. That costs a cut: the schemas are stored per world and the Template Builder learns Fabula's kinds and the core lock. Drak took the middle path (2026-10-24); sections 3 and 5.0.
+2. **Schemas:** Drak leans editable (2026-10-24). Claude's case against fully editable: Fabula's features read particular fields (the timeline reads a scene's When, POV, and Threads; the unpaid-promise flag reads Setup In and Payoff In; a cast record is defined by its Character link; plot points carry their structure's slots; the export walks known fields), so every one of them would need a branch for a field that's gone or retyped, and a later version's schema change would have to merge with each user's edits, the machinery built-in templates already carry. Claude's middle path: the fields a feature reads are core, relabelable but not deletable or retypable; every other field is editable, and every type takes the user's own added fields. That costs a cut: the schemas are stored per world and the Template Builder learns Fabula's kinds and the core lock. Drak took the middle path (2026-10-24); sections 3 and 5.0. At r017's plan he had the seed keep owning what a feature reads of a core field, even in an edited schema (2026-10-26, section 3).
 3. **Concordance:** decided, one Fabula toggle (section 3).
 4. **A deleted entry:** Drak leans toward cleaning the references out (2026-10-24). Claude's case against cleaning everything: a cast record is defined by its Character link, so cleaning it leaves a husk with a role, a voice, and arcs but no character, or deletes the record and the arcs, relationships, and scene POVs that hang off it; and today's entry delete is a bare confirmation that already cleans entries' references without a count. Claude's middle path: clean, but the delete confirmation first says what it will clean ("removes her from 2 cast records and 9 scenes"), counted by the same scan as backlinks, and a cast record whose character is deleted stays, marked as such, so its story work can be relinked or deleted by hand. Drak took the middle path (2026-10-24); section 9.
 5. **Exports:** decided, Fabula's own, HTML and Markdown (section 9).
