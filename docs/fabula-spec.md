@@ -66,10 +66,10 @@ fabula: {
 - **A story** opens on its Story record, with section tabs across the top:
   - **Story:** the Story's own fields and its four panels (Premise, Genre, Narration, Setting).
   - **People:** Cast, Arcs, Relationships.
-  - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs (v1.7's r013, done 2026-10-26). Its thread list edits the Story's Threads in place (Drak, 2026-10-26): a picker adds any existing thread, × takes one off the story while the thread stays in the world, and + New Thread makes a Plot Thread entry by its title, in place, and adds it to the story. It also lists, marked, any other thread the story's scenes, plot points, or promises use, each with a button that adds it to the Story's Threads (section 12, item 7). A thread opens its entry until the Notes cut moves threads into Fabula.
+  - **Plot:** Plot Threads (entries, the ones the Story's Threads lists), Plot Points, Promises & Payoffs (v1.7's r013, done 2026-10-26). Its thread list edits the Story's Threads in place (Drak, 2026-10-26): a picker adds any existing thread, × takes one off the story while the thread stays in the world, and + New Thread makes a Plot Thread entry by its title, in place, and adds it to the story. It also lists, marked, any other thread the story's scenes, plot points, or promises use, each with a button that adds it to the Story's Threads (section 12, item 7). A thread opens its entry until r016 moves threads under Fabula (section 10, item 8).
   - **Outline:** Parts, Chapters, and Scenes as one ordered tree (v1.7's r011, done 2026-10-26; section 7).
   - **Meaning:** Themes & Motifs (entries, the ones the Premise panel's Themes lists).
-  - **Notes:** Research Notes.
+  - **Notes:** Research Notes (v1.7's r014, planned 2026-10-26), by topic, A to Z, as People lists its arcs and relationships (Drak, 2026-10-26). A note whose Open Questions holds any text is flagged open, on its row wherever the row appears, in a color quieter than an unpaid promise's red, since an open question isn't a mistake, and the tab's heading counts them; emptying the field clears the flag, so a note that says "None" stays flagged until it's emptied (Drak, 2026-10-26). A scene's page lists, under its fields, the notes whose Used In names it, by topic, each opening its note: read-only, changed from the note's side, and worked out each time the page is drawn, so nothing is stored (Drak, 2026-10-26). Everything else that points at a scene waits for backlinks (section 10), which the spec builds once over entries and Fabula together.
   - **Timeline:** section 8.
 
   Every tab shows from the story page's first cut, v1.7's r008; one that isn't built yet is greyed out and can't be opened, and its tooltip says what it will hold, until the cut that builds it turns it on (Drak, 2026-10-25). On the Story tab the Story's own fields come first, then each panel under a heading that folds it. The folds belong to the browser, kept with the app's other display settings, one set for every story and the same in view and edit mode, so they never reach the world file (Drak, 2026-10-25). In view an empty field doesn't show, as on an entry's page, so an open panel with nothing filled in says so.
@@ -369,6 +369,8 @@ Notes                 textarea
 
 Applies To is set to any template, which offers world entries and nothing else: no bodies, maps, Glossopoeia records, or Fabula records. Used In is what ties a note to the scenes that need it. A note belongs to one story, so research a series shares lives in one story's notes or in a world entry; a note that belongs to a corpus is on the roadmap (Drak, 2026-10-25: per story for now).
 
+**The rest of the Notes tab** (Claude's defaults, named before the cut, 2026-10-26): + New Note opens a new note in edit on a page of its own, as + New Promise does; a row shows the topic, the open flag, and its details, the entries it applies to and then the scenes it's used in, each scene with its position; an empty tab says so; a note opens on a page of its own over the Notes tab, with Edit, Save, Cancel, and Delete, and Back to where it was opened from, and its delete asks first; Used In offers the story's scenes in the outline's order with their positions, as every scene picker has since r012, and Applies To the world's entries by name; a scene's research list shows in view and in edit, and not at all when no note names the scene; Concordance draws a note to the entries it applies to and the scenes it's used in (section 9); deleting a scene or an entry takes it out of the notes that name it, as every Fabula reference is cleaned, and deleting the story takes its notes; and in Lock Mode nothing adds, and every note still opens.
+
 ### 5.12 Plot Thread and Theme / Motif
 
 Their fields don't change. Each gains a read-only list of the stories and scenes that use it, derived from Fabula's links the way backlinks are derived from references.
@@ -447,15 +449,17 @@ Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of
 3. People: cast, arcs, relationships, ahead of the builder (Drak, 2026-10-25: the fields get some use first, and People's help lines are read in place while its schemas follow the seed). v1.7's r009, done (2026-10-25), with section 9's cleaning for a deleted entry (the calls are in sections 3, 4, and 9; the arc's Cast came in at its pass, section 1).
 4. Outline: parts, chapters, and scenes with their beats, ordered by drag and keyboard. v1.7's r011, done (2026-10-26; the calls are in section 7, and its pass's in section 1). A record's position, on its page, in a reference, and in a picker, came next as v1.7's r012, done (Drak's addition, 2026-10-26; section 7).
 5. Plot: plot points and structures; promises and payoffs with the unpaid-promise flag. v1.7's r013, done (2026-10-26; the calls are in sections 4, 6, and 12, and its staging's in section 6).
-6. Notes, and Plot Thread and Theme / Motif moved under Fabula.
-7. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson).
-8. Chronometric's math extracted, checked unchanged.
-9. The Fabula timeline.
-10. The kept cast records, Fabula's HTML and Markdown export, the help, and the site.
+6. Notes: the story's research notes. v1.7's r014 (planned 2026-10-26; the calls are in section 4, and the defaults in 5.11). This item held Plot Thread's and Theme / Motif's move under Fabula as well until the plan split it out (Drak, 2026-10-26).
+7. Meaning: the themes and motifs the Premise panel lists, a cut of its own (Drak, 2026-10-26), v1.7's r015.
+8. Plot Thread and Theme / Motif moved under Fabula, with a plan of its own, v1.7's r016 (Drak, 2026-10-26). Until then a thread opens on the entry page, and Back returns to the Plot tab.
+9. The Template Builder learns Fabula's kinds and the core lock, once every kind's records have had some use (Drak, 2026-10-25: after Outline, Plot, and Notes, so no schema can be edited before its form has been used, r009's lesson).
+10. Chronometric's math extracted, checked unchanged.
+11. The Fabula timeline.
+12. The kept cast records, Fabula's HTML and Markdown export, the help, and the site.
 
 Letters comes before Pipes in v1.7 (Drak, 2026-10-24), so the two pieces of this spec that ride on backlinks' scan of incoming references, an entry's Referenced by list showing its Fabula records and the delete confirmation's count, land with backlinks (Pipes item 1), which is then built once over entries and Fabula together. Until then a delete cleans Fabula's references and keeps cast records as section 9 says, without the count.
 
-About ten cuts. The extraction and the timeline are the least certain.
+About ten cuts, the first estimate; r006 through r013 took eight, with r012's addition and the carve among them, and r014 through r016 are planned. The extraction and the timeline are the least certain.
 
 ## 11. Acceptance tests
 

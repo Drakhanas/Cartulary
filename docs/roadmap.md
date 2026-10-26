@@ -227,4 +227,4 @@ Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (th
 
 === ADDED 2026-10-26 (session 20, later: r013) ===
 
-**r013 is in**, passed by Drak and frozen; its tag, `v1.7_r013`, goes on its turnover. **What it struck from this file:** nothing. **What it filed:** the plot point's name help, left as seeded so the seed held, and a comment that says which Fabula records open and stops at r011, both under v1.7. **What it changed:** the Letters entry and the line's order say Plot is in. Next: r014, Notes, with Plot Thread and Theme / Motif moved under Fabula, its plan first.
+**r013 is in**, passed by Drak and frozen; its tag, `v1.7_r013`, goes on its turnover. **What it struck from this file:** nothing. **What it filed:** the plot point's name help, left as seeded so the seed held, and a comment that says which Fabula records open and stops at r011, both under v1.7. **What it changed:** the Letters entry and the line's order say Plot is in. Next: r014, Notes, then r015, Meaning, and r016, Plot Thread and Theme / Motif moved under Fabula, as Drak split them at the Notes plan (the spec's section 10).
