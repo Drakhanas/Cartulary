@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 44,
-    "total_lines": 45755,
-    "raw_body_lines": 45755,
-    "canonical_lines": 43513,
-    "decl_count": 538,
+    "total_lines": 46273,
+    "raw_body_lines": 46273,
+    "canonical_lines": 44004,
+    "decl_count": 554,
     "no_trailing_newline": 36,
-    "active_anchor": "reference-r008-body.jsx"
+    "active_anchor": "reference-r009-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 45755,
+      "value": 46273,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 44 files have no trailing newline"
     },
     "decl_count": {
-      "value": 538,
+      "value": 554,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 43513,
+      "value": 44004,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 45755,
+      "value": 46273,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 80,
+      "value": 81,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2397145,
+      "value": 2424875,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "thirty-six",
-        36
+        "thirty-seven",
+        37
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,27 +108,27 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 80,
+      "value": 81,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 80,
+      "value": 81,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
-    "working_hash_r008": {
-      "value": "1d0b64c4f9cb8dcb",
-      "pattern": "working[^\\n]{0,40}at r008 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r009": {
+      "value": "aa89edb8519e3604",
+      "pattern": "working[^\\n]{0,40}at r009 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1290,
+      "line": 1293,
       "contains": "Longform + rich text editor"
     },
     {
       "file": "14_form-engine-edit.jsx",
-      "line": 1292,
+      "line": 1295,
       "contains": "function LongformEditor"
     },
     {
@@ -533,13 +533,18 @@
     },
     {
       "file": "27_trunk.jsx",
-      "line": 496,
+      "line": 506,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     },
     {
       "file": "27_trunk.jsx",
-      "line": 766,
+      "line": 802,
       "contains": "Fabula: the story page (v1.7 r008)"
+    },
+    {
+      "file": "27_trunk.jsx",
+      "line": 970,
+      "contains": "Fabula: People (v1.7 r009)"
     }
   ],
   "spans": {
@@ -677,10 +682,10 @@
       "docs/release-notes/v1.6.1/finals-pass.md",
       "Letters before Pipes",
       "fabula-spec.md",
-      "reference-r008-body.jsx",
-      "reference-r008-layout.json",
-      "0d683c6de47f37c3",
-      "1d0b64c4f9cb8dcb",
+      "reference-r009-body.jsx",
+      "reference-r009-layout.json",
+      "f4d73f0a51c06190",
+      "aa89edb8519e3604",
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
@@ -718,7 +723,14 @@
       "fabulaStoryNodes",
       "prefs.fabulaFolds",
       "fieldPanelSegments",
-      "is checked against the app before it's sent"
+      "is checked against the app before it's sent",
+      "v1.7_r009",
+      "FabulaRecordPage",
+      "fabulaBack",
+      "scrubFabulaRefs",
+      "excludeIds",
+      "fabulaRecordOpens",
+      "as a list of one"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -803,11 +815,16 @@
       "On v1.7 r007 verification",
       "FabulaReadingOrder",
       "reference-r008-body.jsx",
-      "reference-r008-layout.json",
       "0d683c6de47f37c3",
       "1d0b64c4f9cb8dcb",
       "On v1.7 r008 verification",
-      "FabulaStoryPage"
+      "FabulaStoryPage",
+      "reference-r009-body.jsx",
+      "reference-r009-layout.json",
+      "f4d73f0a51c06190",
+      "aa89edb8519e3604",
+      "On v1.7 r009 verification",
+      "FabulaPeopleTab"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -850,7 +867,11 @@
       "v1.7_r008",
       "1d0b64c4f9cb8dcb",
       "0d683c6de47f37c3",
-      "fabulaLiveFields"
+      "fabulaLiveFields",
+      "v1.7_r009",
+      "aa89edb8519e3604",
+      "f4d73f0a51c06190",
+      "scrubFabulaRefs"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -883,7 +904,8 @@
       "CI's two warnings",
       "v1.7_r006",
       "v1.7_r007",
-      "v1.7_r008"
+      "v1.7_r008",
+      "v1.7_r009"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -924,7 +946,8 @@
       "A migration that retires something other records point at by id",
       "The control decides how far a defect reaches",
       "A new screen gets looked at before it's staged",
-      "A fork that says what the app does is checked against the app"
+      "A fork that says what the app does is checked against the app",
+      "A field list's real review is the first use of the form it draws"
     ],
     "journal.txt": [
       "r030",
@@ -958,7 +981,8 @@
       "r005",
       "r006",
       "r007",
-      "r008"
+      "r008",
+      "r009"
     ]
   }
 }

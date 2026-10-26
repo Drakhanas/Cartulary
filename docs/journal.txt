@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, and r008's story page) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, and r009's People) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -611,3 +611,22 @@ code that draws it, which is the same mistake as trusting a comment about what r
 load. The Restore button was his idea, not mine: he asked whether Fabula could bring a
 missing template back without a trip to the sidebar, and it could. He passed it a little
 before nine.
+
+r009 was People, and Drak's five calls set it up as before, one message each: People
+before the builder, a page for every record, references that open what they point at,
+and deletes that clear what points at a record without taking another one with it. The
+probe's last two failures were mine, in the probe: one check expected an id the app
+generates, and another clicked a body's Delete once, where the body's page asks for a
+second click to confirm, which a screenshot of that step and the page's code showed. The
+screenshots with long values found the cut's one layout bug before Drak saw it. I'd
+built People's rows on the index's pattern, whose details are a few short words and
+never run long, and a cast record with every role squeezed its own name to nothing.
+Drak's pass found what nothing of mine could have: an arc's Cast took one cast record,
+and the example that came to his mind, friends to lovers, is two people's. The table had
+passed review that way, his review and my drafting. It was cheap to change because he'd
+put People ahead of the builder so the fields would get some use first, and this was
+that use: the seed went to 2, arcs already saved kept their cast record as the first of
+a list, and there was no edited schema to merge with. Writing this turnover I also
+noticed that the carve giving Fabula a module of its own has been due since r008, by the
+spec's own order, and r009 went into the trunk anyway. It goes to the next plan. He
+passed it at half past ten.
