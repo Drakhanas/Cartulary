@@ -943,6 +943,20 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     return `${e.name} (${tpl.name}${cascadeSuffix})`;
   };
 
+  // v1.7 r013: a field can list some candidates first, under a heading of
+  // their own, and the rest under another (firstIds, firstLabel, restLabel),
+  // as a scene's Threads lists its story's threads first.
+  const firstIds = Array.isArray(field.firstIds) && field.firstIds.length > 0 ? new Set(field.firstIds) : null;
+  const optionsOf = (list) => {
+    const one = (e) => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>;
+    if (!firstIds) return list.map(one);
+    const first = list.filter(e => firstIds.has(e.id)), rest = list.filter(e => !firstIds.has(e.id));
+    return [
+      first.length > 0 ? <optgroup key="first" label={field.firstLabel || "First"}>{first.map(one)}</optgroup> : null,
+      rest.length > 0 ? <optgroup key="rest" label={field.restLabel || "The rest"}>{rest.map(one)}</optgroup> : null,
+    ];
+  };
+
   if (field.multi) {
     const items = isRelation
       ? getRelationValues(value, true)
@@ -1034,7 +1048,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
         {refNote || (
         <select className="input" value="" onChange={e => addOne(e.target.value)}>
           <option value="">+ Add reference...</option>
-          {available.map(e => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>)}
+          {optionsOf(available)}
         </select>
         )}
       </>
@@ -1059,7 +1073,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
           }}
         >
           <option value="">— None —</option>
-          {sorted.map(e => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>)}
+          {optionsOf(sorted)}
         </select>
         {item?.id && (
           <input
@@ -1079,7 +1093,7 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
   return (
     <select className="input" value={value || ""} onChange={e => onChange(e.target.value)}>
       <option value="">— None —</option>
-      {sorted.map(e => <option key={e.id} value={e.id}>{formatEntryLabel(e)}</option>)}
+      {optionsOf(sorted)}
     </select>
   );
 }

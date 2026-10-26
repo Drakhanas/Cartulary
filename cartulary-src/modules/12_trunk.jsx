@@ -4417,6 +4417,7 @@ function App() {
                 outlineFolds={prefs.fabulaOutlineFolds}
                 onToggleOutlineFold={toggleOutlineFold}
                 onUpdateFabula={(fn) => { if (!isLocked) updateFabula(fn); }}
+                onCreateThread={(name) => { if (!isLocked) updateState(s => fabulaWithNewThread(s, rec.id, name)); }}
                 onRestoreTemplate={(name) => restoreBuiltinTemplates([name])}
                 showSecrets={showSecrets}
                 allTags={allTags}
