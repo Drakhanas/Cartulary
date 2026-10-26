@@ -458,9 +458,9 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
 // click can take you there: entries, maps, and bodies open; a Glossopoeia
 // record has no route yet, so it shows as a plain chip (Drak, 2026-10-24),
 // and since v1.7's r009 a Fabula record with a page of its own opens too
-// (fabulaRecordOpens; Drak, 2026-10-25), where a scene stays a plain chip
-// until it has one. `kind` names the record's type for a chip that can't be
-// opened.
+// (fabulaRecordOpens; Drak, 2026-10-25), and since r011 an act, a chapter,
+// or a scene does as well. `kind` names the record's type for a chip that
+// can't be opened.
 const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   if (!id) return null;
   const e = (entries || []).find(x => x && x.id === id);

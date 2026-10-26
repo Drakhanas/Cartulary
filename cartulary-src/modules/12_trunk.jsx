@@ -52,6 +52,9 @@ function App() {
   const [activeRecord, setActiveRecord] = useState(null);
   const [recordDraft, setRecordDraft] = useState(null);
   const initialRecordDraftRef = useRef(null);
+  // v1.7 r011: an act or a chapter whose Delete is asking what happens to
+  // what it holds ({ kind, id }), while its modal is open.
+  const [fabulaHoldsAsk, setFabulaHoldsAsk] = useState(null);
   const [fabulaBack, setFabulaBack] = useState([]);
   // Kalendarium session state (v1.4). activeCalendarId follows the stemma
   // pattern: null = index view; non-null = editor for that calendar. Special
@@ -185,6 +188,7 @@ function App() {
     sidebarWidth: 236,
     mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
     fabulaFolds: {}, // v1.7 r008: the Story tab's folded panels, one set for every story
+    fabulaOutlineFolds: {}, // v1.7 r011: the Outline tab's folded acts, chapters, and scenes, by id
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -238,6 +242,7 @@ function App() {
               : 236,
             mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
             fabulaFolds: stored.fabulaFolds && typeof stored.fabulaFolds === "object" && !Array.isArray(stored.fabulaFolds) ? stored.fabulaFolds : {},
+            fabulaOutlineFolds: stored.fabulaOutlineFolds && typeof stored.fabulaOutlineFolds === "object" && !Array.isArray(stored.fabulaOutlineFolds) ? stored.fabulaOutlineFolds : {},
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -855,9 +860,10 @@ function App() {
       return;
     }
     // v1.7 r009: a cast record, an arc, or a relationship opens on its own
-    // page over its story's (Drak, 2026-10-25). From a Fabula page, Back
-    // returns to the page the click came from; from anywhere else, such as
-    // Concordance, to its story's People tab.
+    // page over its story's (Drak, 2026-10-25), and since r011 an act, a
+    // chapter, or a scene. From a Fabula page, Back returns to the page the
+    // click came from; from anywhere else, such as Concordance, to the story's
+    // tab that lists it (fabulaTabOf).
     const fabRec = fabulaFindRecord(state, id);
     if (fabRec) {
       const onFabulaPage = view === "fabula" && activeStoryId && activeStoryId === fabRec.record.storyId;
@@ -870,9 +876,9 @@ function App() {
         const home = ((state.fabula && state.fabula.corpora) || []).find(c => c && Array.isArray(c.storyIds) && c.storyIds.includes(fabRec.record.storyId));
         setActiveCorpusId(home ? home.id : null);
         setActiveStoryId(fabRec.record.storyId);
-        setStoryTab("people");
+        setStoryTab(fabulaTabOf(fabRec.kind));
       }
-      setFabulaBack(b => from ? [...b, from] : [{ kind: "story", tab: "people" }]);
+      setFabulaBack(b => from ? [...b, from] : [{ kind: "story", tab: fabulaTabOf(fabRec.kind) }]);
       setActiveRecord({ kind: fabRec.kind, id });
       setView("fabula");
       return;
@@ -1397,6 +1403,14 @@ function App() {
   // (Drak, 2026-10-25), so they live with the display settings.
   const toggleFabulaFold = (panelId) => setPrefs(p => ({ ...p, fabulaFolds: { ...(p.fabulaFolds || {}), [panelId]: !(p.fabulaFolds || {})[panelId] } }));
 
+  // v1.7 r011: so do the Outline tab's, one per act, chapter, or scene
+  // (Drak, 2026-10-25); an unfolded one leaves the settings.
+  const toggleOutlineFold = (id) => setPrefs(p => {
+    const folds = { ...(p.fabulaOutlineFolds || {}) };
+    if (folds[id]) delete folds[id]; else folds[id] = true;
+    return { ...p, fabulaOutlineFolds: folds };
+  });
+
   // v1.7 r009: People (docs/fabula-spec.md, section 4). A cast record, an arc,
   // or a relationship opens on a page of its own over its story's page, and
   // Back walks fabulaBack. A new record is a draft until Save, as a new
@@ -1478,18 +1492,27 @@ function App() {
   };
 
   // Delete asks first, counting what points at the record, then clears those
-  // references; nothing else is deleted with it (Drak, 2026-10-25).
+  // references; nothing else is deleted with it (Drak, 2026-10-25). Since
+  // v1.7's r011 an act, a chapter, or a scene leaves its story's outline as
+  // well, and an act or a chapter that holds anything asks instead, in a
+  // modal, whether what it holds moves up a level, the default, or goes with
+  // it (spec, section 7).
   const deleteFabulaRecord = () => {
     if (!activeRecord || isLocked) return;
     const rec = fabulaRecordOf(activeRecord.kind, activeRecord.id);
     if (!rec) return;
+    if (fabulaOutlineHolding(state, activeRecord.kind, rec).length > 0) { setFabulaHoldsAsk({ kind: activeRecord.kind, id: rec.id }); return; }
     if (!confirm(fabulaRecordDeleteMessage(state, activeRecord.kind, rec))) return;
-    const slice = fabulaSliceOf(activeRecord.kind);
+    finishFabulaDelete(activeRecord.kind, rec, false);
+  };
+
+  const finishFabulaDelete = (kind, rec, lift) => {
+    if (isLocked) return;
     updateState(s => {
-      const fab = s.fabula || {};
-      const without = { ...fab, [slice]: fabArr(fab, slice).filter(r => r.id !== rec.id) };
-      return { ...s, fabula: scrubFabulaRefs({ ...s, fabula: without }, new Set([rec.id])) };
+      const { fab, gone } = fabulaOutlineDelete(s.fabula || {}, kind, rec, lift);
+      return { ...s, fabula: scrubFabulaRefs({ ...s, fabula: fab }, gone) };
     });
+    setFabulaHoldsAsk(null);
     setRecordDraft(null); initialRecordDraftRef.current = null;
     popFabulaBack();
   };
@@ -4391,6 +4414,9 @@ function App() {
                 isLocked={isLocked}
                 folds={prefs.fabulaFolds}
                 onToggleFold={toggleFabulaFold}
+                outlineFolds={prefs.fabulaOutlineFolds}
+                onToggleOutlineFold={toggleOutlineFold}
+                onUpdateFabula={(fn) => { if (!isLocked) updateFabula(fn); }}
                 onRestoreTemplate={(name) => restoreBuiltinTemplates([name])}
                 showSecrets={showSecrets}
                 allTags={allTags}
@@ -4580,6 +4606,21 @@ function App() {
           }}
         />
       )}
+
+      {fabulaHoldsAsk && (() => {
+        const rec = fabulaRecordOf(fabulaHoldsAsk.kind, fabulaHoldsAsk.id);
+        if (!rec) return null;
+        return (
+          <FabulaHoldsDeleteModal
+            state={state}
+            kind={fabulaHoldsAsk.kind}
+            record={rec}
+            onMoveUp={() => finishFabulaDelete(fabulaHoldsAsk.kind, rec, true)}
+            onDeleteAll={() => finishFabulaDelete(fabulaHoldsAsk.kind, rec, false)}
+            onCancel={() => setFabulaHoldsAsk(null)}
+          />
+        );
+      })()}
 
       {destructiveOp && (
         <DestructiveOpModal
