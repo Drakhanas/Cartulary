@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "0d683c6de47f37c396889a9865b5bcb27ce0bbe2fa25c68d975a3cfe77a7ed84",
+  "anchor_sha256": "f4d73f0a51c06190975f85b06b16b36bb9b6603b2ce794d720b03af0f4bfabda",
   "shell_sha256": "65714755efa11c91036354e5c78f38fdddb46bc9c27a38dd1838823ce9fd59b2",
   "files": [
     [
@@ -52,15 +52,15 @@
     ],
     [
       "12_trunk.jsx",
-      5341
+      5542
     ],
     [
       "13_form-engine-display.jsx",
-      731
+      732
     ],
     [
       "14_form-engine-edit.jsx",
-      1844
+      1847
     ],
     [
       "15_template-builder.jsx",
@@ -136,7 +136,7 @@
     ],
     [
       "24_ephemeris/01_shell.jsx",
-      722
+      724
     ],
     [
       "24_ephemeris/02_asbo.jsx",
@@ -168,7 +168,7 @@
     ],
     [
       "27_trunk.jsx",
-      907
+      1218
     ],
     [
       "28_modals.jsx",
