@@ -28624,7 +28624,8 @@ function TimelineView({ state, onOpenEntry, showSecrets, onUpdateViewPrefs }) {
 // drawing with the last passed build's, step by step. v1.7's r019 changed
 // what the lanes draw, on Drak's calls (2026-10-26): rows by what each event
 // draws, long lane titles wrapped with their lanes grown to fit, and year
-// ticks on whole years.
+// ticks on whole years. v1.7's r021, on his call at its plan, cut an era's
+// name to fit its band.
 
 // The chart's sizes, in pixels: the lane-title column, the axis and era band
 // above the lanes, a lane's least height, a sub-row's height, a title line's
@@ -28824,6 +28825,20 @@ const chronoEraBands = (cal) => {
     bands.push({ era, start, end });
   }
   return bands;
+};
+
+// An era's name as its band draws it (v1.7 r021): whole when it fits between
+// 6 pixels in from the band's start and 4 before its end, else the longest
+// start of it that fits there with an ellipsis, else nothing. width is the
+// band's drawn width; widthOf measures a name in the chart's italic type.
+const chronoEraLabel = (name, width, widthOf) => {
+  const room = width - 10;
+  const full = name || "";
+  if (widthOf(full) <= room) return full;
+  let cut = full;
+  while (cut.length > 0 && widthOf(cut.replace(/\s+$/, "") + "…") > room) cut = cut.slice(0, -1);
+  cut = cut.replace(/\s+$/, "");
+  return cut ? cut + "…" : "";
 };
 
 // A span's name as its bar draws it: cut short with an ellipsis where it
@@ -29196,7 +29211,8 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
 
   // Text widths for the lanes' layout (v1.7 r019), measured on a canvas in
   // the fonts the chart draws in, and measured again once the page's fonts
-  // finish loading, since a fallback face sets other widths.
+  // finish loading, since a fallback face sets other widths; since r021 in
+  // italic too, for the era names.
   const [fontsLoaded, setFontsLoaded] = useState(0);
   useEffect(() => {
     const fonts = document.fonts;
@@ -29210,10 +29226,10 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
   const measureText = useMemo(() => {
     const ctx = document.createElement("canvas").getContext("2d");
     const widths = new Map();
-    return (text, size) => {
-      const key = size + "|" + text;
+    return (text, size, italic) => {
+      const key = (italic ? "i" : "") + size + "|" + text;
       if (!widths.has(key)) {
-        if (ctx) ctx.font = `${size}px "DM Sans", sans-serif`;
+        if (ctx) ctx.font = `${italic ? "italic " : ""}${size}px "DM Sans", sans-serif`;
         widths.set(key, ctx ? ctx.measureText(text).width : text.length * size * 0.55);
       }
       return widths.get(key);
@@ -29708,7 +29724,8 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
               <rect x={LEFT_GUTTER} y={0} width={chartWidth} height={totalHeight} />
             </clipPath>
           </defs>
-          {/* Era bands */}
+          {/* Era bands, their names on a line of their own above the year
+              labels, each cut to fit its band (v1.7 r021) */}
           {eraBands.map((b, i) => {
             const x1 = Math.max(LEFT_GUTTER, yearToX(Math.max(b.start, visStart)));
             const x2 = Math.min(LEFT_GUTTER + chartWidth, yearToX(Math.min(b.end, visEnd)));
@@ -29717,18 +29734,23 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
             const hues = ["rgba(200,169,110,.06)", "rgba(160,110,200,.06)", "rgba(110,158,200,.06)", "rgba(200,110,110,.06)"];
             return (
               <g key={i}>
-                <rect x={x1} y={TOP_GUTTER - 18} width={x2 - x1} height={totalHeight - TOP_GUTTER + 18} fill={hues[i % hues.length]} />
-                {(x2 - x1) > 50 && (
-                  <text
-                    x={x1 + 6} y={TOP_GUTTER - 6}
-                    fill="var(--accent-dim)"
-                    fontSize={10}
-                    fontFamily="DM Sans, sans-serif"
-                    fontStyle="italic"
-                  >
-                    {b.era.shortName || b.era.name}
-                  </text>
-                )}
+                <rect x={x1} y={TOP_GUTTER - 36} width={x2 - x1} height={totalHeight - TOP_GUTTER + 36} fill={hues[i % hues.length]} />
+                {(x2 - x1) > 50 && (() => {
+                  const full = b.era.shortName || b.era.name || "";
+                  const label = chronoEraLabel(full, x2 - x1, (s) => measureText(s, 10, true));
+                  return label && (
+                    <text
+                      x={x1 + 6} y={TOP_GUTTER - 24}
+                      fill="var(--accent-dim)"
+                      fontSize={10}
+                      fontFamily="DM Sans, sans-serif"
+                      fontStyle="italic"
+                    >
+                      {label}
+                      {label !== full && <title>{full}</title>}
+                    </text>
+                  );
+                })()}
               </g>
             );
           })}
@@ -49297,7 +49319,8 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   }, []);
 
   // Text widths, measured as Chronometric measures them: on a canvas in the
-  // chart's fonts, and again once the page's fonts finish loading.
+  // chart's fonts, and again once the page's fonts finish loading, since
+  // v1.7's r021 in italic too, for the era names.
   const [fontsLoaded, setFontsLoaded] = useState(0);
   useEffect(() => {
     const fonts = document.fonts;
@@ -49311,10 +49334,10 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   const measureText = useMemo(() => {
     const ctx = document.createElement("canvas").getContext("2d");
     const widths = new Map();
-    return (text, size) => {
-      const key = size + "|" + text;
+    return (text, size, italic) => {
+      const key = (italic ? "i" : "") + size + "|" + text;
       if (!widths.has(key)) {
-        if (ctx) ctx.font = `${size}px "DM Sans", sans-serif`;
+        if (ctx) ctx.font = `${italic ? "italic " : ""}${size}px "DM Sans", sans-serif`;
         widths.set(key, ctx ? ctx.measureText(text).width : text.length * size * 0.55);
       }
       return widths.get(key);
@@ -49533,7 +49556,8 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                   <rect x={LEFT_GUTTER} y={0} width={chartWidth} height={totalHeight} />
                 </clipPath>
               </defs>
-              {/* Era bands, their names on a line of their own above the year labels */}
+              {/* Era bands, their names on a line of their own above the year
+                  labels, each cut to fit its band (v1.7 r021) */}
               {eraBands.map((b, i) => {
                 const x1 = Math.max(LEFT_GUTTER, yearToX(Math.max(b.start, visStart)));
                 const x2 = Math.min(LEFT_GUTTER + chartWidth, yearToX(Math.min(b.end, visEnd)));
@@ -49542,11 +49566,16 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                 return (
                   <g key={i}>
                     <rect x={x1} y={TOP_GUTTER - 36} width={x2 - x1} height={totalHeight - TOP_GUTTER + 36} fill={hues[i % hues.length]} />
-                    {(x2 - x1) > 50 && (
-                      <text className="fabula-tl-era" x={x1 + 6} y={TOP_GUTTER - 24} fill="var(--accent-dim)" fontSize={10} fontFamily="DM Sans, sans-serif" fontStyle="italic">
-                        {b.era.shortName || b.era.name}
-                      </text>
-                    )}
+                    {(x2 - x1) > 50 && (() => {
+                      const full = b.era.shortName || b.era.name || "";
+                      const label = chronoEraLabel(full, x2 - x1, (s) => measureText(s, 10, true));
+                      return label && (
+                        <text className="fabula-tl-era" x={x1 + 6} y={TOP_GUTTER - 24} fill="var(--accent-dim)" fontSize={10} fontFamily="DM Sans, sans-serif" fontStyle="italic">
+                          {label}
+                          {label !== full && <title>{full}</title>}
+                        </text>
+                      );
+                    })()}
                   </g>
                 );
               })}

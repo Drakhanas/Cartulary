@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "7f00bd545264415b0ceceb963552c09587df28e00c3cf9141a7889693ee08e58",
+  "anchor_sha256": "2b8b5eb3734031ecd5388fc18e3b24ed0e1cab55e1bb6c30c134376720d25392",
   "shell_sha256": "65714755efa11c91036354e5c78f38fdddb46bc9c27a38dd1838823ce9fd59b2",
   "files": [
     [
@@ -96,7 +96,7 @@
     ],
     [
       "19_chronometric.jsx",
-      1750
+      1772
     ],
     [
       "20_linea.jsx",
@@ -172,7 +172,7 @@
     ],
     [
       "28_fabula.jsx",
-      3979
+      3986
     ],
     [
       "29_modals.jsx",
