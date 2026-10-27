@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 50144,
-    "raw_body_lines": 50144,
-    "canonical_lines": 47695,
-    "decl_count": 671,
+    "total_lines": 50773,
+    "raw_body_lines": 50773,
+    "canonical_lines": 48293,
+    "decl_count": 687,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r022-body.jsx"
+    "active_anchor": "reference-r023-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 50144,
+      "value": 50773,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 671,
+      "value": 687,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 47695,
+      "value": 48293,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 50144,
+      "value": 50773,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 89,
+      "value": 90,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2654667,
+      "value": 2694883,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty-nine",
-        49
+        "fifty",
+        50
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,25 +108,25 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 89,
+      "value": 90,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 89,
+      "value": 90,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r022": {
-      "value": "5a959d0f6cedbe82",
-      "pattern": "working[^\\n]{0,40}at r022 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r023": {
+      "value": "95e16b5e98b0e927",
+      "pattern": "working[^\\n]{0,40}at r023 hashes to sha256 `([0-9a-f]{16})`"
     },
     "anchor_rotations_made": {
       "value": [
-        "forty-nine",
-        49
+        "fifty",
+        50
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
@@ -519,17 +519,17 @@
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 939,
+      "line": 948,
       "contains": "const renderMapHtml"
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 1512,
+      "line": 1532,
       "contains": "HTML export modal"
     },
     {
       "file": "08_export-layer.jsx",
-      "line": 1523,
+      "line": 1543,
       "contains": "function HtmlExportModal"
     },
     {
@@ -554,37 +554,37 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 815,
+      "line": 820,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1089,
+      "line": 1094,
       "contains": "Fabula: Outline (v1.7 r011)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1847,
+      "line": 1852,
       "contains": "Fabula: Plot (v1.7 r013)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2520,
+      "line": 2525,
       "contains": "Fabula: Notes (v1.7 r014)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2655,
+      "line": 2660,
       "contains": "Fabula: Meaning (v1.7 r015)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2882,
+      "line": 2887,
       "contains": "Fabula: threads and themes (v1.7 r016)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 3137,
+      "line": 3142,
       "contains": "Fabula: templates (v1.7 r017)"
     },
     {
@@ -599,8 +599,13 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 3433,
+      "line": 3438,
       "contains": "Fabula: the timeline (v1.7 r020)"
+    },
+    {
+      "file": "28_fabula.jsx",
+      "line": 4198,
+      "contains": "Fabula: the export (v1.7 r023)"
     }
   ],
   "spans": {
@@ -791,10 +796,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r022-body.jsx",
-      "reference-r022-layout.json",
-      "b57e7a1196c91937",
-      "5a959d0f6cedbe82",
+      "reference-r023-body.jsx",
+      "reference-r023-layout.json",
+      "0724107911773c17",
+      "95e16b5e98b0e927",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -841,7 +846,11 @@
       "--aside eras",
       "v1.7_r022",
       "FABULA_TIMELINE_MODES",
-      "entry-view-full"
+      "entry-view-full",
+      "v1.7_r023",
+      "renderEntryFieldsHtml",
+      "FabulaExportModal",
+      "articleIds"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -905,7 +914,7 @@
       "b1b07ff195a9e796",
       "a2bb59988f15030f",
       "On v1.7 r003 verification",
-      "08_export-layer:1512",
+      "08_export-layer:1532",
       "reference-r004-body.jsx",
       "16337a1350d7e7e6",
       "0731070bf5555171",
@@ -943,7 +952,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r022-layout.json",
+      "reference-r023-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -993,7 +1002,12 @@
       "reference-r022-body.jsx",
       "b57e7a1196c91937",
       "5a959d0f6cedbe82",
-      "On v1.7 r022 verification"
+      "On v1.7 r022 verification",
+      "reference-r023-body.jsx",
+      "0724107911773c17",
+      "95e16b5e98b0e927",
+      "On v1.7 r023 verification",
+      "renderEntryFieldsHtml"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1105,7 +1119,15 @@
       "8a743c1",
       "9d4d07e",
       "85b021a",
-      "FABULA_TIMELINE_MODES"
+      "FABULA_TIMELINE_MODES",
+      "v1.7_r023",
+      "95e16b5e98b0e927",
+      "0724107911773c17",
+      "a8e0ddc",
+      "ff9ae78",
+      "4c98e43",
+      "renderEntryFieldsHtml",
+      "FabulaExportModal"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1161,7 +1183,8 @@
       "v1.7_r020",
       "v1.7_r021",
       "drawn 36 pixels wider than its frame",
-      "v1.7_r022"
+      "v1.7_r022",
+      "v1.7_r023"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1214,7 +1237,8 @@
       "A refactor that keeps behavior but not bytes is proven by recording the behavior",
       "A check whose result changes under load has found a race",
       "A planted defect that crashes the probe has been noticed, not counted",
-      "A planted copy that passes every check has either found a blind check or a world that never reaches the rule"
+      "A planted copy that passes every check has either found a blind check or a world that never reaches the rule",
+      "A queued run whose check count differs from the solo run's is the race too"
     ],
     "journal.txt": [
       "r030",
@@ -1262,7 +1286,8 @@
       "r019",
       "r020",
       "r021",
-      "r022"
+      "r022",
+      "r023"
     ]
   }
 }

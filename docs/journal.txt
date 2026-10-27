@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, and r022's modes) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, r022's modes, and r023's export) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -843,3 +843,20 @@ and he'd passed; with two more modes in the same box it was plainly cramped. I s
 asked at r020. The revision was small, a wide flag on the entry view and two rules, but
 every check ran again, and r021's probe needed a copy with longer drags, since the wider
 chart no longer narrowed its era band enough. He passed the revision in one word.
+
+r023 is Fabula's export, the story bible in HTML and in Markdown. Drak's three calls came
+one a message, as they do now: the export alone, with the help as r024 and the site after;
+the bible in the story page's order, everything the tabs show; and the world's entries as
+names, the story's own threads and themes in full. The cut's shape was set by one rule I
+gave myself before writing a line: the world's exports had to come out byte for byte as
+r022's, so the article renderer's field listing came out as a function that returns the
+exact substring the template literal held, and twenty files on five worlds said the same
+bytes. The probe's world had to be filled out for it; Told Askew got panels, a structure,
+secrets, beats with wiki links in them, a thread bound to the second calendar and used but
+not listed, and themes of two types and one with none, and the probe reads the Markdown's
+headings and the HTML's articles and holds them to the same order. One figure in r022's
+record turned out to be the queue's: r021's adapted probe had counted 1,785 there, and run
+alone it counts 1,735 on either build. I'd taken a passing count on trust because it
+passed. The spec named a nested list for the Markdown outline, and I went with headings by
+depth instead, because a list can't hold a scene's block fields and its beats; it's in the
+cut's calls, and he passed it in one word.
