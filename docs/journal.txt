@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, and r019's lanes) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, and r020's timeline) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -798,3 +798,17 @@ move before the last. The difference came from the machine being busy, and it po
 real bug I'd never have found reading the drawing. The check pauses before letting go now,
 and the race is filed rather than fixed, since r019's pass was about lanes. Drak passed it
 in one word.
+
+r020 is Fabula's timeline in story time. The plan took eight calls in eight messages, seven
+of them the first option; the one that wasn't gave Chronometric's era names a cut of their
+own. The cut drew with r018's and r019's functions and needed one change to them, a title
+with no icon. The probe's first run failed eight checks, and all eight were the probe's own
+expectations, a date format I'd guessed among them. The planted copies were less tidy: two
+of them crashed the probe at a click that waited for what the copy didn't draw, and the
+control at the Timeline tab, which r019 doesn't open, and a crash prints no checks, so
+those runs read as broken with nothing counted. The probe records a broken section as a
+failed check now, and starts each run clean, since one copy had counted 26 only because its
+broken run left its picks for the next. The parity check found Chronometric identical. Then
+the staging: I sent the build under a probe copy's name, and Drak caught that it had lost
+the v1.7 and the cut's name, the format the doctrine gives a working copy. I reworded the
+cut's commit before pushing it, so its count reads 13. He passed it in one word.

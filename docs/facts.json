@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 49323,
-    "raw_body_lines": 49323,
-    "canonical_lines": 46906,
-    "decl_count": 663,
+    "total_lines": 49907,
+    "raw_body_lines": 49907,
+    "canonical_lines": 47463,
+    "decl_count": 669,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r019-body.jsx"
+    "active_anchor": "reference-r020-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 49323,
+      "value": 49907,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 663,
+      "value": 669,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 46906,
+      "value": 47463,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 49323,
+      "value": 49907,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 88,
+      "value": 89,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2604674,
+      "value": 2639425,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty-six",
-        46
+        "forty-seven",
+        47
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,25 +108,25 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 88,
+      "value": 89,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 88,
+      "value": 89,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r019": {
-      "value": "bf1e59886e5a973c",
-      "pattern": "working[^\\n]{0,40}at r019 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r020": {
+      "value": "2b5155e3e0eee2bd",
+      "pattern": "working[^\\n]{0,40}at r020 hashes to sha256 `([0-9a-f]{16})`"
     },
     "anchor_rotations_made": {
       "value": [
-        "forty-six",
-        46
+        "forty-seven",
+        47
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
@@ -164,7 +164,7 @@
     },
     {
       "file": "19_chronometric.jsx",
-      "line": 1748,
+      "line": 1750,
       "contains": "}"
     },
     {
@@ -554,37 +554,37 @@
     },
     {
       "file": "28_fabula.jsx",
-      "line": 808,
+      "line": 812,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1082,
+      "line": 1086,
       "contains": "Fabula: Outline (v1.7 r011)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 1840,
+      "line": 1844,
       "contains": "Fabula: Plot (v1.7 r013)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2513,
+      "line": 2517,
       "contains": "Fabula: Notes (v1.7 r014)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2648,
+      "line": 2652,
       "contains": "Fabula: Meaning (v1.7 r015)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 2875,
+      "line": 2879,
       "contains": "Fabula: threads and themes (v1.7 r016)"
     },
     {
       "file": "28_fabula.jsx",
-      "line": 3130,
+      "line": 3134,
       "contains": "Fabula: templates (v1.7 r017)"
     },
     {
@@ -594,8 +594,13 @@
     },
     {
       "file": "19_chronometric.jsx",
-      "line": 612,
+      "line": 614,
       "contains": "Chronometrics view"
+    },
+    {
+      "file": "28_fabula.jsx",
+      "line": 3430,
+      "contains": "Fabula: the timeline (v1.7 r020)"
     }
   ],
   "spans": {
@@ -651,7 +656,7 @@
     "19_chronometric.jsx": [
       [
         1,
-        1748,
+        1750,
         "chronometric"
       ]
     ],
@@ -786,10 +791,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r019-body.jsx",
-      "reference-r019-layout.json",
-      "9614e63540e713f1",
-      "bf1e59886e5a973c",
+      "reference-r020-body.jsx",
+      "reference-r020-layout.json",
+      "7f00bd545264415b",
+      "2b5155e3e0eee2bd",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -826,7 +831,11 @@
       "v1.7_r019",
       "chronoTitleLines",
       "chronoEventExtent",
-      "titleLinesByLane"
+      "titleLinesByLane",
+      "v1.7_r020",
+      "FabulaTimelineTab",
+      "fabulaTimelineData",
+      "openFabulaRecordIn"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -928,7 +937,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r019-layout.json",
+      "reference-r020-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -966,7 +975,11 @@
       "reference-r019-body.jsx",
       "9614e63540e713f1",
       "bf1e59886e5a973c",
-      "On v1.7 r019 verification"
+      "On v1.7 r019 verification",
+      "reference-r020-body.jsx",
+      "7f00bd545264415b",
+      "2b5155e3e0eee2bd",
+      "On v1.7 r020 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1060,7 +1073,12 @@
       "bf1e59886e5a973c",
       "9614e63540e713f1",
       "26c6dde",
-      "chronoTitleLines"
+      "chronoTitleLines",
+      "v1.7_r020",
+      "2b5155e3e0eee2bd",
+      "7f00bd545264415b",
+      "d8889d9",
+      "FabulaTimelineTab"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1112,7 +1130,8 @@
       "v1.7_r018",
       "v1.7_r019",
       "A drag let go the instant after its last move can land short",
-      "An era's name and a tick's label can print over each other"
+      "An era's name and a tick's label can print over each other",
+      "v1.7_r020"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1163,7 +1182,8 @@
       "A flag added to a stored record has to come through every pass that writes the record",
       "A census of what reads a field is taken from the code",
       "A refactor that keeps behavior but not bytes is proven by recording the behavior",
-      "A check whose result changes under load has found a race"
+      "A check whose result changes under load has found a race",
+      "A planted defect that crashes the probe has been noticed, not counted"
     ],
     "journal.txt": [
       "r030",
@@ -1208,7 +1228,8 @@
       "r016",
       "r017",
       "r018",
-      "r019"
+      "r019",
+      "r020"
     ]
   }
 }
