@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "36b5e4ae0b1eb9b10d94d9bad05562f8e56eff7cc49cfde41302bf1aa225708e",
+  "anchor_sha256": "9fc40ea26388ef8f9ed86cbe0ef1fba2715fef76a8217aea78d0c7084c9a431b",
   "shell_sha256": "65714755efa11c91036354e5c78f38fdddb46bc9c27a38dd1838823ce9fd59b2",
   "files": [
     [
@@ -96,7 +96,7 @@
     ],
     [
       "19_chronometric.jsx",
-      1528
+      1606
     ],
     [
       "20_linea.jsx",
