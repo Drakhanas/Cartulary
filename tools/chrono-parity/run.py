@@ -78,6 +78,7 @@ def main():
     ap.add_argument('baseline', help='the git ref of the last passed build, e.g. v1.7_r017')
     ap.add_argument('--candidate', default=None, help='a git ref to check instead of the working tree')
     ap.add_argument('--out', default=str(ROOT / 'inlining' / 'out' / 'chrono-parity'))
+    ap.add_argument('--aside', default=None, help="what compare sets aside, e.g. eras (see parity.js)")
     args = ap.parse_args()
 
     out = Path(args.out).resolve()
@@ -100,7 +101,10 @@ def main():
         code = subprocess.run(cmd).returncode
         if code != 0:
             return code
-    return subprocess.run(['node', parity, 'compare', str(out / 'baseline'), str(out / 'candidate')]).returncode
+    compare = ['node', parity, 'compare', str(out / 'baseline'), str(out / 'candidate')]
+    if args.aside:
+        compare += ['--aside', args.aside]
+    return subprocess.run(compare).returncode
 
 
 if __name__ == '__main__':

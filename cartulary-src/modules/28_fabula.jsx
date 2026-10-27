@@ -3660,7 +3660,8 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   }, []);
 
   // Text widths, measured as Chronometric measures them: on a canvas in the
-  // chart's fonts, and again once the page's fonts finish loading.
+  // chart's fonts, and again once the page's fonts finish loading, since
+  // v1.7's r021 in italic too, for the era names.
   const [fontsLoaded, setFontsLoaded] = useState(0);
   useEffect(() => {
     const fonts = document.fonts;
@@ -3674,10 +3675,10 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   const measureText = useMemo(() => {
     const ctx = document.createElement("canvas").getContext("2d");
     const widths = new Map();
-    return (text, size) => {
-      const key = size + "|" + text;
+    return (text, size, italic) => {
+      const key = (italic ? "i" : "") + size + "|" + text;
       if (!widths.has(key)) {
-        if (ctx) ctx.font = `${size}px "DM Sans", sans-serif`;
+        if (ctx) ctx.font = `${italic ? "italic " : ""}${size}px "DM Sans", sans-serif`;
         widths.set(key, ctx ? ctx.measureText(text).width : text.length * size * 0.55);
       }
       return widths.get(key);
@@ -3896,7 +3897,8 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                   <rect x={LEFT_GUTTER} y={0} width={chartWidth} height={totalHeight} />
                 </clipPath>
               </defs>
-              {/* Era bands, their names on a line of their own above the year labels */}
+              {/* Era bands, their names on a line of their own above the year
+                  labels, each cut to fit its band (v1.7 r021) */}
               {eraBands.map((b, i) => {
                 const x1 = Math.max(LEFT_GUTTER, yearToX(Math.max(b.start, visStart)));
                 const x2 = Math.min(LEFT_GUTTER + chartWidth, yearToX(Math.min(b.end, visEnd)));
@@ -3905,11 +3907,16 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                 return (
                   <g key={i}>
                     <rect x={x1} y={TOP_GUTTER - 36} width={x2 - x1} height={totalHeight - TOP_GUTTER + 36} fill={hues[i % hues.length]} />
-                    {(x2 - x1) > 50 && (
-                      <text className="fabula-tl-era" x={x1 + 6} y={TOP_GUTTER - 24} fill="var(--accent-dim)" fontSize={10} fontFamily="DM Sans, sans-serif" fontStyle="italic">
-                        {b.era.shortName || b.era.name}
-                      </text>
-                    )}
+                    {(x2 - x1) > 50 && (() => {
+                      const full = b.era.shortName || b.era.name || "";
+                      const label = chronoEraLabel(full, x2 - x1, (s) => measureText(s, 10, true));
+                      return label && (
+                        <text className="fabula-tl-era" x={x1 + 6} y={TOP_GUTTER - 24} fill="var(--accent-dim)" fontSize={10} fontFamily="DM Sans, sans-serif" fontStyle="italic">
+                          {label}
+                          {label !== full && <title>{full}</title>}
+                        </text>
+                      );
+                    })()}
                   </g>
                 );
               })}

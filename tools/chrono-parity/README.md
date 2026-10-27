@@ -86,3 +86,12 @@ whether those are the intended ones. `parity.js compare --only saved` still
 holds such a cut to what its edits save. r019 moved lanes and grew them but
 moved no event sideways, and every drag and panel step saved the same entries
 as r018's did.
+
+`parity.js compare --aside eras`, or `run.py <ref> --aside eras`, sets each era
+band aside, its tint and its name, in the drawing and in the export, leaving a
+placeholder in its place, and compares the rest. r021 moved Chronometric's era
+names onto a line of their own above the year labels and cut each to its band,
+so its drawing differs wherever an era is drawn; with the era bands set aside
+it had to come out identical to r020's, and a copy of r021 with one year label
+moved a pixel had to come out different, so the setting-aside is known to hide
+nothing else.

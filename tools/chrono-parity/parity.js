@@ -5,7 +5,7 @@
 // passed. Two commands:
 //
 //   node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]
-//   node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...]
+//   node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...] [--aside eras]
 //
 // record opens the build in Chromium (Playwright), loads each of the four
 // worlds in worlds.js at each width, opens Timeline; Chronometric, and drives
@@ -16,7 +16,10 @@
 // own new world; pass --fixtures to load those same files into another build.
 // compare reads two outdirs and prints the first difference in each run;
 // --only compares those fields of each step alone (`--only saved` for what the
-// edits saved, when a cut changes the drawing on purpose and the edits mustn't).
+// edits saved, when a cut changes the drawing on purpose and the edits mustn't);
+// --aside eras sets each era band, its tint and its name, aside in the drawing
+// and the export alike, for a cut that changes the era bands on purpose and
+// nothing else (v1.7's r021).
 // Exit codes: record 0, or 3 when a step failed (the failure is recorded);
 // compare 0 when every step matches, 1 when any differs.
 //
@@ -372,8 +375,20 @@ function firstDifference(a, b, where = '') {
     : `${where || 'value'}: baseline ${JSON.stringify(a)}, candidate ${JSON.stringify(b)}`;
 }
 
-function compare(dirA, dirB, only) {
-  const load = (dir, f) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, f))).toString('utf8'));
+// An era band's markup, a <g> holding its tinted <rect> and, when the band
+// draws one, its name's <text>: as the page renders it and as the export
+// serializes it. --aside eras leaves a placeholder in each one's place, so a
+// band drawn in one build and not the other still differs.
+const ERA_BAND = /<g[^>]*><rect[^>]*\bfill="rgba\((?:200,169,110|160,110,200|110,158,200|200,110,110),\.06\)"[^>]*?(?:\/>|><\/rect>)(?:<text[^>]*>(?:(?!<\/text>)[\s\S])*<\/text>)?<\/g>/g;
+const setAside = (r, aside) => {
+  if (!aside || !aside.includes('eras')) return r;
+  const out = { ...r };
+  ['svg', 'exported'].forEach(k => { if (typeof out[k] === 'string') out[k] = out[k].replace(ERA_BAND, '<g data-aside="era band"></g>'); });
+  return out;
+};
+
+function compare(dirA, dirB, only, aside) {
+  const load = (dir, f) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, f))).toString('utf8')).map(r => setAside(r, aside));
   const files = fs.readdirSync(dirA).filter(f => f.endsWith('.json.gz')).sort();
   const meta = (dir) => { try { return JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')); } catch (e) { return {}; } };
   const [ma, mb] = [meta(dirA), meta(dirB)];
@@ -409,7 +424,7 @@ function compare(dirA, dirB, only) {
       console.log(`  ${run}: ${SA.length} steps, identical${failedA ? ` (both stopped at a failed step: ${failedA.error})` : ''}`);
     }
   }
-  const fields = only ? `, ${only.join(' and ')} only` : '';
+  const fields = (only ? `, ${only.join(' and ')} only` : '') + (aside ? `, ${aside.join(' and ')} set aside` : '');
   if (differing) console.log(`PARITY: DIFFERENT (${differing} of ${files.length} runs${fields})`);
   else console.log(`PARITY: IDENTICAL (${files.length} runs, ${steps} steps${fields})`);
   return differing ? 1 : 0;
@@ -426,10 +441,10 @@ function compare(dirA, dirB, only) {
     const only = opt('only') ? opt('only').split(',') : null;
     process.exit(await record(pos[0], pos[1], { libs, fixtures: opt('fixtures'), only }));
   } else if (cmd === 'compare' && pos.length === 2) {
-    process.exit(compare(pos[0], pos[1], opt('only') ? opt('only').split(',') : null));
+    process.exit(compare(pos[0], pos[1], opt('only') ? opt('only').split(',') : null, opt('aside') ? opt('aside').split(',') : null));
   } else {
     console.log('usage: node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]\n'
-      + '       node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...]');
+      + '       node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...] [--aside eras]');
     process.exit(2);
   }
 })().catch(e => { console.error(e); process.exit(2); });
