@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, and r020's timeline) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, and r021's era names) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -812,3 +812,19 @@ broken run left its picks for the next. The parity check found Chronometric iden
 the staging: I sent the build under a probe copy's name, and Drak caught that it had lost
 the v1.7 and the cut's name, the format the doctrine gives a working copy. I reworded the
 cut's commit before pushing it, so its count reads 13. He passed it in one word.
+
+r021 moved Chronometric's era names onto the line Fabula's have used since r020 and cut a
+name too long for its band. Drak's one call at the plan settled the cutting: an ellipsis,
+the full name on hover, both timelines. The cut added 29 lines; the check took longer. The
+parity check had to differ wherever an era's name is drawn, so its compare learned to set
+the bands aside, and a copy with a year label moved a pixel had to come out different
+anyway, to show the setting-aside hid nothing else. It did. The probe's first run failed
+184 checks, and 183 were mine: I held an italic name's box to the band's margin, and an
+italic glyph's box starts a pixel left of its text. The last was the probe's floor on cut
+names in Fabula's timeline, which wanted three and got two, both cut to the same "The
+Long…". Five more drag widths gave seven, in four different cuts. In the screenshots I saw
+a year label cut off at the chart's right edge and told Drak it wasn't this cut's. At the
+turnover I measured it: Chronometric takes its width from a box that counts its padding,
+so it draws its chart 36 pixels wider than the frame that shows it. That's filed. Drak
+asked for the worlds the check used, got them as the app's own exports, and passed it in
+one word.
