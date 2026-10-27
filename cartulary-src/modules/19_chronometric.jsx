@@ -542,12 +542,14 @@ const chronoStackRows = (extents, gap) => {
 // slash ending a line; inside a part, at its spaces, only when the part alone
 // is too wide; and a word too wide alone cut short with an ellipsis. A slash
 // stays with the word before it and the icon with the word after it. widthOf
-// measures a line. A title that fits is one line.
-const chronoTitleLines = (title, widthOf, maxWidth) => {
+// measures a line. A title that fits is one line. Since r020 a title can come
+// without an icon (hasIcon false, Fabula's timeline), and its first word then
+// stands alone.
+const chronoTitleLines = (title, widthOf, maxWidth, hasIcon = true) => {
   if (widthOf(title) <= maxWidth) return [title];
   const words = [];
   title.split(" ").forEach((word, i) => {
-    if (words.length && (word === "/" || i === 1)) words[words.length - 1] += " " + word;
+    if (words.length && (word === "/" || (hasIcon && i === 1))) words[words.length - 1] += " " + word;
     else words.push(word);
   });
   const parts = [[]];

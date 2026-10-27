@@ -197,6 +197,7 @@ function App() {
     mapStrip: null, // the map editor's strip layout (r046), normalized where it is read
     fabulaFolds: {}, // v1.7 r008: the Story tab's folded panels, one set for every story
     fabulaOutlineFolds: {}, // v1.7 r011: the Outline tab's folded acts, chapters, and scenes, by id
+    fabulaTimeline: {}, // v1.7 r020: the Timeline tab's scope, lanes, and calendar, by story
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -251,6 +252,7 @@ function App() {
             mapStrip: stored.mapStrip && typeof stored.mapStrip === "object" ? stored.mapStrip : null,
             fabulaFolds: stored.fabulaFolds && typeof stored.fabulaFolds === "object" && !Array.isArray(stored.fabulaFolds) ? stored.fabulaFolds : {},
             fabulaOutlineFolds: stored.fabulaOutlineFolds && typeof stored.fabulaOutlineFolds === "object" && !Array.isArray(stored.fabulaOutlineFolds) ? stored.fabulaOutlineFolds : {},
+            fabulaTimeline: stored.fabulaTimeline && typeof stored.fabulaTimeline === "object" && !Array.isArray(stored.fabulaTimeline) ? stored.fabulaTimeline : {},
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -1545,6 +1547,13 @@ function App() {
     return { ...p, fabulaOutlineFolds: folds };
   });
 
+  // v1.7 r020: and so do the Timeline tab's picks, its scope, its lanes, and
+  // its calendar, one set per story (docs/fabula-spec.md, section 8).
+  const setFabulaTimeline = (storyId, patch) => setPrefs(p => {
+    const all = p.fabulaTimeline && typeof p.fabulaTimeline === "object" ? p.fabulaTimeline : {};
+    return { ...p, fabulaTimeline: { ...all, [storyId]: { ...(all[storyId] || {}), ...patch } } };
+  });
+
   // v1.7 r009: People (docs/fabula-spec.md, section 4). A cast record, an arc,
   // or a relationship opens on a page of its own over its story's page, and
   // Back walks fabulaBack. A new record is a draft until Save, as a new
@@ -1558,6 +1567,19 @@ function App() {
     setStoryDraft(null); initialStoryDraftRef.current = null;
     setRecordDraft(null); initialRecordDraftRef.current = null;
     setFabulaBack(b => [...b, fabulaHere()]);
+    setActiveRecord({ kind, id });
+  };
+
+  // v1.7 r020: a record of another of the corpus's stories, from the
+  // timeline at the corpus's scope, opens over its own story's page, and Back
+  // returns to this story's page as it was left.
+  const openFabulaRecordIn = (kind, id, storyId) => {
+    if (!storyId || storyId === activeStoryId) { openFabulaRecord(kind, id); return; }
+    if (!confirmDiscardDraft()) return;
+    setStoryDraft(null); initialStoryDraftRef.current = null;
+    setRecordDraft(null); initialRecordDraftRef.current = null;
+    setFabulaBack(b => [...b, { ...fabulaHere(), storyId: activeStoryId }]);
+    setActiveStoryId(storyId);
     setActiveRecord({ kind, id });
   };
 
@@ -1577,6 +1599,8 @@ function App() {
     const frame = fabulaBack[fabulaBack.length - 1];
     setFabulaBack(b => b.slice(0, -1));
     if (frame && frame.kind === "entry") { returnToEntry(frame.id); return; }
+    // v1.7 r020: a frame left on another story's page returns to that story.
+    if (frame && frame.storyId) setActiveStoryId(frame.storyId);
     if (frame && frame.kind !== "story") { setActiveRecord({ kind: frame.kind, id: frame.id }); return; }
     setActiveRecord(null);
     setStoryTab((frame && frame.tab) || "people");
@@ -4602,6 +4626,9 @@ function App() {
                 onToggleFold={toggleFabulaFold}
                 outlineFolds={prefs.fabulaOutlineFolds}
                 onToggleOutlineFold={toggleOutlineFold}
+                timelinePrefs={(prefs.fabulaTimeline || {})[rec.id]}
+                onSetTimelinePrefs={(patch) => setFabulaTimeline(rec.id, patch)}
+                onOpenRecordIn={openFabulaRecordIn}
                 onUpdateFabula={(fn) => { if (!isLocked) updateFabula(fn); }}
                 onCreateThread={(name) => { if (!isLocked) updateState(s => fabulaWithNewThread(s, rec.id, name)); }}
                 onCreateTheme={(name) => { if (!isLocked) updateState(s => fabulaWithNewTheme(s, rec.id, name)); }}
