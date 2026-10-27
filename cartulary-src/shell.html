@@ -324,6 +324,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 
 /* ── Entry view ── */
 .entry-view{max-width:760px;margin:0 auto;padding:26px 30px 56px}
+.entry-view-wide{max-width:none}
+.entry-view-wide>*:not(.entry-view-full){max-width:700px;margin-left:auto;margin-right:auto}
 .entry-title{font-family:'Cormorant Garamond',serif;font-size:calc(33px * var(--font-scale));font-weight:400;color:var(--text-bright);line-height:1.2;margin-bottom:6px}
 .entry-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .entry-header-row .entry-title{margin-bottom:0;flex:1;min-width:0}

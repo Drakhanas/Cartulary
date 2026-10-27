@@ -64,7 +64,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot, wide }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -80,8 +80,11 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
   // r012 a caller can give its own, named as its form names them, as a
   // Fabula page gives its story's (fabulaStoryNodes).
   const registeredNodes = nodesGiven || (state ? getRegisteredGraphNodes(state) : []);
+  // v1.7 r022: wide widens the column to the pane, for Fabula's Timeline
+  // tab; every child but one marked entry-view-full stays in the reading
+  // width, centered as before.
   return (
-    <div className="entry-view">
+    <div className={wide ? "entry-view entry-view-wide" : "entry-view"}>
       <div className="entry-header-row">
         <div className="entry-title">{entry.name}</div>
         {onExportEntry && (
