@@ -746,12 +746,21 @@ const registeredNodeIndex = (state) =>
 // v1.7 r003: one reference value in the HTML export. An entry links to its
 // article, and so does a map, whose article reuses the entry-<id> scheme; a
 // body or a Glossopoeia record has no article, so it's its name, titled with
-// its type; an id nothing has is the broken-link span it always was.
+// its type; an id nothing has is the broken-link span it always was. Since
+// v1.7 r023 a context may name what its file holds (articleIds, a Fabula
+// bible's): then a reference to one of them links to its article, and any
+// other reference is its name, a map's with its source's name as a body's.
 const refLinkHtml = (id, ctx) => {
   const ref = ctx.entryById[id];
-  if (ref) return `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`;
   const node = ctx.nodeById ? ctx.nodeById[id] : null;
-  if (node && node.templateId === SYNTH_TPL_MAP) return `<a class="entry-ref-link" href="#entry-${htmlEscape(node.id)}">${htmlEscape(node.name)}</a>`;
+  if (ctx.articleIds) {
+    const named = ref || node;
+    if (named && ctx.articleIds.has(id)) return `<a class="entry-ref-link" href="#entry-${htmlEscape(id)}">${htmlEscape(named.name)}</a>`;
+    if (ref) return `<span class="entry-ref-record" title="World entry">${htmlEscape(ref.name)}</span>`;
+  } else {
+    if (ref) return `<a class="entry-ref-link" href="#entry-${htmlEscape(ref.id)}">${htmlEscape(ref.name)}</a>`;
+    if (node && node.templateId === SYNTH_TPL_MAP) return `<a class="entry-ref-link" href="#entry-${htmlEscape(node.id)}">${htmlEscape(node.name)}</a>`;
+  }
   if (node) {
     const src = getRegisteredSourceById(node.templateId);
     return `<span class="entry-ref-record" title="${htmlEscape(src ? src.name : "")}">${htmlEscape(node.name)}</span>`;
@@ -828,7 +837,7 @@ const renderFieldForHtml = (field, val, ctx) => {
       // Resolve wiki-links to anchor hrefs, then run through marked.parse to
       // process the surrounding markdown. marked treats the inline anchor HTML
       // as-is and processes the rest as markdown.
-      const withLinks = resolveWikiLinksForHtml(val, entryByLowerName, htmlEscape);
+      const withLinks = resolveWikiLinksForHtml(val, entryByLowerName, htmlEscape, ctx.articleIds);
       if (typeof marked !== "undefined" && marked.parse) {
         try {
           return marked.parse(withLinks);
@@ -1057,12 +1066,13 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
   ${legendHtml}`;
 };
 
-// Render one entry as a full <article> block. Walks fields in template order,
-// respecting secret/showWhen/cascade rules. Separates short inline fields
-// (rendered as a <dl> definition list) from block-level fields (textareas,
-// groups, name-history, multi-line content rendered as <section> blocks below
-// the <dl>).
-const renderEntryArticleHtml = (entry, tpl, state, ctx, options, canvasHtml) => {
+// v1.7 r023: an entry's fields as its article holds them, the short ones as
+// a <dl> definition list and the block ones (textareas, groups, name-history,
+// multi-line content) as <section> blocks after it, walked in template order
+// under the secret, showWhen, and cascade rules. The article renderer below
+// takes its field listing from here, and a Fabula record's bible takes it
+// inside an article of its own.
+const renderEntryFieldsHtml = (entry, tpl, state, ctx, options) => {
   const inlineRows = [];
   const blockSections = [];
 
@@ -1104,6 +1114,22 @@ const renderEntryArticleHtml = (entry, tpl, state, ctx, options, canvasHtml) => 
     }
   });
 
+  const inlineHtml = inlineRows.length > 0 ? `<dl class="entry-fields">${inlineRows.join("")}</dl>` : "";
+  const blockHtml = blockSections.map(b =>
+    `<section class="entry-block"><h3>${htmlEscape(b.label)}${b.marker}</h3><div class="entry-block-content">${b.content}</div></section>`
+  ).join("");
+  return `${inlineHtml}\n    ${blockHtml}`;
+};
+
+// Render one entry as a full <article> block: its title and badge, the
+// obituary line, the tags, a map's canvas, and its fields
+// (renderEntryFieldsHtml).
+const renderEntryArticleHtml = (entry, tpl, state, ctx, options, canvasHtml) => {
+  const fieldsHtml = renderEntryFieldsHtml(entry, tpl, state, ctx, options);
+
+  // The entry's calendar, for the obituary line
+  const entryCal = getCalendar(state, entry.calendarId);
+
   // Tags chips (renders only when present, before fields)
   const tagsHtml = (entry.tags && entry.tags.length > 0)
     ? `<div class="entry-tags-bar">${entry.tags.map(t => `<span class="entry-tag">${htmlEscape(t)}</span>`).join("")}</div>`
@@ -1127,11 +1153,6 @@ const renderEntryArticleHtml = (entry, tpl, state, ctx, options, canvasHtml) => 
     }
   }
 
-  const inlineHtml = inlineRows.length > 0 ? `<dl class="entry-fields">${inlineRows.join("")}</dl>` : "";
-  const blockHtml = blockSections.map(b =>
-    `<section class="entry-block"><h3>${htmlEscape(b.label)}${b.marker}</h3><div class="entry-block-content">${b.content}</div></section>`
-  ).join("");
-
   // Canvas slot: for map records, the caller passes the pre-rendered map block
   // (image + pin overlay + legend) to sit ahead of the field listing. Entries
   // pass nothing.
@@ -1143,8 +1164,7 @@ const renderEntryArticleHtml = (entry, tpl, state, ctx, options, canvasHtml) => 
     ${obituaryHtml}
     ${tagsHtml}
     ${mapHtml}
-    ${inlineHtml}
-    ${blockHtml}
+    ${fieldsHtml}
   </article>`;
 };
 

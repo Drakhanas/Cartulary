@@ -113,6 +113,7 @@ function App() {
   const [moonReconcile, setMoonReconcile] = useState(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);  // Template export dropdown
   const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);  // World-level HTML export modal
+  const [fabulaExport, setFabulaExport] = useState(null);  // v1.7 r023: Fabula's export modal, { kind: "story" | "corpus", id }
   // ChronometricsView's per-template enable filter. Lifted to App so toggling
   // off a lane and then navigating away and back doesn't reset the filter to
   // all-enabled. State is the SET OF DISABLED template ids; absent means enabled.
@@ -4552,6 +4553,8 @@ function App() {
                 calendar={getCalendar(state, null)}
                 state={state}
                 onUpdateViewPrefs={updateViewPrefs}
+                onExportEntry={() => setFabulaExport({ kind: "corpus", id: rec.id })}
+                exportTitle={FABULA_EXPORT_TITLE}
                 canvasSlot={
                   <FabulaReadingOrder
                     state={state}
@@ -4640,6 +4643,7 @@ function App() {
                 onOpenEntry={openEntryFromAnywhere}
                 onSelectTag={selectTag}
                 onUpdateViewPrefs={updateViewPrefs}
+                onExport={() => setFabulaExport({ kind: "story", id: rec.id })}
               />
             );
           })()}
@@ -4790,6 +4794,21 @@ function App() {
           onConfirm={(options) => {
             setShowHtmlExportModal(false);
             exportHtml(options);
+          }}
+        />
+      )}
+
+      {fabulaExport && (
+        <FabulaExportModal
+          state={state}
+          target={fabulaExport}
+          onCancel={() => setFabulaExport(null)}
+          onConfirm={(options) => {
+            const target = fabulaExport;
+            setFabulaExport(null);
+            const name = fabulaExportDownload(state, target, options);
+            if (name) flash(`${target.kind === "corpus" ? "Corpus" : "Story"} exported as ${options.format === "html" ? "HTML" : "Markdown"}${options.includeSecrets ? " (includes secrets)" : ""}`);
+            else flash("Nothing to export", "error");
           }}
         />
       )}

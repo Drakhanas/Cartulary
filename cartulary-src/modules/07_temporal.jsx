@@ -219,7 +219,10 @@ const resolveWikiLinksForMd = (text, entryByLowerName) => {
 // styled span so the reader can see "something was meant to be here."
 // The `escape` callback HTML-escapes the inner text — passed in to avoid
 // circular dependency on the escape helper that lives in buildHtmlExport.
-const resolveWikiLinksForHtml = (text, entryByLowerName, escape) => {
+// v1.7 r023: given articleIds, the ids of what the file holds (a Fabula
+// bible's), a link to an entry the file doesn't hold is the entry's name in
+// an entry-ref-record span instead of an anchor.
+const resolveWikiLinksForHtml = (text, entryByLowerName, escape, articleIds) => {
   if (!text || typeof text !== "string") return escape(text || "");
   // Process wiki-links FIRST, before escaping, to find anchor targets.
   // Then escape the surrounding text but leave our generated anchors alone.
@@ -237,7 +240,9 @@ const resolveWikiLinksForHtml = (text, entryByLowerName, escape) => {
     const target = pipe >= 0 ? inner.substring(0, pipe).trim() : inner.trim();
     const display = pipe >= 0 ? inner.substring(pipe + 1).trim() : target;
     const entry = entryByLowerName[target.toLowerCase()];
-    if (entry) {
+    if (entry && articleIds && !articleIds.has(entry.id)) {
+      parts.push(`<span class="entry-ref-record" title="World entry">${escape(display)}</span>`);
+    } else if (entry) {
       parts.push(`<a class="wiki-link" href="#entry-${escape(entry.id)}">${escape(display)}</a>`);
     } else {
       parts.push(`<span class="broken-link" title="No entry named '${escape(target)}'">${escape(display)}</span>`);

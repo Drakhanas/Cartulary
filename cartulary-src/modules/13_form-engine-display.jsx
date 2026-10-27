@@ -64,7 +64,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot, wide }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, exportTitle, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot, wide }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -91,7 +91,7 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
           <button
             className="btn btn-ghost btn-small entry-export-btn"
             onClick={() => onExportEntry(entry.id)}
-            title={showSecrets ? "Download this entry as Markdown (.md). Secret fields included." : "Download this entry as Markdown (.md). Secret fields excluded."}
+            title={exportTitle || (showSecrets ? "Download this entry as Markdown (.md). Secret fields included." : "Download this entry as Markdown (.md). Secret fields excluded.")}
           >
             Export ↓
           </button>
