@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 49181,
-    "raw_body_lines": 49181,
-    "canonical_lines": 46769,
-    "decl_count": 660,
+    "total_lines": 49323,
+    "raw_body_lines": 49323,
+    "canonical_lines": 46906,
+    "decl_count": 663,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r018-body.jsx"
+    "active_anchor": "reference-r019-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 49181,
+      "value": 49323,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,15 +26,15 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 660,
+      "value": 663,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 46769,
+      "value": 46906,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 49181,
+      "value": 49323,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2597427,
+      "value": 2604674,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty-five",
-        45
+        "forty-six",
+        46
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -119,14 +119,14 @@
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r018": {
-      "value": "da27cd8bf8d579ef",
-      "pattern": "working[^\\n]{0,40}at r018 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r019": {
+      "value": "bf1e59886e5a973c",
+      "pattern": "working[^\\n]{0,40}at r019 hashes to sha256 `([0-9a-f]{16})`"
     },
     "anchor_rotations_made": {
       "value": [
-        "forty-five",
-        45
+        "forty-six",
+        46
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
@@ -164,7 +164,7 @@
     },
     {
       "file": "19_chronometric.jsx",
-      "line": 1606,
+      "line": 1748,
       "contains": "}"
     },
     {
@@ -594,7 +594,7 @@
     },
     {
       "file": "19_chronometric.jsx",
-      "line": 540,
+      "line": 612,
       "contains": "Chronometrics view"
     }
   ],
@@ -651,7 +651,7 @@
     "19_chronometric.jsx": [
       [
         1,
-        1606,
+        1748,
         "chronometric"
       ]
     ],
@@ -786,10 +786,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r018-body.jsx",
-      "reference-r018-layout.json",
-      "9fc40ea26388ef8f",
-      "da27cd8bf8d579ef",
+      "reference-r019-body.jsx",
+      "reference-r019-layout.json",
+      "9614e63540e713f1",
+      "bf1e59886e5a973c",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -822,7 +822,11 @@
       "v1.7_r018",
       "tools/chrono-parity",
       "chronoLaneLayout",
-      "rowsByLane"
+      "rowsByLane",
+      "v1.7_r019",
+      "chronoTitleLines",
+      "chronoEventExtent",
+      "titleLinesByLane"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -924,7 +928,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r018-layout.json",
+      "reference-r019-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -958,7 +962,11 @@
       "9fc40ea26388ef8f",
       "da27cd8bf8d579ef",
       "On v1.7 r018 verification",
-      "chronoRowY"
+      "chronoRowY",
+      "reference-r019-body.jsx",
+      "9614e63540e713f1",
+      "bf1e59886e5a973c",
+      "On v1.7 r019 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1047,7 +1055,12 @@
       "9fc40ea26388ef8f",
       "d7ff89c",
       "tools/chrono-parity",
-      "chronoStackRows"
+      "chronoStackRows",
+      "v1.7_r019",
+      "bf1e59886e5a973c",
+      "9614e63540e713f1",
+      "26c6dde",
+      "chronoTitleLines"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1097,7 +1110,9 @@
       "A disabled danger button looks like an enabled one",
       "A field deleted from one of Fabula's kinds keeps its values",
       "v1.7_r018",
-      "Chronometric's year ticks can step by 1.6 years"
+      "v1.7_r019",
+      "A drag let go the instant after its last move can land short",
+      "An era's name and a tick's label can print over each other"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1147,7 +1162,8 @@
       "The same values shown in two places come in the same order",
       "A flag added to a stored record has to come through every pass that writes the record",
       "A census of what reads a field is taken from the code",
-      "A refactor that keeps behavior but not bytes is proven by recording the behavior"
+      "A refactor that keeps behavior but not bytes is proven by recording the behavior",
+      "A check whose result changes under load has found a race"
     ],
     "journal.txt": [
       "r030",
@@ -1191,7 +1207,8 @@
       "r015",
       "r016",
       "r017",
-      "r018"
+      "r018",
+      "r019"
     ]
   }
 }
