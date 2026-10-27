@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, and r017's templates) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, and r018's Chronometric math) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -766,3 +766,20 @@ run, Cancel not landing on the Templates section, because the section showed on 
 whether or not anything had scrolled to it; the check asks now whether the page scrolled as
 far toward it as it can, and the rerun caught all twenty-six. Drak passed it in the late
 afternoon, in one word.
+
+r018 pulled Chronometric's math out of its view so Fabula's timeline can share it, and it
+had to change nothing on screen. Drak made the plan's three calls in three messages and
+added two of his own about the lanes, with a screenshot of a lane title running off the
+chart; those went to r019, so this cut could be proven unchanged. The parity gate can't
+prove a refactor, which keeps the behavior and changes the bytes, so the cut came with a
+check of its own, tools/chrono-parity, which drives the passed build and the new one
+through the same steps on the same worlds and compares what Chronometric draws, as text,
+after each. Its first run stopped on itself: two of the spans it grabbed were too short to
+take hold of, and it recorded the failed step instead of passing. Listing a planted change
+for every function, I saw that none of the three worlds put every event on one moment, so
+the bounds' widening of a single moment would have gone untested. A fourth world went in
+before the planted runs, and that change was the one only it caught. The container
+restarted halfway through them; what had been written held, and the rest ran again. The
+check also turned up a year tick reading 1300.8000000000002, older than the cut, which r018
+had to keep. Before he passed it, Drak asked whether a story's Timeline tab should open
+yet. It shouldn't, and he passed it.

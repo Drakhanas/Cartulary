@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 49103,
-    "raw_body_lines": 49103,
-    "canonical_lines": 46703,
-    "decl_count": 646,
+    "total_lines": 49181,
+    "raw_body_lines": 49181,
+    "canonical_lines": 46769,
+    "decl_count": 660,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r017-body.jsx"
+    "active_anchor": "reference-r018-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 49103,
+      "value": 49181,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 45 files have no trailing newline"
     },
     "decl_count": {
-      "value": 646,
+      "value": 660,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 46703,
+      "value": 46769,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 49103,
+      "value": 49181,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 87,
+      "value": 88,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2593929,
+      "value": 2597427,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "forty-four",
-        44
+        "forty-five",
+        45
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,25 +108,25 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 87,
+      "value": 88,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 87,
+      "value": 88,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r017": {
-      "value": "3efc9fffa2c65b6a",
-      "pattern": "working[^\\n]{0,40}at r017 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r018": {
+      "value": "da27cd8bf8d579ef",
+      "pattern": "working[^\\n]{0,40}at r018 hashes to sha256 `([0-9a-f]{16})`"
     },
     "anchor_rotations_made": {
       "value": [
-        "forty-four",
-        44
+        "forty-five",
+        45
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
@@ -164,7 +164,7 @@
     },
     {
       "file": "19_chronometric.jsx",
-      "line": 1528,
+      "line": 1606,
       "contains": "}"
     },
     {
@@ -586,6 +586,16 @@
       "file": "28_fabula.jsx",
       "line": 3130,
       "contains": "Fabula: templates (v1.7 r017)"
+    },
+    {
+      "file": "19_chronometric.jsx",
+      "line": 286,
+      "contains": "Chronometric math"
+    },
+    {
+      "file": "19_chronometric.jsx",
+      "line": 540,
+      "contains": "Chronometrics view"
     }
   ],
   "spans": {
@@ -641,7 +651,7 @@
     "19_chronometric.jsx": [
       [
         1,
-        1528,
+        1606,
         "chronometric"
       ]
     ],
@@ -776,10 +786,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r017-body.jsx",
-      "reference-r017-layout.json",
-      "36b5e4ae0b1eb9b1",
-      "3efc9fffa2c65b6a",
+      "reference-r018-body.jsx",
+      "reference-r018-layout.json",
+      "9fc40ea26388ef8f",
+      "da27cd8bf8d579ef",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -808,7 +818,11 @@
       "fabulaRefreshCore",
       "FabulaKindTemplates",
       "schemaDraft",
-      "passing for the wrong reason"
+      "passing for the wrong reason",
+      "v1.7_r018",
+      "tools/chrono-parity",
+      "chronoLaneLayout",
+      "rowsByLane"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -910,7 +924,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r017-layout.json",
+      "reference-r018-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -939,7 +953,12 @@
       "36b5e4ae0b1eb9b1",
       "3efc9fffa2c65b6a",
       "On v1.7 r017 verification",
-      "FabulaResetModal"
+      "FabulaResetModal",
+      "reference-r018-body.jsx",
+      "9fc40ea26388ef8f",
+      "da27cd8bf8d579ef",
+      "On v1.7 r018 verification",
+      "chronoRowY"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1022,7 +1041,13 @@
       "36b5e4ae0b1eb9b1",
       "fabulaRefreshCore",
       "61df82c",
-      "ededabe"
+      "ededabe",
+      "v1.7_r018",
+      "da27cd8bf8d579ef",
+      "9fc40ea26388ef8f",
+      "d7ff89c",
+      "tools/chrono-parity",
+      "chronoStackRows"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1070,7 +1095,9 @@
       "Fabula's index squeezes a long story title",
       "v1.7_r017",
       "A disabled danger button looks like an enabled one",
-      "A field deleted from one of Fabula's kinds keeps its values"
+      "A field deleted from one of Fabula's kinds keeps its values",
+      "v1.7_r018",
+      "Chronometric's year ticks can step by 1.6 years"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1119,7 +1146,8 @@
       "A control that can't get past its first check",
       "The same values shown in two places come in the same order",
       "A flag added to a stored record has to come through every pass that writes the record",
-      "A census of what reads a field is taken from the code"
+      "A census of what reads a field is taken from the code",
+      "A refactor that keeps behavior but not bytes is proven by recording the behavior"
     ],
     "journal.txt": [
       "r030",
@@ -1162,7 +1190,8 @@
       "r014",
       "r015",
       "r016",
-      "r017"
+      "r017",
+      "r018"
     ]
   }
 }
