@@ -24,16 +24,26 @@ def run(docs, facts):
                       '--src',str(SRC),'--facts',str(facts)],capture_output=True,text=True)
     fails=[l.strip() for l in r.stdout.split('\n') if ' FAIL' in l]
     return r.returncode, fails[0].split()[0] if fails else '-'
+# The two anchor probes name a retired anchor, the one before the active anchor,
+# read from facts.json. They named `reference-r018-body.jsx`, v1.6's r018 anchor, as a
+# literal until v1.7's r018 made that file name the active anchor (2026-10-26): the
+# r-counter starts over with each line, so both probes injected a correct sentence
+# and read MISS on a gate that was right to pass it.
+import re as _re_anchor
+def _retired_anchor(d):
+    active = json.loads((d/'facts.json').read_text())['derived']['active_anchor']
+    n = int(_re_anchor.fullmatch(r'reference-r(\d{3})-body\.jsx', active).group(1))
+    return f'reference-r{n - 1:03d}-body.jsx'
 probes=[
  ("em dash inserted",        lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nA \u2014 B\n")),
  ("stale NN_ filename",      lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nSee `17_home-data.jsx`.\n")),
  ("wrong line count",        lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\n`05_field-system` (999) here.\n")),
  ("malformed table row",     lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\n| a | b |\n|---|---|\n| a | b | c |\n")),
  ("banned phrase",           lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nA robust and seamless approach.\n")),
- ("retired anchor as live",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nUse `reference-r018-body.jsx`.\n")),
+ ("retired anchor as live",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+f"\nUse `{_retired_anchor(d)}`.\n")),
  # The history word sits one sentence away, on the same line. Until 2026-10-24 the
  # check read the whole line, so this passed; the marker has to share the anchor's sentence.
- ("history word elsewhere",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+"\nThe anchor history is in the manifest. Use `reference-r018-body.jsx` today.\n")),
+ ("history word elsewhere",  lambda d: (d/'handoff.md').write_text((d/'handoff.md').read_text()+f"\nThe anchor history is in the manifest. Use `{_retired_anchor(d)}` today.\n")),
 ]
 # The required-string probe reads its target FROM facts.json instead of naming one.
 # The original hardcoded "r025, header integrity", which stopped proving anything the
