@@ -18014,7 +18014,7 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
-function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot }) {
+function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectTag, showSecrets, imageFolder, dirHandle, calendar, onExportEntry, state, onUpdateViewPrefs, canvasSlot, panels, foldedPanels, onTogglePanel, registeredNodes: nodesGiven, badgeExtra, footSlot, wide }) {
   if (!template) return <div className="entry-view"><div className="empty">Template not found.</div></div>;
   // currentMoment is stored as { year, monthIndex, day } in primary's frame
   // (calendar-position invariant under primary structural edits). Derive
@@ -18030,8 +18030,11 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
   // r012 a caller can give its own, named as its form names them, as a
   // Fabula page gives its story's (fabulaStoryNodes).
   const registeredNodes = nodesGiven || (state ? getRegisteredGraphNodes(state) : []);
+  // v1.7 r022: wide widens the column to the pane, for Fabula's Timeline
+  // tab; every child but one marked entry-view-full stays in the reading
+  // width, centered as before.
   return (
-    <div className="entry-view">
+    <div className={wide ? "entry-view entry-view-wide" : "entry-view"}>
       <div className="entry-header-row">
         <div className="entry-title">{entry.name}</div>
         {onExportEntry && (
@@ -46351,7 +46354,7 @@ const fabulaStoryNodes = (state, storyId) => {
 // edit there's no onSelect, and the other tabs wait for Save or Cancel.
 function FabulaStoryTabs({ active, onSelect }) {
   return (
-    <div role="tablist" aria-label="Story sections" style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid var(--border)", margin: "0 0 22px" }}>
+    <div role="tablist" aria-label="Story sections" style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid var(--border)", margin: "0 auto 22px" }}>
       {FABULA_STORY_TABS.map(t => {
         const on = t.id === active;
         const usable = t.built && (on || !!onSelect);
@@ -46383,9 +46386,12 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
   const tabs = <FabulaStoryTabs active={active} onSelect={draft ? null : onSelectTab} />;
   // A tab other than Story: the story's title over the tabs and the tab's
   // own content, People's lists (v1.7 r009), the Outline (r011), Plot
-  // (r013), Notes (r014), Meaning (r015), or the Timeline (r020).
-  const tabPage = (content) => (
+  // (r013), Notes (r014), Meaning (r015), or the Timeline (r020), which
+  // since r022 fills the pane's width while the title and the tabs stay in
+  // the reading column (wide).
+  const tabPage = (content, wide) => (
     <EntryView
+      wide={wide}
       entry={story}
       template={{ ...template, fields: [] }}
       templates={state.templates}
@@ -46418,7 +46424,7 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
   }
   if (!draft && active === "timeline") {
     return tabPage(<FabulaTimelineTab state={state} story={story} showSecrets={showSecrets} prefs={timelinePrefs} onSetPrefs={onSetTimelinePrefs || (() => {})}
-      onOpenScene={(s) => (onOpenRecordIn ? onOpenRecordIn("scene", s.id, s.storyId) : onOpenRecord("scene", s.id))} onOpenEntry={onOpenEntry} />);
+      onOpenScene={(s) => (onOpenRecordIn ? onOpenRecordIn("scene", s.id, s.storyId) : onOpenRecord("scene", s.id))} onOpenEntry={onOpenEntry} />, true);
   }
   const panelProps = { panels: FABULA_STORY_PANELS, foldedPanels: folds || {}, onTogglePanel: onToggleFold };
   if (draft) {
@@ -49093,11 +49099,23 @@ function FabulaResetModal({ analysis, onCancel, onConfirm }) {
 // axis, in lanes by POV, by thread, or by arc, and drawn with the
 // Chronometric math in 19_chronometric, so its lanes, rows, titles, and ticks
 // are Chronometric's. It only shows: a click opens a scene's page or a
-// thread's entry, and nothing on it edits. Telling order, with chapters and
-// parts as bands, and the third mode come at r022.
+// thread's entry, and nothing on it edits. Since r022 (Drak's calls of
+// 2026-10-27) it has three modes: Chrono, that story time; Narratio, the
+// telling order, every scene of the scope in an equal slot in the outline's
+// order, with acts and chapters as bands; and Anachronia, telling order
+// across against story time up the side, the scenes joined in telling order,
+// so a book told in order climbs and every flashback or jump breaks the line.
 
 // The groupings, in the picker's order.
 const FABULA_TIMELINE_LANES = [["pov", "By POV"], ["thread", "By thread"], ["arc", "By arc"]];
+
+// The modes, in their picker's order, each with the hover that says what it
+// draws (v1.7 r022).
+const FABULA_TIMELINE_MODES = [
+  ["chrono", "Chrono", "Story time: each scene placed by its When in your calendar"],
+  ["narratio", "Narratio", "Telling order: each scene in its place in the outline, with acts and chapters as bands"],
+  ["anachronia", "Anachronia", "Telling order across, story time up the side: a book told in order climbs, and every flashback or jump breaks the line"],
+];
 
 // A kind's color, from the registry.
 const fabulaKindColor = (kind) => (FABULA_KINDS.find(k => k.kind === kind) || {}).color || "#a3a3ad";
@@ -49133,11 +49151,14 @@ const fabulaTimelineWhen = (range, dateCal, axisCal, moment) => {
 
 // What the timeline shows of a story, or at the corpus's scope of every
 // story in its corpus, in reading order, every date on axisCal's axis.
-// scenes: each scene, story by story in the outline's order, with its
-// position, its POV (its own, or its chapter's when it has none), its threads,
-// the arcs that turn in it and how, the plot points delivered in it, its
-// When on the axis or none, and the lanes it belongs to under each grouping.
-// While secrets are hidden, a When marked secret leaves every scene out.
+// scenes: each scene, story by story in the outline's order, which is the
+// telling order, with its slot in it, its position, its POV (its own, or its
+// chapter's when it has none), its threads, the arcs that turn in it and how,
+// the plot points delivered in it, its When on the axis or none, and the
+// lanes it belongs to under each grouping. While secrets are hidden, a When
+// marked secret leaves every scene with none (whenHidden). bands (v1.7
+// r022): the stories, the acts, and the chapters that hold scenes, each with
+// its label and the slots of its first and last scene.
 // povLanes: a lane for each cast record that's a scene's POV, in People's
 // order, Importance and then name; at the corpus's scope a character's cast
 // records from each story share one, named for their entry and ranked by the
@@ -49225,27 +49246,41 @@ const fabulaTimelineData = (state, story, corpusScope, axisCal, showSecrets) => 
     return key;
   };
   const scenes = [];
-  if (!whenHidden) stories.forEach(st => {
+  const bands = { stories: [], acts: [], chapters: [] };
+  const band = (kind, list, id, label, slot) => {
+    const b = list.find(x => x.id === id);
+    if (b) b.last = slot;
+    else list.push({ kind, id, label, first: slot, last: slot });
+  };
+  const partById = new Map(fabulaArr(fab, "parts").filter(x => x && x.id).map(x => [x.id, x]));
+  stories.forEach(st => {
     const places = fabulaOutlinePlaces(state, st.id);
-    const chapterOf = new Map();
-    const walk = (nodes, parent) => nodes.forEach(n => {
-      if (n.kind === "scene") chapterOf.set(n.id, parent && parent.kind === "chapter" ? parent.id : null);
-      else walk(n.children, n);
+    const above = new Map();
+    const walk = (nodes, act, chapter) => nodes.forEach(n => {
+      if (n.kind === "scene") above.set(n.id, { act, chapter });
+      else walk(n.children, n.kind === "part" ? n.id : act, n.kind === "chapter" ? n.id : chapter);
     });
-    walk(fabulaOutlineTree(state, st), null);
+    walk(fabulaOutlineTree(state, st), null, null);
     const castOf = (id) => { const c = typeof id === "string" && id ? castById.get(id) : null; return c && c.storyId === st.id ? c : null; };
     fabulaArr(fab, "scenes").filter(sc => sc && sc.id && sc.storyId === st.id)
       .map(sc => ({ sc, place: places.get(sc.id) || { path: "", index: Infinity } }))
       .sort((a, b) => a.place.index - b.place.index)
       .forEach(({ sc, place }) => {
         const f = sc.fields || {};
-        const chapter = chapterById.get(chapterOf.get(sc.id));
+        const over = above.get(sc.id) || { act: null, chapter: null };
+        const chapter = chapterById.get(over.chapter);
+        const act = partById.get(over.act);
         const pov = f.pov ? castOf(f.pov) : castOf(chapter && (chapter.fields || {}).pov);
         const threads = [...new Set((Array.isArray(f.threads) ? f.threads : []).filter(id => typeof id === "string" && id))];
         const turns = turnsByScene.get(sc.id) || [];
+        const slot = scenes.length;
+        const named = (r) => `${(places.get(r.id) || {}).path || ""} ${r.name || "(untitled)"}`.trim();
+        band("story", bands.stories, st.id, st.name || "(untitled)", slot);
+        if (act) band("act", bands.acts, act.id, named(act), slot);
+        if (chapter) band("chapter", bands.chapters, chapter.id, named(chapter), slot);
         scenes.push({
-          id: sc.id, storyId: st.id, storyName: st.name || "(untitled)", name: sc.name || "(untitled)", path: place.path,
-          when: fabulaTimelineWhen(f.when, primary, axisCal, true),
+          id: sc.id, storyId: st.id, storyName: st.name || "(untitled)", name: sc.name || "(untitled)", path: place.path, slot,
+          when: whenHidden ? null : fabulaTimelineWhen(f.when, primary, axisCal, true),
           pov, turns, plotPoints: pointsByScene.get(sc.id) || [],
           lanes: {
             pov: pov ? [povLaneOf(pov)] : [],
@@ -49256,45 +49291,62 @@ const fabulaTimelineData = (state, story, corpusScope, axisCal, showSecrets) => 
       });
   });
   const povLanes = [...povLaneMap.values()].sort((a, b) => a.rank - b.rank || byName(a, b));
-  return { corpus, wide, stories, scenes, whenHidden, lanes: { pov: povLanes, thread: threadLanes, arc: arcLanes } };
+  return { corpus, wide, stories, scenes, bands, whenHidden, lanes: { pov: povLanes, thread: threadLanes, arc: arcLanes } };
 };
 
-// The tab. prefs are its kept picks, { scope, lanes, calendarId }, which
+// The tab. prefs are its kept picks, { scope, lanes, calendarId, mode }, which
 // onSetPrefs changes; a pick that no longer applies falls back to the
-// default, this story, lanes by POV, the primary calendar.
+// default, this story, lanes by POV, the primary calendar, Chrono. The modes
+// (v1.7 r022, Drak's calls of 2026-10-27): Chrono places each scene by its
+// When on a calendar's axis, r020's story time; Narratio gives each scene of
+// the scope an equal slot in telling order, the outline's, in Chrono's
+// lanes, with acts and chapters as bands over the chart; and Anachronia
+// plots the two against each other, telling order across and story time up
+// the side, the dated scenes joined in telling order, so a book told in
+// order climbs and every flashback or jump breaks the line.
 function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpenScene, onOpenEntry }) {
   const { LEFT_GUTTER, TOP_GUTTER, LANE_HEIGHT } = CHRONO_LAYOUT;
+  const PLOT_HEIGHT = 300, STRIP_HEIGHT = 24;
   const p = prefs && typeof prefs === "object" ? prefs : {};
   const calendars = Array.isArray(state.calendars) ? state.calendars.filter(c => c && c.id) : [];
   const calendarId = p.calendarId && calendars.some(c => c.id === p.calendarId) ? p.calendarId : null;
   const axisCal = getCalendar(state, calendarId);
   const lanesBy = FABULA_TIMELINE_LANES.some(([id]) => id === p.lanes) ? p.lanes : "pov";
+  const mode = FABULA_TIMELINE_MODES.some(([id]) => id === p.mode) ? p.mode : "chrono";
+  const chrono = mode === "chrono", narratio = mode === "narratio", anachronia = mode === "anachronia";
   const data = useMemo(() => fabulaTimelineData(state, story, p.scope === "corpus", axisCal, showSecrets), [state, story, p.scope, axisCal, showSecrets]);
   const corpusScope = data.wide;
   const SCENE = fabulaKindColor("scene"), PLOT = fabulaKindColor("plotPoint"), ARC = fabulaKindColor("arc");
   const NONE = "__none__";
 
-  // The lanes, and which of them each dated scene is drawn in.
-  const dated = data.scenes.filter(s => s.when);
-  const undated = data.scenes.filter(s => !s.when);
+  // The scenes the mode draws: while a secret When is hidden, Chrono and
+  // Anachronia draw none, and Narratio draws them all with no When.
+  const scenes = data.whenHidden && !narratio ? [] : data.scenes;
+  const dated = scenes.filter(s => s.when);
+  const undated = scenes.filter(s => !s.when);
+  // The lanes, and which of them each drawn scene is in: the dated scenes in
+  // Chrono, every scene of the scope in Narratio, and none in Anachronia.
+  const laneScenes = narratio ? scenes : dated;
   const memberOf = (s) => (s.lanes[lanesBy].length ? s.lanes[lanesBy] : [NONE]);
   const noneName = lanesBy === "pov" ? "No POV" : lanesBy === "thread" ? "No thread" : "No arc";
-  const lanes = [...data.lanes[lanesBy], ...(dated.some(s => memberOf(s)[0] === NONE) ? [{ id: NONE, name: noneName, icon: "", color: "var(--text-dim)" }] : [])];
-  const bars = lanesBy === "thread";
+  const lanes = anachronia ? [] : [...data.lanes[lanesBy], ...(laneScenes.some(s => memberOf(s)[0] === NONE) ? [{ id: NONE, name: noneName, icon: "", color: "var(--text-dim)" }] : [])];
+  const bars = chrono && lanesBy === "thread";
 
-  // The axis fits the dated scenes, the same under every grouping; with none,
-  // lanes by thread fit the threads' Timespans.
+  // The axis. Chrono's fits the dated scenes, the same under every grouping,
+  // and with none, lanes by thread fit the threads' Timespans. Narratio's and
+  // Anachronia's count the scope's scenes, a slot each in telling order, and
+  // fit them all.
   const fit = dated.length ? dated.map(s => s.when) : (bars ? data.lanes.thread.filter(l => l.span).map(l => l.span) : []);
-  const nothing = fit.length === 0;
-  const dataBounds = chronoDataBounds(fit);
+  const nothing = chrono ? fit.length === 0 : narratio ? scenes.length === 0 : dated.length === 0;
+  const dataBounds = chrono ? chronoDataBounds(fit) : { min: 0, max: Math.max(1, scenes.length) };
   const [viewStart, setViewStart] = useState(null);
   const [viewEnd, setViewEnd] = useState(null);
   const [pan, setPan] = useState(0);
   const [zoom, setZoom] = useState(1);
   const resetView = () => { setPan(0); setZoom(1); setViewStart(null); setViewEnd(null); };
-  // Changing the scope or the calendar fits the axis again; changing the
-  // grouping keeps the zoom.
-  useEffect(() => { resetView(); }, [story.id, corpusScope, calendarId]);
+  // Changing the scope, the calendar, or the mode fits the axis again;
+  // changing the grouping keeps the zoom.
+  useEffect(() => { resetView(); }, [story.id, corpusScope, calendarId, mode]);
   const effStart = viewStart ?? dataBounds.min;
   const effEnd = viewEnd ?? dataBounds.max;
   const baseRange = effEnd - effStart;
@@ -49345,21 +49397,33 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   }, [fontsLoaded]);
 
   const chartWidth = chronoChartWidth(containerWidth);
+  // The scale across: years to pixels in Chrono, slots to pixels in the others.
   const { yearsPerPx, yearToX, xToYear } = chronoScale(visStart, visibleRange, chartWidth);
 
-  // What a scene draws, in pixels: a point's circle, or its diamond when a
-  // plot point is delivered in it, and its name, which a turn's ring moves
-  // right; a span's bar, its ~, its marks at its start, and its name inside,
-  // past the marks; and where the drawing starts and ends, for the rows.
+  // What a scene draws, in pixels. In Chrono: a point's circle, or its
+  // diamond when a plot point is delivered in it, and its name, which a
+  // turn's ring moves right; a span's bar, its ~, its marks at its start, and
+  // its name inside, past the marks; and where the drawing starts and ends,
+  // for the rows. In Narratio: a block filling the scene's slot, inset 2
+  // pixels, its marks inside it at its start and its name past them.
   const geometry = (s) => {
-    const w = s.when;
     const turn = s.turns.length > 0, plot = s.plotPoints.length > 0;
+    if (narratio) {
+      const x1 = yearToX(s.slot) + 2, x2 = yearToX(s.slot + 1) - 2;
+      const bw = Math.max(2, x2 - x1);
+      const inset = turn || plot ? 20 : 5;
+      const room = bw - (inset - 5);
+      const label = room > 50 ? chronoSpanLabel(s.name, room) : "";
+      const nameWidth = label ? measureText(label, 11) : 0;
+      return { kind: "block", x1, x2: x1 + bw, bw, markX: x1 + 9, nameX: x1 + inset, label, nameWidth, left: x1, right: x1 + bw };
+    }
+    const w = s.when;
     const x1 = yearToX(w.startYear), x2 = yearToX(w.endYear);
     if (w.kind === "point") {
       const nameX = x1 + (turn ? 12 : 8);
       const label = (w.startApprox ? "~" : "") + s.name;
       const nameWidth = measureText(label, 11);
-      return { x1, x2: x1, nameX, label, nameWidth, left: x1 - (turn ? 10 : plot ? 7 : 5), right: nameX + nameWidth };
+      return { kind: "point", x1, x2: x1, markX: x1, nameX, label, nameWidth, left: x1 - (turn ? 10 : plot ? 7 : 5), right: nameX + nameWidth };
     }
     const bw = Math.max(2, x2 - x1);
     const inset = turn || plot ? 10 : 5;
@@ -49369,21 +49433,26 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
     let left = w.startApprox ? x1 - 8 : x1;
     if (turn) left = Math.min(left, x1 - 10); else if (plot) left = Math.min(left, x1 - 7);
     const right = Math.max(x1 + bw, nameWidth > 0 ? x1 + inset + nameWidth : -Infinity);
-    return { x1, x2: x1 + bw, bw, nameX: x1 + inset, label, nameWidth, left, right };
+    return { kind: "span", x1, x2: x1 + bw, bw, markX: x1, nameX: x1 + inset, label, nameWidth, left, right };
   };
 
   // Each lane's scenes in the visible span, their drawings, and their rows:
-  // stacked by what they draw, under the thread's bar when it has one.
+  // stacked by what they draw in Chrono, under the thread's bar when it has
+  // one; one row in Narratio, since no two scenes share a slot.
   const laneDraw = new Map();
   const rowsByLane = {};
   lanes.forEach(lane => {
-    const evs = dated.filter(s => !(s.when.endYear < visStart || s.when.startYear > visEnd) && memberOf(s).includes(lane.id));
+    const evs = laneScenes.filter(s => (narratio ? !(s.slot + 1 < visStart || s.slot > visEnd) : !(s.when.endYear < visStart || s.when.startYear > visEnd)) && memberOf(s).includes(lane.id));
     const geoms = evs.map(geometry);
-    const order = geoms.map((g, i) => i).sort((a, b) => (geoms[a].left - geoms[b].left) || (a - b));
-    const stacked = chronoStackRows(order.map(i => ({ left: geoms[i].left, right: geoms[i].right })), CHRONO_LAYOUT.EVENT_GAP);
     const bar = bars && lane.span ? lane.span : null;
-    const rows = new Array(evs.length);
-    order.forEach((i, k) => { rows[i] = stacked[k] + (bar ? 1 : 0); });
+    let rows;
+    if (narratio) rows = evs.map(() => 0);
+    else {
+      const order = geoms.map((g, i) => i).sort((a, b) => (geoms[a].left - geoms[b].left) || (a - b));
+      const stacked = chronoStackRows(order.map(i => ({ left: geoms[i].left, right: geoms[i].right })), CHRONO_LAYOUT.EVENT_GAP);
+      rows = new Array(evs.length);
+      order.forEach((i, k) => { rows[i] = stacked[k] + (bar ? 1 : 0); });
+    }
     laneDraw.set(lane.id, { evs, geoms, rows, bar });
     rowsByLane[lane.id] = bar ? [0, ...rows] : rows;
   });
@@ -49391,9 +49460,26 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
   const titleLines = {};
   lanes.forEach(lane => { titleLines[lane.id] = chronoTitleLines(titleText(lane), (t) => measureText(t, 13), CHRONO_LAYOUT.TITLE_WIDTH, !!lane.icon); });
   const layout = chronoLaneLayout(lanes.map(l => l.id), rowsByLane, Object.fromEntries(lanes.map(l => [l.id, titleLines[l.id].length])));
-  const totalHeight = layout.totalHeight;
-  const ticks = chronoTicks(visStart, visEnd, chartWidth, axisCal);
-  const eraBands = chronoEraBands(axisCal);
+
+  // The axis band. Chrono's: year ticks, and the era bands. Narratio's and
+  // Anachronia's: the acts, or the stories at the corpus's scope, tinted as
+  // eras are and named on the upper line, and the chapters as dashed lines
+  // named on the lower line, each band from its first scene's slot to its
+  // last's.
+  const ticks = chrono ? chronoTicks(visStart, visEnd, chartWidth, axisCal) : [];
+  const eraBands = chrono ? chronoEraBands(axisCal) : [];
+  const upperBands = chrono ? [] : (corpusScope ? data.bands.stories : data.bands.acts);
+  const chapterBands = chrono ? [] : data.bands.chapters;
+  const bandX = (b) => [Math.max(LEFT_GUTTER, yearToX(Math.max(b.first, visStart))), Math.min(LEFT_GUTTER + chartWidth, yearToX(Math.min(b.last + 1, visEnd)))];
+
+  // Anachronia's plot: story time up the side, fitted to the dated scenes'
+  // Whens as Chrono's axis is, earliest at the bottom, with Chronometric's
+  // year ticks across it, and the undated scenes on a strip under it.
+  const yBounds = anachronia ? chronoDataBounds(dated.map(s => s.when)) : { min: 0, max: 1 };
+  const yearToY = (y) => TOP_GUTTER + PLOT_HEIGHT - ((y - yBounds.min) / (yBounds.max - yBounds.min)) * PLOT_HEIGHT;
+  const yTicks = anachronia ? chronoTicks(yBounds.min, yBounds.max, PLOT_HEIGHT, axisCal) : [];
+  const stripY = TOP_GUTTER + PLOT_HEIGHT + 4;
+  const totalHeight = anachronia ? stripY + (undated.length ? STRIP_HEIGHT : 0) + 10 : layout.totalHeight;
 
   // Pan by drag, as Chronometric does.
   const dragRef = useRef(null);
@@ -49437,23 +49523,23 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
     : (w.openStarted ? "?" : (w.startApprox ? "~" : "") + fmt(w.startYear)) + " → " + (w.openEnded ? "ongoing" : (w.endApprox ? "~" : "") + fmt(w.endYear)));
   const sceneTip = (s) => [
     `${s.path ? s.path + " " : ""}${s.name}${corpusScope ? ` (${s.storyName})` : ""}`,
-    s.when ? dateText(s.when) : "No When",
+    s.when ? dateText(s.when) : data.whenHidden ? null : "No When",
     s.pov ? `POV: ${s.pov.name || "(unnamed)"}` : null,
     ...s.plotPoints.map(pp => `Plot point: ${pp.name}`),
     ...s.turns.map(t => `Turn, ${t.arcName}${t.shift ? `: ${t.shift}` : ""}`),
   ].filter(Boolean).join("\n");
   const open = (s) => (e) => { e.stopPropagation(); onOpenScene(s); };
+  const hooks = (s) => ({
+    className: "fabula-tl-event", "data-scene": s.id, "data-story": s.storyId,
+    onMouseDown: open(s), onMouseEnter: () => setLit(s.id), onMouseLeave: () => setLit(x => (x === s.id ? null : x)),
+    style: { cursor: "pointer" },
+  });
 
   const sceneMark = (s, g, cy, key) => {
     const turn = s.turns.length > 0, plot = s.plotPoints.length > 0, on = lit === s.id;
-    const common = {
-      className: "fabula-tl-event", "data-scene": s.id, "data-story": s.storyId,
-      onMouseDown: open(s), onMouseEnter: () => setLit(s.id), onMouseLeave: () => setLit(x => (x === s.id ? null : x)),
-      style: { cursor: "pointer" },
-    };
-    if (s.when.kind === "point") {
+    if (g.kind === "point") {
       return (
-        <g key={key} {...common} data-kind="point" data-x={g.x1}>
+        <g key={key} {...hooks(s)} data-kind="point" data-x={g.x1}>
           {on && <circle cx={g.x1} cy={cy} r={turn ? 12 : 9} fill="none" stroke="var(--accent)" strokeWidth={2} />}
           {turn && <circle className="fabula-tl-turn" cx={g.x1} cy={cy} r={9} fill="none" stroke={ARC} strokeWidth={1.5} />}
           {plot
@@ -49467,14 +49553,14 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
       );
     }
     return (
-      <g key={key} {...common} data-kind="span" data-x={g.x1} data-x2={g.x2}>
+      <g key={key} {...hooks(s)} data-kind={g.kind} data-x={g.x1} data-x2={g.x2} data-slot={g.kind === "block" ? s.slot : undefined}>
         {on && <rect x={g.x1 - 3} y={cy - 10} width={g.bw + 6} height={20} fill="none" stroke="var(--accent)" strokeWidth={2} rx={3} />}
         <rect x={g.x1} y={cy - 7} width={g.bw} height={14} fill={SCENE} fillOpacity={0.65} stroke={SCENE} strokeWidth={1} rx={2} />
-        {s.when.startApprox && (
+        {g.kind === "span" && s.when.startApprox && (
           <text x={g.x1 - 8} y={cy + 4} fill={SCENE} fontSize={11} fontFamily="DM Sans, sans-serif" style={{ pointerEvents: "none" }}>~</text>
         )}
-        {turn && <circle className="fabula-tl-turn" cx={g.x1} cy={cy} r={9} fill="none" stroke={ARC} strokeWidth={1.5} />}
-        {plot && <polygon className="fabula-tl-plot" points={fabulaDiamond(g.x1, cy, 7)} fill={PLOT} stroke="var(--bg)" strokeWidth={1.5} />}
+        {turn && <circle className="fabula-tl-turn" cx={g.markX} cy={cy} r={9} fill="none" stroke={ARC} strokeWidth={1.5} />}
+        {plot && <polygon className="fabula-tl-plot" points={fabulaDiamond(g.markX, cy, 7)} fill={PLOT} stroke="var(--bg)" strokeWidth={1.5} />}
         {g.label && (
           <text x={g.nameX} y={cy + 4} fill="var(--text-bright)" fontSize={11} fontFamily="DM Sans, sans-serif" style={{ pointerEvents: "none" }}>{g.label}</text>
         )}
@@ -49497,13 +49583,58 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
     );
   };
 
-  const empty = data.whenHidden ? "Every scene's When is secret, and secrets are hidden."
-    : data.scenes.length === 0 ? (corpusScope ? "No scenes in the corpus yet." : "No scenes yet.")
-    : (corpusScope ? "No scene in the corpus has a When yet." : "No scene has a When yet.");
-  const trayGroups = data.stories.map(st => ({ st, scenes: undated.filter(s => s.storyId === st.id) })).filter(g => g.scenes.length > 0);
+  // Anachronia's marks: a dated scene is a dot at its slot's middle at its
+  // When's height, or a bar from its start up to its end with its marks at
+  // the start; an undated one a hollow dot on the strip.
+  const plotMark = (s) => {
+    const cx = yearToX(s.slot + 0.5);
+    const turn = s.turns.length > 0, plot = s.plotPoints.length > 0, on = lit === s.id;
+    if (!s.when) {
+      const cy = stripY + STRIP_HEIGHT / 2;
+      return (
+        <g key={s.id} {...hooks(s)} data-kind="undated" data-x={cx} data-y={cy}>
+          {on && <circle cx={cx} cy={cy} r={9} fill="none" stroke="var(--accent)" strokeWidth={2} />}
+          <circle cx={cx} cy={cy} r={4} fill="var(--surf)" stroke={SCENE} strokeWidth={1.5} />
+          <title>{sceneTip(s)}</title>
+        </g>
+      );
+    }
+    const span = s.when.kind === "span";
+    const y1 = yearToY(s.when.startYear), y2 = yearToY(s.when.endYear);
+    return (
+      <g key={s.id} {...hooks(s)} data-kind={span ? "vbar" : "dot"} data-x={cx} data-y={y1} data-y2={span ? y2 : undefined}>
+        {span && <rect x={cx - 3} y={Math.min(y1, y2)} width={6} height={Math.max(2, Math.abs(y1 - y2))} fill={SCENE} fillOpacity={0.65} stroke={SCENE} strokeWidth={1} rx={2} />}
+        {on && <circle cx={cx} cy={y1} r={turn ? 12 : 9} fill="none" stroke="var(--accent)" strokeWidth={2} />}
+        {turn && <circle className="fabula-tl-turn" cx={cx} cy={y1} r={9} fill="none" stroke={ARC} strokeWidth={1.5} />}
+        {plot
+          ? <polygon className="fabula-tl-plot" points={fabulaDiamond(cx, y1, 7)} fill={PLOT} stroke="var(--bg)" strokeWidth={1.5} />
+          : <circle cx={cx} cy={y1} r={5} fill={SCENE} stroke="var(--bg)" strokeWidth={1.5} />}
+        <title>{sceneTip(s)}</title>
+      </g>
+    );
+  };
+  // The line: the dated scenes joined in telling order, entering a span's
+  // bar at its start and leaving at its end, with no vertex at an undated
+  // scene's slot, and each story its own line at the corpus's scope.
+  const lines = anachronia ? data.stories.map(st => ({
+    id: st.id,
+    points: dated.filter(s => s.storyId === st.id).flatMap(s => {
+      const cx = yearToX(s.slot + 0.5);
+      return s.when.kind === "span" ? [[cx, yearToY(s.when.startYear)], [cx, yearToY(s.when.endYear)]] : [[cx, yearToY(s.when.startYear)]];
+    }),
+  })).filter(l => l.points.length > 1) : [];
+
+  const empty = narratio
+    ? (corpusScope ? "No scenes in the corpus yet." : "No scenes yet.")
+    : data.whenHidden ? "Every scene's When is secret, and secrets are hidden."
+      : data.scenes.length === 0 ? (corpusScope ? "No scenes in the corpus yet." : "No scenes yet.")
+        : (corpusScope ? "No scene in the corpus has a When yet." : "No scene has a When yet.");
+  // The tray is Chrono's; the other modes draw the undated scenes.
+  const trayGroups = chrono ? data.stories.map(st => ({ st, scenes: undated.filter(s => s.storyId === st.id) })).filter(g => g.scenes.length > 0) : [];
+  const hues = ["rgba(200,169,110,.06)", "rgba(160,110,200,.06)", "rgba(110,158,200,.06)", "rgba(200,110,110,.06)"];
 
   return (
-    <div className="fabula-timeline" ref={containerRef} style={{ marginTop: 4 }}>
+    <div className="fabula-timeline entry-view-full" ref={containerRef} style={{ marginTop: 4 }}>
       <div className="chrono-controls fabula-tl-controls">
         <div className="chrono-controls-row" style={{ rowGap: 8, columnGap: 18 }}>
           {data.corpus && (
@@ -49516,12 +49647,20 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
             </span>
           )}
           <span className="fabula-tl-group" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <span className="chrono-controls-label">Lanes</span>
-            {FABULA_TIMELINE_LANES.map(([id, label]) => (
-              <button key={id} type="button" className={`btn btn-small ${lanesBy === id ? "btn-accent" : "btn-ghost"} fabula-tl-lanes`} aria-pressed={lanesBy === id} onClick={() => onSetPrefs({ lanes: id })}>{label}</button>
+            <span className="chrono-controls-label">Mode</span>
+            {FABULA_TIMELINE_MODES.map(([id, label, hint]) => (
+              <button key={id} type="button" className={`btn btn-small ${mode === id ? "btn-accent" : "btn-ghost"} fabula-tl-mode`} aria-pressed={mode === id} title={hint} onClick={() => onSetPrefs({ mode: id })}>{label}</button>
             ))}
           </span>
-          {calendars.length > 0 && (
+          {!anachronia && (
+            <span className="fabula-tl-group" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span className="chrono-controls-label">Lanes</span>
+              {FABULA_TIMELINE_LANES.map(([id, label]) => (
+                <button key={id} type="button" className={`btn btn-small ${lanesBy === id ? "btn-accent" : "btn-ghost"} fabula-tl-lanes`} aria-pressed={lanesBy === id} onClick={() => onSetPrefs({ lanes: id })}>{label}</button>
+              ))}
+            </span>
+          )}
+          {calendars.length > 0 && !narratio && (
             <span className="fabula-tl-group" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
               <span className="chrono-controls-label">Display in</span>
               <select className="input fabula-tl-calendar" aria-label="Display in" value={calendarId || ""} onChange={e => onSetPrefs({ calendarId: e.target.value || null })} style={{ width: "auto", minWidth: 200, padding: "4px 28px 4px 8px" }}>
@@ -49533,10 +49672,14 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
         </div>
         {!nothing && (
           <div className="chrono-controls-row" style={{ borderTop: "1px solid var(--border)", paddingTop: 8, marginTop: 4 }}>
-            <span className="chrono-controls-label">Range:</span>
-            <input className="input chrono-bound-input" type="number" placeholder="From year" value={viewStart ?? ""} onChange={e => setViewStart(e.target.value === "" ? null : parseInt(e.target.value))} />
-            <span style={{ color: "var(--text-dim)" }}>→</span>
-            <input className="input chrono-bound-input" type="number" placeholder="To year" value={viewEnd ?? ""} onChange={e => setViewEnd(e.target.value === "" ? null : parseInt(e.target.value))} />
+            {chrono ? (
+              <>
+                <span className="chrono-controls-label">Range:</span>
+                <input className="input chrono-bound-input" type="number" placeholder="From year" value={viewStart ?? ""} onChange={e => setViewStart(e.target.value === "" ? null : parseInt(e.target.value))} />
+                <span style={{ color: "var(--text-dim)" }}>→</span>
+                <input className="input chrono-bound-input" type="number" placeholder="To year" value={viewEnd ?? ""} onChange={e => setViewEnd(e.target.value === "" ? null : parseInt(e.target.value))} />
+              </>
+            ) : <span className="chrono-controls-label">Zoom:</span>}
             <span style={{ flex: 1 }} />
             <button className="btn btn-ghost btn-small" onClick={() => setZoom(z => Math.min(1000, z * 1.5))}>+</button>
             <button className="btn btn-ghost btn-small" onClick={() => setZoom(z => Math.max(0.1, z / 1.5))}>−</button>
@@ -49556,13 +49699,12 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                   <rect x={LEFT_GUTTER} y={0} width={chartWidth} height={totalHeight} />
                 </clipPath>
               </defs>
-              {/* Era bands, their names on a line of their own above the year
-                  labels, each cut to fit its band (v1.7 r021) */}
+              {/* Chrono's era bands, their names on a line of their own above
+                  the year labels, each cut to fit its band (v1.7 r021) */}
               {eraBands.map((b, i) => {
                 const x1 = Math.max(LEFT_GUTTER, yearToX(Math.max(b.start, visStart)));
                 const x2 = Math.min(LEFT_GUTTER + chartWidth, yearToX(Math.min(b.end, visEnd)));
                 if (x2 <= x1) return null;
-                const hues = ["rgba(200,169,110,.06)", "rgba(160,110,200,.06)", "rgba(110,158,200,.06)", "rgba(200,110,110,.06)"];
                 return (
                   <g key={i}>
                     <rect x={x1} y={TOP_GUTTER - 36} width={x2 - x1} height={totalHeight - TOP_GUTTER + 36} fill={hues[i % hues.length]} />
@@ -49579,6 +49721,44 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                   </g>
                 );
               })}
+              {/* Narratio's and Anachronia's bands (v1.7 r022): the acts, or
+                  the stories at the corpus's scope, on the upper line, and
+                  the chapters on the lower */}
+              {upperBands.map((b, i) => {
+                const [x1, x2] = bandX(b);
+                if (x2 <= x1) return null;
+                const label = (x2 - x1) > 50 ? chronoEraLabel(b.label, x2 - x1, (s) => measureText(s, 10, true)) : "";
+                return (
+                  <g key={b.id} className="fabula-tl-band" data-band={b.kind} data-id={b.id} data-first={b.first} data-last={b.last}>
+                    <rect x={x1} y={TOP_GUTTER - 36} width={x2 - x1} height={totalHeight - TOP_GUTTER + 36} fill={hues[i % hues.length]} />
+                    {label && (
+                      <text className="fabula-tl-band-name" x={x1 + 6} y={TOP_GUTTER - 24} fill="var(--accent-dim)" fontSize={10} fontFamily="DM Sans, sans-serif" fontStyle="italic">
+                        {label}
+                        {label !== b.label && <title>{b.label}</title>}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+              {chapterBands.map(b => {
+                const [x1, x2] = bandX(b);
+                if (x2 <= x1) return null;
+                const lineX = yearToX(b.first);
+                const label = (x2 - x1) > 50 ? chronoEraLabel(b.label, x2 - x1, (s) => measureText(s, 10)) : "";
+                return (
+                  <g key={b.id} className="fabula-tl-chapter" data-id={b.id} data-first={b.first} data-last={b.last}>
+                    {lineX >= LEFT_GUTTER && lineX <= LEFT_GUTTER + chartWidth && (
+                      <line x1={lineX} y1={TOP_GUTTER - 4} x2={lineX} y2={totalHeight - 10} stroke="var(--border2)" strokeWidth={0.7} strokeDasharray="2 4" />
+                    )}
+                    {label && (
+                      <text className="fabula-tl-chapter-name" x={x1 + 6} y={TOP_GUTTER - 8} fill="var(--text-dim)" fontSize={10} fontFamily="DM Sans, sans-serif">
+                        {label}
+                        {label !== b.label && <title>{b.label}</title>}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
               {/* The axis */}
               <line x1={LEFT_GUTTER} y1={TOP_GUTTER} x2={LEFT_GUTTER + chartWidth} y2={TOP_GUTTER} stroke="var(--border2)" strokeWidth={1} />
               {ticks.map((t, i) => (
@@ -49587,6 +49767,18 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                     stroke={t.major ? "var(--border2)" : "var(--border)"} strokeWidth={t.major ? 0.7 : 0.4} strokeDasharray={t.major ? "2 4" : "1 5"} />
                   <text className="fabula-tl-tick" x={yearToX(t.value)} y={TOP_GUTTER - 8} fill={t.major ? "var(--text-dim)" : "var(--text-faint, var(--text-dim))"}
                     fontSize={t.major ? 10 : 9} fontFamily="DM Sans, sans-serif" textAnchor="middle" opacity={t.major ? 1 : 0.75}>
+                    {t.label}
+                  </text>
+                </g>
+              ))}
+              {/* Anachronia's axis up the side: Chronometric's year ticks
+                  across the plot, labeled in the title column */}
+              {yTicks.map((t, i) => (
+                <g key={i} className="fabula-tl-ytick" data-value={t.value} data-y={yearToY(t.value)}>
+                  <line x1={LEFT_GUTTER} y1={yearToY(t.value)} x2={LEFT_GUTTER + chartWidth} y2={yearToY(t.value)}
+                    stroke={t.major ? "var(--border2)" : "var(--border)"} strokeWidth={t.major ? 0.7 : 0.4} strokeDasharray={t.major ? "2 4" : "1 5"} />
+                  <text x={LEFT_GUTTER - 10} y={yearToY(t.value) + 3} fill={t.major ? "var(--text-dim)" : "var(--text-faint, var(--text-dim))"}
+                    fontSize={t.major ? 10 : 9} fontFamily="DM Sans, sans-serif" textAnchor="end" opacity={t.major ? 1 : 0.75}>
                     {t.label}
                   </text>
                 </g>
@@ -49615,6 +49807,22 @@ function FabulaTimelineTab({ state, story, showSecrets, prefs, onSetPrefs, onOpe
                   </g>
                 );
               })}
+              {/* Anachronia's plot: the lines, then the scenes */}
+              {anachronia && (
+                <g className="fabula-tl-graph" clipPath="url(#fabula-tl-clip)">
+                  {lines.map(l => (
+                    <polyline key={l.id} className="fabula-tl-line" data-story={l.id} points={l.points.map(pt => pt.join(",")).join(" ")} fill="none" stroke={SCENE} strokeWidth={1.5} strokeLinejoin="round" style={{ pointerEvents: "none" }} />
+                  ))}
+                  {dated.map(plotMark)}
+                  {undated.map(plotMark)}
+                </g>
+              )}
+              {anachronia && undated.length > 0 && (
+                <g className="fabula-tl-strip" data-y={stripY}>
+                  <line x1={LEFT_GUTTER} y1={stripY} x2={LEFT_GUTTER + chartWidth} y2={stripY} stroke="var(--border)" strokeWidth={0.7} />
+                  <text x={LEFT_GUTTER - 10} y={stripY + STRIP_HEIGHT / 2 + 4} fill="var(--text-dim)" fontSize={11} fontFamily="DM Sans, sans-serif" textAnchor="end">Undated</text>
+                </g>
+              )}
             </svg>
           </div>
           <div className="chrono-hint">{bars
