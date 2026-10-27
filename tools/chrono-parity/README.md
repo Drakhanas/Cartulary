@@ -82,4 +82,7 @@ and `parity.js compare` must exit 1.
 
 A cut that changes Chronometric on purpose will differ, and should: then the
 differences show where the drawing changed, and the cut's own checks judge
-whether those are the intended ones.
+whether those are the intended ones. `parity.js compare --only saved` still
+holds such a cut to what its edits save. r019 moved lanes and grew them but
+moved no event sideways, and every drag and panel step saved the same entries
+as r018's did.

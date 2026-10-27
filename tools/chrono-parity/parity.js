@@ -5,7 +5,7 @@
 // passed. Two commands:
 //
 //   node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]
-//   node parity.js compare <baseline outdir> <candidate outdir>
+//   node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...]
 //
 // record opens the build in Chromium (Playwright), loads each of the four
 // worlds in worlds.js at each width, opens Timeline; Chronometric, and drives
@@ -14,7 +14,9 @@
 // after a step that saves, the world's entries as saved (updatedAt aside).
 // The first build recorded writes the worlds to <outdir>/fixtures from its
 // own new world; pass --fixtures to load those same files into another build.
-// compare reads two outdirs and prints the first difference in each run.
+// compare reads two outdirs and prints the first difference in each run;
+// --only compares those fields of each step alone (`--only saved` for what the
+// edits saved, when a cut changes the drawing on purpose and the edits mustn't).
 // Exit codes: record 0, or 3 when a step failed (the failure is recorded);
 // compare 0 when every step matches, 1 when any differs.
 //
@@ -144,6 +146,10 @@ async function drive(page, world, rec) {
     await page.mouse.move(from.x + dx / 2, from.y, { steps: 3 });
     if (mid) await mid();
     await page.mouse.move(from.x + dx, from.y, { steps: 3 });
+    // A person lets go a moment after the last move. Released at once, the
+    // drag can commit the move before the last, since the view reads the
+    // drag's last position from a ref its effect updates after the render.
+    await page.waitForTimeout(120);
     await page.mouse.up();
   };
   // An event's group, found by its tooltip: "<name> (<field>)" for a span,
@@ -366,7 +372,7 @@ function firstDifference(a, b, where = '') {
     : `${where || 'value'}: baseline ${JSON.stringify(a)}, candidate ${JSON.stringify(b)}`;
 }
 
-function compare(dirA, dirB) {
+function compare(dirA, dirB, only) {
   const load = (dir, f) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, f))).toString('utf8'));
   const files = fs.readdirSync(dirA).filter(f => f.endsWith('.json.gz')).sort();
   const meta = (dir) => { try { return JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')); } catch (e) { return {}; } };
@@ -376,7 +382,9 @@ function compare(dirA, dirB) {
   for (const f of files) {
     const run = f.replace(/\.json\.gz$/, '');
     if (!fs.existsSync(path.join(dirB, f))) { differing++; console.log(`  ${run}: the candidate has no record`); continue; }
-    const [A, B] = [load(dirA, f), load(dirB, f)];
+    const keep = (r) => (only && r.step !== 'page errors' && r.step !== 'failed'
+      ? Object.fromEntries([['step', r.step], ...only.filter(k => k in r).map(k => [k, r[k]])]) : r);
+    const [A, B] = [load(dirA, f).map(keep), load(dirB, f).map(keep)];
     // The steps, a failed step's record among them, and apart from them the
     // page errors each run met.
     const [SA, SB] = [A, B].map(R => R.filter(r => r.step !== 'page errors'));
@@ -401,8 +409,9 @@ function compare(dirA, dirB) {
       console.log(`  ${run}: ${SA.length} steps, identical${failedA ? ` (both stopped at a failed step: ${failedA.error})` : ''}`);
     }
   }
-  if (differing) console.log(`PARITY: DIFFERENT (${differing} of ${files.length} runs)`);
-  else console.log(`PARITY: IDENTICAL (${files.length} runs, ${steps} steps)`);
+  const fields = only ? `, ${only.join(' and ')} only` : '';
+  if (differing) console.log(`PARITY: DIFFERENT (${differing} of ${files.length} runs${fields})`);
+  else console.log(`PARITY: IDENTICAL (${files.length} runs, ${steps} steps${fields})`);
   return differing ? 1 : 0;
 }
 
@@ -417,10 +426,10 @@ function compare(dirA, dirB) {
     const only = opt('only') ? opt('only').split(',') : null;
     process.exit(await record(pos[0], pos[1], { libs, fixtures: opt('fixtures'), only }));
   } else if (cmd === 'compare' && pos.length === 2) {
-    process.exit(compare(pos[0], pos[1]));
+    process.exit(compare(pos[0], pos[1], opt('only') ? opt('only').split(',') : null));
   } else {
     console.log('usage: node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]\n'
-      + '       node parity.js compare <baseline outdir> <candidate outdir>');
+      + '       node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...]');
     process.exit(2);
   }
 })().catch(e => { console.error(e); process.exit(2); });
