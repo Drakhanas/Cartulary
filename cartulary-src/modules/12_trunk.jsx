@@ -3025,218 +3025,14 @@ function App() {
     setFocalNodeId(null);
   };
 
-  // Immutable tree update: returns a new root with `child` appended to the
-  // children array of the node whose id === parentId. Walks recursively;
-  // returns the original root unchanged if parentId isn't found.
-  const addChildToStemmaTree = (root, parentId, child) => {
-    if (!root) return root;
-    if (root.id === parentId) {
-      return { ...root, children: [...(root.children || []), child] };
-    }
-    if (!Array.isArray(root.children) || root.children.length === 0) return root;
-    return {
-      ...root,
-      children: root.children.map(c => addChildToStemmaTree(c, parentId, child)),
-    };
-  };
-
-  // Immutable tree update: applies `updater(node)` to the node whose id matches.
-  // updater takes the node and returns the patched node. Tree is rebuilt.
-  const updateNodeInStemmaTree = (root, nodeId, updater) => {
-    if (!root) return root;
-    if (root.id === nodeId) return updater(root);
-    if (!Array.isArray(root.children) || root.children.length === 0) return root;
-    return {
-      ...root,
-      children: root.children.map(c => updateNodeInStemmaTree(c, nodeId, updater)),
-    };
-  };
-
-  // Immutable tree mutation: removes the node whose id matches and returns a
-  // new tree. Returns null if the root itself matches (caller should refuse to
-  // delete the root). Otherwise prunes the matching subtree from its parent.
-  const removeNodeFromStemmaTree = (root, nodeId) => {
-    if (!root) return root;
-    if (root.id === nodeId) return null;  // root deletion handled by caller
-    if (!Array.isArray(root.children) || root.children.length === 0) return root;
-    return {
-      ...root,
-      children: root.children
-        .filter(c => c.id !== nodeId)
-        .map(c => removeNodeFromStemmaTree(c, nodeId)),
-    };
-  };
-
-  // Add a child node (freeform or linked) to a specific node within a stemma.
-  // payload shape:
-  //   { type: "freeform", label, color?, icon? }
-  //   { type: "linked", entryId, cachedName }
-  const addStemmaChild = (stemmaId, parentNodeId, slot, payload) => {
-    if (isLocked) return;
-    if (typeof slot !== "number" || slot < 0 || slot >= STEMMA_SLOTS) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        // Reject if slot is already occupied (defensive — UI shouldn't allow it).
-        const focal = findStemmaNode(st.root, parentNodeId);
-        if (!focal) return st;
-        if ((focal.children || []).some(c => c.slot === slot)) return st;
-
-        let newChild;
-        if (payload.type === "linked") {
-          newChild = {
-            id: `n-${genId()}`,
-            slot,
-            type: "linked",
-            entryId: payload.entryId,
-            _cachedName: payload.cachedName || "",
-            children: [],
-          };
-        } else {
-          newChild = {
-            id: `n-${genId()}`,
-            slot,
-            type: "freeform",
-            label: payload.label || "(empty)",
-            color: payload.color || "#c8a96e",
-            icon: payload.icon || "✦",
-            children: [],
-          };
-        }
-        return {
-          ...st,
-          root: addChildToStemmaTree(st.root, parentNodeId, newChild),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Patch a node's display fields (label/color/icon for freeform; nothing
-  // editable on linked aside from convert/relink which have their own paths).
-  // patch is a partial of the node — only specified keys overwrite.
-  const updateStemmaNode = (stemmaId, nodeId, patch) => {
-    if (isLocked) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        return {
-          ...st,
-          root: updateNodeInStemmaTree(st.root, nodeId, (n) => ({ ...n, ...patch })),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Delete a node and all its descendants. Refuses to delete the root (the
-  // caller should disable the inspector's delete button when the focal IS the
-  // root, or fall through to deleting the entire stemma instead — that flow
-  // isn't built yet, see step 5 flags).
-  const deleteStemmaNode = (stemmaId, nodeId) => {
-    if (isLocked) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        if (st.root.id === nodeId) return st;  // refuse to remove root via this path
-        return {
-          ...st,
-          root: removeNodeFromStemmaTree(st.root, nodeId),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Convert a freeform node to a linked node, binding it to an existing entry.
-  // Drops freeform-only fields (label/color/icon) since linked nodes pull
-  // display from the entry's template.
-  const convertStemmaNodeToLinked = (stemmaId, nodeId, entryId, cachedName) => {
-    if (isLocked) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        return {
-          ...st,
-          root: updateNodeInStemmaTree(st.root, nodeId, (n) => {
-            // Preserve children, slot, id; replace identity fields.
-            const { label, color, icon, ...rest } = n;
-            return {
-              ...rest,
-              type: "linked",
-              entryId,
-              _cachedName: cachedName || "",
-            };
-          }),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Convert a linked node to freeform. Promotes _cachedName to be the new
-  // label (per design doc §6.1). Drops entryId / _cachedName.
-  const convertStemmaNodeToFreeform = (stemmaId, nodeId) => {
-    if (isLocked) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        return {
-          ...st,
-          root: updateNodeInStemmaTree(st.root, nodeId, (n) => {
-            const { entryId, _cachedName, ...rest } = n;
-            return {
-              ...rest,
-              type: "freeform",
-              label: _cachedName || "(empty)",
-              color: "#c8a96e",
-              icon: "✦",
-            };
-          }),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Re-link a linked node to a different entry. Stays type "linked"; just
-  // swaps entryId and _cachedName. If the node was orphaned, this fixes it.
-  const relinkStemmaNode = (stemmaId, nodeId, newEntryId, newCachedName) => {
-    if (isLocked) return;
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st => {
-        if (st.id !== stemmaId) return st;
-        return {
-          ...st,
-          root: updateNodeInStemmaTree(st.root, nodeId, (n) => ({
-            ...n,
-            entryId: newEntryId,
-            _cachedName: newCachedName || "",
-          })),
-          updatedAt: isoNow(),
-        };
-      });
-      return { ...s, stemmas };
-    });
-  };
-
-  // Rename a stemma at the document level (not a node). Used by the inline
-  // edit on the canvas breadcrumb.
-  const renameStemma = (stemmaId, newName) => {
-    if (isLocked) return;
-    const trimmed = (newName || "").trim();
-    if (!trimmed) return;  // refuse blank names
-    updateState(s => {
-      const stemmas = (s.stemmas || []).map(st =>
-        st.id === stemmaId ? { ...st, name: trimmed, updatedAt: isoNow() } : st
-      );
-      return { ...s, stemmas };
-    });
+  // Put the document the canvas hands back into the world (v1.7 r026). The
+  // edits themselves are pure transforms in 21_stemma (Stemma transforms),
+  // committed through the canvas's history, which is how Stemma has undo;
+  // this is the one write. Refuses when the world is locked, as the canvas
+  // does before it.
+  const replaceStemma = (stemmaId, next) => {
+    if (isLocked || !next) return;
+    updateState(s => ({ ...s, stemmas: (s.stemmas || []).map(st => (st.id === stemmaId ? next : st)) }));
   };
 
   // Delete a stemma entirely. Used by the index-page row's delete action.
@@ -4355,6 +4151,7 @@ function App() {
             ];
             return (
               <StemmaCanvasView
+                key={`${stem.id}:${isLocked ? "locked" : "open"}`}
                 stemma={stem}
                 focalNodeId={focalNodeId}
                 entries={stemmaEntriesWithBodies}
@@ -4363,13 +4160,7 @@ function App() {
                 flash={flash}
                 onFocalChange={setFocalNodeId}
                 onBackToIndex={closeStemmaToIndex}
-                onAddChild={(slot, payload) => addStemmaChild(stem.id, focalNodeId, slot, payload)}
-                onUpdateNode={(nodeId, patch) => updateStemmaNode(stem.id, nodeId, patch)}
-                onDeleteNode={(nodeId) => deleteStemmaNode(stem.id, nodeId)}
-                onConvertToLinked={(nodeId, entryId, name) => convertStemmaNodeToLinked(stem.id, nodeId, entryId, name)}
-                onConvertToFreeform={(nodeId) => convertStemmaNodeToFreeform(stem.id, nodeId)}
-                onRelink={(nodeId, entryId, name) => relinkStemmaNode(stem.id, nodeId, entryId, name)}
-                onRename={(newName) => renameStemma(stem.id, newName)}
+                onReplace={(next) => replaceStemma(stem.id, next)}
                 onOpenEntry={openEntryFromAnywhere}
                 onExport={() => exportStemmaJson(stem)}
               />
