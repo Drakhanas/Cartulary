@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 45,
-    "total_lines": 50773,
-    "raw_body_lines": 50773,
-    "canonical_lines": 48293,
+    "total_lines": 50945,
+    "raw_body_lines": 50945,
+    "canonical_lines": 48412,
     "decl_count": 687,
     "no_trailing_newline": 37,
-    "active_anchor": "reference-r023-body.jsx"
+    "active_anchor": "reference-r024-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 50773,
+      "value": 50945,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 48293,
+      "value": 48412,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 50773,
+      "value": 50945,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2694883,
+      "value": 2727694,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "fifty",
-        50
+        "fifty-one",
+        51
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -119,14 +119,14 @@
       "value": 45,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r023": {
-      "value": "95e16b5e98b0e927",
-      "pattern": "working[^\\n]{0,40}at r023 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r024": {
+      "value": "35b615d71606dc90",
+      "pattern": "working[^\\n]{0,40}at r024 hashes to sha256 `([0-9a-f]{16})`"
     },
     "anchor_rotations_made": {
       "value": [
-        "fifty",
-        50
+        "fifty-one",
+        51
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     }
@@ -796,10 +796,10 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r023-body.jsx",
-      "reference-r023-layout.json",
-      "0724107911773c17",
-      "95e16b5e98b0e927",
+      "reference-r024-body.jsx",
+      "reference-r024-layout.json",
+      "ff3dfdd0a011f1dc",
+      "35b615d71606dc90",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -850,7 +850,10 @@
       "v1.7_r023",
       "renderEntryFieldsHtml",
       "FabulaExportModal",
-      "articleIds"
+      "articleIds",
+      "v1.7_r024",
+      "HOME_SECTIONS",
+      "fabula-timeline"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -952,7 +955,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r023-layout.json",
+      "reference-r024-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -1007,7 +1010,11 @@
       "0724107911773c17",
       "95e16b5e98b0e927",
       "On v1.7 r023 verification",
-      "renderEntryFieldsHtml"
+      "renderEntryFieldsHtml",
+      "reference-r024-body.jsx",
+      "ff3dfdd0a011f1dc",
+      "35b615d71606dc90",
+      "On v1.7 r024 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1127,7 +1134,14 @@
       "ff9ae78",
       "4c98e43",
       "renderEntryFieldsHtml",
-      "FabulaExportModal"
+      "FabulaExportModal",
+      "v1.7_r024",
+      "35b615d71606dc90",
+      "ff3dfdd0a011f1dc",
+      "ea4d2bd",
+      "3c36ec6",
+      "d438083",
+      "fabula-timeline"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1184,7 +1198,8 @@
       "v1.7_r021",
       "drawn 36 pixels wider than its frame",
       "v1.7_r022",
-      "v1.7_r023"
+      "v1.7_r023",
+      "v1.7_r024"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1238,7 +1253,8 @@
       "A check whose result changes under load has found a race",
       "A planted defect that crashes the probe has been noticed, not counted",
       "A planted copy that passes every check has either found a blind check or a world that never reaches the rule",
-      "A queued run whose check count differs from the solo run's is the race too"
+      "A queued run whose check count differs from the solo run's is the race too",
+      "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it"
     ],
     "journal.txt": [
       "r030",
@@ -1287,7 +1303,8 @@
       "r020",
       "r021",
       "r022",
-      "r023"
+      "r023",
+      "r024"
     ]
   }
 }

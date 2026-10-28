@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, r022's modes, and r023's export) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, r022's modes, r023's export, and r024's help) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -860,3 +860,19 @@ alone it counts 1,735 on either build. I'd taken a passing count on trust becaus
 passed. The spec named a nested list for the Markdown outline, and I went with headings by
 depth instead, because a list can't hold a scene's block fields and its beats; it's in the
 cut's calls, and he passed it in one word.
+
+r024 is Fabula's help, two topics and the save file's schema in full. The schema topic's
+depth was the call I'd have got wrong alone: I offered the shapes, the shapes with each
+kind's core fields, or the whole, and Drak's rule came back before the letter did, that the
+site's JSON page is the complete reference, which is what it's there for, and the site is
+written from the topic. So every seeded field of every kind went in, 110 of them, and the
+probe reads them off the page and holds them to fabulaSeedSchemas at run time, so a seed
+that changes fails the probe until the topic follows it. Writing against the component
+caught my own errors before the probe could: the buttons' names, where a corpus's page puts
+its reading order, where a custom turn lands, what the fold control looks like, what a
+hidden When does in each mode. Every correction after a probe run meant stopping the queue
+and starting over on the final build, which the doctrine already says and which I did. What
+the plan missed: the roadmap had carried two one-line help fixes since r005 and r016, each
+filed for the next cut that touches the help. r024 was that cut and took neither, because I
+wrote its scope from the spec's item and never read the roadmap's rows on the file I was
+about to edit. They stand, and the doctrine has the lesson.
