@@ -974,3 +974,21 @@ Concordance, with an index of its own, draws the edge. It's filed under Pipes,
 where renames rewrite the same code, and the doctrine has the rule: a comment says
 what a helper was for, a caller says whether the feature exists. Drak passed the
 build on the first staging.
+
+r028 closed the one piece of Fabula that had waited for Stemma: Brainstorm, the
+Story's link to the trees behind it, parked on the 25th because no field could
+point at a stemma. With stemmas a registered source since r027, the field is a
+seed row, and the cut's only decision was where it sits and whether it's core; I
+put it beside Threads, the story's other link out, and left it off the core list
+because nothing in Fabula reads it, which means a Story schema someone has edited
+keeps its fields as they left them and doesn't gain the new one. That's the seed's
+standing rule, and the probe asserts it as documented behavior rather than treating
+it as a gap. The bump to 5 carried the three lines the roadmap had filed since the
+site page, the ones saying the timeline will do what r020 made it do. The probe
+had to find its way around two things the form does that I'd guessed wrong from
+the code: a label's innerText comes back uppercase from the CSS, and the reference
+picker is a select, not a text box; the planted copies then failed where they
+should, and the help and site checks compare every kind's table to the seed, in
+order, with multi and core, which is the check r024's probe used to make before it
+went with that session's sandbox. Three cuts in one evening, all passed on the
+first staging; Tabula's canvas is next, the big one.

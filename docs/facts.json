@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 56,
-    "total_lines": 51038,
-    "raw_body_lines": 51038,
-    "canonical_lines": 48499,
+    "total_lines": 51045,
+    "raw_body_lines": 51045,
+    "canonical_lines": 48506,
     "decl_count": 703,
     "no_trailing_newline": 48,
-    "active_anchor": "reference-r027-body.jsx"
+    "active_anchor": "reference-r028-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 51038,
+      "value": 51045,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -30,11 +30,11 @@
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 48499,
+      "value": 48506,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 51038,
+      "value": 51045,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2734263,
+      "value": 2735053,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "fifty-three",
-        53
+        "fifty-four",
+        54
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -121,14 +121,14 @@
     },
     "anchor_rotations_made": {
       "value": [
-        "fifty-three",
-        53
+        "fifty-four",
+        54
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
     },
-    "working_hash_r027": {
-      "value": "d76fcd6d132c7c10",
-      "pattern": "working[^\\n]{0,40}at r027 hashes to sha256 `([0-9a-f]{16})`"
+    "working_hash_r028": {
+      "value": "bfba2f23739b1e41",
+      "pattern": "working[^\\n]{0,40}at r028 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -761,7 +761,7 @@
       "v1.7 is OPEN",
       "Common Year",
       "stop hook",
-      "84fede2480fa0d52",
+      "112ad4301a10df3c",
       "stages the old content",
       "owes a pass of its own",
       "answers the font requests empty",
@@ -811,9 +811,9 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r027-body.jsx",
-      "reference-r027-layout.json",
-      "03e5c1b2e7da7943",
+      "reference-r028-body.jsx",
+      "reference-r028-layout.json",
+      "7bf03e23236a407b",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -865,13 +865,13 @@
       "renderEntryFieldsHtml",
       "FabulaExportModal",
       "articleIds",
-      "v1.7_r027",
+      "v1.7_r028",
       "HOME_SECTIONS",
       "fabula-timeline",
       "56874e0",
       "v1.7_r025",
       "28_fabula/",
-      "d76fcd6d132c7c10",
+      "bfba2f23739b1e41",
       "tools/stemma-parity",
       "__stemmas__"
     ],
@@ -975,7 +975,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r027-layout.json",
+      "reference-r028-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -1040,7 +1040,9 @@
       "reference-r026-body.jsx",
       "On v1.7 r026 verification",
       "reference-r027-body.jsx",
-      "On v1.7 r027 verification"
+      "On v1.7 r027 verification",
+      "reference-r028-body.jsx",
+      "On v1.7 r028 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1176,7 +1178,9 @@
       "2d657f7",
       "v1.7_r025_carve_fabula_folder.py",
       "5c4e425ad5b6a63a",
-      "d76fcd6d132c7c10"
+      "d76fcd6d132c7c10",
+      "bfba2f23739b1e41",
+      "112ad4301a10df3c"
     ],
     "roadmap.md": [
       "roadmap-archive.md",

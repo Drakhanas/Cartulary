@@ -22,7 +22,7 @@ Fabula is a new view, a peer of Linea, Stemma, and Kalendarium, for planning the
 - **A deleted entry is cleaned out of Fabula**, with a count first and cast records kept (Drak took Claude's middle path, 2026-10-24; section 9).
 - **Stemma v2** ships alongside as the brainstorm engine and stays its own view.
 - **Other on multi-selects, for every template** (Drak, 2026-10-25). The four multi-selects whose lists end in Other get a real one, built into the field system rather than worked around. It went in as v1.7's r005, which saves each typed value as one more string in the same list.
-- **Brainstorm waits for Stemma v2** (Drak, 2026-10-25). No field can point at a stemma yet, so the Story's link to the trees behind it is settled with Stemma v2, which follows Fabula.
+- **Brainstorm waits for Stemma v2** (Drak, 2026-10-25). No field can point at a stemma yet, so the Story's link to the trees behind it is settled with Stemma v2, which follows Fabula. **Done at v1.7's r028** (2026-10-27): stemmas became a registered source at r027, and the Story took Brainstorm, a multi-target link to them between Threads and Notes, not core, at seed 5 (`docs/stemma-v2-spec.md`, section 5).
 - **Fabula's record types join the registry with its first screen** (Drak, 2026-10-25). The registry makes a source a reference target in every template builder and a toggle in Concordance, so the first cut seeds the slice and the schemas only, and the registry entries come with the first cut that shows Fabula, together with Concordance's single Fabula toggle and a builder that offers only sources marked eligible.
 - **The field lists are settled** (Drak, 2026-10-25), reviewed one table per message in his table format, his call. What the review changed: the Story gains Threads, and the Premise panel's Themes is core, since the Plot and Meaning tabs list them; the Premise panel puts the theme pair under the Logline and the conflict fields under that; Genre gains Sci-Fantasy and Point of View Third Objective; the Setting panel's Places and a scene's Setting take Location, Cosmology / Plane, Astronomical Body, and Vehicle, since a big enough carrier can be a setting; a cast record's character can be a Deity / Entity, as can a scene's walk-ons, and Role loses Narrator, which the Narration panel's Narrators already says; Arc's and Promise & Payoff's statuses start at Idea; a scene with no POV of its own takes its chapter's, and chapters and scenes share one status list; and a research note gains Used In and stays with one story.
 - **An arc can be more than one person's** (Drak, 2026-10-25, at r009's pass): an arc's Cast takes more than one cast record, as friends to lovers does. It came in at the pass, so it reached this file with r009's turnover, after the cut. The seed went to 2 with it (section 3).
@@ -164,10 +164,11 @@ Structure             select                       half-eligible · core · {Thr
 Custom Slots          group                        core · showWhen Structure = Custom; one slot per row, in order
     · Slot            text
 Threads               entry-ref multi              core · -> Plot Thread; the threads this story carries
+Brainstorm            entry-ref multi              -> Stemma; the stemmas behind this story (since v1.7's r028)
 Notes                 textarea
 ```
 
-Threads is where the story records the threads it carries, so one thread can run through several books (section 4). Brainstorm, a link to the Stemma trees behind the story, is out until Stemma v2 (section 1).
+Threads is where the story records the threads it carries, so one thread can run through several books (section 4). Brainstorm, a link to the Stemma trees behind the story, waited for Stemma v2 (section 1) and came in at v1.7's r028, once stemmas were a registered source.
 
 **Premise** panel (Gilbo 1 and 2):
 
