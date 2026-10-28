@@ -1716,7 +1716,7 @@ const TABULA = {
   minWidth: { note: 160, linked: 160, image: 80, column: 160, board: 160 },
   maxWidth: 800,
   color: "#c8a96e",
-  icon: "✦",                            // ✦
+  icon: "✦",
 };
 const TABULA_ITEM_TYPES = ["note", "linked", "image", "column", "board"];
 
@@ -1853,12 +1853,33 @@ const tabulaRewrite = (node, fn) => {
   });
   return { ...node, items };
 };
-// The index's count: cards (a note, a linked card, an image, a sub-board)
-// and columns, everywhere below the root.
-const tabulaCounts = (stemma) => {
+// What a node holds, everywhere below it: cards (a note, a linked card, an
+// image, a sub-board) and columns. The index reads it for the root and
+// (r030) a board card's face for the sub-board, so the two agree.
+const tabulaCountBelow = (node) => {
   let cards = 0, columns = 0;
-  tabulaWalk(stemma && stemma.root, (it) => { if (it.type === "column") columns++; else if (TABULA_ITEM_TYPES.includes(it.type)) cards++; });
+  tabulaWalk(node, (it) => { if (it.type === "column") columns++; else if (TABULA_ITEM_TYPES.includes(it.type)) cards++; });
   return { cards, columns };
+};
+const tabulaCounts = (stemma) => tabulaCountBelow(stemma && stemma.root);
+// The node (a board or a column) that holds an item.
+const tabulaParentOf = (root, id) => {
+  let parent = null;
+  tabulaWalk(root, (it, holder) => { if (!parent && it.id === id) parent = holder; });
+  return parent;
+};
+// The boards from the root down to a board, for the breadcrumb; the root
+// alone when the id names nothing.
+const tabulaBoardPath = (root, boardId) => {
+  const walk = (node, chain) => {
+    if (node.id === boardId) return chain;
+    for (const it of (node.items || [])) {
+      if (it.type === "board") { const r = walk(it, [...chain, it]); if (r) return r; }
+      else if (it.type === "column") { for (const c of (it.items || [])) { if (c.type === "board") { const r = walk(c, [...chain, c]); if (r) return r; } } }
+    }
+    return null;
+  };
+  return (root && walk(root, [root])) || [root];
 };
 
 const tabulaNewDocument = (name) => {
@@ -1920,6 +1941,79 @@ const tabulaMoveItem = (doc, id, x, y) => {
     return { ...node, items: items.map(it => (it.type === "board" || it.type === "column") ? move(it) : it) };
   };
   const root = move(doc.root);
+  return hit ? { ...doc, root, updatedAt: isoNow() } : doc;
+};
+// A move to a place (v1.7 r030): into a column at an index, where the item
+// loses its position and takes the stack's order, or onto a board at x and
+// y, where it takes them (and the width given, when it comes out of a
+// column) and goes to the end. Refused: a column into a column, anything
+// into itself or into what it holds. The index counts the column's items
+// without the item itself, so a reorder inside the column reads as it looks.
+const tabulaMoveTo = (doc, id, target) => {
+  if (!doc || !doc.root || !target) return doc;
+  const item = tabulaFindItem(doc.root, id);
+  if (!item) return doc;
+  if (target.columnId) {
+    if (item.type === "column") return doc;
+    if (target.columnId === id || tabulaFindItem(item, target.columnId)) return doc;
+  } else if (target.boardId) {
+    if (target.boardId === id || tabulaFindItem(item, target.boardId)) return doc;
+  } else return doc;
+  if (target.columnId) {
+    const parent = tabulaParentOf(doc.root, id);
+    if (parent && parent.id === target.columnId) {
+      const rest = (parent.items || []).filter(it => it.id !== id);
+      const orig = (parent.items || []).findIndex(it => it.id === id);
+      const idx = Math.max(0, Math.min(rest.length, tabulaInt(target.index, rest.length)));
+      if (orig === idx) return doc;  // the same place in the stack
+    }
+  }
+  const without = tabulaRewrite(doc.root, it => (it.id === id ? null : it));
+  let placed = false;
+  const put = (node) => {
+    if (target.columnId && node.id === target.columnId && node.type === "column") {
+      placed = true;
+      const { x, y, w, ...rest } = item;
+      const items = [...(node.items || [])];
+      const idx = Math.max(0, Math.min(items.length, tabulaInt(target.index, items.length)));
+      items.splice(idx, 0, rest);
+      return { ...node, items };
+    }
+    if (target.boardId && node.id === target.boardId && node.type === "board") {
+      placed = true;
+      const w = tabulaClampWidth(item.type, tabulaInt(target.w, Number.isFinite(item.w) ? item.w : TABULA.width[item.type]));
+      return { ...node, items: [...(node.items || []), { ...item, x: tabulaInt(target.x, 0), y: tabulaInt(target.y, 0), w }] };
+    }
+    return { ...node, items: (node.items || []).map(it => (it.type === "board" || it.type === "column") ? put(it) : it) };
+  };
+  const root = put(without);
+  return placed ? { ...doc, root, updatedAt: isoNow() } : doc;
+};
+// A column deleted (v1.7 r030): with `placements` ([{ id, x, y }], where
+// each card stood, measured by the view), its cards go out onto the board
+// that held it, at the column's width, after everything else; without, they
+// go with it. A card the placements don't name stacks under the last.
+const tabulaDeleteColumn = (doc, id, placements) => {
+  if (!doc || !doc.root) return doc;
+  const col = tabulaFindItem(doc.root, id);
+  if (!col || col.type !== "column") return doc;
+  if (!placements) return tabulaDeleteItem(doc, id);
+  const at = new Map(placements.map(p => [p.id, p]));
+  let nextY = tabulaInt(col.y, 0);
+  const freed = (col.items || []).map(it => {
+    const p = at.get(it.id);
+    const x = p ? tabulaInt(p.x, col.x) : tabulaInt(col.x, 0);
+    const y = p ? tabulaInt(p.y, nextY) : nextY;
+    nextY = y + 60;
+    return { ...it, x, y, w: tabulaClampWidth(it.type, tabulaInt(col.w, TABULA.width[it.type])) };
+  });
+  let hit = false;
+  const cut = (node) => {
+    const items = node.items || [];
+    if (items.some(it => it.id === id)) { hit = true; return { ...node, items: [...items.filter(it => it.id !== id), ...freed] }; }
+    return { ...node, items: items.map(it => (it.type === "board" || it.type === "column") ? cut(it) : it) };
+  };
+  const root = cut(doc.root);
   return hit ? { ...doc, root, updatedAt: isoNow() } : doc;
 };
 // A linked card becomes a note titled with the name it showed.
@@ -2090,13 +2184,20 @@ function useTabulaCamera({ paneRef, isLocked, initial, onChange }) {
   return { view, viewRef, setView, zoomAt, zoomBy, panBy, fitTo, toCanvas, rectOf, onPointerDownCapture, dragging, spaceHeld, cfg };
 }
 
-// One card on the canvas. A note shows its title and its body as Markdown
-// (wiki-links resolve through the pool), or, edited in place, a title field
-// and a body field that commit as they're typed, a run of typing one history
-// step, the inspector's way; a linked card draws its record's icon and color
-// and its source, orphaned when the record is gone; an image shows its
-// picture and caption. The right edge is the width handle.
-function TabulaCard({ item, pool, templates, selected, dragging, editing, onEditChange, onEditDone, onPointerDown, onHandleDown, onDoubleClick, onOpenEntry, dirHandle, imageFolder, x, y, w }) {
+// One card: placed on the canvas (absolute, at x and y, w wide, with the
+// width handle) or in a column's stack (in flow, the column's width). A note
+// shows its title and its body as Markdown (wiki-links resolve through the
+// pool), or, edited in place, a title field and a body field that commit as
+// they're typed, a run of typing one history step, the inspector's way; a
+// linked card draws its record's icon and color and its source, orphaned
+// when the record is gone; an image shows its picture and caption; a column
+// (r030) shows its title, edited in place the same way, over its stack, with
+// an insertion line at `insertAt` while something is dragged over it, each
+// item rendered through `renderItem`; a board card (r030) shows its icon,
+// its title, and what it holds. `ghost` is the copy that follows the
+// pointer while a stack item is on the move; `over` marks a column a drag
+// is over.
+function TabulaCard({ item, placed, x, y, w, pool, templates, selected, dragging, ghost, over, editing, onEditChange, onEditDone, onPointerDown, onHandleDown, onDoubleClick, onOpenEntry, dirHandle, imageFolder, renderItem, insertAt }) {
   const editRef = useRef(null);
   const { url: imageUrl, errored: imageErrored } = useMapImageUrl(item.type === "image" ? item.image : null, dirHandle, imageFolder);
   useEffect(() => {
@@ -2105,21 +2206,30 @@ function TabulaCard({ item, pool, templates, selected, dragging, editing, onEdit
       if (first) { first.focus({ preventScroll: true }); first.select(); }
     }
   }, [!!editing]);
+  const editBox = (fields) => (
+    <div
+      ref={editRef}
+      className="tabula-card-edit tabula-ui"
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onEditDone(); }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onEditDone(); return; }
+        if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); e.stopPropagation(); const ta = e.currentTarget.querySelector("textarea"); if (ta) ta.focus({ preventScroll: true }); else onEditDone(); return; }
+        e.stopPropagation();
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+    >{fields}</div>
+  );
   let body = null;
+  let accent = null;
   if (item.type === "note") {
+    accent = item.color || TABULA.color;
     if (editing) {
-      body = (
-        <div
-          ref={editRef}
-          className="tabula-card-edit tabula-ui"
-          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onEditDone(); }}
-          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onEditDone(); } e.stopPropagation(); }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-        >
+      body = editBox(
+        <>
           <input type="text" value={item.title || ""} placeholder="Title" onChange={(e) => onEditChange({ title: e.target.value }, "title")} />
           <textarea value={item.body || ""} placeholder="Markdown; [[wiki-links]] resolve" rows={Math.max(3, Math.min(14, (item.body || "").split("\n").length + 1))} onChange={(e) => onEditChange({ body: e.target.value }, "body")} />
-        </div>
+        </>
       );
     } else {
       body = (
@@ -2159,21 +2269,58 @@ function TabulaCard({ item, pool, templates, selected, dragging, editing, onEdit
         {item.caption ? <div className="tabula-caption">{item.caption}</div> : null}
       </>
     );
+  } else if (item.type === "column") {
+    const color = item.color || TABULA.color;
+    const stack = item.items || [];
+    const shown = renderItem ? stack.map(renderItem).filter(Boolean) : [];  // the item on the move is left out, as the gap index is
+    const rows = [];
+    shown.forEach((el, i) => {
+      if (insertAt === i) rows.push(<div key="ins" className="tabula-insert" />);
+      if (el) rows.push(el);
+    });
+    if (insertAt !== null && insertAt !== undefined && insertAt >= shown.length) rows.push(<div key="ins" className="tabula-insert" />);
+    body = (
+      <>
+        <div className="tabula-column-hdr" style={{ borderTop: `3px solid ${color}` }}>
+          {editing ? editBox(<input type="text" value={item.title || ""} placeholder="Column" onChange={(e) => onEditChange({ title: e.target.value }, "title")} />) : (
+            <div className="tabula-column-title" style={{ color: item.title ? "var(--text)" : "var(--text-dim)", fontStyle: item.title ? "normal" : "italic" }}>{item.title || "Untitled column"}</div>
+          )}
+        </div>
+        <div className="tabula-column-body">
+          {rows.length > 0 ? rows : <div className="tabula-column-empty">{over ? "" : "Drop cards here"}</div>}
+        </div>
+      </>
+    );
+  } else if (item.type === "board") {
+    const color = item.color || TABULA.color;
+    const held = tabulaCountBelow(item);
+    const holds = held.cards === 0 && held.columns === 0 ? "empty" : [held.cards ? `${held.cards} ${held.cards === 1 ? "card" : "cards"}` : null, held.columns ? `${held.columns} ${held.columns === 1 ? "column" : "columns"}` : null].filter(Boolean).join(" · ");
+    body = (
+      <div className="tabula-board" title="Double-click to open">
+        <div className="face" style={{ background: color }}>{item.icon || TABULA.icon}</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          {editing ? editBox(<input type="text" value={item.title || ""} placeholder="Board" onChange={(e) => onEditChange({ title: e.target.value }, "title")} />) : (
+            <div className="name" style={{ color: item.title ? "var(--text)" : "var(--text-dim)", fontStyle: item.title ? "normal" : "italic" }}>{item.title || "Untitled board"}</div>
+          )}
+          <div className="src">{holds}</div>
+        </div>
+      </div>
+    );
   } else {
     return null;
   }
-  const accent = item.type === "note" ? (item.color || TABULA.color) : null;
+  const cls = `${placed ? "tabula-card" : "tabula-colitem"}${selected ? " selected" : ""}${dragging ? " dragging" : ""}${ghost ? " ghost" : ""}${over ? " over" : ""}`;
   return (
     <div
-      className={`tabula-card${selected ? " selected" : ""}${dragging ? " dragging" : ""}`}
+      className={cls}
       data-item={item.id}
       data-type={item.type}
-      style={{ left: x, top: y, width: w, borderLeft: accent ? `3px solid ${accent}` : undefined }}
+      style={placed ? { left: x, top: y, width: w, borderLeft: accent ? `3px solid ${accent}` : undefined } : { borderLeft: accent ? `3px solid ${accent}` : undefined }}
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
     >
       {body}
-      <div className="tabula-card-handle" title="Drag to resize" onPointerDown={onHandleDown} />
+      {placed && !ghost && <div className="tabula-card-handle" title="Drag to resize" onPointerDown={onHandleDown} />}
     </div>
   );
 }
@@ -2181,9 +2328,10 @@ function TabulaCard({ item, pool, templates, selected, dragging, editing, onEdit
 // The right-side inspector for the selected card, the rota's pattern: a
 // note's title, body, and color; a linked card's record with Open where
 // something opens, re-link, and convert to a note; an image's caption and
-// its replacement; Delete on every card. A run of typing in a field is one
-// history step.
-function TabulaInspector({ item, pool, templates, isLocked, onClose, onPatch, onDelete, onRelink, onConvertToNote, onOpenEntry, onReplaceImage }) {
+// its replacement; a column's title and color (r030); a board's title,
+// color, and icon, with Open (r030); what a column or a board holds; Delete
+// on every card. A run of typing in a field is one history step.
+function TabulaInspector({ item, pool, templates, isLocked, onClose, onPatch, onDelete, onRelink, onConvertToNote, onOpenEntry, onReplaceImage, onOpenBoard }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   useEffect(() => { setPickerOpen(false); }, [item && item.id]);
   if (!item) return null;
@@ -2193,19 +2341,26 @@ function TabulaInspector({ item, pool, templates, isLocked, onClose, onPatch, on
       {control}
     </div>
   );
+  const colorRow = (
+    <div className="color-row">
+      {COLORS.map(color => (
+        <div key={color} className={`color-opt ${item.color === color ? "sel" : ""}`} style={{ background: color, ...(isLocked ? { opacity: 0.5, cursor: "default" } : {}) }} onClick={() => !isLocked && onPatch({ color })} />
+      ))}
+    </div>
+  );
+  const holdsLine = (node) => {
+    const held = tabulaCountBelow(node);
+    const parts = [held.cards ? `${held.cards} ${held.cards === 1 ? "card" : "cards"}` : null, held.columns ? `${held.columns} ${held.columns === 1 ? "column" : "columns"}` : null].filter(Boolean);
+    return <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 4 }}>{parts.length ? `Holds ${parts.join(" and ")}.` : "Holds nothing yet."}</div>;
+  };
   let body = null;
+  const kind = item.type === "note" ? "Note" : item.type === "linked" ? "Linked" : item.type === "image" ? "Image" : item.type === "column" ? "Column" : "Board";
   if (item.type === "note") {
     body = (
       <>
         {field("Title", <input className="input" type="text" value={item.title || ""} disabled={isLocked} placeholder="Untitled" onChange={(e) => onPatch({ title: e.target.value }, "title")} />)}
         {field("Body", <textarea className="input" value={item.body || ""} disabled={isLocked} placeholder="Markdown; [[wiki-links]] resolve" rows={8} style={{ overflow: "auto", minHeight: 120 }} onChange={(e) => onPatch({ body: e.target.value }, "body")} />)}
-        {field("Color", (
-          <div className="color-row">
-            {COLORS.map(color => (
-              <div key={color} className={`color-opt ${item.color === color ? "sel" : ""}`} style={{ background: color, ...(isLocked ? { opacity: 0.5, cursor: "default" } : {}) }} onClick={() => !isLocked && onPatch({ color })} />
-            ))}
-          </div>
-        ))}
+        {field("Color", colorRow)}
       </>
     );
   } else if (item.type === "linked") {
@@ -2244,13 +2399,37 @@ function TabulaInspector({ item, pool, templates, isLocked, onClose, onPatch, on
         <div style={{ fontSize: 11, color: "var(--text-dim)", wordBreak: "break-all" }}>{item.image && item.image.startsWith("data:") ? "Stored inside the save file" : `Images folder: ${item.image}`}</div>
       </>
     );
+  } else if (item.type === "column") {
+    body = (
+      <>
+        {field("Title", <input className="input" type="text" value={item.title || ""} disabled={isLocked} placeholder="Untitled column" onChange={(e) => onPatch({ title: e.target.value }, "title")} />)}
+        {field("Color", colorRow)}
+        {holdsLine(item)}
+      </>
+    );
+  } else if (item.type === "board") {
+    body = (
+      <>
+        {field("Title", <input className="input" type="text" value={item.title || ""} disabled={isLocked} placeholder="Untitled board" onChange={(e) => onPatch({ title: e.target.value }, "title")} />)}
+        {field("Icon", (
+          <div className="icon-grid">
+            {ICONS.map(icon => (
+              <div key={icon} className={`icon-opt ${item.icon === icon ? "sel" : ""}`} onClick={() => !isLocked && onPatch({ icon })} style={isLocked ? { opacity: 0.5, cursor: "default" } : {}}>{icon}</div>
+            ))}
+          </div>
+        ))}
+        {field("Color", colorRow)}
+        {holdsLine(item)}
+        <button className="btn btn-ghost" style={{ fontSize: 12, width: "100%", marginTop: 10 }} onClick={() => onOpenBoard(item.id)}>Open board →</button>
+      </>
+    );
   }
   return (
     <div className="tabula-ui" style={{ width: 320, flexShrink: 0, borderLeft: "1px solid var(--border)", background: "var(--surf)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
         <div style={{ fontSize: 13, fontWeight: 500 }}>
           Inspector
-          <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-dim)", fontWeight: 400 }}>{item.type === "note" ? "Note" : item.type === "linked" ? "Linked" : "Image"}</span>
+          <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-dim)", fontWeight: 400 }}>{kind}</span>
         </div>
         <button className="btn btn-ghost" onClick={onClose} style={{ fontSize: 16, padding: "0 8px", lineHeight: 1 }} title="Close inspector">×</button>
       </div>
@@ -2266,16 +2445,54 @@ function TabulaInspector({ item, pool, templates, isLocked, onClose, onPatch, on
           {item.type === "image" && (
             <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onReplaceImage}>Replace image…</button>
           )}
-          <button className="btn" style={{ fontSize: 12, color: "var(--danger)", borderColor: "var(--danger)" }} onClick={onDelete}>Delete card</button>
+          <button className="btn" style={{ fontSize: 12, color: "var(--danger)", borderColor: "var(--danger)" }} onClick={onDelete}>{item.type === "column" ? "Delete column" : item.type === "board" ? "Delete board" : "Delete card"}</button>
         </div>
       )}
     </div>
   );
 }
 
-// The canvas view. boardId names the board node shown, the root until r030's
-// sub-boards. The pool and the templates are the rota's (App builds them).
-function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash, onBackToIndex, onReplace, onOpenEntry, onExport, viewPref, onViewPref, dirHandle, imageFolder }) {
+// Deleting a column or a board card that holds anything asks (v1.7 r030),
+// Fabula's holds-delete modal's shape: a column's cards can go out onto the
+// canvas where they stood, the default, or with it; a board's go with it,
+// with the count. Esc cancels, as a click outside does.
+function TabulaDeleteModal({ item, onMoveOut, onDeleteAll, onCancel }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); onCancel(); } };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [onCancel]);
+  const held = tabulaCountBelow(item);
+  const parts = [held.cards ? `${held.cards} ${held.cards === 1 ? "card" : "cards"}` : null, held.columns ? `${held.columns} ${held.columns === 1 ? "column" : "columns"}` : null].filter(Boolean).join(" and ");
+  const isColumn = item.type === "column";
+  const name = item.title || (isColumn ? "Untitled column" : "Untitled board");
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal tabula-holds-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Delete the {isColumn ? "column" : "board"}</div>
+        <div className="modal-body">
+          <p style={{ margin: "0 0 10px" }}>Delete {isColumn ? "column" : "board"} "{name}"?</p>
+          {isColumn ? (
+            <p style={{ margin: 0 }}>It holds {parts}. Move out puts {held.cards === 1 ? "it" : "them"} on the canvas where {held.cards === 1 ? "it" : "they"} stood; Delete everything deletes it all.</p>
+          ) : (
+            <p style={{ margin: 0 }}>It holds {parts}, and everything inside it goes with it.</p>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn btn-danger" onClick={onDeleteAll} autoFocus={!isColumn}>Delete everything</button>
+          {isColumn && <button className="btn btn-accent" onClick={onMoveOut} autoFocus>Move out</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The canvas view. boardId names the board node shown: the root, or a
+// sub-board opened by a double-click on its card (r030), with the rota's
+// breadcrumb in the bar and Back to its parent. The pool and the templates
+// are the rota's (App builds them).
+function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash, onFocalChange, onBackToIndex, onReplace, onOpenEntry, onExport, viewPref, onViewPref, dirHandle, imageFolder }) {
   const board = tabulaBoardNode(stemma.root, boardId) || stemma.root;
   const history = useMapHistory(stemma, onReplace);
   const apply = (next, opts) => {
@@ -2285,13 +2502,14 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
   const paneRef = useRef(null);
   const surfaceRef = useRef(null);
   const [selectedId, setSelectedId] = useState(null);
-  const [editing, setEditing] = useState(null);     // the id of the note edited in place
+  const [editing, setEditing] = useState(null);     // the id of the note, column, or board edited in place
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [picker, setPicker] = useState(null);       // { x, y }: the Link tool's smart input, canvas units
-  const [drag, setDrag] = useState(null);           // { id, dx, dy }: a card on the move, canvas units
+  const [drag, setDrag] = useState(null);           // { id, x, y, w, ghost, over }: a card on the move, canvas units; over = { columnId, index }
   const [resize, setResize] = useState(null);       // { id, w }: a card on the resize
   const [placing, setPlacing] = useState(null);     // { kind }: a rail button on the drag
+  const [asking, setAsking] = useState(null);       // the column or board card whose delete is being asked about
   const gestureRef = useRef(null);
   const prefTimer = useRef(null);
   const camera = useTabulaCamera({
@@ -2303,13 +2521,16 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
     },
   });
   const items = board.items || [];
-  const selected = selectedId ? items.find(it => it.id === selectedId) : null;
+  // the selection may sit in a column's stack
+  const selected = selectedId ? tabulaFindItem(board, selectedId) : null;
+  const selectedParent = selected ? tabulaParentOf(board, selectedId) : null;
+  const drillIn = (id) => { if (onFocalChange && tabulaBoardNode(stemma.root, id)) onFocalChange(id); };
 
   // the cards' boxes in canvas units, from the DOM, for Fit
   const cardsBox = () => {
     const el = surfaceRef.current;
     if (!el) return null;
-    const cards = Array.from(el.querySelectorAll(".tabula-card"));
+    const cards = Array.from(el.querySelectorAll(".tabula-card:not(.ghost)"));
     if (cards.length === 0) return null;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     cards.forEach(c => {
@@ -2321,13 +2542,23 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
   };
   const fitAll = () => camera.fitTo(cardsBox());
   camera.cfg.current.onFit = fitAll;
-  React.useLayoutEffect(() => { if (!viewPref) fitAll(); }, [board.id]);
+  // a board opens where it was left, or at Fit the first time; the view
+  // mounted on the first board's own pref, so only a change of board sets it
+  const shownBoardRef = useRef(null);
+  React.useLayoutEffect(() => {
+    const first = shownBoardRef.current === null;
+    shownBoardRef.current = board.id;
+    if (viewPref) { if (!first) camera.setView(viewPref); }
+    else fitAll();
+    if (!first) { setSelectedId(null); setEditing(null); setPicker(null); setDrag(null); setAsking(null); }
+  }, [board.id]);
 
   // a card that goes closes the inspector and the editor on it
   useEffect(() => {
-    if (selectedId && !items.some(it => it.id === selectedId)) setSelectedId(null);
-    if (editing && !items.some(it => it.id === editing)) setEditing(null);
-  }, [items, selectedId, editing]);
+    if (selectedId && !tabulaFindItem(board, selectedId)) setSelectedId(null);
+    if (editing && !tabulaFindItem(board, editing)) setEditing(null);
+    if (asking && !tabulaFindItem(board, asking.id)) setAsking(null);
+  }, [board, selectedId, editing, asking]);
   useEffect(() => () => { if (prefTimer.current) clearTimeout(prefTimer.current); }, []);
 
   // The in-place editor's fields commit as they're typed, so ending the edit
@@ -2337,7 +2568,7 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
   editingRef.current = editing;
   const endEdit = () => { if (!editingRef.current) return; editingRef.current = null; setEditing(null); };
   camera.cfg.current.onTap = () => { endEdit(); setSelectedId(null); setPicker(null); };
-  const startEdit = (it) => { if (isLocked || it.type !== "note") return; setSelectedId(it.id); setEditing(it.id); };
+  const startEdit = (it) => { if (isLocked || (it.type !== "note" && it.type !== "column")) return; setSelectedId(it.id); setEditing(it.id); };
 
   // placing: a new card at a canvas point, centered on it sideways
   const addAt = (item, cx, cy) => {
@@ -2397,6 +2628,8 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
     if (kind === "note") { const it = addAt({ id: `n-${genId()}`, type: "note", title: "", body: "", color: TABULA.color }, cx, cy); setEditing(it.id); }
     else if (kind === "linked") { endEdit(); setPicker({ x: cx, y: cy }); }
     else if (kind === "image") pickImageFile(cx, cy);
+    else if (kind === "column") { const it = addAt({ id: `n-${genId()}`, type: "column", title: "", color: TABULA.color, items: [] }, cx, cy); setEditing(it.id); }
+    else if (kind === "board") { const it = addAt({ id: `n-${genId()}`, type: "board", title: "", color: TABULA.color, icon: TABULA.icon, items: [], shapes: [] }, cx, cy); setEditing(it.id); }
   };
   const paneCenter = () => { const r = camera.rectOf(); return camera.toCanvas(r ? r.left + r.width / 2 : 0, r ? r.top + r.height / 2 : 0); };
 
@@ -2412,9 +2645,31 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
     window.addEventListener("pointerup", handlersRef.current.up);
     window.addEventListener("pointercancel", handlersRef.current.up);
   };
-  useEffect(() => () => { gestureRef.current = null; window.removeEventListener("pointermove", handlersRef.current.move); window.removeEventListener("pointerup", handlersRef.current.up); window.removeEventListener("pointercancel", handlersRef.current.up); }, []);
+  useEffect(() => () => { gestureRef.current = null; document.body.classList.remove("tabula-dragging"); window.removeEventListener("pointermove", handlersRef.current.move); window.removeEventListener("pointerup", handlersRef.current.up); window.removeEventListener("pointercancel", handlersRef.current.up); }, []);
 
-  const onCardPointerDown = (it) => (e) => {
+  // The column under the pointer, for a drop, and the gap nearest the
+  // pointer in its stack (the dragged item left out): from the DOM, so what
+  // the line shows is where the card lands. A column never enters one.
+  const columnTarget = (clientX, clientY, dragged) => {
+    const el = surfaceRef.current;
+    if (!el || !dragged || dragged.type === "column") return null;
+    const cols = Array.from(el.querySelectorAll('.tabula-card[data-type="column"]'));
+    for (const col of cols) {
+      if (col.dataset.item === dragged.id) continue;
+      const r = col.getBoundingClientRect();
+      if (clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) continue;
+      const kids = Array.from(col.querySelectorAll(":scope > .tabula-column-body > .tabula-colitem")).filter(k => k.dataset.item !== dragged.id);
+      let index = 0;
+      kids.forEach(k => { const kr = k.getBoundingClientRect(); if (kr.top + kr.height / 2 < clientY) index++; });
+      return { columnId: col.dataset.item, index };
+    }
+    return null;
+  };
+
+  // a press on a card, placed or in a stack: select it, and begin the move
+  // that commits on release, into a column at the gap, or onto the board at
+  // the drop, raised
+  const onCardPointerDown = (it, parent) => (e) => {
     if (e.button !== 0 || camera.spaceHeld) return;
     if (editing === it.id) return;
     e.stopPropagation();
@@ -2422,22 +2677,35 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
     setSelectedId(it.id);
     if (isLocked) return;
     const startX = e.clientX, startY = e.clientY;
+    const box = e.currentTarget.getBoundingClientRect();
+    const z0 = camera.viewRef.current.zoom;
+    const grab = { dx: (e.clientX - box.left) / z0, dy: (e.clientY - box.top) / z0 };
+    const inStack = parent && parent.type === "column";
+    const w = inStack ? tabulaClampWidth(it.type, parent.w) : it.w;
+    const at = (ev) => { const p = camera.toCanvas(ev.clientX, ev.clientY); return { x: p.x - grab.dx, y: p.y - grab.dy }; };
     beginGesture({
       moved: false,
       onMove: (ev) => {
-        const z = camera.viewRef.current.zoom;
-        const dx = (ev.clientX - startX) / z, dy = (ev.clientY - startY) / z;
         const g = gestureRef.current;
-        if (g && !g.moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) > TABULA.dragSlop) g.moved = true;
-        if (g && g.moved) setDrag({ id: it.id, dx, dy });
+        if (g && !g.moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) > TABULA.dragSlop) {
+          g.moved = true;
+          // a stack item leaves the DOM for its ghost, and the browser's text
+          // selection, anchored in it, would spill over the page
+          document.body.classList.add("tabula-dragging");
+          const sel = window.getSelection(); if (sel) sel.removeAllRanges();
+        }
+        if (!g || !g.moved) return;
+        const p = at(ev);
+        setDrag({ id: it.id, x: p.x, y: p.y, w, ghost: inStack, over: columnTarget(ev.clientX, ev.clientY, it) });
       },
       onUp: (ev) => {
+        document.body.classList.remove("tabula-dragging");
+        const moved = Math.hypot(ev.clientX - startX, ev.clientY - startY) > TABULA.dragSlop;
         setDrag(null);
-        const z = camera.viewRef.current.zoom;
-        const dx = (ev.clientX - startX) / z, dy = (ev.clientY - startY) / z;
-        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > TABULA.dragSlop) {
-          apply(tabulaMoveItem(stemma, it.id, tabulaSnap(it.x + dx), tabulaSnap(it.y + dy)));
-        }
+        if (!moved) return;
+        const over = columnTarget(ev.clientX, ev.clientY, it);
+        if (over) apply(tabulaMoveTo(stemma, it.id, { columnId: over.columnId, index: over.index }));
+        else { const p = at(ev); apply(tabulaMoveTo(stemma, it.id, { boardId: board.id, x: tabulaSnap(p.x), y: tabulaSnap(p.y), w })); }
       },
     });
   };
@@ -2495,30 +2763,89 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
     addImageFile(f, p.x, p.y);
   };
 
-  // the selection's keys: Delete, the arrows by the grid, Escape
+  // Deleting: a card goes; a column or a board card that holds anything
+  // asks first (TabulaDeleteModal). A column's cards moved out land where
+  // they stood, measured from the stack as drawn.
+  const requestDelete = (it) => {
+    if (!it || isLocked) return;
+    const held = tabulaCountBelow(it);
+    if ((it.type === "column" || it.type === "board") && (held.cards > 0 || held.columns > 0)) { setAsking(it); return; }
+    apply(tabulaDeleteItem(stemma, it.id));
+  };
+  const columnPlacements = (col) => {
+    const el = surfaceRef.current && surfaceRef.current.querySelector(`.tabula-card[data-item="${col.id}"]`);
+    if (!el) return [];
+    const r = el.getBoundingClientRect();
+    const z = camera.viewRef.current.zoom;
+    return Array.from(el.querySelectorAll(":scope > .tabula-column-body > .tabula-colitem")).map(k => {
+      const kr = k.getBoundingClientRect();
+      return { id: k.dataset.item, x: col.x, y: Math.round(col.y + (kr.top - r.top) / z) };
+    });
+  };
+  const moveOut = () => { if (asking) apply(tabulaDeleteColumn(stemma, asking.id, columnPlacements(asking))); setAsking(null); };
+  const deleteAll = () => { if (asking) apply(tabulaDeleteItem(stemma, asking.id)); setAsking(null); };
+
+  // the selection's keys: Delete, the arrows by the grid on a placed card, Escape
   useEffect(() => {
     const typing = (t) => { const tag = t && t.tagName ? t.tagName.toUpperCase() : ""; return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!(t && t.isContentEditable); };
     const down = (e) => {
-      if (typing(e.target)) return;
+      if (typing(e.target) || asking) return;
       if (e.key === "Escape") { if (picker) { setPicker(null); return; } if (editing) { endEdit(); return; } if (selectedId) setSelectedId(null); return; }
       if (!selected || isLocked || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); apply(tabulaDeleteItem(stemma, selected.id)); return; }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); requestDelete(selected); return; }
+      if (!selectedParent || selectedParent.type !== "board") return;
       const step = TABULA.grid;
       const d = e.key === "ArrowLeft" ? [-step, 0] : e.key === "ArrowRight" ? [step, 0] : e.key === "ArrowUp" ? [0, -step] : e.key === "ArrowDown" ? [0, step] : null;
       if (d) { e.preventDefault(); apply(tabulaMoveItem(stemma, selected.id, selected.x + d[0], selected.y + d[1]), { coalesce: `nudge:${selected.id}` }); }
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [selected, selectedId, editing, picker, stemma, isLocked]);
+  }, [selected, selectedParent, selectedId, editing, picker, stemma, isLocked, asking]);
 
   const view = camera.view;
   const pool = entries || [];
   const screenOf = (cx, cy) => ({ x: (cx - view.x) * view.zoom, y: (cy - view.y) * view.zoom });
   const zoomPct = Math.round(view.zoom * 100);
+  const path = tabulaBoardPath(stemma.root, board.id);
+  const dragged = drag ? tabulaFindItem(board, drag.id) : null;
+
+  // one card, placed or in a stack, wired to the view
+  const cardFor = (it, parent) => {
+    const placed = parent.type === "board";
+    const isDragged = drag && drag.id === it.id;
+    if (isDragged && drag.ghost) return null;  // the ghost stands in for a stack item on the move
+    const x = isDragged ? drag.x : it.x;
+    const y = isDragged ? drag.y : it.y;
+    const w = resize && resize.id === it.id ? resize.w : it.w;
+    return (
+      <TabulaCard
+        key={it.id}
+        item={it}
+        placed={placed}
+        x={x} y={y} w={w}
+        pool={pool}
+        templates={templates}
+        selected={selectedId === it.id}
+        dragging={!!isDragged}
+        over={!!(drag && drag.over && drag.over.columnId === it.id)}
+        insertAt={drag && drag.over && drag.over.columnId === it.id ? drag.over.index : null}
+        editing={editing === it.id}
+        onEditChange={(patch, key) => apply(tabulaUpdateItem(stemma, it.id, patch), { coalesce: `field:${it.id}:${key}` })}
+        onEditDone={endEdit}
+        onPointerDown={onCardPointerDown(it, parent)}
+        onHandleDown={onHandlePointerDown(it)}
+        onDoubleClick={(e) => { e.stopPropagation(); if (it.type === "board") drillIn(it.id); else startEdit(it); }}
+        onOpenEntry={onOpenEntry}
+        dirHandle={dirHandle}
+        imageFolder={imageFolder}
+        renderItem={it.type === "column" ? ((c) => cardFor(c, it)) : undefined}
+      />
+    );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* The top bar: back, the name (click to rename), undo and redo, export. */}
+      {/* The top bar: back, the name (click to rename), the breadcrumb on a sub-board, undo and redo, export. */}
       <div className="tabula-ui" style={{ padding: "10px 24px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, flexWrap: "wrap" }}>
         <button onClick={onBackToIndex} className="btn btn-ghost" style={{ padding: "4px 10px", fontSize: 13 }}>← Stemmas</button>
         <span style={{ color: "var(--text-dim)", fontSize: 13 }}>·</span>
@@ -2540,6 +2867,24 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
           >{stemma.name}</span>
         )}
         <span className="tabula-badge" title="A board">Tabula</span>
+        {path.length > 1 && (
+          <button className="btn btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title="Back to the board that holds this one" onClick={() => drillIn(path[path.length - 2].id)}>Back</button>
+        )}
+        {path.length > 1 && path.map((node, i) => {
+          const isCurrent = i === path.length - 1;
+          const name = i === 0 ? stemma.name : (node.title || "Untitled board");
+          const truncated = name.length > 28 ? name.slice(0, 27) + "…" : name;
+          return (
+            <React.Fragment key={node.id}>
+              <span style={{ color: "var(--text-dim)", fontSize: 13 }}>›</span>
+              {isCurrent ? (
+                <span className="tabula-crumb" title={name} style={{ fontSize: 13, color: "var(--accent)", fontWeight: 500, padding: "2px 6px" }}>{truncated}</span>
+              ) : (
+                <button className="btn btn-ghost tabula-crumb" title={name} onClick={() => drillIn(node.id)} style={{ padding: "2px 8px", fontSize: 13 }}>{truncated}</button>
+              )}
+            </React.Fragment>
+          );
+        })}
         <div style={{ marginLeft: "auto", display: "flex", gap: 4, alignItems: "center" }}>
           {!isLocked && (
             <button className="btn btn-ghost" onClick={history.undo} disabled={!history.canUndo} style={{ padding: "4px 10px", fontSize: 13, opacity: history.canUndo ? 1 : 0.45 }} title="Undo (Ctrl+Z)">Undo</button>
@@ -2557,6 +2902,8 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
             <button type="button" title="Note: click to add one at the center, drag to place it, or double-click the canvas" onPointerDown={onRailPointerDown("note")}><span className="glyph">▭</span>Note</button>
             <button type="button" title="Link: a card for an entry or any record of the world" onPointerDown={onRailPointerDown("linked")}><span className="glyph">⛓</span>Link</button>
             <button type="button" title="Image: a picture from a file, or drop one on the canvas" onPointerDown={onRailPointerDown("image")}><span className="glyph">▣</span>Image</button>
+            <button type="button" title="Column: a stack that cards drop into" onPointerDown={onRailPointerDown("column")}><span className="glyph">▥</span>Column</button>
+            <button type="button" title="Board: a board inside this one; double-click its card to open it" onPointerDown={onRailPointerDown("board")}><span className="glyph">⊞</span>Board</button>
           </div>
         )}
         <div
@@ -2570,32 +2917,10 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
           onDrop={onPaneDrop}
         >
           <div ref={surfaceRef} className="tabula-surface" style={{ transform: `translate(${-view.x * view.zoom}px, ${-view.y * view.zoom}px) scale(${view.zoom})` }}>
-            {items.map(it => {
-              const isDragged = drag && drag.id === it.id;
-              const x = isDragged ? it.x + drag.dx : it.x;
-              const y = isDragged ? it.y + drag.dy : it.y;
-              const w = resize && resize.id === it.id ? resize.w : it.w;
-              return (
-                <TabulaCard
-                  key={it.id}
-                  item={it}
-                  x={x} y={y} w={w}
-                  pool={pool}
-                  templates={templates}
-                  selected={selectedId === it.id}
-                  dragging={!!isDragged}
-                  editing={editing === it.id}
-                  onEditChange={(patch, key) => apply(tabulaUpdateItem(stemma, it.id, patch), { coalesce: `field:${it.id}:${key}` })}
-                  onEditDone={endEdit}
-                  onPointerDown={onCardPointerDown(it)}
-                  onHandleDown={onHandlePointerDown(it)}
-                  onDoubleClick={(e) => { e.stopPropagation(); startEdit(it); }}
-                  onOpenEntry={onOpenEntry}
-                  dirHandle={dirHandle}
-                  imageFolder={imageFolder}
-                />
-              );
-            })}
+            {items.map(it => cardFor(it, board))}
+            {drag && drag.ghost && dragged && (
+              <TabulaCard item={dragged} placed ghost dragging x={drag.x} y={drag.y} w={drag.w} pool={pool} templates={templates} onOpenEntry={onOpenEntry} dirHandle={dirHandle} imageFolder={imageFolder} />
+            )}
           </div>
           {picker && (() => {
             const p = screenOf(picker.x, picker.y);
@@ -2620,7 +2945,7 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
             <button type="button" className="btn btn-ghost" style={{ padding: "0 8px", fontSize: 12 }} onClick={fitAll} title="Fit the cards (0)">Fit</button>
           </div>
           {items.length === 0 && !isLocked && (
-            <div className="tabula-empty tabula-ui">Nothing here yet. Add a note from the rail, or double-click the canvas.</div>
+            <div className="tabula-empty tabula-ui">{path.length > 1 ? "An empty board. Add a note from the rail, or double-click the canvas." : "Nothing here yet. Add a note from the rail, or double-click the canvas."}</div>
           )}
         </div>
         {selected && (
@@ -2631,14 +2956,18 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
             isLocked={isLocked}
             onClose={() => setSelectedId(null)}
             onPatch={(patch, key) => apply(tabulaUpdateItem(stemma, selected.id, patch), key ? { coalesce: `field:${selected.id}:${key}` } : undefined)}
-            onDelete={() => apply(tabulaDeleteItem(stemma, selected.id))}
+            onDelete={() => requestDelete(selected)}
             onRelink={(entryId, name) => apply(tabulaRelink(stemma, selected.id, entryId, name))}
             onConvertToNote={() => { const rec = pool.find(e => e.id === selected.entryId); apply(tabulaConvertToNote(stemma, selected.id, rec ? rec.name : selected._cachedName)); }}
             onOpenEntry={onOpenEntry}
             onReplaceImage={() => replaceImage(selected)}
+            onOpenBoard={drillIn}
           />
         )}
       </div>
+      {asking && (
+        <TabulaDeleteModal item={asking} onMoveOut={moveOut} onDeleteAll={deleteAll} onCancel={() => setAsking(null)} />
+      )}
     </div>
   );
 }

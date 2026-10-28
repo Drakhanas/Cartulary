@@ -4216,6 +4216,7 @@ function App() {
                   templates={stemmaTemplates}
                   isLocked={isLocked}
                   flash={flash}
+                  onFocalChange={setFocalNodeId}
                   onBackToIndex={closeStemmaToIndex}
                   onReplace={(next) => replaceStemma(stem.id, next)}
                   onOpenEntry={openEntryFromAnywhere}
