@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 56,
-  "total_lines": 52483,
-  "raw_body_lines": 52483,
-  "canonical_lines": 49910,
-  "decl_count": 736,
+  "total_lines": 53180,
+  "raw_body_lines": 53180,
+  "canonical_lines": 50593,
+  "decl_count": 752,
   "no_trailing_newline": 48,
-  "active_anchor": "reference-r031-body.jsx"
+  "active_anchor": "reference-r032-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 52483,
+   "value": 53180,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 56 files have no trailing newline"
   },
   "decl_count": {
-   "value": 736,
+   "value": 752,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 49910,
+   "value": 50593,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 52483,
+   "value": 53180,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 93,
+   "value": 94,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2817297,
+   "value": 2857534,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "fifty-seven",
-    57
+    "fifty-eight",
+    58
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -104,15 +104,15 @@
    "pattern": "github\\.com/(Drakhanas/Cartulary)"
   },
   "cartographia_lines": {
-   "value": 5241,
+   "value": 5299,
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 93,
+   "value": 94,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 93,
+   "value": 94,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,14 +121,14 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "fifty-seven",
-    57
+    "fifty-eight",
+    58
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r031": {
-   "value": "a493613861b36eae",
-   "pattern": "working[^\\n]{0,40}at r031 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r032": {
+   "value": "0064466f0530b578",
+   "pattern": "working[^\\n]{0,40}at r032 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -194,7 +194,7 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 3029,
+   "line": 3668,
    "contains": "}"
   },
   {
@@ -264,52 +264,52 @@
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 205,
+   "line": 209,
    "contains": "function ensureMapStamps"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 253,
+   "line": 257,
    "contains": "const MAP_STAMP_ALLOWLIST"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 275,
+   "line": 279,
    "contains": "const MAP_RASTER_TIP"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 282,
+   "line": 286,
    "contains": "const MAP_STAMP_ID_MAX"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 380,
+   "line": 384,
    "contains": "function mapReadAbr"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 586,
+   "line": 590,
    "contains": "function mapReadBplist"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 670,
+   "line": 674,
    "contains": "async function buildMapStampPngZip"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 718,
+   "line": 722,
    "contains": "function sanitizeMapStampBody"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 867,
+   "line": 871,
    "contains": "async function mapReadStampFiles"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 1081,
+   "line": 1085,
    "contains": "function MapStampGlyph"
   },
   {
@@ -384,12 +384,12 @@
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1899,
+   "line": 1911,
    "contains": "function MapStampPicker"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1955,
+   "line": 1967,
    "contains": "function MapLayerPanel"
   },
   {
@@ -609,12 +609,12 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 253,
+   "line": 258,
    "contains": "Stemma transforms"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 266,
+   "line": 271,
    "contains": "const addChildToStemmaTree"
   },
   {
@@ -624,23 +624,48 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 1695,
+   "line": 1700,
    "contains": "Tabula: the document"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2027,
+   "line": 2144,
    "contains": "Tabula: the canvas"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 1952,
+   "line": 2033,
    "contains": "const tabulaMoveTo"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2468,
+   "line": 3094,
    "contains": "function TabulaDeleteModal"
+  },
+  {
+   "file": "18_cartographia/01_renderer.jsx",
+   "line": 161,
+   "contains": "function mapArrowHeads"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 1778,
+   "contains": "const tabulaHealAnchors"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 2165,
+   "contains": "Tabula: the drawing layer"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 2223,
+   "contains": "function useTabulaDrawing"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 3130,
+   "contains": "function TabulaCanvasView"
   }
  ],
  "spans": {
@@ -661,21 +686,21 @@
   "18_cartographia/00_model.jsx": [
    [
     1,
-    1096,
+    1100,
     "model"
    ]
   ],
   "18_cartographia/01_renderer.jsx": [
    [
     1,
-    380,
+    417,
     "renderer"
    ]
   ],
   "18_cartographia/02_tools.jsx": [
    [
     1,
-    2121,
+    2138,
     "tools"
    ]
   ],
@@ -710,7 +735,7 @@
   "21_stemma.jsx": [
    [
     1,
-    3029,
+    3668,
     "stemma"
    ]
   ],
@@ -831,9 +856,6 @@
    "whatHappens",
    "The auto-save writes 250 ms after the last change",
    "for what the screen says as well as for what it clips",
-   "reference-r031-body.jsx",
-   "reference-r031-layout.json",
-   "6943d6caf3827715",
    "v1.7_r012",
    "fabulaOutlinePlaces",
    "keepOrder",
@@ -891,7 +913,6 @@
    "56874e0",
    "v1.7_r025",
    "28_fabula/",
-   "a493613861b36eae",
    "tools/stemma-parity",
    "__stemmas__",
    "TabulaCanvasView",
@@ -911,7 +932,21 @@
    "boardLanding",
    "selectCard",
    "beginDrag",
-   "9196063"
+   "9196063",
+   "reference-r032-body.jsx",
+   "reference-r032-layout.json",
+   "5c71d73583b5427e",
+   "0064466f0530b578",
+   "v1.7_r032",
+   "tabulaCoerceShape",
+   "tabulaHealAnchors",
+   "tabulaVisibleIds",
+   "useTabulaDrawing",
+   "TabulaDrawLayer",
+   "TabulaShapePanel",
+   "mapArrowHeads",
+   "tools/stemma-parity/renderer.py",
+   "3aa500a"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1013,7 +1048,7 @@
    "On v1.7 r011 verification",
    "FabulaOutlineTab",
    "reference-r012-body.jsx",
-   "reference-r031-layout.json",
+   "reference-r032-layout.json",
    "dfdb4a8f0e05eebc",
    "880886f26451d22e",
    "On v1.7 r012 verification",
@@ -1092,7 +1127,11 @@
    "reference-r031-body.jsx",
    "On v1.7 r031 verification",
    "a493613861b36eae",
-   "6943d6caf3827715"
+   "6943d6caf3827715",
+   "reference-r032-body.jsx",
+   "On v1.7 r032 verification",
+   "0064466f0530b578",
+   "5c71d73583b5427e"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1247,7 +1286,13 @@
    "a493613861b36eae",
    "9196063",
    "b9ab3ea",
-   "v1.7_r031_tabula_grip.py"
+   "v1.7_r031_tabula_grip.py",
+   "v1.7_r032",
+   "0064466f0530b578",
+   "3aa500a",
+   "93f958c",
+   "tabulaHealAnchors",
+   "v1.7_r032_tabula_drawing.py"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1313,7 +1358,10 @@
    "v1.7_r030",
    "r030 is in",
    "v1.7_r031",
-   "r031 is in"
+   "r031 is in",
+   "v1.7_r032",
+   "r032 is in",
+   "Sticky line ends on maps"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1421,7 +1469,8 @@
    "r024",
    "the site's Fabula page",
    "r025",
-   "r029"
+   "r029",
+   "r032"
   ]
  }
 }

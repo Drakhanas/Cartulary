@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1077,3 +1077,31 @@ where the body rule, which I had just written, correctly moved nothing. The
 one design departure worth writing down: image cards give up fourteen pixels
 on the left to the grip like every other card, and I offered the overlay as
 the exception if he wants the picture full width.
+
+r032 was the cut I had marked least certain at the plan, the port of two
+tools out of a hook that assumes a map's fixed canvas, and it went the way
+ports go when the model is sound: the shape model and the renderer came over
+whole, and what I wrote new was the geometry Tabula needed and the map never
+did. A line's end that sticks to a card has to be drawn from somewhere, and
+heights aren't stored, so the layer measures the anchored cards after every
+render and keeps their boxes in state; the end is drawn where the line from
+the card's center toward its next point crosses the border, which is what a
+connector does in every tool that has one. The point the end was put down at
+stays in the data for the day the card goes, and when a card is deleted or
+dragged into a sub-board the view hands the transform the ends as it last
+drew them, so the freed line stays where it was seen rather than snapping
+back to a click from an hour ago. The arrowheads are open chevrons written as
+subpaths of the line's own path, which keeps a stroke one element and keeps
+the map's hit copies and its export honest; a stroke without a head renders
+to the byte as before, and the renderer parity proves it over four hundred
+generated drawings, every shape type with every option the model has, so
+Cartographia's output can't have drifted. Drak's two calls came in three
+words, expose the toggle and six pixels, and I took the six as screen pixels,
+since six canvas pixels at a quarter zoom is a reach of one and a half. The
+probe caught my usual sins: presses off the visible pane once the panel had
+taken three hundred and twenty pixels of it, the hit copies counted as shapes,
+and an unknown shape type that is kept but never drawn, which my locked check
+had counted as drawn. He passed it within the hour and asked for one thing,
+the arrow logic for Cartographia when Pipes comes, which I read as the
+sticking, since the heads are already there by his own call; it's filed as
+Pipes' tenth item with the reading marked as mine.
