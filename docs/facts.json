@@ -1,16 +1,16 @@
 {
   "derived": {
-    "module_file_count": 45,
+    "module_file_count": 56,
     "total_lines": 50945,
     "raw_body_lines": 50945,
     "canonical_lines": 48412,
     "decl_count": 687,
-    "no_trailing_newline": 37,
+    "no_trailing_newline": 48,
     "active_anchor": "reference-r024-body.jsx"
   },
   "published": {
     "module_file_count": {
-      "value": 45,
+      "value": 56,
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
@@ -22,8 +22,8 @@
       "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
     },
     "no_trailing_nl": {
-      "value": 37,
-      "pattern": "(\\d+) of the 45 files have no trailing newline"
+      "value": 48,
+      "pattern": "(\\d+) of the 56 files have no trailing newline"
     },
     "decl_count": {
       "value": 687,
@@ -77,7 +77,7 @@
       "pattern": "(?i)(nine|\\d+) trunk arcs"
     },
     "carves_proven": {
-      "value": 22,
+      "value": 23,
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
@@ -116,7 +116,7 @@
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
-      "value": 45,
+      "value": 56,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
     "working_hash_r024": {
@@ -538,53 +538,53 @@
       "contains": "const FABULA_KINDS"
     },
     {
-      "file": "28_fabula.jsx",
+      "file": "28_fabula/00_seed.jsx",
       "line": 2,
       "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 272,
+      "file": "28_fabula/01_index.jsx",
+      "line": 2,
       "contains": "Fabula: the index and the corpus page (v1.7 r007)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 606,
+      "file": "28_fabula/02_story.jsx",
+      "line": 2,
       "contains": "Fabula: the story page (v1.7 r008)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 820,
+      "file": "28_fabula/03_people.jsx",
+      "line": 2,
       "contains": "Fabula: People (v1.7 r009)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 1094,
+      "file": "28_fabula/04_outline.jsx",
+      "line": 2,
       "contains": "Fabula: Outline (v1.7 r011)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 1852,
+      "file": "28_fabula/05_plot.jsx",
+      "line": 2,
       "contains": "Fabula: Plot (v1.7 r013)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 2525,
+      "file": "28_fabula/06_notes.jsx",
+      "line": 2,
       "contains": "Fabula: Notes (v1.7 r014)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 2660,
+      "file": "28_fabula/07_meaning.jsx",
+      "line": 2,
       "contains": "Fabula: Meaning (v1.7 r015)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 2887,
+      "file": "28_fabula/08_threads.jsx",
+      "line": 2,
       "contains": "Fabula: threads and themes (v1.7 r016)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 3142,
+      "file": "28_fabula/09_templates.jsx",
+      "line": 2,
       "contains": "Fabula: templates (v1.7 r017)"
     },
     {
@@ -598,13 +598,13 @@
       "contains": "Chronometrics view"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 3438,
+      "file": "28_fabula/10_timeline.jsx",
+      "line": 2,
       "contains": "Fabula: the timeline (v1.7 r020)"
     },
     {
-      "file": "28_fabula.jsx",
-      "line": 4198,
+      "file": "28_fabula/11_export.jsx",
+      "line": 2,
       "contains": "Fabula: the export (v1.7 r023)"
     }
   ],
@@ -854,7 +854,9 @@
       "v1.7_r024",
       "HOME_SECTIONS",
       "fabula-timeline",
-      "56874e0"
+      "56874e0",
+      "v1.7_r025",
+      "28_fabula/"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -1015,7 +1017,9 @@
       "reference-r024-body.jsx",
       "ff3dfdd0a011f1dc",
       "35b615d71606dc90",
-      "On v1.7 r024 verification"
+      "On v1.7 r024 verification",
+      "On v1.7 r025 verification",
+      "28_fabula/"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1145,7 +1149,11 @@
       "fabula-timeline",
       "56874e0",
       "b36e8e6",
-      "84fede2480fa0d52"
+      "84fede2480fa0d52",
+      "v1.7_r025",
+      "92629b6",
+      "2d657f7",
+      "v1.7_r025_carve_fabula_folder.py"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1204,7 +1212,8 @@
       "v1.7_r022",
       "v1.7_r023",
       "v1.7_r024",
-      "56874e0"
+      "56874e0",
+      "v1.7_r025"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1310,7 +1319,8 @@
       "r022",
       "r023",
       "r024",
-      "the site's Fabula page"
+      "the site's Fabula page",
+      "r025"
     ]
   }
 }

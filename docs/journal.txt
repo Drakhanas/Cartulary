@@ -467,7 +467,7 @@ through default encodings and newline translation. With the fix the finals rebui
 shipped hashes, which is the only proof that counts there. Drak locked the order for v1.7,
 Letters before Pipes, and took it to a fresh session.
 
-=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, r022's modes, r023's export, r024's help, and the site's Fabula page) ===
+=== 2026-10-24 (session 20, v1.7 opens: the VERSION bump, r001's text fixes and Common Year, r002's target lists, r003's reference display, r004's retired targets, r005's Other on multi-selects, Fabula's field lists, r006's slice, r007's first screen, r008's story page, r009's People, r010's carve, r011's Outline, r012's positions, r013's Plot, r014's Notes, r015's Meaning, r016's threads and themes, r017's templates, r018's Chronometric math, r019's lanes, r020's timeline, r021's era names, r022's modes, r023's export, r024's help, the site's Fabula page, and r025's split) ===
 
 A fresh session, and the handoff did what it was rewritten to do: I cloned, read two files,
 ran the gates, and every figure it promised came back the same. That's less of an event than
@@ -892,3 +892,12 @@ pixels the nav bar ran off the right edge, because the hamburger only took over 
 860; Drak had it fixed in the same commit. Fabula is finished, which means the one file he
 asked for while it was being built is due to split at its twelve headers; that and Stemma
 v2 are his to order.
+
+r025 split Fabula into its folder, the pure carve Drak asked for on the 25th for when the
+view was finished. Twelve parts at the twelve headers the cuts left behind, r006's to
+r023's; the script read every seam, rejoined the parts to the file before writing a byte,
+and the gate said exact against the r024 anchor, the working build hashing to what Drak
+passed at r024. The folder keeps the file's number, so nothing downstream moved. Fabula is
+done: twenty r-numbers from the slice to this folder, the carve, the positions, and the
+three Chronometric cuts among them, and one site commit, since the field lists passed his
+review two days ago. Stemma v2 next.
