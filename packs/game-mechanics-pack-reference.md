@@ -15,7 +15,7 @@ It is the designated **comprehensive-standalone exception** to normal pack doctr
 
 Consequence: the pack format must gain an `entries` array and a seeding import path (ID-namespacing, ref-wiring, idempotent re-import, no-clobber — r082 care level). That is Phase 2 of the build plan.
 
-**Sources:** SRD 5.1 (403pp) and SRD 5.2.1 (364pp), both CC-BY-4.0, both in project files at `/mnt/project/SRD_CC_v5_1.pdf` and `/mnt/project/SRD_CC_v5_2_1.pdf`. Note: the project-mount copies are extracted text under `.pdf` filenames (the ingestion layer extracts; `pdftotext` will fail on them, plain text reads work). Extraction artifacts present: non-breaking spaces (`\xc2\xa0`), `\t\r` runs, soft-hyphen `\u0002` marks. The Phase 3 pipeline consumes this text directly.
+**Sources:** SRD 5.1 (403pp) and SRD 5.2.1 (364pp), both CC-BY-4.0, from Wizards of the Coast at https://dnd.wizards.com/resources/systems-reference-document (5.1) and https://www.dndbeyond.com/srd (5.2.1); download them again when the pipeline runs. They were in the claude.ai Project until 2026-10-27, where the ingestion layer served them as extracted text under `.pdf` filenames (`pdftotext` failed on them, plain text reads worked), with extraction artifacts: non-breaking spaces (`\xc2\xa0`), `\t\r` runs, soft-hyphen `\u0002` marks. The Phase 3 pipeline consumes extracted text directly, so extract the downloads the same way.
 
 ---
 
@@ -433,7 +433,7 @@ Current position: mid-Phase 1. Done: roster, 8 locks, 5 Edition re-adds, attribu
 
 ## 11. Durable References
 
-- SRD texts: `/mnt/project/SRD_CC_v5_1.pdf`, `/mnt/project/SRD_CC_v5_2_1.pdf` (extracted text under .pdf names; read as plain text).
+- SRD texts: https://dnd.wizards.com/resources/systems-reference-document (5.1) and https://www.dndbeyond.com/srd (5.2.1), CC-BY-4.0; the Project copies were removed on 2026-10-27 (section 1's Sources line says how they read).
 - Working HTML: r087 staged as `Cartulary_v1_5_Working_r087_variant-filter.html`. Parse gate: `/tmp/babelcheck/check.js` (rebuild from project files on fresh containers; reads `/home/claude/cartulary.html`).
 - Generator pattern: `build_pack.py` (project files) — self-validating, single-file JSON, envelope `cartulary_pack_export:1`, name-based refs, explicit field ids. The `_half_ungated` tally-leak fix (validator must tally into a separate dict, never mutate template objects) carries forward into the Game Mechanics generator.
 - Pack import code-watch: `handleImportPackFile` must run `resolveTemplateRefs` (gates/cascades/refFilters silently fail without it).
