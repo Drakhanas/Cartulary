@@ -21,8 +21,8 @@ const MAP_TOOLS = [
   { id: "rect",    label: "Rect",    key: "r", hint: "Drag on the map to draw a rectangle · Right-click when done" },
   { id: "ellipse", label: "Ellipse", key: "e", hint: "Drag on the map to draw an ellipse · Right-click when done" },
   { id: "polygon", label: "Polygon", key: "p", hint: "Click to place the corners of a closed, filled area · Done in the strip, the first corner, a double-click, Enter, or right-click closes it · Esc discards" },
-  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards" },
-  { id: "freehand", label: "Freehand", key: "f", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Right-click when done" },
+  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards · Arrowheads in the strip" },
+  { id: "freehand", label: "Freehand", key: "f", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Arrowheads in the strip · Right-click when done" },
   { id: "fill",    label: "Fill",    key: "g", hint: "Click inside an area to fill it with the Fill color · The fill goes under the lines around it, and small gaps in them close · Right-click when done" },
   { id: "text",    label: "Text",    key: "t", hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
   { id: "stamp",   label: "Stamp",   key: "s", hint: "Pick a stamp in the strip, then click to place it or drag to size it · Right-click when done" },
@@ -76,7 +76,7 @@ function mapDescribeShape(s, stamps) {
     case "rect": return `Rectangle, ${n(s.w)} by ${n(s.h)}`;
     case "ellipse": return `Ellipse, ${n(s.w)} by ${n(s.h)}`;
     case "polygon": return `Polygon, ${s.points.length} points`;
-    case "stroke": return `Line, ${s.points.length} points`;
+    case "stroke": return `Line, ${s.points.length} points${s.arrow === "both" ? ", arrows at both ends" : s.arrow === "end" ? ", an arrow" : ""}`;
     case "region": return "Filled region";
     case "text": return `Label "${s.text}"`;
     case "stamp": { const d = mapStampDef(s.stampId, stamps); return `Stamp ${d ? d.name : s.stampId}`; }
@@ -383,7 +383,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   // Defaults for the first shape: stone fill, sepia stroke. Stone because a
   // fill has to be visibly a fill on white, vellum, and parchment alike;
   // parchment on vellum read as an outline.
-  const [style, setStyle] = useState({ fill: "#8a8378", stroke: "#6b4e2e", strokeWidth: 4, smooth: true });
+  const [style, setStyle] = useState({ fill: "#8a8378", stroke: "#6b4e2e", strokeWidth: 4, smooth: true, arrow: "none" });
   const [selectedShapeId, setSelectedShapeId] = useState(null);
   const [draft, setDraft] = useState(null);     // rect/ellipse: {type, x0, y0, x1, y1}; polygon/stroke: {type, points}
   const [cursor, setCursor] = useState(null);   // [x, y] while a polygon or line is in progress
@@ -529,7 +529,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   // The strip shows the selected shape's style when there is one, else the
   // defaults; a change edits the selected shape and becomes the default too.
   const current = selectedShape
-    ? { fill: selectedShape.fill, stroke: selectedShape.stroke, strokeWidth: selectedShape.strokeWidth, smooth: !!selectedShape.smooth }
+    ? { fill: selectedShape.fill, stroke: selectedShape.stroke, strokeWidth: selectedShape.strokeWidth, smooth: !!selectedShape.smooth, arrow: selectedShape.type === "stroke" ? (selectedShape.arrow || "none") : "none" }
     : style;
   const applyStyle = (patch, coalesceKey) => {
     setStyle(st => ({ ...st, ...patch }));
@@ -552,7 +552,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
       let pts = mapSimplifyPoints(draft.points, tol);
       while (pts.length > MAP_FREEHAND.maxPoints) { tol *= 1.5; pts = mapSimplifyPoints(draft.points, tol); }
       if (pts.length >= 2) {
-        id = addShape({ type: "stroke", points: pts.map(p => [r2(p[0]), r2(p[1])]), fill: null, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: true });
+        id = addShape({ type: "stroke", points: pts.map(p => [r2(p[0]), r2(p[1])]), fill: null, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: true, arrow: style.arrow });
       }
       setDraft(null);
       setCursor(null);
@@ -561,7 +561,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (draft.type === "polygon" || draft.type === "stroke") {
       const pts = pointsOverride || draft.points;
       if (pts.length >= (draft.type === "polygon" ? 3 : 2)) {
-        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth });
+        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth, arrow: draft.type === "stroke" ? style.arrow : undefined });
       }
     }
     setDraft(null);
@@ -1577,6 +1577,18 @@ function MapToolStrip({ drawing, history, showPresets, presetValue, onPreset, ca
         </React.Fragment>
       );
     }
+    if (kind === "stroke" || kind === "freehand") {
+      // The heads (r032): none, at the end, or at both ends; the selected
+      // line's, or the next one's.
+      parts.push(
+        <React.Fragment key="arrow">
+          <span className="map-tools-label">Arrow</span>
+          {[["none", "None", "No arrowhead"], ["end", "End", "An arrowhead at the line's end"], ["both", "Both", "An arrowhead at each end"]].map(([v, label, title]) => (
+            <button key={v} type="button" className={`btn btn-small ${current.arrow === v ? "btn-accent" : "btn-ghost"}`} aria-pressed={current.arrow === v} onClick={() => applyStyle({ arrow: v })} title={title}>{label}</button>
+          ))}
+        </React.Fragment>
+      );
+    }
     if ((tool === "brush" || tool === "eraser") && !selectedShape) {
       // The tip: the built-in two inline, an armed imported tip first,
       // More... for the rest; then the size (the slider to 256, the field to
@@ -2052,11 +2064,16 @@ function MapEditorOverlay({ width, height, drawing, view }) {
       items.push(<ellipse key="draft" cx={f(x + w / 2)} cy={f(y + h / 2)} rx={f(w / 2)} ry={f(h / 2)} {...paint} />);
     }
   } else if (draft && draft.type === "freehand") {
-    items.push(<polyline key="draft" points={draft.points.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
+    // an arrowed draft (r032) previews as the path the renderer will draw, heads and all
+    const arrowed = style.arrow === "end" || style.arrow === "both";
+    if (arrowed) items.push(<path key="draft" d={`M${draft.points.map(p => `${f(p[0])} ${f(p[1])}`).join(" L")}${mapArrowHeads(draft.points, style.strokeWidth, style.arrow)}`} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
+    else items.push(<polyline key="draft" points={draft.points.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
   } else if (draft) {
     const pts = draft.points;
     const trail = cursor ? [...pts, cursor] : pts;
-    items.push(<polyline key="draft" points={trail.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
+    const arrowed = draft.type === "stroke" && (style.arrow === "end" || style.arrow === "both");
+    if (arrowed) items.push(<path key="draft" d={`M${trail.map(p => `${f(p[0])} ${f(p[1])}`).join(" L")}${mapArrowHeads(trail, style.strokeWidth, style.arrow)}`} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
+    else items.push(<polyline key="draft" points={trail.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
     if (draft.type === "polygon" && cursor && pts.length >= 2) {
       items.push(<line key="close" x1={f(cursor[0])} y1={f(cursor[1])} x2={f(pts[0][0])} y2={f(pts[0][1])} stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={1} strokeDasharray="6 6" vectorEffect="non-scaling-stroke" opacity={0.6} />);
     }

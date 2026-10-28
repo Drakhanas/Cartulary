@@ -274,6 +274,17 @@ body.tabula-dragging,body.tabula-dragging *{user-select:none!important}
 .tabula-edge-right{right:-4px;top:-2px;bottom:-2px;width:3px}
 .tabula-edge-top{top:-4px;left:-2px;right:-2px;height:3px}
 .tabula-edge-bottom{bottom:-4px;left:-2px;right:-2px;height:3px}
+.tabula-draw{position:absolute;pointer-events:none;overflow:visible;user-select:none}
+.tabula-draw.draw{pointer-events:all;cursor:crosshair}
+.tabula-draw.select [data-shape],.tabula-draw.select [data-hit]{pointer-events:auto;cursor:move}
+.tabula-draw.select [data-vertex]{pointer-events:auto;cursor:crosshair}
+.tabula-draw.live [data-hit],.tabula-draw.live [data-vertex]{pointer-events:none}
+.tabula-pane.draw{cursor:crosshair}
+.tabula-card.stick,.tabula-colitem.stick{outline:2px solid var(--accent);outline-offset:3px;box-shadow:0 0 0 6px var(--accent-glow)}
+.tabula-rail-sep{width:28px;height:1px;background:var(--border2);margin:2px 0;flex-shrink:0}
+.tabula-rail button.active{color:var(--accent);border-color:var(--accent);background:var(--accent-glow)}
+.tabula-seg{display:flex;gap:4px;flex-wrap:wrap}
+.tabula-range{flex:1;min-width:0}
 .collision-options input[type="radio"]{margin-top:3px;flex-shrink:0;cursor:pointer}
 .collision-options label > span{flex:1;display:flex;flex-direction:column;gap:6px}
 .collision-options label .input{margin-top:4px;width:100%}

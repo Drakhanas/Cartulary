@@ -70,3 +70,31 @@ The walk has teeth, proven at r026: a copy of the build whose label edits
 aren't coalesced (each keystroke its own step) fails it in both directions,
 and the compare catches a copy whose convert-to-freeform writes a different
 label.
+
+## The map renderer
+
+`renderer.py` is a second check, written for v1.7's r032, which taught the
+map's shape model and renderer an arrowed stroke and had to change nothing
+else a map draws. It loads `18_cartographia/00_model.jsx` and
+`01_renderer.jsx` from a baseline ref and from the working tree (or a
+candidate ref), transpiles each pair with the app's own Babel, and renders
+the same four hundred generated drawings through both, comparing the SVG
+text the HTML export writes. The set comes from a fixed seed, so it is the
+same every run: every shape type with every option the model has (smooth
+and not, bent and rotated labels, labels in ink and stroked, the built-in
+stamps, imported stamps of each kind, missing stamps with and without the
+editor's placeholder, regions with holes, hidden and locked layers, raster
+layers with and without an image, grain, an image canvas and an image-less
+one), with `arrow` absent, "none", or a value the model doesn't know, since
+a map saved before r032 carries none. Then it checks what the candidate
+adds: a stroke with `arrow` set renders its heads, smooth or not, and one
+without renders as the baseline does.
+
+```
+python3 tools/stemma-parity/renderer.py v1.7_r031
+```
+
+Exit 0 when every drawing renders the same and the arrow checks hold, 1
+when any differ, 2 when the run breaks. It needs Node and Python 3 and
+nothing else: Babel is unpacked from `deps/` as `run.py` unpacks it, and
+the modules run in Node's own sandbox, no browser.

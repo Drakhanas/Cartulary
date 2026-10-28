@@ -128,6 +128,10 @@ function ensureMapShape(s) {
     if (pts.length < (type === "polygon" ? 3 : 2)) return null;
     out.points = pts;
   }
+  if (type === "stroke") {
+    // the heads (v1.7 r032): none, one at the end, or one at each end
+    out.arrow = pick(s.arrow, ["none", "end", "both"], "none");
+  }
   if (type === "text") {
     out.text = typeof s.text === "string" ? s.text : "";
     out.fontSize = pick(s.fontSize, MAP_TEXT_SIZES, 36);

@@ -150,6 +150,37 @@ function mapTextArcPath(s) {
   return `M${f(p1[0])} ${f(p1[1])} A${f(R)} ${f(R)} 0 ${large} ${sweep} ${f(p2[0])} ${f(p2[1])}`;
 }
 
+// The heads of an arrowed stroke (v1.7 r032): an open chevron at the end
+// (`arrow: "end"`) or at both ends (`"both"`), written as subpaths after the
+// line's own so one path draws the whole and the line's cap and joins serve
+// the heads. A head's tip is the line's end; its two legs run back from the
+// tip at 28 degrees to the line's direction there, 3.5 widths long and 10
+// units at least. The direction is taken from the nearest earlier point at
+// least half a head away (a freehand line's last points sit close), else the
+// adjacent one; a line whose points all coincide gets no head.
+function mapArrowHeads(points, width, arrow) {
+  const f = mapNum;
+  const n = points.length;
+  if (n < 2 || (arrow !== "end" && arrow !== "both")) return "";
+  const len = Math.max(10, 3.5 * width);
+  const head = (tip, back) => {
+    let from = back[0];
+    for (const q of back) { if (Math.hypot(tip[0] - q[0], tip[1] - q[1]) >= len / 2) { from = q; break; } }
+    const dx = tip[0] - from[0], dy = tip[1] - from[1];
+    const d = Math.hypot(dx, dy);
+    if (d === 0) return "";
+    const ux = dx / d, uy = dy / d;
+    const a = 28 * Math.PI / 180;
+    const c = Math.cos(a), s = Math.sin(a);
+    const l1 = [tip[0] - len * (ux * c - uy * s), tip[1] - len * (uy * c + ux * s)];
+    const l2 = [tip[0] - len * (ux * c + uy * s), tip[1] - len * (uy * c - ux * s)];
+    return ` M${f(l1[0])} ${f(l1[1])} L${f(tip[0])} ${f(tip[1])} L${f(l2[0])} ${f(l2[1])}`;
+  };
+  let d = head(points[n - 1], points.slice(0, -1).reverse());
+  if (arrow === "both") d += head(points[0], points.slice(1));
+  return d;
+}
+
 // One normalized shape to one node, or null for a stamp whose symbol is not
 // known. ctx ({idBase, defs, stampsUsed, stamps, placeholder}) comes from
 // buildMapDrawingTree: a bent label's path goes into the defs, a stamp's
@@ -188,6 +219,12 @@ function mapShapeNode(s, ctx) {
     }
     case "stroke": {
       const linePaint = { ...paint, fill: "none" };
+      const arrow = s.arrow === "end" || s.arrow === "both" ? s.arrow : "none";
+      if (arrow !== "none") {
+        // an arrowed line (r032) is one path: the line, then its heads
+        const line = s.smooth ? mapSmoothPath(s.points, false) : `M${s.points.map(p => `${f(p[0])} ${f(p[1])}`).join(" L")}`;
+        return { tag: "path", attrs: { ...common, d: line + mapArrowHeads(s.points, s.strokeWidth, arrow), ...linePaint } };
+      }
       if (s.smooth) return { tag: "path", attrs: { ...common, d: mapSmoothPath(s.points, false), ...linePaint } };
       return { tag: "polyline", attrs: { ...common, points: s.points.map(p => `${f(p[0])},${f(p[1])}`).join(" "), ...linePaint } };
     }
