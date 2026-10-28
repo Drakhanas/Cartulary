@@ -1,12 +1,12 @@
 {
   "derived": {
     "module_file_count": 56,
-    "total_lines": 50945,
-    "raw_body_lines": 50945,
-    "canonical_lines": 48412,
-    "decl_count": 687,
+    "total_lines": 50922,
+    "raw_body_lines": 50922,
+    "canonical_lines": 48388,
+    "decl_count": 697,
     "no_trailing_newline": 48,
-    "active_anchor": "reference-r024-body.jsx"
+    "active_anchor": "reference-r026-body.jsx"
   },
   "published": {
     "module_file_count": {
@@ -14,7 +14,7 @@
       "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
     },
     "total_lines": {
-      "value": 50945,
+      "value": 50922,
       "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
     },
     "arc_count": {
@@ -26,19 +26,19 @@
       "pattern": "(\\d+) of the 56 files have no trailing newline"
     },
     "decl_count": {
-      "value": 687,
+      "value": 697,
       "pattern": "decl-set (?:PASS at )?(\\d+)"
     },
     "canonical_lines": {
-      "value": 48412,
+      "value": 48388,
       "pattern": "sequence PASS at ([\\d,]+)"
     },
     "raw_body_lines": {
-      "value": 50945,
+      "value": 50922,
       "pattern": "raw line count PASS at ([\\d,]+)"
     },
     "header_count": {
-      "value": 90,
+      "value": 91,
       "pattern": "(\\d+) column-0 section headers"
     },
     "shears_resolved": {
@@ -81,13 +81,13 @@
       "pattern": "proven on (\\d+) carves"
     },
     "anchor_bytes": {
-      "value": 2727694,
+      "value": 2728132,
       "pattern": "anchor is ([\\d,]+) bytes"
     },
     "anchor_rotations": {
       "value": [
-        "fifty-one",
-        51
+        "fifty-two",
+        52
       ],
       "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
     },
@@ -108,27 +108,27 @@
       "pattern": "18_cartographia/` \\(([\\d,]+) lines"
     },
     "header_pairs_cold_start": {
-      "value": 90,
+      "value": 91,
       "pattern": "header pairs at (\\d+)"
     },
     "header_pairs_verify": {
-      "value": 90,
+      "value": 91,
       "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
     },
     "module_files_cold_start": {
       "value": 56,
       "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
     },
-    "working_hash_r024": {
-      "value": "35b615d71606dc90",
-      "pattern": "working[^\\n]{0,40}at r024 hashes to sha256 `([0-9a-f]{16})`"
-    },
     "anchor_rotations_made": {
       "value": [
-        "fifty-one",
-        51
+        "fifty-two",
+        52
       ],
       "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
+    },
+    "working_hash_r026": {
+      "value": "5c4e425ad5b6a63a",
+      "pattern": "working[^\\n]{0,40}at r026 hashes to sha256 `([0-9a-f]{16})`"
     }
   },
   "assertions": [
@@ -194,7 +194,7 @@
     },
     {
       "file": "21_stemma.jsx",
-      "line": 1410,
+      "line": 1596,
       "contains": "}"
     },
     {
@@ -606,6 +606,16 @@
       "file": "28_fabula/11_export.jsx",
       "line": 2,
       "contains": "Fabula: the export (v1.7 r023)"
+    },
+    {
+      "file": "21_stemma.jsx",
+      "line": 181,
+      "contains": "Stemma transforms"
+    },
+    {
+      "file": "21_stemma.jsx",
+      "line": 194,
+      "contains": "const addChildToStemmaTree"
     }
   ],
   "spans": {
@@ -675,7 +685,7 @@
     "21_stemma.jsx": [
       [
         1,
-        1410,
+        1596,
         "stemma"
       ]
     ],
@@ -796,10 +806,9 @@
       "whatHappens",
       "The auto-save writes 250 ms after the last change",
       "for what the screen says as well as for what it clips",
-      "reference-r024-body.jsx",
-      "reference-r024-layout.json",
-      "ff3dfdd0a011f1dc",
-      "35b615d71606dc90",
+      "reference-r026-body.jsx",
+      "reference-r026-layout.json",
+      "5ab1ab494de70e27",
       "v1.7_r012",
       "fabulaOutlinePlaces",
       "keepOrder",
@@ -851,12 +860,14 @@
       "renderEntryFieldsHtml",
       "FabulaExportModal",
       "articleIds",
-      "v1.7_r024",
+      "v1.7_r026",
       "HOME_SECTIONS",
       "fabula-timeline",
       "56874e0",
       "v1.7_r025",
-      "28_fabula/"
+      "28_fabula/",
+      "5c4e425ad5b6a63a",
+      "tools/stemma-parity"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -958,7 +969,7 @@
       "On v1.7 r011 verification",
       "FabulaOutlineTab",
       "reference-r012-body.jsx",
-      "reference-r024-layout.json",
+      "reference-r026-layout.json",
       "dfdb4a8f0e05eebc",
       "880886f26451d22e",
       "On v1.7 r012 verification",
@@ -1019,7 +1030,9 @@
       "35b615d71606dc90",
       "On v1.7 r024 verification",
       "On v1.7 r025 verification",
-      "28_fabula/"
+      "28_fabula/",
+      "reference-r026-body.jsx",
+      "On v1.7 r026 verification"
     ],
     "changelog.md": [
       "changelog-v1.6.md",
@@ -1153,7 +1166,8 @@
       "v1.7_r025",
       "92629b6",
       "2d657f7",
-      "v1.7_r025_carve_fabula_folder.py"
+      "v1.7_r025_carve_fabula_folder.py",
+      "5c4e425ad5b6a63a"
     ],
     "roadmap.md": [
       "roadmap-archive.md",

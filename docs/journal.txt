@@ -901,3 +901,56 @@ passed at r024. The folder keeps the file's number, so nothing downstream moved.
 done: twenty r-numbers from the slice to this folder, the carve, the positions, and the
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
+
+=== 2026-10-27 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo) ===
+
+A fresh chat, as the handoff asked for, and the cold start held except for one
+figure: the handoff still gave the site's documentation page as the hash it had at
+r005, three commits after the Fabula page moved it, and facts.json's required
+strings were holding the handoff to the stale number. The gate was guarding the
+wrong hash, which is the one thing a required string must never do; the doctrine
+has the lesson. The session's own permission check refused the build gate's verify
+and edit on the first try, so the cold start took CI's verify on the head commit
+and a reassembly of the 56 modules against the anchor, byte for byte; the check
+allowed both commands once the cut was under way, and I don't know what changed
+its mind.
+
+The plan took five calls and a name, one per message, and the first call undid the
+plan the roadmap had carried in. I proposed the kanban as the other chat's review
+had shaped it, a stemma tree two deep drawn as columns, and argued for it against a
+flat column list. Drak's answer was that a tree drawn as columns is the radial with
+a different name, and the board should disregard the radial's shape and follow
+Milanote's structure instead, minus the social layer. He was right, and the reason
+was in the tree: with slots gone and depth fixed at two, the kanban had one thing
+the radial lacked, a reparent. A canvas has a different unit, position rather than
+parent, and that's what makes it a companion rather than a costume. Re-proposed,
+the storage kept what it should from Stemma, the index row, the envelope, the
+recursive document, orphans, and took the rest from Milanote: items by position, a
+column that stacks, boards inside boards, a drawing layer in the map's shape model.
+He took every recommendation after that but one. On the lines I offered drawn
+lines only, attached connectors beside a drawing layer, or one Line tool whose
+endpoint sticks to a card when dropped on one, and recommended the third; he took
+it, with Cartographia's Line and Freehand cribbed as he'd asked. He dropped the
+depth cap, which had come onto the v2 list from the v1 "not in" list, a gap that
+was never a feature. The names are Rota and Tabula; his first guess, Radii, is the
+genitive of radius and reads as "of the spoke", and he was unsure of it himself.
+The spec is docs/stemma-v2-spec.md, twelve cuts, approved with "looks good".
+
+r026 was the quiet cut, the one that must change nothing but undo. The radial's
+seven edits were closures in App writing state.stemmas directly; they're pure
+transforms now, in 21_stemma under a header of their own, and the canvas commits
+them through useMapHistory, the map editor's hook, which turned out to need no
+change at all: it stacks any record, its byte trim ignores a record with no
+drawing, and its keydown handler already guards inputs. The one design question
+was what carries the stack across: a canvas that stays mounted while the document
+under it changes would undo one document into another, so App keys the canvas by
+document and by lock. The check is a tool, not a scratch probe, because the next
+eight cuts will touch this path: tools/stemma-parity drives twelve edits through
+the last passed build and the new one and compares what each saved and showed,
+then walks the new build's undo both ways. The label's typing had to be sent key
+by key, since Playwright's fill is one input event and would never have exercised
+the coalescing; sent key by key, a copy without the coalescing failed the walk in
+both directions. I nearly reported that copy as caught in one direction only,
+because I'd read its output through tail -3; the trace showed the undo findings
+had been there all along, above the cut. Read the whole output, or write the
+verdict to a file and read that. Drak passed the build on the first staging.
