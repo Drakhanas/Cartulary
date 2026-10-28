@@ -44538,7 +44538,7 @@ If an entry has more than two parents (e.g. biological + adoptive), the third an
 
 **A corpus's page.** Its **Reading order** first: the stories in the order the corpus tells them, each with arrows to move it earlier or later, or drag a row; **+ New Story** adds a story to the corpus, **Rename** renames one in place. Under it, the corpus's fields (Kind, Status, Description, Notes). **Edit** opens the fields, **Delete** removes the corpus and leaves its stories in Fabula, in no corpus. **Export ↓** writes the corpus's bible (below). Deleting a corpus never deletes a story.
 
-**The story page.** The story's title, then its tabs: **Story**, **People**, **Plot**, **Outline**, **Meaning**, **Notes**, and **Timeline** (see Fabula's Timeline). **Edit** and **Delete** sit in the header with **← Back**, and **Export ↓** beside the title on every tab. The Story tab is the story's own record: Status, Form, Audience, Target Length, Structure (with Custom Slots when the structure is Custom), Threads, and Notes, then four panels that fold under their headings, **Premise** (Why, What If, Logline, Theme Statement, Themes, Central Conflict, Conflict Kinds, Stakes, Synopsis), **Genre** (Genre, Subgenre, Tone, Reader Expectations, Expected Moments, Comparable Titles), **Narration** (Point of View, Tense, Narrative Distance, Reliability, Narrators, POV Plan, Voice & Style), and **Setting** (Time Period, Story Timespan, Places, Rules in Play, Arena, Sensory Palette). Which panels are folded is remembered by your browser, one set for every story, and doesn't travel with the world.
+**The story page.** The story's title, then its tabs: **Story**, **People**, **Plot**, **Outline**, **Meaning**, **Notes**, and **Timeline** (see Fabula's Timeline). **Edit** and **Delete** sit in the header with **← Back**, and **Export ↓** beside the title on every tab. The Story tab is the story's own record: Status, Form, Audience, Target Length, Structure (with Custom Slots when the structure is Custom), Threads, Brainstorm (the stemmas behind the story; a chip opens one), and Notes, then four panels that fold under their headings, **Premise** (Why, What If, Logline, Theme Statement, Themes, Central Conflict, Conflict Kinds, Stakes, Synopsis), **Genre** (Genre, Subgenre, Tone, Reader Expectations, Expected Moments, Comparable Titles), **Narration** (Point of View, Tense, Narrative Distance, Reliability, Narrators, POV Plan, Voice & Style), and **Setting** (Time Period, Story Timespan, Places, Rules in Play, Arena, Sensory Palette). Which panels are folded is remembered by your browser, one set for every story, and doesn't travel with the world.
 
 **People.** The story's **Cast**, ordered by Importance (Main, Secondary, Minor) and then by name, each row with its importance and roles; its **Arcs**, by name, each with whose arc it is, its type, and its status; and its **Relationships**, by name, each with the pair it joins and its kinds. **+ New Cast**, **+ New Arc**, and **+ New Relationship** make a record and open it for editing; a click on a row opens its page, where **Edit**, **Delete**, and **← Back** work as an entry's do. A reference to a cast record, from a chip on another record's page or from Concordance, opens it the same way. Deleting a record never takes another with it: Delete says what points at the record and clears those references. When a world entry is deleted, Fabula's references to it are cleared as entries' are, and a cast record whose character it was stays, marked **Character deleted**, with its roles, arcs, and relationships intact, for you to repoint with Edit or delete.
 
@@ -45502,7 +45502,7 @@ A story belongs to at most one corpus; when two list it, the first wins.
 \`\`\`
 {
   "kind":      string,                            // the kind, as the key
-  "seed":      number,                            // the seed version it follows; currently 4
+  "seed":      number,                            // the seed version it follows; currently 5
   "nameLabel": string,                            // "Name", "Title", "Label", or "Topic"
   "nameHelp":  string,                            // the help line under the name
   "fields":    [ ...field definitions ],          // as templates[].fields, with the extras below
@@ -45516,7 +45516,7 @@ A schema's field definitions take the same keys as a template's (\`id\`, \`label
 
 **\`corpus\`** (nameLabel "Name"): \`kind\` select [core] (Series, Shared World, Anthology, Collection; Other) · \`status\` select [core] (Planning, Active, Complete, Shelved) · \`description\` textarea · \`notes\` textarea.
 
-**\`story\`** (nameLabel "Title"): \`status\` select [core] (Idea, Planning, Drafting, Revising, Done, Shelved) · \`form\` select (Novel, Novella, Short Story, Serial, Screenplay, Campaign; Other) · \`audience\` select (Adult, New Adult, Young Adult, Middle Grade, Children's) · \`targetLength\` number · \`structure\` select [core] (Three-Act, Freytag, Hero's Journey, Seven-Point, Kishotenketsu, Custom, None) · \`customSlots\` group [core], rows \`{ slot: text }\`, shown when \`structure\` is Custom · \`threads\` entry-ref multi [core], Plot Thread entries · \`notes\` textarea. Premise panel: \`why\` textarea · \`whatIf\` textarea · \`logline\` text · \`themeStatement\` textarea [core] · \`themes\` entry-ref multi [core], Theme / Motif entries · \`centralConflict\` textarea · \`conflictKinds\` multiselect (vs Character, vs Self, vs Society, vs Nature, vs Technology, vs the Supernatural, vs Fate; Other) · \`stakes\` textarea · \`synopsis\` textarea. Genre panel: \`genre\` select (Fantasy, Science Fiction, Sci-Fantasy, Mystery, Thriller, Romance, Horror, Historical, Literary, Adventure; Other) · \`subgenre\` text · \`tone\` multiselect (Bleak, Hopeful, Comic, Wry, Tense, Lyrical, Grim, Cozy; Other) · \`readerExpectations\` textarea · \`expectedMoments\` group, rows \`{ moment: text, momentScene: entry-ref to a scene }\` · \`comparableTitles\` group, rows \`{ comparableTitle: text, comparableWhy: text }\`. Narration panel: \`pointOfView\` select (First, Second, Third Limited, Third Omniscient, Third Objective, Multiple) · \`tense\` select (Past, Present, Mixed) · \`narrativeDistance\` select (Close, Medium, Distant, Varies) · \`reliability\` select (Reliable, Unreliable, Varies) · \`narrators\` entry-ref multi, cast records · \`povPlan\` textarea · \`voiceStyle\` textarea. Setting panel: \`timePeriod\` text · \`storyTimespan\` calendar-date-range · \`places\` entry-ref multi (Location, Cosmology / Plane, Astronomical Body, Vehicle) · \`rulesInPlay\` entry-ref multi (Magic / Tech System, Religion / Belief System, Faction / Government / Organization, Culture / People) · \`arena\` textarea · \`sensoryPalette\` textarea.
+**\`story\`** (nameLabel "Title"): \`status\` select [core] (Idea, Planning, Drafting, Revising, Done, Shelved) · \`form\` select (Novel, Novella, Short Story, Serial, Screenplay, Campaign; Other) · \`audience\` select (Adult, New Adult, Young Adult, Middle Grade, Children's) · \`targetLength\` number · \`structure\` select [core] (Three-Act, Freytag, Hero's Journey, Seven-Point, Kishotenketsu, Custom, None) · \`customSlots\` group [core], rows \`{ slot: text }\`, shown when \`structure\` is Custom · \`threads\` entry-ref multi [core], Plot Thread entries · \`brainstorm\` entry-ref multi, stemmas · \`notes\` textarea. Premise panel: \`why\` textarea · \`whatIf\` textarea · \`logline\` text · \`themeStatement\` textarea [core] · \`themes\` entry-ref multi [core], Theme / Motif entries · \`centralConflict\` textarea · \`conflictKinds\` multiselect (vs Character, vs Self, vs Society, vs Nature, vs Technology, vs the Supernatural, vs Fate; Other) · \`stakes\` textarea · \`synopsis\` textarea. Genre panel: \`genre\` select (Fantasy, Science Fiction, Sci-Fantasy, Mystery, Thriller, Romance, Horror, Historical, Literary, Adventure; Other) · \`subgenre\` text · \`tone\` multiselect (Bleak, Hopeful, Comic, Wry, Tense, Lyrical, Grim, Cozy; Other) · \`readerExpectations\` textarea · \`expectedMoments\` group, rows \`{ moment: text, momentScene: entry-ref to a scene }\` · \`comparableTitles\` group, rows \`{ comparableTitle: text, comparableWhy: text }\`. Narration panel: \`pointOfView\` select (First, Second, Third Limited, Third Omniscient, Third Objective, Multiple) · \`tense\` select (Past, Present, Mixed) · \`narrativeDistance\` select (Close, Medium, Distant, Varies) · \`reliability\` select (Reliable, Unreliable, Varies) · \`narrators\` entry-ref multi, cast records · \`povPlan\` textarea · \`voiceStyle\` textarea. Setting panel: \`timePeriod\` text · \`storyTimespan\` calendar-date-range · \`places\` entry-ref multi (Location, Cosmology / Plane, Astronomical Body, Vehicle) · \`rulesInPlay\` entry-ref multi (Magic / Tech System, Religion / Belief System, Faction / Government / Organization, Culture / People) · \`arena\` textarea · \`sensoryPalette\` textarea.
 
 **\`cast\`** (nameLabel "Name"): \`character\` entry-ref [core] (Character, Deity / Entity), required · \`importance\` select [core] (Main, Secondary, Minor) · \`firstAppears\` entry-ref, a scene · \`role\` multiselect [core] (Protagonist, Antagonist, Deuteragonist, Tritagonist, Confidant, Mentor, Love Interest, Foil, Antihero, Supporting; Other) · \`beliefSystems\` entry-ref multi (Religion / Belief System) · \`motive\` textarea · \`fear\` textarea · \`voice\` textarea · \`beliefsIdeals\` textarea · \`secrets\` textarea, secret · \`notes\` textarea.
 
@@ -45987,8 +45987,11 @@ function ProjectView({ state, onOpenEntry, dirHandle, onSelectTemplate, onChange
 // the core list caught up with what r007 through r015 read, a row's details
 // included, each core field took the line the builder shows for what reads
 // it, and the plot point's name help stopped saying a structure makes one
-// (Drak, at r017's plan, 2026-10-26).
-const FABULA_SCHEMA_SEED = 4;
+// (Drak, at r017's plan, 2026-10-26), and 5 since r028, when the Story took
+// Brainstorm, the stemmas behind it, once stemmas were a registered source
+// (r027), and three core fields' lines stopped saying the timeline will,
+// r020 having built it (Drak's plan for Stemma v2, 2026-10-27).
+const FABULA_SCHEMA_SEED = 5;
 
 // The seeded schemas, one per kind, resolved against this world's templates.
 // Field ids are stable and unique within a kind, subfields included, as
@@ -46057,6 +46060,10 @@ const fabulaSeedSchemas = (templates) => {
         text("slot", "Slot", "One turning point's name."),
       ], core("A Custom structure's turning points, the Plot tab's headings.", { showWhen: { fieldId: "structure", values: ["Custom"] } })),
       ref("threads", "Threads", "The plot threads this story carries; one thread can run through several stories.", ["Plot Thread"], core("The Plot tab lists them.", MANY)),
+      // v1.7 r028: the stemmas behind the story, a registered source since
+      // r027, named and id'd directly since the seed's target() resolves
+      // templates and the two older sources alone. Not core: nothing reads it.
+      f("brainstorm", "Brainstorm", "entry-ref", "The stemmas behind this story, rota or tabula; a chip opens one on its canvas.", { refTemplates: [STEMMA_REF_LABEL], refTemplatesId: [SYNTH_TPL_STEMMA], ...MANY }),
       area("notes", "Notes", "Anything else about the story."),
       ...inPanel("premise", [
         area("why", "Why", "Why you're writing this story."),
@@ -46127,7 +46134,7 @@ const fabulaSeedSchemas = (templates) => {
       group("turningPoints", "Turning Points", "Where the arc turns, and how; one per row.", [
         kref("turnScene", "Scene", "The scene where it turns.", "scene"),
         text("turnShift", "Shift", "What shifts there."),
-      ], core("The timeline will mark them.")),
+      ], core("The timeline marks them.")),
       area("notes", "Notes", "Anything else about the arc."),
     ]),
     relationship: schema("relationship", "Name", "A name for the pair, such as \"Mira and Tomas\".", [
@@ -46172,14 +46179,14 @@ const fabulaSeedSchemas = (templates) => {
       area("notes", "Notes", "Anything else about the chapter."),
     ]),
     scene: schema("scene", "Title", "The scene's title.", [
-      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", core("The outline shows it, and the timeline will lane scenes by it.")),
+      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", core("The outline shows it, and the timeline lanes scenes by it.")),
       ref("setting", "Setting", "Where the scene happens.", PLACES),
       text("goal", "Goal", "What the POV character wants here."),
       text("conflict", "Conflict", "What's in the way."),
       pickOther("outcome", "Outcome", "How the goal comes out.", ["Yes", "No", "Yes, but", "No, and"]),
       text("turn", "Turn", "What has changed by the end."),
       pick("status", "Status", "Where the scene stands.", OUTLINE_STATUS, core("The outline shows it.")),
-      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", core("The timeline will place the scene by it.")),
+      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", core("The timeline places the scene by it.")),
       kref("participants", "Participants", "Who from the cast is in it.", "cast", MANY),
       ref("walkOns", "Walk-ons", "Anyone in it without a cast record.", BEINGS, MANY),
       ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], core("The Plot tab's marks and a thread's page read it.", MANY)),

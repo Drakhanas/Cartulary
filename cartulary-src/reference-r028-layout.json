@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "03e5c1b2e7da7943a62008dd1195a24b1670394449b718c93a8cf0734d8638f0",
+  "anchor_sha256": "7bf03e23236a407bf8f7764ec85cf42b22d8a5fd8bc226fc6615f8faa4eb0629",
   "shell_sha256": "982d572272cf4af4d991071f7cee0e1edc27365caaf88d25a2c1aaba92587ba1",
   "files": [
     [
@@ -172,7 +172,7 @@
     ],
     [
       "28_fabula/00_seed.jsx",
-      270
+      277
     ],
     [
       "28_fabula/01_index.jsx",
