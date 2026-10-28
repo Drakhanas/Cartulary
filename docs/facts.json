@@ -853,7 +853,8 @@
       "articleIds",
       "v1.7_r024",
       "HOME_SECTIONS",
-      "fabula-timeline"
+      "fabula-timeline",
+      "56874e0"
     ],
     "cartulary-spine-manifest.md": [
       "## 11. Header integrity",
@@ -1141,7 +1142,10 @@
       "ea4d2bd",
       "3c36ec6",
       "d438083",
-      "fabula-timeline"
+      "fabula-timeline",
+      "56874e0",
+      "b36e8e6",
+      "84fede2480fa0d52"
     ],
     "roadmap.md": [
       "roadmap-archive.md",
@@ -1199,7 +1203,8 @@
       "drawn 36 pixels wider than its frame",
       "v1.7_r022",
       "v1.7_r023",
-      "v1.7_r024"
+      "v1.7_r024",
+      "56874e0"
     ],
     "cartulary-doctrine.md": [
       "r030",
@@ -1304,7 +1309,8 @@
       "r021",
       "r022",
       "r023",
-      "r024"
+      "r024",
+      "the site's Fabula page"
     ]
   }
 }
