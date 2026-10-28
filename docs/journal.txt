@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1027,3 +1027,34 @@ caught by the check named for it, though two read as missed until I looked,
 because the probe names its checks with colons and my runner cut the names at
 the first one. Drak passed it on the first staging, past one in the morning.
 r030 is columns and sub-boards, and the document already knows them.
+
+r030 went faster than r029 because r029 had already decided the document: a
+column's items and a board's were coerced, validated, and counted before any
+screen drew them, and the render site already resolved a sub-board from the
+focal id. What remained was the drag. A card dragged over a column has to show
+where it will land, and the honest way to know that is to ask the DOM: the
+column under the pointer, and among its stack as drawn, with the dragged item
+left out, the gap whose neighbor's midpoint the pointer has passed. The
+transform then takes that index against the same list without the item, so
+the line and the drop agree by construction. The one place the two parted was
+my probe, not the build: it dragged a stack item to a spot measured before the
+drag, and when the item left the stack the stack shrank under the pointer,
+which fell outside the column and onto the board. A person sees the column
+shrink and moves accordingly; a script doesn't, so the script now drags the
+last item upward, where nothing shifts. The build's own defect was uglier.
+Dragging a stack item made the whole page select its text, header to footer,
+because the item leaves the DOM for its ghost and the browser's selection,
+anchored in a node that no longer exists, fell back to the document. A free
+card never showed it, since it stays in the DOM and moves. The drag now clears
+the selection and holds it off until release. I chose everything below for a
+board card's count, so the face and the index can never disagree, and gave the
+board card's title to the inspector, since the spec had handed both the title
+and the opening to the double-click. Drak passed it in the morning and asked
+for three things in the same breath: a grip in the left margin, the sidebar's,
+as the only thing that drags; the drop into a sub-board, which the plan had
+parked in Tabula IV; and table-like columns. The first two are r031, a short
+cut of their own, so the plan shifts by one from there. The third I read as
+lanes, inner columns side by side with their own titles, so that a card dropped
+in a lane stays in it and the titles read as a table's headers; he said as
+much, that the card goes in the sub-column it's dragged to. That's Tabula IV's
+first item now, at r033.
