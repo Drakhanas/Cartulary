@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1058,3 +1058,22 @@ lanes, inner columns side by side with their own titles, so that a card dropped
 in a lane stays in it and the titles read as a table's headers; he said as
 much, that the card goes in the sub-column it's dragged to. That's Tabula IV's
 first item now, at r033.
+
+r031 was an hour's cut and the right kind of one: Drak used the board for a
+morning and came back with what the hand wanted. The grip went in as the
+sidebar's, a strip in the left margin that shows itself on hover, and I made
+it the only thing that drags, which is the sidebar's rule too; a press on the
+body selects and a double-click still edits or opens, so a click into a note
+to follow a link can no longer nudge the note. The drop into a sub-board had
+one open question, where the card lands, and his answer was better than my
+proposal: let the line decide. The mark on a board card now carries a line on
+whichever edge is nearest, and the card lands on that side of the content,
+beside it or above or below. It reads the same as a column's line, which is
+the point. The probe caught me twice in the way these probes do: a bounding
+box has x and width, not right and bottom, so two of my edge targets were NaN
+and Chromium refused the mouse event; and a column's header at a small zoom
+is ten pixels tall, so my press at ten pixels landed in the stack below it,
+where the body rule, which I had just written, correctly moved nothing. The
+one design departure worth writing down: image cards give up fourteen pixels
+on the left to the grip like every other card, and I offered the overlay as
+the exception if he wants the picture full width.
