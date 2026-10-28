@@ -481,7 +481,7 @@ const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   const n = (registeredNodes || []).find(x => x && x.id === id);
   if (!n) return null;
   const src = getRegisteredSourceById(n.templateId);
-  return { name: n.name, place: n.place || null, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
+  return { name: n.name, place: n.place || null, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || n.templateId === SYNTH_TPL_STEMMA || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
 };
 
 function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {

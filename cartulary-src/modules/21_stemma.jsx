@@ -178,6 +178,55 @@ const countStemmaDescendants = (node) => {
   return node.children.reduce((acc, c) => acc + 1 + countStemmaDescendants(c), 0);
 };
 
+// The ids every linked node of a document points at, each once (v1.7 r027).
+// The registry's stemma source reads it for Concordance's edges, and the
+// delete message for the nodes elsewhere that would orphan. Walks the radial
+// tree; r029 teaches it a board's items.
+const stemmaLinkedTargets = (stemma) => {
+  const out = new Set();
+  const walk = (node) => {
+    if (!node) return;
+    if (node.type === "linked" && node.entryId) out.add(node.entryId);
+    (node.children || []).forEach(walk);
+  };
+  walk(stemma && stemma.root);
+  return out;
+};
+
+// A registered source's label for a picker's hit or the inspector: the
+// source's own label where it has one (a Fabula kind's), else its name.
+const stemmaSourceLabel = (sourceId) => {
+  const src = getRegisteredSourceById(sourceId);
+  return src ? (src.label || src.name) : "";
+};
+
+// Whether a click can open what a linked node points at: an entry always;
+// a registered record where the app has a page for it (a body, a map, a
+// stemma, a Fabula record with a page), the rule resolveRefTarget applies to
+// a reference chip. A Glossopoeia record resolves but opens nowhere yet.
+const stemmaTargetOpens = (record) => {
+  if (!record) return false;
+  if (!record.synthetic) return true;
+  const t = record.templateId;
+  return t === SYNTH_TPL_MAP || t === BODY_REF_SENTINEL || t === SYNTH_TPL_STEMMA || fabulaRecordOpens(t);
+};
+
+// The index's delete confirmation (v1.7 r027), the map's pattern: it counts
+// the references to the stemma from entries and from Fabula's records, which
+// the delete clears, and the linked nodes in other stemmas, which orphan.
+const stemmaDeleteMessage = (stemma, state) => {
+  const entries = countInboundEntryRefs(state.entries, state.templates, stemma.id);
+  const fab = fabulaInboundCounts(state, stemma.id).reduce((n, [, c]) => n + c, 0);
+  const nodes = (state.stemmas || []).reduce((n, s) => (s && s.id !== stemma.id && stemmaLinkedTargets(s).has(stemma.id) ? n + 1 : n), 0);
+  const parts = [];
+  if (entries > 0) parts.push(`${entries} ${entries === 1 ? "entry" : "entries"}`);
+  if (fab > 0) parts.push(`${fab} Fabula ${fab === 1 ? "record" : "records"}`);
+  let refs = "";
+  if (parts.length > 0) refs += ` Referenced by ${parts.join(" and ")}. Deleting this stemma removes ${entries + fab === 1 ? "that reference" : "those references"}; ${entries + fab === 1 ? "the record stays" : "the records stay"} intact.`;
+  if (nodes > 0) refs += ` ${nodes} other ${nodes === 1 ? "stemma links" : "stemmas link"} to it; ${nodes === 1 ? "its node becomes an orphan" : "their nodes become orphans"}.`;
+  return `Delete stemma "${stemma.name}"?${refs} This cannot be undone.`;
+};
+
 // ─── Stemma transforms ─────────────────────────────────────────────────────────
 // Every edit to a stemma document is a pure function of the document (v1.7
 // r026): it takes the document and returns a new one, or the very document it
@@ -340,7 +389,9 @@ function StemmaNode({ node, entries, templates, cx, cy, radius, isFocal, onClick
     if (entry) {
       const tpl = (templates || []).find(t => t.id === entry.templateId);
       displayLabel = entry.name || "(unnamed)";
-      displayColor = tpl?.color || "#888";
+      // v1.7 r027: a registered record carries its own color (a body's by its
+      // kind); its source's synthetic template gives the icon and the rest.
+      displayColor = (entry.synthetic && entry.color) || tpl?.color || "#888";
       displayIcon = tpl?.icon || "◈";
     } else {
       isOrphan = true;
@@ -616,6 +667,7 @@ function StemmaSmartInput({ cx, cy, entries, onCommitFreeform, onCommitLinked, o
             >
               <span style={{ marginRight: 8, opacity: 0.7 }}>⛓</span>
               {e.name}
+              {e.synthetic && <span style={{ color: "var(--text-dim)" }}>{` (${stemmaSourceLabel(e.templateId)})`}</span>}
             </div>
           ))}
           <div style={{
@@ -745,6 +797,7 @@ function StemmaInspectorEntryPicker({ entries, onPick, onCancel, label }) {
             >
               <span style={{ marginRight: 8, opacity: 0.7 }}>⛓</span>
               {e.name}
+              {e.synthetic && <span style={{ color: "var(--text-dim)" }}>{` (${stemmaSourceLabel(e.templateId)})`}</span>}
             </div>
           ))}
         </div>
@@ -989,7 +1042,7 @@ function LinkedInspectorBody({ node, entry, template, isOrphan, onOpenEntry }) {
         </div>
       ) : (
         <>
-          <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 4 }}>Linked to entry</div>
+          <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 4 }}>Linked to {entry && entry.synthetic ? stemmaSourceLabel(entry.templateId) : "entry"}</div>
           <div style={{
             display: "flex",
             alignItems: "center",
@@ -1021,11 +1074,17 @@ function LinkedInspectorBody({ node, entry, template, isOrphan, onOpenEntry }) {
               </div>
             </div>
           </div>
-          <button
-            className="btn btn-ghost"
-            style={{ fontSize: 12, width: "100%" }}
-            onClick={() => entry && onOpenEntry(entry.id)}
-          >Open entry →</button>
+          {stemmaTargetOpens(entry) ? (
+            <button
+              className="btn btn-ghost"
+              style={{ fontSize: 12, width: "100%" }}
+              onClick={() => entry && onOpenEntry(entry.id)}
+            >Open {entry && entry.synthetic ? stemmaSourceLabel(entry.templateId) : "entry"} →</button>
+          ) : (
+            <div style={{ fontSize: 11, color: "var(--text-dim)", fontStyle: "italic" }}>
+              Nothing opens a {stemmaSourceLabel(entry.templateId)} yet.
+            </div>
+          )}
         </>
       )}
     </div>
@@ -1578,7 +1637,7 @@ function StemmaIndexView({ state, isLocked, onOpen, onCreate, onImport, onExport
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(`Delete stemma "${s.name}"? This cannot be undone.`)) {
+                        if (confirm(stemmaDeleteMessage(s, state))) {
                           onDelete(s.id);
                         }
                       }}

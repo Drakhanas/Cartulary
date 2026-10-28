@@ -76,6 +76,14 @@ const WRITINGSYSTEM_REF_LABEL = "Writing System";
 const SYNTH_TPL_MAP = "__maps__";
 const MAP_REF_LABEL = "Map";
 
+// Stemma sentinel (v1.7 r027; docs/stemma-v2-spec.md, section 5). A stemma is
+// a document in state.stemmas, radial (a rota) or, from r029, a board (a
+// tabula). Registered, a stemma is a reference target in every template
+// builder, a node in Concordance with an edge to each record its linked nodes
+// point at, and what a linked node in another stemma can open.
+const SYNTH_TPL_STEMMA = "__stemmas__";
+const STEMMA_REF_LABEL = "Stemma";
+
 // Fabula's record kinds (v1.7 r006; docs/fabula-spec.md, section 3). Each
 // has the array in state.fabula that holds its records (slice) and a sentinel
 // id, the way Glossopoeia's kinds have theirs, so a reference field can name a
@@ -303,6 +311,34 @@ const NODE_SOURCE_REGISTRY = [
       return edges;
     },
   },
+  // v1.7 r027: stemmas, both layouts (docs/stemma-v2-spec.md, section 5).
+  // Eligible on purpose, as maps are: a field can point at a stemma, a linked
+  // node in another stemma can, and Fabula's Brainstorm field will (r028).
+  // The kind is the document's layout. The edges run from the document to
+  // every record its linked nodes point at, one per target: Concordance
+  // draws them, and Pipes' backlinks will read them as the stemma's mentions.
+  {
+    id: SYNTH_TPL_STEMMA,
+    name: STEMMA_REF_LABEL,
+    color: "#c8a96e",
+    icon: "\u274b", // ❋
+    refEligible: true,
+    getInstances: (state) =>
+      (Array.isArray(state.stemmas) ? state.stemmas : [])
+        .filter(s => s && s.id)
+        .map(s => ({ id: s.id, name: (s.name || "Untitled Stemma"), kind: s.layout === "tabula" ? "tabula" : "rota" })),
+    getColor: () => "#c8a96e",
+    getEdges: (state) => {
+      const edges = [];
+      (Array.isArray(state.stemmas) ? state.stemmas : []).forEach(s => {
+        if (!s || !s.id) return;
+        stemmaLinkedTargets(s).forEach(target => {
+          if (target !== s.id) edges.push({ source: s.id, target, label: "links", kind: "directed" });
+        });
+      });
+      return edges;
+    },
+  },
   // v1.7 r007: Fabula's record kinds (FABULA_KINDS), one source each. Not
   // eligible: no template's field can point at one, and the template builder
   // offers eligible sources only. group puts all eleven behind one toggle in
@@ -311,6 +347,7 @@ const NODE_SOURCE_REGISTRY = [
   ...FABULA_KINDS.map(k => ({
     id: k.id,
     name: k.name,
+    label: k.label,
     color: k.color,
     icon: "\u2042", // ⁂
     refEligible: false,

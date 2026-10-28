@@ -895,6 +895,17 @@ function App() {
       setView("cartographia");
       return;
     }
+    // v1.7 r027: a stemma opens on its canvas, from a reference chip, a
+    // wiki-link, Concordance, or a linked node in another stemma; the canvas
+    // is keyed by document, so its history starts fresh.
+    const stemRec = (state.stemmas || []).find(st => st && st.id === id);
+    if (stemRec) {
+      setActiveTagFilter(null);
+      setActiveStemmaId(id);
+      setFocalNodeId(stemRec.root ? stemRec.root.id : null);
+      setView("stemma");
+      return;
+    }
     // v1.7 r009: a cast record, an arc, or a relationship opens on its own
     // page over its story's (Drak, 2026-10-25), since r011 an act, a chapter,
     // or a scene, since r013 a plot point or a promise, and since r014 a
@@ -3038,7 +3049,16 @@ function App() {
   // Delete a stemma entirely. Used by the index-page row's delete action.
   const deleteStemma = (stemmaId) => {
     if (isLocked) return;
-    updateState(s => ({ ...s, stemmas: (s.stemmas || []).filter(st => st.id !== stemmaId) }));
+    // v1.7 r027: a stemma is a reference target, so its delete clears the
+    // references to it from every entry's fields and from Fabula's records,
+    // as a map's and a body's do; the index's confirmation counts them first
+    // (stemmaDeleteMessage). Linked nodes in other stemmas orphan.
+    updateState(s => ({
+      ...s,
+      stemmas: (s.stemmas || []).filter(st => st.id !== stemmaId),
+      entries: scrubEntryRefs(s.entries, s.templates, new Set([stemmaId])),
+      fabula: scrubFabulaRefs(s, new Set([stemmaId])),
+    }));
     // If the canvas was open on this stemma, close it
     if (activeStemmaId === stemmaId) {
       setActiveStemmaId(null);
@@ -3339,7 +3359,7 @@ function App() {
         return;
       }
       const regenerated = regenerateStemmaIds(norm.stemma);
-      const missingRefs = collectStemmaMissingRefs(regenerated, state.entries);
+      const missingRefs = collectStemmaMissingRefs(regenerated, [...state.entries, ...getRegisteredGraphNodes(state)]);
 
       // Name collision check (case-insensitive)
       const existing = (state.stemmas || []).find(s =>
@@ -4136,26 +4156,26 @@ function App() {
                 </div>
               );
             }
-            // v1.5 r078: merge celestial bodies into the entry pool the Stemma
-            // canvas/inspector/picker resolve against, so nodes can link to
-            // bodies — the picker lists them, the breadcrumb/canvas resolve
-            // their live name, and click routes into Ephemeris via
-            // openEntryFromAnywhere. Body synth-entries carry the body sentinel
-            // as templateId; the canvas falls back to a generic swatch (bodies
-            // have no template) and the inspector shows "(no template)". If a
-            // linked body is later deleted, the node orphans to _cachedName,
-            // same graceful path as a deleted entry.
-            const stemmaEntriesWithBodies = [
+            // v1.7 r027: the pool the canvas, its pickers, and its inspector
+            // resolve a linked node against is the entries and every registered
+            // record (bodies, maps, Glossopoeia's and Fabula's records, and the
+            // other stemmas), each registered record carrying its source's id as
+            // its templateId and its own color; the templates are the world's and
+            // the registry's synthetic ones, which give a record's icon and name.
+            // Until r027 the pool was the entries and the bodies alone (v1.5
+            // r078). A record that goes orphans its node to _cachedName.
+            const stemmaPool = [
               ...state.entries,
-              ...(state.celestialBodies || []).map(b => ({ id: b.id, name: b.name || "(unnamed)", templateId: BODY_REF_SENTINEL, _isBody: true })),
+              ...getRegisteredGraphNodes(state).filter(n => n.id !== stem.id),
             ];
+            const stemmaTemplates = [...state.templates, ...getRegisteredSyntheticTemplates()];
             return (
               <StemmaCanvasView
                 key={`${stem.id}:${isLocked ? "locked" : "open"}`}
                 stemma={stem}
                 focalNodeId={focalNodeId}
-                entries={stemmaEntriesWithBodies}
-                templates={state.templates}
+                entries={stemmaPool}
+                templates={stemmaTemplates}
                 isLocked={isLocked}
                 flash={flash}
                 onFocalChange={setFocalNodeId}
