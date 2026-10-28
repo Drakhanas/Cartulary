@@ -1,1353 +1,1383 @@
 {
-  "derived": {
-    "module_file_count": 56,
-    "total_lines": 51045,
-    "raw_body_lines": 51045,
-    "canonical_lines": 48506,
-    "decl_count": 703,
-    "no_trailing_newline": 48,
-    "active_anchor": "reference-r028-body.jsx"
+ "derived": {
+  "module_file_count": 56,
+  "total_lines": 52097,
+  "raw_body_lines": 52097,
+  "canonical_lines": 49528,
+  "decl_count": 730,
+  "no_trailing_newline": 48,
+  "active_anchor": "reference-r029-body.jsx"
+ },
+ "published": {
+  "module_file_count": {
+   "value": 56,
+   "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
-  "published": {
-    "module_file_count": {
-      "value": 56,
-      "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
-    },
-    "total_lines": {
-      "value": 51045,
-      "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
-    },
-    "arc_count": {
-      "value": 31,
-      "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
-    },
-    "no_trailing_nl": {
-      "value": 48,
-      "pattern": "(\\d+) of the 56 files have no trailing newline"
-    },
-    "decl_count": {
-      "value": 703,
-      "pattern": "decl-set (?:PASS at )?(\\d+)"
-    },
-    "canonical_lines": {
-      "value": 48506,
-      "pattern": "sequence PASS at ([\\d,]+)"
-    },
-    "raw_body_lines": {
-      "value": 51045,
-      "pattern": "raw line count PASS at ([\\d,]+)"
-    },
-    "header_count": {
-      "value": 91,
-      "pattern": "(\\d+) column-0 section headers"
-    },
-    "shears_resolved": {
-      "value": [
-        11,
-        "eleven"
-      ],
-      "pattern": "(?:^|\\s)(eleven|\\d+) sheared section headers"
-    },
-    "shears_remaining": {
-      "value": [
-        0,
-        "zero"
-      ],
-      "pattern": "(zero|one|\\d+) sheared headers? remains?"
-    },
-    "probe_count": {
-      "value": [
-        18,
-        "eighteen"
-      ],
-      "pattern": "(?i)(eighteen|seven|\\d+) mutation probes"
-    },
-    "named_modules": {
-      "value": [
-        "twenty-two",
-        22
-      ],
-      "pattern": "(?i)(twenty-two|\\d+) named modules"
-    },
-    "trunk_arcs": {
-      "value": [
-        9,
-        "nine"
-      ],
-      "pattern": "(?i)(nine|\\d+) trunk arcs"
-    },
-    "carves_proven": {
-      "value": 23,
-      "pattern": "proven on (\\d+) carves"
-    },
-    "anchor_bytes": {
-      "value": 2735053,
-      "pattern": "anchor is ([\\d,]+) bytes"
-    },
-    "anchor_rotations": {
-      "value": [
-        "fifty-four",
-        54
-      ],
-      "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
-    },
-    "trunk16_lines": {
-      "value": 265,
-      "pattern": "`16_trunk` \\((\\d+)\\)"
-    },
-    "trunk16_tiling": {
-      "value": "6526",
-      "pattern": "265 \\+ 1028 \\+ 5233 = (\\d+)"
-    },
-    "repo": {
-      "value": "Drakhanas/Cartulary",
-      "pattern": "github\\.com/(Drakhanas/Cartulary)"
-    },
-    "cartographia_lines": {
-      "value": 5241,
-      "pattern": "18_cartographia/` \\(([\\d,]+) lines"
-    },
-    "header_pairs_cold_start": {
-      "value": 91,
-      "pattern": "header pairs at (\\d+)"
-    },
-    "header_pairs_verify": {
-      "value": 91,
-      "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
-    },
-    "module_files_cold_start": {
-      "value": 56,
-      "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
-    },
-    "anchor_rotations_made": {
-      "value": [
-        "fifty-four",
-        54
-      ],
-      "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
-    },
-    "working_hash_r028": {
-      "value": "bfba2f23739b1e41",
-      "pattern": "working[^\\n]{0,40}at r028 hashes to sha256 `([0-9a-f]{16})`"
-    }
+  "total_lines": {
+   "value": 52097,
+   "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
-  "assertions": [
-    {
-      "file": "14_form-engine-edit.jsx",
-      "line": 1311,
-      "contains": "Longform + rich text editor"
-    },
-    {
-      "file": "14_form-engine-edit.jsx",
-      "line": 1313,
-      "contains": "function LongformEditor"
-    },
-    {
-      "file": "13_form-engine-display.jsx",
-      "line": 323,
-      "contains": "Longform + markdown display"
-    },
-    {
-      "file": "13_form-engine-display.jsx",
-      "line": 325,
-      "contains": "function LongformDisplay"
-    },
-    {
-      "file": "19_chronometric.jsx",
-      "line": 2,
-      "contains": "Timeline view"
-    },
-    {
-      "file": "19_chronometric.jsx",
-      "line": 4,
-      "contains": "function TimelineView"
-    },
-    {
-      "file": "19_chronometric.jsx",
-      "line": 1772,
-      "contains": "}"
-    },
-    {
-      "file": "20_linea.jsx",
-      "line": 2,
-      "contains": "Family tree view"
-    },
-    {
-      "file": "20_linea.jsx",
-      "line": 4,
-      "contains": "function buildFamilyData"
-    },
-    {
-      "file": "20_linea.jsx",
-      "line": 646,
-      "contains": "}"
-    },
-    {
-      "file": "21_stemma.jsx",
-      "line": 2,
-      "contains": "Stemma helpers and canvas"
-    },
-    {
-      "file": "21_stemma.jsx",
-      "line": 9,
-      "contains": "const STEMMA_SLOTS"
-    },
-    {
-      "file": "21_stemma.jsx",
-      "line": 1655,
-      "contains": "}"
-    },
-    {
-      "file": "22_trunk.jsx",
-      "line": 2,
-      "contains": "Node-source registry"
-    },
-    {
-      "file": "25_kalendarium.jsx",
-      "line": 2,
-      "contains": "Kalendarium views"
-    },
-    {
-      "file": "25_kalendarium.jsx",
-      "line": 876,
-      "contains": "}"
-    },
-    {
-      "file": "16_trunk.jsx",
-      "line": 2,
-      "contains": "Settings"
-    },
-    {
-      "file": "16_trunk.jsx",
-      "line": 4,
-      "contains": "function SettingsView"
-    },
-    {
-      "file": "16_trunk.jsx",
-      "line": 265,
-      "contains": "}"
-    },
-    {
-      "file": "17_concordance.jsx",
-      "line": 2,
-      "contains": "Graph view"
-    },
-    {
-      "file": "17_concordance.jsx",
-      "line": 12,
-      "contains": "const VAGUE_EDGE_LABELS"
-    },
-    {
-      "file": "17_concordance.jsx",
-      "line": 14,
-      "contains": "function GraphView"
-    },
-    {
-      "file": "17_concordance.jsx",
-      "line": 1054,
-      "contains": "}"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 2,
-      "contains": "Map drawing model (v1.6 pillar 3)"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 13,
-      "contains": "const MAP_PALETTE"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 53,
-      "contains": "const MAP_RASTER_LAYER"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 205,
-      "contains": "function ensureMapStamps"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 253,
-      "contains": "const MAP_STAMP_ALLOWLIST"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 275,
-      "contains": "const MAP_RASTER_TIP"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 282,
-      "contains": "const MAP_STAMP_ID_MAX"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 380,
-      "contains": "function mapReadAbr"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 586,
-      "contains": "function mapReadBplist"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 670,
-      "contains": "async function buildMapStampPngZip"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 718,
-      "contains": "function sanitizeMapStampBody"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 867,
-      "contains": "async function mapReadStampFiles"
-    },
-    {
-      "file": "18_cartographia/00_model.jsx",
-      "line": 1081,
-      "contains": "function MapStampGlyph"
-    },
-    {
-      "file": "18_cartographia/01_renderer.jsx",
-      "line": 2,
-      "contains": "Map drawing renderer (v1.6 pillar 3)"
-    },
-    {
-      "file": "18_cartographia/01_renderer.jsx",
-      "line": 20,
-      "contains": "function mapNum"
-    },
-    {
-      "file": "18_cartographia/01_renderer.jsx",
-      "line": 90,
-      "contains": "const MAP_BUILTIN_STAMPS"
-    },
-    {
-      "file": "18_cartographia/01_renderer.jsx",
-      "line": 134,
-      "contains": "function mapTextArcPath"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 2,
-      "contains": "Map drawing tools (v1.6 pillar 3)"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 18,
-      "contains": "const MAP_TOOLS"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 39,
-      "contains": "const MAP_STRIP_GROUPS"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 101,
-      "contains": "const MAP_FREEHAND"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 108,
-      "contains": "const MAP_PAINT"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 208,
-      "contains": "const MAP_FILL"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 317,
-      "contains": "function mapSvgToCanvas"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 354,
-      "contains": "function mapShapeFrame"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 1402,
-      "contains": "function mapTrimHistory"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 1432,
-      "contains": "function useMapHistory"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 1899,
-      "contains": "function MapStampPicker"
-    },
-    {
-      "file": "18_cartographia/02_tools.jsx",
-      "line": 1955,
-      "contains": "function MapLayerPanel"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 2,
-      "contains": "Map view"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 4,
-      "contains": "function useMapImageUrl"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 46,
-      "contains": "function useMapLayerImages"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 90,
-      "contains": "function mapFontFaceCss"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 120,
-      "contains": "function buildMapDownloadSvg"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 183,
-      "contains": "function rasterizeMapSvg"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 205,
-      "contains": "const MAP_CAMERA"
-    },
-    {
-      "file": "18_cartographia/03_view.jsx",
-      "line": 207,
-      "contains": "function useMapCamera"
-    },
-    {
-      "file": "18_cartographia/04_index.jsx",
-      "line": 2,
-      "contains": "Cartographia"
-    },
-    {
-      "file": "18_cartographia/04_index.jsx",
-      "line": 26,
-      "contains": "function MapStampImportButton"
-    },
-    {
-      "file": "18_cartographia/04_index.jsx",
-      "line": 137,
-      "contains": "function MapStampsPanel"
-    },
-    {
-      "file": "18_cartographia/04_index.jsx",
-      "line": 245,
-      "contains": "function CartographiaIndexView"
-    },
-    {
-      "file": "18_cartographia/04_index.jsx",
-      "line": 358,
-      "contains": "}"
-    },
-    {
-      "file": "24_ephemeris/01_shell.jsx",
-      "line": 10,
-      "contains": "Ephemeris view (v1.5)"
-    },
-    {
-      "file": "24_ephemeris/01_shell.jsx",
-      "line": 36,
-      "contains": "function EphemerisView"
-    },
-    {
-      "file": "26_home-data.jsx",
-      "line": 2,
-      "contains": "Home view (app instructions)"
-    },
-    {
-      "file": "05_field-system.jsx",
-      "line": 167,
-      "contains": "Relation value helpers"
-    },
-    {
-      "file": "05_field-system.jsx",
-      "line": 552,
-      "contains": "v1.3 select / cascade / required helpers"
-    },
-    {
-      "file": "03_persistence.jsx",
-      "line": 367,
-      "contains": "Version History panel"
-    },
-    {
-      "file": "29_modals.jsx",
-      "line": 2,
-      "contains": "Destructive Op confirmation modal"
-    },
-    {
-      "file": "29_modals.jsx",
-      "line": 98,
-      "contains": "Reset Template confirmation modal"
-    },
-    {
-      "file": "29_modals.jsx",
-      "line": 100,
-      "contains": "function ResetTemplateModal"
-    },
-    {
-      "file": "12_trunk.jsx",
-      "line": 2,
-      "contains": "App"
-    },
-    {
-      "file": "09_trunk.jsx",
-      "line": 174,
-      "contains": "Initial state"
-    },
-    {
-      "file": "10_migrate.jsx",
-      "line": 6093,
-      "contains": "marked.use({"
-    },
-    {
-      "file": "08_export-layer.jsx",
-      "line": 948,
-      "contains": "const renderMapHtml"
-    },
-    {
-      "file": "08_export-layer.jsx",
-      "line": 1532,
-      "contains": "HTML export modal"
-    },
-    {
-      "file": "08_export-layer.jsx",
-      "line": 1543,
-      "contains": "function HtmlExportModal"
-    },
-    {
-      "file": "22_trunk.jsx",
-      "line": 97,
-      "contains": "const FABULA_KINDS"
-    },
-    {
-      "file": "28_fabula/00_seed.jsx",
-      "line": 2,
-      "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
-    },
-    {
-      "file": "28_fabula/01_index.jsx",
-      "line": 2,
-      "contains": "Fabula: the index and the corpus page (v1.7 r007)"
-    },
-    {
-      "file": "28_fabula/02_story.jsx",
-      "line": 2,
-      "contains": "Fabula: the story page (v1.7 r008)"
-    },
-    {
-      "file": "28_fabula/03_people.jsx",
-      "line": 2,
-      "contains": "Fabula: People (v1.7 r009)"
-    },
-    {
-      "file": "28_fabula/04_outline.jsx",
-      "line": 2,
-      "contains": "Fabula: Outline (v1.7 r011)"
-    },
-    {
-      "file": "28_fabula/05_plot.jsx",
-      "line": 2,
-      "contains": "Fabula: Plot (v1.7 r013)"
-    },
-    {
-      "file": "28_fabula/06_notes.jsx",
-      "line": 2,
-      "contains": "Fabula: Notes (v1.7 r014)"
-    },
-    {
-      "file": "28_fabula/07_meaning.jsx",
-      "line": 2,
-      "contains": "Fabula: Meaning (v1.7 r015)"
-    },
-    {
-      "file": "28_fabula/08_threads.jsx",
-      "line": 2,
-      "contains": "Fabula: threads and themes (v1.7 r016)"
-    },
-    {
-      "file": "28_fabula/09_templates.jsx",
-      "line": 2,
-      "contains": "Fabula: templates (v1.7 r017)"
-    },
-    {
-      "file": "19_chronometric.jsx",
-      "line": 286,
-      "contains": "Chronometric math"
-    },
-    {
-      "file": "19_chronometric.jsx",
-      "line": 629,
-      "contains": "Chronometrics view"
-    },
-    {
-      "file": "28_fabula/10_timeline.jsx",
-      "line": 2,
-      "contains": "Fabula: the timeline (v1.7 r020)"
-    },
-    {
-      "file": "28_fabula/11_export.jsx",
-      "line": 2,
-      "contains": "Fabula: the export (v1.7 r023)"
-    },
-    {
-      "file": "21_stemma.jsx",
-      "line": 230,
-      "contains": "Stemma transforms"
-    },
-    {
-      "file": "21_stemma.jsx",
-      "line": 243,
-      "contains": "const addChildToStemmaTree"
-    },
-    {
-      "file": "22_trunk.jsx",
-      "line": 84,
-      "contains": "const SYNTH_TPL_STEMMA"
-    }
-  ],
-  "spans": {
-    "16_trunk.jsx": [
-      [
-        1,
-        265,
-        "head (SettingsView)"
-      ]
-    ],
-    "17_concordance.jsx": [
-      [
-        1,
-        1054,
-        "concordance"
-      ]
-    ],
-    "18_cartographia/00_model.jsx": [
-      [
-        1,
-        1096,
-        "model"
-      ]
-    ],
-    "18_cartographia/01_renderer.jsx": [
-      [
-        1,
-        380,
-        "renderer"
-      ]
-    ],
-    "18_cartographia/02_tools.jsx": [
-      [
-        1,
-        2121,
-        "tools"
-      ]
-    ],
-    "18_cartographia/03_view.jsx": [
-      [
-        1,
-        1286,
-        "view"
-      ]
-    ],
-    "18_cartographia/04_index.jsx": [
-      [
-        1,
-        358,
-        "index"
-      ]
-    ],
-    "19_chronometric.jsx": [
-      [
-        1,
-        1772,
-        "chronometric"
-      ]
-    ],
-    "20_linea.jsx": [
-      [
-        1,
-        646,
-        "linea"
-      ]
-    ],
-    "21_stemma.jsx": [
-      [
-        1,
-        1655,
-        "stemma"
-      ]
-    ],
-    "25_kalendarium.jsx": [
-      [
-        1,
-        876,
-        "kalendarium"
-      ]
-    ]
+  "arc_count": {
+   "value": 31,
+   "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
   },
-  "required_strings": {
-    "handoff.md": [
-      "header placement",
-      "prove_gate_teeth.py",
-      "build_inline.py gather",
-      "check_docs.py",
-      "back to front",
-      "25_kalendarium",
-      "Drakhanas/Cartulary",
-      "build_inline.py edit",
-      "freeze r###",
-      "tools/turnover/check_docs.py",
-      "eighteen mutation probes",
-      "cartographia-plus-spec.md",
-      "r031",
-      "ensureMapData",
-      "buildMapDrawingTree",
-      "MapStampImportButton",
-      "r047",
-      "r048",
-      "r049",
-      "17_concordance",
-      "18_cartographia",
-      "r050",
-      "r051",
-      "b99381a041153d9d",
-      "e748142eadb3e1aa",
-      "v1.6 is SHIPPED",
-      "2026-10-23",
-      "changelog-v1.6.md",
-      "handoff-v1.6.md",
-      "tools/turnover/conventions.md",
-      "docs/roadmap.md",
-      "8554fdf",
-      "prove_teeth.py",
-      "Never freeze a body",
-      "finals-pass.md",
-      "hash equal to the artifact last passed",
-      "`working` and the parse gate",
-      "`v<version>_r###`",
-      "v1.7_r001",
-      "is never tagged",
-      "`v<version>_Release`",
-      "v1.7_Release",
-      "`inlining/cuts/v<version>_r###_description.py`",
-      "(p / 'cartulary-src').is_dir()",
-      "r052",
-      "v1.6.1 is SHIPPED",
-      "v1.6.1_r052",
-      "v1.6.1_Release",
-      "v1.4",
-      "d9125ed013be5641",
-      "c10c693bbacbe9e6",
-      "docs/release-notes/v1.6.1/finals-pass.md",
-      "Letters before Pipes",
-      "fabula-spec.md",
-      "v1.7 is OPEN",
-      "Common Year",
-      "stop hook",
-      "112ad4301a10df3c",
-      "stages the old content",
-      "owes a pass of its own",
-      "answers the font requests empty",
-      "v1.7_r002",
-      "syncRefTargetNames",
-      "refTargetIndex",
-      "r003",
-      "r004",
-      "as a control",
-      "v1.7_r003",
-      "resolveRefTarget",
-      "refLinkHtml",
-      "mapDeleteMessage",
-      "v1.7_r004",
-      "retargetRetired",
-      "retiredTargetsRepairedV17",
-      "755e95a722506f5e",
-      "v1.7_r005",
-      "MultiSelectEditor",
-      "One item per message",
-      "v1.7_r006",
-      "ensureFabulaSlice",
-      "FABULA_KINDS",
-      "d9125ed013be5641",
-      "v1.7_r007",
-      "fabulaTemplate",
-      "corpusDraft",
-      "its shortest value and its longest",
-      "v1.7_r008",
-      "fabulaLiveFields",
-      "fabulaStoryNodes",
-      "prefs.fabulaFolds",
-      "fieldPanelSegments",
-      "is checked against the app before it's sent",
-      "v1.7_r009",
-      "FabulaRecordPage",
-      "fabulaBack",
-      "scrubFabulaRefs",
-      "excludeIds",
-      "fabulaRecordOpens",
-      "as a list of one",
-      "v1.7_r010",
-      "28_fabula",
-      "v1.7_r011",
-      "FabulaOutlineTab",
-      "prefs.fabulaOutlineFolds",
-      "whatHappens",
-      "The auto-save writes 250 ms after the last change",
-      "for what the screen says as well as for what it clips",
-      "reference-r028-body.jsx",
-      "reference-r028-layout.json",
-      "7bf03e23236a407b",
-      "v1.7_r012",
-      "fabulaOutlinePlaces",
-      "keepOrder",
-      "badgeExtra",
-      "Nine browser probes at once",
-      "runs that probe from a copy adapted at those checks",
-      "v1.7_r013",
-      "FabulaPlotTab",
-      "fabulaPlotEdit",
-      "firstIds",
-      "fabulaUnpaid",
-      "Wait for probes by their processes",
-      "plant a defect for each of the cut's main rules",
-      "v1.7_r014",
-      "FabulaNotesTab",
-      "footSlot",
-      "fabulaNoteOpen",
-      "v1.7_r015",
-      "FabulaMeaningTab",
-      "fabulaThemeScenes",
-      "A picker's option is an entry's bare name",
-      "v1.7_r016",
-      "fabulaFlagTemplates",
-      "setDefaultNavigationTimeout",
-      "v1.7_r017",
-      "fabulaRefreshCore",
-      "FabulaKindTemplates",
-      "schemaDraft",
-      "passing for the wrong reason",
-      "v1.7_r018",
-      "tools/chrono-parity",
-      "chronoLaneLayout",
-      "rowsByLane",
-      "v1.7_r019",
-      "chronoTitleLines",
-      "chronoEventExtent",
-      "titleLinesByLane",
-      "v1.7_r020",
-      "FabulaTimelineTab",
-      "fabulaTimelineData",
-      "openFabulaRecordIn",
-      "v1.7_r021",
-      "chronoEraLabel",
-      "--aside eras",
-      "v1.7_r022",
-      "FABULA_TIMELINE_MODES",
-      "entry-view-full",
-      "v1.7_r023",
-      "renderEntryFieldsHtml",
-      "FabulaExportModal",
-      "articleIds",
-      "v1.7_r028",
-      "HOME_SECTIONS",
-      "fabula-timeline",
-      "56874e0",
-      "v1.7_r025",
-      "28_fabula/",
-      "bfba2f23739b1e41",
-      "tools/stemma-parity",
-      "__stemmas__"
-    ],
-    "cartulary-spine-manifest.md": [
-      "## 11. Header integrity",
-      "r030",
-      "25_kalendarium",
-      "2facf10cea574525",
-      "Eighteen probes",
-      "r031",
-      "3604074d447fcc41",
-      "r032",
-      "cce2d99770ed6ee4",
-      "r033",
-      "a3e8d460d3bab754",
-      "r034",
-      "4e01cbf041ffed41",
-      "r035",
-      "9c0bbfe453e80668",
-      "r036",
-      "1543145c4ce2e5b9",
-      "r037",
-      "4b3b7eee4cc16920",
-      "r038",
-      "02757469587b7ba5",
-      "r039",
-      "r040",
-      "ab06b96df79cd7f7",
-      "r041",
-      "d83664af97b38bfe",
-      "r042",
-      "de69aed94037dfe1",
-      "r043",
-      "aec789dfc940ed73",
-      "r044",
-      "c8b110fe92691d17",
-      "r045",
-      "c30bb358c0e7e6a6",
-      "r046",
-      "b0bb5c39be590495",
-      "r047",
-      "91c36b021ad89d90",
-      "r048",
-      "r049",
-      "17_concordance",
-      "18_cartographia",
-      "r050",
-      "e6e610a404924a85",
-      "r051",
-      "reference-r052-body.jsx",
-      "d8369c86696f8f46",
-      "r052",
-      "1dbfec5bbafcdaa2",
-      "reference-r001-body.jsx",
-      "a2f26b602064207c",
-      "e11d0a9253eedaad",
-      "On v1.7 r001 verification",
-      "reference-r002-body.jsx",
-      "8af1a730ac383d32",
-      "710f0d88e89bde32",
-      "On v1.7 r002 verification",
-      "reference-r003-body.jsx",
-      "b1b07ff195a9e796",
-      "a2bb59988f15030f",
-      "On v1.7 r003 verification",
-      "08_export-layer:1532",
-      "reference-r004-body.jsx",
-      "16337a1350d7e7e6",
-      "0731070bf5555171",
-      "On v1.7 r004 verification",
-      "10_migrate:6093",
-      "reference-r005-body.jsx",
-      "e70e86fef21544cd",
-      "cd6875aa3a5295db",
-      "On v1.7 r005 verification",
-      "reference-r006-body.jsx",
-      "b2a8ba4e362f54bd",
-      "046261e6caccc29f",
-      "On v1.7 r006 verification",
-      "FABULA_KINDS",
-      "reference-r007-body.jsx",
-      "9d42ce11a6c8002e",
-      "c723fa573f160881",
-      "On v1.7 r007 verification",
-      "FabulaReadingOrder",
-      "reference-r008-body.jsx",
-      "0d683c6de47f37c3",
-      "1d0b64c4f9cb8dcb",
-      "On v1.7 r008 verification",
-      "FabulaStoryPage",
-      "reference-r009-body.jsx",
-      "f4d73f0a51c06190",
-      "aa89edb8519e3604",
-      "On v1.7 r009 verification",
-      "FabulaPeopleTab",
-      "On v1.7 r010 verification",
-      "28_fabula.jsx",
-      "reference-r011-body.jsx",
-      "8d11c4834e6424f7",
-      "819c23d2f11cb58c",
-      "On v1.7 r011 verification",
-      "FabulaOutlineTab",
-      "reference-r012-body.jsx",
-      "reference-r028-layout.json",
-      "dfdb4a8f0e05eebc",
-      "880886f26451d22e",
-      "On v1.7 r012 verification",
-      "fabulaOutlinePlaces",
-      "reference-r013-body.jsx",
-      "041fba079f455cd6",
-      "061f90388538cfeb",
-      "On v1.7 r013 verification",
-      "FabulaPlotTab",
-      "reference-r014-body.jsx",
-      "274e570b491549df",
-      "5f6ccdc961669baf",
-      "On v1.7 r014 verification",
-      "FabulaNotesTab",
-      "reference-r015-body.jsx",
-      "c9d6bc061d5d9da2",
-      "9ff2acd11c4730bf",
-      "On v1.7 r015 verification",
-      "FabulaMeaningTab",
-      "reference-r016-body.jsx",
-      "8133242d2b3d5212",
-      "3b354a21f2a02a36",
-      "On v1.7 r016 verification",
-      "FabulaEntryStories",
-      "reference-r017-body.jsx",
-      "36b5e4ae0b1eb9b1",
-      "3efc9fffa2c65b6a",
-      "On v1.7 r017 verification",
-      "FabulaResetModal",
-      "reference-r018-body.jsx",
-      "9fc40ea26388ef8f",
-      "da27cd8bf8d579ef",
-      "On v1.7 r018 verification",
-      "chronoRowY",
-      "reference-r019-body.jsx",
-      "9614e63540e713f1",
-      "bf1e59886e5a973c",
-      "On v1.7 r019 verification",
-      "reference-r020-body.jsx",
-      "7f00bd545264415b",
-      "2b5155e3e0eee2bd",
-      "On v1.7 r020 verification",
-      "reference-r021-body.jsx",
-      "2b8b5eb3734031ec",
-      "15798476a23a5474",
-      "On v1.7 r021 verification",
-      "reference-r022-body.jsx",
-      "b57e7a1196c91937",
-      "5a959d0f6cedbe82",
-      "On v1.7 r022 verification",
-      "reference-r023-body.jsx",
-      "0724107911773c17",
-      "95e16b5e98b0e927",
-      "On v1.7 r023 verification",
-      "renderEntryFieldsHtml",
-      "reference-r024-body.jsx",
-      "ff3dfdd0a011f1dc",
-      "35b615d71606dc90",
-      "On v1.7 r024 verification",
-      "On v1.7 r025 verification",
-      "28_fabula/",
-      "reference-r026-body.jsx",
-      "On v1.7 r026 verification",
-      "reference-r027-body.jsx",
-      "On v1.7 r027 verification",
-      "reference-r028-body.jsx",
-      "On v1.7 r028 verification"
-    ],
-    "changelog.md": [
-      "changelog-v1.6.md",
-      "changelog-v1.5.md",
-      "Between v1.6 and v1.7",
-      "session 19",
-      "r051",
-      "v1.6.1",
-      "r052",
-      "## v1.7",
-      "session 20",
-      "v1.7_r001",
-      "Common Year",
-      "e11d0a9253eedaad",
-      "v1.7_r002",
-      "710f0d88e89bde32",
-      "8af1a730ac383d32",
-      "syncRefTargetNames",
-      "v1.7_r003",
-      "a2bb59988f15030f",
-      "b1b07ff195a9e796",
-      "resolveRefTarget",
-      "v1.7_r004",
-      "0731070bf5555171",
-      "16337a1350d7e7e6",
-      "retargetRetired",
-      "v1.7_r005",
-      "cd6875aa3a5295db",
-      "e70e86fef21544cd",
-      "MultiSelectEditor",
-      "v1.7_r006",
-      "046261e6caccc29f",
-      "b2a8ba4e362f54bd",
-      "ensureFabulaSlice",
-      "v1.7_r007",
-      "c723fa573f160881",
-      "9d42ce11a6c8002e",
-      "FabulaIndexView",
-      "3c7279a8d9c3875a",
-      "v1.7_r008",
-      "1d0b64c4f9cb8dcb",
-      "0d683c6de47f37c3",
-      "fabulaLiveFields",
-      "v1.7_r009",
-      "aa89edb8519e3604",
-      "f4d73f0a51c06190",
-      "scrubFabulaRefs",
-      "v1.7_r010",
-      "v1.7_r011",
-      "819c23d2f11cb58c",
-      "8d11c4834e6424f7",
-      "FabulaOutlineTab",
-      "01f168a",
-      "v1.7_r012",
-      "880886f26451d22e",
-      "dfdb4a8f0e05eebc",
-      "fabulaOutlinePlaces",
-      "4a48dfe",
-      "v1.7_r013",
-      "061f90388538cfeb",
-      "041fba079f455cd6",
-      "FabulaPlotTab",
-      "v1.7_r014",
-      "5f6ccdc961669baf",
-      "274e570b491549df",
-      "FabulaNotesTab",
-      "26652cb",
-      "v1.7_r015",
-      "9ff2acd11c4730bf",
-      "c9d6bc061d5d9da2",
-      "FabulaMeaningTab",
-      "1211af0",
-      "v1.7_r016",
-      "3b354a21f2a02a36",
-      "8133242d2b3d5212",
-      "fabulaFlagTemplates",
-      "5387bf6",
-      "v1.7_r017",
-      "3efc9fffa2c65b6a",
-      "36b5e4ae0b1eb9b1",
-      "fabulaRefreshCore",
-      "61df82c",
-      "ededabe",
-      "v1.7_r018",
-      "da27cd8bf8d579ef",
-      "9fc40ea26388ef8f",
-      "d7ff89c",
-      "tools/chrono-parity",
-      "chronoStackRows",
-      "v1.7_r019",
-      "bf1e59886e5a973c",
-      "9614e63540e713f1",
-      "26c6dde",
-      "chronoTitleLines",
-      "v1.7_r020",
-      "2b5155e3e0eee2bd",
-      "7f00bd545264415b",
-      "d8889d9",
-      "FabulaTimelineTab",
-      "v1.7_r021",
-      "15798476a23a5474",
-      "2b8b5eb3734031ec",
-      "e331732",
-      "dc561f8",
-      "chronoEraLabel",
-      "v1.7_r022",
-      "5a959d0f6cedbe82",
-      "b57e7a1196c91937",
-      "8a743c1",
-      "9d4d07e",
-      "85b021a",
-      "FABULA_TIMELINE_MODES",
-      "v1.7_r023",
-      "95e16b5e98b0e927",
-      "0724107911773c17",
-      "a8e0ddc",
-      "ff9ae78",
-      "4c98e43",
-      "renderEntryFieldsHtml",
-      "FabulaExportModal",
-      "v1.7_r024",
-      "35b615d71606dc90",
-      "ff3dfdd0a011f1dc",
-      "ea4d2bd",
-      "3c36ec6",
-      "d438083",
-      "fabula-timeline",
-      "56874e0",
-      "b36e8e6",
-      "84fede2480fa0d52",
-      "v1.7_r025",
-      "92629b6",
-      "2d657f7",
-      "v1.7_r025_carve_fabula_folder.py",
-      "5c4e425ad5b6a63a",
-      "d76fcd6d132c7c10",
-      "bfba2f23739b1e41",
-      "112ad4301a10df3c"
-    ],
-    "roadmap.md": [
-      "roadmap-archive.md",
-      "roadmap-principles.md",
-      "r051",
-      "b99381a041153d9d",
-      "No line is open",
-      "product-text defects",
-      "makeEmptyGrid",
-      "v1.6.1",
-      "r052",
-      "v1.6.1 shipped",
-      "d9125ed013be5641",
-      "Letters before Pipes",
-      "fabula-spec.md",
-      "session 20",
-      "Common Year",
-      "A grid's starting shape",
-      "### Document debt",
-      "v1.7_r002",
-      "r003",
-      "r004",
-      "Language / Glossary",
-      "v1.7_r003",
-      "Deleting a Glossopoeia record leaves entry references to it",
-      "v1.7_r004",
-      "A map template of the user's own, promoted to Cartographia before r004",
-      "v1.7_r005",
-      "Other on multi-selects: done in r005",
-      "CI's two warnings",
-      "v1.7_r006",
-      "v1.7_r007",
-      "v1.7_r008",
-      "v1.7_r009",
-      "v1.7_r010",
-      "v1.7_r011",
-      "The outline's keyboard moves rows, not the focus",
-      "the auto-save's last 250 ms",
-      "v1.7_r012",
-      "A scene picker's option reads its position as plain text",
-      "v1.7_r013",
-      "v1.7_r014",
-      "v1.7_r015",
-      "v1.7_r016",
-      "Fabula's index squeezes a long story title",
-      "v1.7_r017",
-      "A disabled danger button looks like an enabled one",
-      "A field deleted from one of Fabula's kinds keeps its values",
-      "v1.7_r018",
-      "v1.7_r019",
-      "A drag let go the instant after its last move can land short",
-      "an era's name printing over a tick's label",
-      "v1.7_r020",
-      "v1.7_r021",
-      "drawn 36 pixels wider than its frame",
-      "v1.7_r022",
-      "v1.7_r023",
-      "v1.7_r024",
-      "56874e0",
-      "v1.7_r025"
-    ],
-    "cartulary-doctrine.md": [
-      "r030",
-      "Drakhanas/Cartulary",
-      "session 19",
-      "r033",
-      "r034",
-      "r035",
-      "r036",
-      "r037",
-      "r038",
-      "r039",
-      "r040",
-      "r041",
-      "r042",
-      "r043",
-      "r044",
-      "r045",
-      "r046",
-      "r047",
-      "r048",
-      "r049",
-      "r050",
-      "r051",
-      "`v{VERSION}_r###`",
-      "v1.7_r001",
-      "`v{VERSION}_Release`",
-      "`v{VERSION}_r###_description.py`",
-      "the folder that holds `cartulary-src/`",
-      "v1.6.1",
-      "r052",
-      "session 20",
-      "stage every file in its scope",
-      "stop hook",
-      "every load",
-      "Judge stored data by the rules that produced it",
-      "A user's world carries every upgrade it has been through",
-      "A migration that retires something other records point at by id",
-      "The control decides how far a defect reaches",
-      "A new screen gets looked at before it's staged",
-      "A fork that says what the app does is checked against the app",
-      "A field list's real review is the first use of the form it draws",
-      "A screenshot is read for what the screen says",
-      "A probe reads the saved world only after the save has run",
-      "An older probe that stops at a check the cut changed on purpose",
-      "A control that can't get past its first check",
-      "The same values shown in two places come in the same order",
-      "A flag added to a stored record has to come through every pass that writes the record",
-      "A census of what reads a field is taken from the code",
-      "A refactor that keeps behavior but not bytes is proven by recording the behavior",
-      "A check whose result changes under load has found a race",
-      "A planted defect that crashes the probe has been noticed, not counted",
-      "A planted copy that passes every check has either found a blind check or a world that never reaches the rule",
-      "A queued run whose check count differs from the solo run's is the race too",
-      "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it"
-    ],
-    "journal.txt": [
-      "r030",
-      "session 19",
-      "r031",
-      "r032",
-      "r035",
-      "r036",
-      "r037",
-      "r038",
-      "r039",
-      "r040",
-      "r041",
-      "r042",
-      "r043",
-      "r044",
-      "r045",
-      "r046",
-      "r047",
-      "r048",
-      "r049",
-      "r050",
-      "r051",
-      "v1.6.1",
-      "r052",
-      "session 20",
-      "Common Year",
-      "r002",
-      "r003",
-      "r004",
-      "r005",
-      "r006",
-      "r007",
-      "r008",
-      "r009",
-      "r010",
-      "r011",
-      "r012",
-      "r013",
-      "r014",
-      "r015",
-      "r016",
-      "r017",
-      "r018",
-      "r019",
-      "r020",
-      "r021",
-      "r022",
-      "r023",
-      "r024",
-      "the site's Fabula page",
-      "r025"
-    ]
+  "no_trailing_nl": {
+   "value": 48,
+   "pattern": "(\\d+) of the 56 files have no trailing newline"
+  },
+  "decl_count": {
+   "value": 730,
+   "pattern": "decl-set (?:PASS at )?(\\d+)"
+  },
+  "canonical_lines": {
+   "value": 49528,
+   "pattern": "sequence PASS at ([\\d,]+)"
+  },
+  "raw_body_lines": {
+   "value": 52097,
+   "pattern": "raw line count PASS at ([\\d,]+)"
+  },
+  "header_count": {
+   "value": 93,
+   "pattern": "(\\d+) column-0 section headers"
+  },
+  "shears_resolved": {
+   "value": [
+    11,
+    "eleven"
+   ],
+   "pattern": "(?:^|\\s)(eleven|\\d+) sheared section headers"
+  },
+  "shears_remaining": {
+   "value": [
+    0,
+    "zero"
+   ],
+   "pattern": "(zero|one|\\d+) sheared headers? remains?"
+  },
+  "probe_count": {
+   "value": [
+    18,
+    "eighteen"
+   ],
+   "pattern": "(?i)(eighteen|seven|\\d+) mutation probes"
+  },
+  "named_modules": {
+   "value": [
+    "twenty-two",
+    22
+   ],
+   "pattern": "(?i)(twenty-two|\\d+) named modules"
+  },
+  "trunk_arcs": {
+   "value": [
+    9,
+    "nine"
+   ],
+   "pattern": "(?i)(nine|\\d+) trunk arcs"
+  },
+  "carves_proven": {
+   "value": 23,
+   "pattern": "proven on (\\d+) carves"
+  },
+  "anchor_bytes": {
+   "value": 2793854,
+   "pattern": "anchor is ([\\d,]+) bytes"
+  },
+  "anchor_rotations": {
+   "value": [
+    "fifty-five",
+    55
+   ],
+   "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
+  },
+  "trunk16_lines": {
+   "value": 265,
+   "pattern": "`16_trunk` \\((\\d+)\\)"
+  },
+  "trunk16_tiling": {
+   "value": "6526",
+   "pattern": "265 \\+ 1028 \\+ 5233 = (\\d+)"
+  },
+  "repo": {
+   "value": "Drakhanas/Cartulary",
+   "pattern": "github\\.com/(Drakhanas/Cartulary)"
+  },
+  "cartographia_lines": {
+   "value": 5241,
+   "pattern": "18_cartographia/` \\(([\\d,]+) lines"
+  },
+  "header_pairs_cold_start": {
+   "value": 93,
+   "pattern": "header pairs at (\\d+)"
+  },
+  "header_pairs_verify": {
+   "value": 93,
+   "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
+  },
+  "module_files_cold_start": {
+   "value": 56,
+   "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
+  },
+  "anchor_rotations_made": {
+   "value": [
+    "fifty-five",
+    55
+   ],
+   "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
+  },
+  "working_hash_r029": {
+   "value": "2bc98ae1e4bcafe5",
+   "pattern": "working[^\\n]{0,40}at r029 hashes to sha256 `([0-9a-f]{16})`"
   }
+ },
+ "assertions": [
+  {
+   "file": "14_form-engine-edit.jsx",
+   "line": 1311,
+   "contains": "Longform + rich text editor"
+  },
+  {
+   "file": "14_form-engine-edit.jsx",
+   "line": 1313,
+   "contains": "function LongformEditor"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 323,
+   "contains": "Longform + markdown display"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 325,
+   "contains": "function LongformDisplay"
+  },
+  {
+   "file": "19_chronometric.jsx",
+   "line": 2,
+   "contains": "Timeline view"
+  },
+  {
+   "file": "19_chronometric.jsx",
+   "line": 4,
+   "contains": "function TimelineView"
+  },
+  {
+   "file": "19_chronometric.jsx",
+   "line": 1772,
+   "contains": "}"
+  },
+  {
+   "file": "20_linea.jsx",
+   "line": 2,
+   "contains": "Family tree view"
+  },
+  {
+   "file": "20_linea.jsx",
+   "line": 4,
+   "contains": "function buildFamilyData"
+  },
+  {
+   "file": "20_linea.jsx",
+   "line": 646,
+   "contains": "}"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 2,
+   "contains": "Stemma helpers and canvas"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 9,
+   "contains": "const STEMMA_SLOTS"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 2644,
+   "contains": "}"
+  },
+  {
+   "file": "22_trunk.jsx",
+   "line": 2,
+   "contains": "Node-source registry"
+  },
+  {
+   "file": "25_kalendarium.jsx",
+   "line": 2,
+   "contains": "Kalendarium views"
+  },
+  {
+   "file": "25_kalendarium.jsx",
+   "line": 876,
+   "contains": "}"
+  },
+  {
+   "file": "16_trunk.jsx",
+   "line": 2,
+   "contains": "Settings"
+  },
+  {
+   "file": "16_trunk.jsx",
+   "line": 4,
+   "contains": "function SettingsView"
+  },
+  {
+   "file": "16_trunk.jsx",
+   "line": 265,
+   "contains": "}"
+  },
+  {
+   "file": "17_concordance.jsx",
+   "line": 2,
+   "contains": "Graph view"
+  },
+  {
+   "file": "17_concordance.jsx",
+   "line": 12,
+   "contains": "const VAGUE_EDGE_LABELS"
+  },
+  {
+   "file": "17_concordance.jsx",
+   "line": 14,
+   "contains": "function GraphView"
+  },
+  {
+   "file": "17_concordance.jsx",
+   "line": 1054,
+   "contains": "}"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 2,
+   "contains": "Map drawing model (v1.6 pillar 3)"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 13,
+   "contains": "const MAP_PALETTE"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 53,
+   "contains": "const MAP_RASTER_LAYER"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 205,
+   "contains": "function ensureMapStamps"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 253,
+   "contains": "const MAP_STAMP_ALLOWLIST"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 275,
+   "contains": "const MAP_RASTER_TIP"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 282,
+   "contains": "const MAP_STAMP_ID_MAX"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 380,
+   "contains": "function mapReadAbr"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 586,
+   "contains": "function mapReadBplist"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 670,
+   "contains": "async function buildMapStampPngZip"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 718,
+   "contains": "function sanitizeMapStampBody"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 867,
+   "contains": "async function mapReadStampFiles"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 1081,
+   "contains": "function MapStampGlyph"
+  },
+  {
+   "file": "18_cartographia/01_renderer.jsx",
+   "line": 2,
+   "contains": "Map drawing renderer (v1.6 pillar 3)"
+  },
+  {
+   "file": "18_cartographia/01_renderer.jsx",
+   "line": 20,
+   "contains": "function mapNum"
+  },
+  {
+   "file": "18_cartographia/01_renderer.jsx",
+   "line": 90,
+   "contains": "const MAP_BUILTIN_STAMPS"
+  },
+  {
+   "file": "18_cartographia/01_renderer.jsx",
+   "line": 134,
+   "contains": "function mapTextArcPath"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 2,
+   "contains": "Map drawing tools (v1.6 pillar 3)"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 18,
+   "contains": "const MAP_TOOLS"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 39,
+   "contains": "const MAP_STRIP_GROUPS"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 101,
+   "contains": "const MAP_FREEHAND"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 108,
+   "contains": "const MAP_PAINT"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 208,
+   "contains": "const MAP_FILL"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 317,
+   "contains": "function mapSvgToCanvas"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 354,
+   "contains": "function mapShapeFrame"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 1402,
+   "contains": "function mapTrimHistory"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 1432,
+   "contains": "function useMapHistory"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 1899,
+   "contains": "function MapStampPicker"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 1955,
+   "contains": "function MapLayerPanel"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 2,
+   "contains": "Map view"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 4,
+   "contains": "function useMapImageUrl"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 46,
+   "contains": "function useMapLayerImages"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 90,
+   "contains": "function mapFontFaceCss"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 120,
+   "contains": "function buildMapDownloadSvg"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 183,
+   "contains": "function rasterizeMapSvg"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 205,
+   "contains": "const MAP_CAMERA"
+  },
+  {
+   "file": "18_cartographia/03_view.jsx",
+   "line": 207,
+   "contains": "function useMapCamera"
+  },
+  {
+   "file": "18_cartographia/04_index.jsx",
+   "line": 2,
+   "contains": "Cartographia"
+  },
+  {
+   "file": "18_cartographia/04_index.jsx",
+   "line": 26,
+   "contains": "function MapStampImportButton"
+  },
+  {
+   "file": "18_cartographia/04_index.jsx",
+   "line": 137,
+   "contains": "function MapStampsPanel"
+  },
+  {
+   "file": "18_cartographia/04_index.jsx",
+   "line": 245,
+   "contains": "function CartographiaIndexView"
+  },
+  {
+   "file": "18_cartographia/04_index.jsx",
+   "line": 358,
+   "contains": "}"
+  },
+  {
+   "file": "24_ephemeris/01_shell.jsx",
+   "line": 10,
+   "contains": "Ephemeris view (v1.5)"
+  },
+  {
+   "file": "24_ephemeris/01_shell.jsx",
+   "line": 36,
+   "contains": "function EphemerisView"
+  },
+  {
+   "file": "26_home-data.jsx",
+   "line": 2,
+   "contains": "Home view (app instructions)"
+  },
+  {
+   "file": "05_field-system.jsx",
+   "line": 167,
+   "contains": "Relation value helpers"
+  },
+  {
+   "file": "05_field-system.jsx",
+   "line": 552,
+   "contains": "v1.3 select / cascade / required helpers"
+  },
+  {
+   "file": "03_persistence.jsx",
+   "line": 367,
+   "contains": "Version History panel"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 2,
+   "contains": "Destructive Op confirmation modal"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 98,
+   "contains": "Reset Template confirmation modal"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 100,
+   "contains": "function ResetTemplateModal"
+  },
+  {
+   "file": "12_trunk.jsx",
+   "line": 2,
+   "contains": "App"
+  },
+  {
+   "file": "09_trunk.jsx",
+   "line": 174,
+   "contains": "Initial state"
+  },
+  {
+   "file": "10_migrate.jsx",
+   "line": 6098,
+   "contains": "marked.use({"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 948,
+   "contains": "const renderMapHtml"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 1532,
+   "contains": "HTML export modal"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 1543,
+   "contains": "function HtmlExportModal"
+  },
+  {
+   "file": "22_trunk.jsx",
+   "line": 97,
+   "contains": "const FABULA_KINDS"
+  },
+  {
+   "file": "28_fabula/00_seed.jsx",
+   "line": 2,
+   "contains": "Fabula: the slice and its seeded schemas (v1.7 r006)"
+  },
+  {
+   "file": "28_fabula/01_index.jsx",
+   "line": 2,
+   "contains": "Fabula: the index and the corpus page (v1.7 r007)"
+  },
+  {
+   "file": "28_fabula/02_story.jsx",
+   "line": 2,
+   "contains": "Fabula: the story page (v1.7 r008)"
+  },
+  {
+   "file": "28_fabula/03_people.jsx",
+   "line": 2,
+   "contains": "Fabula: People (v1.7 r009)"
+  },
+  {
+   "file": "28_fabula/04_outline.jsx",
+   "line": 2,
+   "contains": "Fabula: Outline (v1.7 r011)"
+  },
+  {
+   "file": "28_fabula/05_plot.jsx",
+   "line": 2,
+   "contains": "Fabula: Plot (v1.7 r013)"
+  },
+  {
+   "file": "28_fabula/06_notes.jsx",
+   "line": 2,
+   "contains": "Fabula: Notes (v1.7 r014)"
+  },
+  {
+   "file": "28_fabula/07_meaning.jsx",
+   "line": 2,
+   "contains": "Fabula: Meaning (v1.7 r015)"
+  },
+  {
+   "file": "28_fabula/08_threads.jsx",
+   "line": 2,
+   "contains": "Fabula: threads and themes (v1.7 r016)"
+  },
+  {
+   "file": "28_fabula/09_templates.jsx",
+   "line": 2,
+   "contains": "Fabula: templates (v1.7 r017)"
+  },
+  {
+   "file": "19_chronometric.jsx",
+   "line": 286,
+   "contains": "Chronometric math"
+  },
+  {
+   "file": "19_chronometric.jsx",
+   "line": 629,
+   "contains": "Chronometrics view"
+  },
+  {
+   "file": "28_fabula/10_timeline.jsx",
+   "line": 2,
+   "contains": "Fabula: the timeline (v1.7 r020)"
+  },
+  {
+   "file": "28_fabula/11_export.jsx",
+   "line": 2,
+   "contains": "Fabula: the export (v1.7 r023)"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 253,
+   "contains": "Stemma transforms"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 266,
+   "contains": "const addChildToStemmaTree"
+  },
+  {
+   "file": "22_trunk.jsx",
+   "line": 84,
+   "contains": "const SYNTH_TPL_STEMMA"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 1695,
+   "contains": "Tabula: the document"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 1933,
+   "contains": "Tabula: the canvas"
+  }
+ ],
+ "spans": {
+  "16_trunk.jsx": [
+   [
+    1,
+    265,
+    "head (SettingsView)"
+   ]
+  ],
+  "17_concordance.jsx": [
+   [
+    1,
+    1054,
+    "concordance"
+   ]
+  ],
+  "18_cartographia/00_model.jsx": [
+   [
+    1,
+    1096,
+    "model"
+   ]
+  ],
+  "18_cartographia/01_renderer.jsx": [
+   [
+    1,
+    380,
+    "renderer"
+   ]
+  ],
+  "18_cartographia/02_tools.jsx": [
+   [
+    1,
+    2121,
+    "tools"
+   ]
+  ],
+  "18_cartographia/03_view.jsx": [
+   [
+    1,
+    1286,
+    "view"
+   ]
+  ],
+  "18_cartographia/04_index.jsx": [
+   [
+    1,
+    358,
+    "index"
+   ]
+  ],
+  "19_chronometric.jsx": [
+   [
+    1,
+    1772,
+    "chronometric"
+   ]
+  ],
+  "20_linea.jsx": [
+   [
+    1,
+    646,
+    "linea"
+   ]
+  ],
+  "21_stemma.jsx": [
+   [
+    1,
+    2644,
+    "stemma"
+   ]
+  ],
+  "25_kalendarium.jsx": [
+   [
+    1,
+    876,
+    "kalendarium"
+   ]
+  ]
+ },
+ "required_strings": {
+  "handoff.md": [
+   "header placement",
+   "prove_gate_teeth.py",
+   "build_inline.py gather",
+   "check_docs.py",
+   "back to front",
+   "25_kalendarium",
+   "Drakhanas/Cartulary",
+   "build_inline.py edit",
+   "freeze r###",
+   "tools/turnover/check_docs.py",
+   "eighteen mutation probes",
+   "cartographia-plus-spec.md",
+   "r031",
+   "ensureMapData",
+   "buildMapDrawingTree",
+   "MapStampImportButton",
+   "r047",
+   "r048",
+   "r049",
+   "17_concordance",
+   "18_cartographia",
+   "r050",
+   "r051",
+   "b99381a041153d9d",
+   "e748142eadb3e1aa",
+   "v1.6 is SHIPPED",
+   "2026-10-23",
+   "changelog-v1.6.md",
+   "handoff-v1.6.md",
+   "tools/turnover/conventions.md",
+   "docs/roadmap.md",
+   "8554fdf",
+   "prove_teeth.py",
+   "Never freeze a body",
+   "finals-pass.md",
+   "hash equal to the artifact last passed",
+   "`working` and the parse gate",
+   "`v<version>_r###`",
+   "v1.7_r001",
+   "is never tagged",
+   "`v<version>_Release`",
+   "v1.7_Release",
+   "`inlining/cuts/v<version>_r###_description.py`",
+   "(p / 'cartulary-src').is_dir()",
+   "r052",
+   "v1.6.1 is SHIPPED",
+   "v1.6.1_r052",
+   "v1.6.1_Release",
+   "v1.4",
+   "d9125ed013be5641",
+   "c10c693bbacbe9e6",
+   "docs/release-notes/v1.6.1/finals-pass.md",
+   "Letters before Pipes",
+   "fabula-spec.md",
+   "v1.7 is OPEN",
+   "Common Year",
+   "stop hook",
+   "112ad4301a10df3c",
+   "stages the old content",
+   "owes a pass of its own",
+   "answers the font requests empty",
+   "v1.7_r002",
+   "syncRefTargetNames",
+   "refTargetIndex",
+   "r003",
+   "r004",
+   "as a control",
+   "v1.7_r003",
+   "resolveRefTarget",
+   "refLinkHtml",
+   "mapDeleteMessage",
+   "v1.7_r004",
+   "retargetRetired",
+   "retiredTargetsRepairedV17",
+   "755e95a722506f5e",
+   "v1.7_r005",
+   "MultiSelectEditor",
+   "One item per message",
+   "v1.7_r006",
+   "ensureFabulaSlice",
+   "FABULA_KINDS",
+   "d9125ed013be5641",
+   "v1.7_r007",
+   "fabulaTemplate",
+   "corpusDraft",
+   "its shortest value and its longest",
+   "v1.7_r008",
+   "fabulaLiveFields",
+   "fabulaStoryNodes",
+   "prefs.fabulaFolds",
+   "fieldPanelSegments",
+   "is checked against the app before it's sent",
+   "v1.7_r009",
+   "FabulaRecordPage",
+   "fabulaBack",
+   "scrubFabulaRefs",
+   "excludeIds",
+   "fabulaRecordOpens",
+   "as a list of one",
+   "v1.7_r010",
+   "28_fabula",
+   "v1.7_r011",
+   "FabulaOutlineTab",
+   "prefs.fabulaOutlineFolds",
+   "whatHappens",
+   "The auto-save writes 250 ms after the last change",
+   "for what the screen says as well as for what it clips",
+   "reference-r029-body.jsx",
+   "reference-r029-layout.json",
+   "15a9137a51972cbf",
+   "v1.7_r012",
+   "fabulaOutlinePlaces",
+   "keepOrder",
+   "badgeExtra",
+   "Nine browser probes at once",
+   "runs that probe from a copy adapted at those checks",
+   "v1.7_r013",
+   "FabulaPlotTab",
+   "fabulaPlotEdit",
+   "firstIds",
+   "fabulaUnpaid",
+   "Wait for probes by their processes",
+   "plant a defect for each of the cut's main rules",
+   "v1.7_r014",
+   "FabulaNotesTab",
+   "footSlot",
+   "fabulaNoteOpen",
+   "v1.7_r015",
+   "FabulaMeaningTab",
+   "fabulaThemeScenes",
+   "A picker's option is an entry's bare name",
+   "v1.7_r016",
+   "fabulaFlagTemplates",
+   "setDefaultNavigationTimeout",
+   "v1.7_r017",
+   "fabulaRefreshCore",
+   "FabulaKindTemplates",
+   "schemaDraft",
+   "passing for the wrong reason",
+   "v1.7_r018",
+   "tools/chrono-parity",
+   "chronoLaneLayout",
+   "rowsByLane",
+   "v1.7_r019",
+   "chronoTitleLines",
+   "chronoEventExtent",
+   "titleLinesByLane",
+   "v1.7_r020",
+   "FabulaTimelineTab",
+   "fabulaTimelineData",
+   "openFabulaRecordIn",
+   "v1.7_r021",
+   "chronoEraLabel",
+   "--aside eras",
+   "v1.7_r022",
+   "FABULA_TIMELINE_MODES",
+   "entry-view-full",
+   "v1.7_r023",
+   "renderEntryFieldsHtml",
+   "FabulaExportModal",
+   "articleIds",
+   "v1.7_r029",
+   "HOME_SECTIONS",
+   "fabula-timeline",
+   "56874e0",
+   "v1.7_r025",
+   "28_fabula/",
+   "2bc98ae1e4bcafe5",
+   "tools/stemma-parity",
+   "__stemmas__",
+   "TabulaCanvasView",
+   "useTabulaCamera",
+   "tabulaEnsureDocument",
+   "ensureStemmas",
+   "prefs.tabulaViews",
+   "overflow: clip",
+   "bb4c7c9"
+  ],
+  "cartulary-spine-manifest.md": [
+   "## 11. Header integrity",
+   "r030",
+   "25_kalendarium",
+   "2facf10cea574525",
+   "Eighteen probes",
+   "r031",
+   "3604074d447fcc41",
+   "r032",
+   "cce2d99770ed6ee4",
+   "r033",
+   "a3e8d460d3bab754",
+   "r034",
+   "4e01cbf041ffed41",
+   "r035",
+   "9c0bbfe453e80668",
+   "r036",
+   "1543145c4ce2e5b9",
+   "r037",
+   "4b3b7eee4cc16920",
+   "r038",
+   "02757469587b7ba5",
+   "r039",
+   "r040",
+   "ab06b96df79cd7f7",
+   "r041",
+   "d83664af97b38bfe",
+   "r042",
+   "de69aed94037dfe1",
+   "r043",
+   "aec789dfc940ed73",
+   "r044",
+   "c8b110fe92691d17",
+   "r045",
+   "c30bb358c0e7e6a6",
+   "r046",
+   "b0bb5c39be590495",
+   "r047",
+   "91c36b021ad89d90",
+   "r048",
+   "r049",
+   "17_concordance",
+   "18_cartographia",
+   "r050",
+   "e6e610a404924a85",
+   "r051",
+   "reference-r052-body.jsx",
+   "d8369c86696f8f46",
+   "r052",
+   "1dbfec5bbafcdaa2",
+   "reference-r001-body.jsx",
+   "a2f26b602064207c",
+   "e11d0a9253eedaad",
+   "On v1.7 r001 verification",
+   "reference-r002-body.jsx",
+   "8af1a730ac383d32",
+   "710f0d88e89bde32",
+   "On v1.7 r002 verification",
+   "reference-r003-body.jsx",
+   "b1b07ff195a9e796",
+   "a2bb59988f15030f",
+   "On v1.7 r003 verification",
+   "08_export-layer:1532",
+   "reference-r004-body.jsx",
+   "16337a1350d7e7e6",
+   "0731070bf5555171",
+   "On v1.7 r004 verification",
+   "10_migrate:6098",
+   "reference-r005-body.jsx",
+   "e70e86fef21544cd",
+   "cd6875aa3a5295db",
+   "On v1.7 r005 verification",
+   "reference-r006-body.jsx",
+   "b2a8ba4e362f54bd",
+   "046261e6caccc29f",
+   "On v1.7 r006 verification",
+   "FABULA_KINDS",
+   "reference-r007-body.jsx",
+   "9d42ce11a6c8002e",
+   "c723fa573f160881",
+   "On v1.7 r007 verification",
+   "FabulaReadingOrder",
+   "reference-r008-body.jsx",
+   "0d683c6de47f37c3",
+   "1d0b64c4f9cb8dcb",
+   "On v1.7 r008 verification",
+   "FabulaStoryPage",
+   "reference-r009-body.jsx",
+   "f4d73f0a51c06190",
+   "aa89edb8519e3604",
+   "On v1.7 r009 verification",
+   "FabulaPeopleTab",
+   "On v1.7 r010 verification",
+   "28_fabula.jsx",
+   "reference-r011-body.jsx",
+   "8d11c4834e6424f7",
+   "819c23d2f11cb58c",
+   "On v1.7 r011 verification",
+   "FabulaOutlineTab",
+   "reference-r012-body.jsx",
+   "reference-r029-layout.json",
+   "dfdb4a8f0e05eebc",
+   "880886f26451d22e",
+   "On v1.7 r012 verification",
+   "fabulaOutlinePlaces",
+   "reference-r013-body.jsx",
+   "041fba079f455cd6",
+   "061f90388538cfeb",
+   "On v1.7 r013 verification",
+   "FabulaPlotTab",
+   "reference-r014-body.jsx",
+   "274e570b491549df",
+   "5f6ccdc961669baf",
+   "On v1.7 r014 verification",
+   "FabulaNotesTab",
+   "reference-r015-body.jsx",
+   "c9d6bc061d5d9da2",
+   "9ff2acd11c4730bf",
+   "On v1.7 r015 verification",
+   "FabulaMeaningTab",
+   "reference-r016-body.jsx",
+   "8133242d2b3d5212",
+   "3b354a21f2a02a36",
+   "On v1.7 r016 verification",
+   "FabulaEntryStories",
+   "reference-r017-body.jsx",
+   "36b5e4ae0b1eb9b1",
+   "3efc9fffa2c65b6a",
+   "On v1.7 r017 verification",
+   "FabulaResetModal",
+   "reference-r018-body.jsx",
+   "9fc40ea26388ef8f",
+   "da27cd8bf8d579ef",
+   "On v1.7 r018 verification",
+   "chronoRowY",
+   "reference-r019-body.jsx",
+   "9614e63540e713f1",
+   "bf1e59886e5a973c",
+   "On v1.7 r019 verification",
+   "reference-r020-body.jsx",
+   "7f00bd545264415b",
+   "2b5155e3e0eee2bd",
+   "On v1.7 r020 verification",
+   "reference-r021-body.jsx",
+   "2b8b5eb3734031ec",
+   "15798476a23a5474",
+   "On v1.7 r021 verification",
+   "reference-r022-body.jsx",
+   "b57e7a1196c91937",
+   "5a959d0f6cedbe82",
+   "On v1.7 r022 verification",
+   "reference-r023-body.jsx",
+   "0724107911773c17",
+   "95e16b5e98b0e927",
+   "On v1.7 r023 verification",
+   "renderEntryFieldsHtml",
+   "reference-r024-body.jsx",
+   "ff3dfdd0a011f1dc",
+   "35b615d71606dc90",
+   "On v1.7 r024 verification",
+   "On v1.7 r025 verification",
+   "28_fabula/",
+   "reference-r026-body.jsx",
+   "On v1.7 r026 verification",
+   "reference-r027-body.jsx",
+   "On v1.7 r027 verification",
+   "reference-r028-body.jsx",
+   "On v1.7 r028 verification",
+   "reference-r029-body.jsx",
+   "On v1.7 r029 verification",
+   "2bc98ae1e4bcafe5",
+   "15a9137a51972cbf"
+  ],
+  "changelog.md": [
+   "changelog-v1.6.md",
+   "changelog-v1.5.md",
+   "Between v1.6 and v1.7",
+   "session 19",
+   "r051",
+   "v1.6.1",
+   "r052",
+   "## v1.7",
+   "session 20",
+   "v1.7_r001",
+   "Common Year",
+   "e11d0a9253eedaad",
+   "v1.7_r002",
+   "710f0d88e89bde32",
+   "8af1a730ac383d32",
+   "syncRefTargetNames",
+   "v1.7_r003",
+   "a2bb59988f15030f",
+   "b1b07ff195a9e796",
+   "resolveRefTarget",
+   "v1.7_r004",
+   "0731070bf5555171",
+   "16337a1350d7e7e6",
+   "retargetRetired",
+   "v1.7_r005",
+   "cd6875aa3a5295db",
+   "e70e86fef21544cd",
+   "MultiSelectEditor",
+   "v1.7_r006",
+   "046261e6caccc29f",
+   "b2a8ba4e362f54bd",
+   "ensureFabulaSlice",
+   "v1.7_r007",
+   "c723fa573f160881",
+   "9d42ce11a6c8002e",
+   "FabulaIndexView",
+   "3c7279a8d9c3875a",
+   "v1.7_r008",
+   "1d0b64c4f9cb8dcb",
+   "0d683c6de47f37c3",
+   "fabulaLiveFields",
+   "v1.7_r009",
+   "aa89edb8519e3604",
+   "f4d73f0a51c06190",
+   "scrubFabulaRefs",
+   "v1.7_r010",
+   "v1.7_r011",
+   "819c23d2f11cb58c",
+   "8d11c4834e6424f7",
+   "FabulaOutlineTab",
+   "01f168a",
+   "v1.7_r012",
+   "880886f26451d22e",
+   "dfdb4a8f0e05eebc",
+   "fabulaOutlinePlaces",
+   "4a48dfe",
+   "v1.7_r013",
+   "061f90388538cfeb",
+   "041fba079f455cd6",
+   "FabulaPlotTab",
+   "v1.7_r014",
+   "5f6ccdc961669baf",
+   "274e570b491549df",
+   "FabulaNotesTab",
+   "26652cb",
+   "v1.7_r015",
+   "9ff2acd11c4730bf",
+   "c9d6bc061d5d9da2",
+   "FabulaMeaningTab",
+   "1211af0",
+   "v1.7_r016",
+   "3b354a21f2a02a36",
+   "8133242d2b3d5212",
+   "fabulaFlagTemplates",
+   "5387bf6",
+   "v1.7_r017",
+   "3efc9fffa2c65b6a",
+   "36b5e4ae0b1eb9b1",
+   "fabulaRefreshCore",
+   "61df82c",
+   "ededabe",
+   "v1.7_r018",
+   "da27cd8bf8d579ef",
+   "9fc40ea26388ef8f",
+   "d7ff89c",
+   "tools/chrono-parity",
+   "chronoStackRows",
+   "v1.7_r019",
+   "bf1e59886e5a973c",
+   "9614e63540e713f1",
+   "26c6dde",
+   "chronoTitleLines",
+   "v1.7_r020",
+   "2b5155e3e0eee2bd",
+   "7f00bd545264415b",
+   "d8889d9",
+   "FabulaTimelineTab",
+   "v1.7_r021",
+   "15798476a23a5474",
+   "2b8b5eb3734031ec",
+   "e331732",
+   "dc561f8",
+   "chronoEraLabel",
+   "v1.7_r022",
+   "5a959d0f6cedbe82",
+   "b57e7a1196c91937",
+   "8a743c1",
+   "9d4d07e",
+   "85b021a",
+   "FABULA_TIMELINE_MODES",
+   "v1.7_r023",
+   "95e16b5e98b0e927",
+   "0724107911773c17",
+   "a8e0ddc",
+   "ff9ae78",
+   "4c98e43",
+   "renderEntryFieldsHtml",
+   "FabulaExportModal",
+   "v1.7_r024",
+   "35b615d71606dc90",
+   "ff3dfdd0a011f1dc",
+   "ea4d2bd",
+   "3c36ec6",
+   "d438083",
+   "fabula-timeline",
+   "56874e0",
+   "b36e8e6",
+   "84fede2480fa0d52",
+   "v1.7_r025",
+   "92629b6",
+   "2d657f7",
+   "v1.7_r025_carve_fabula_folder.py",
+   "5c4e425ad5b6a63a",
+   "d76fcd6d132c7c10",
+   "bfba2f23739b1e41",
+   "112ad4301a10df3c",
+   "v1.7_r029",
+   "2bc98ae1e4bcafe5",
+   "bb4c7c9",
+   "a040da4",
+   "tabulaCoerceItem",
+   "v1.7_r029_tabula_one.py"
+  ],
+  "roadmap.md": [
+   "roadmap-archive.md",
+   "roadmap-principles.md",
+   "r051",
+   "b99381a041153d9d",
+   "No line is open",
+   "product-text defects",
+   "makeEmptyGrid",
+   "v1.6.1",
+   "r052",
+   "v1.6.1 shipped",
+   "d9125ed013be5641",
+   "Letters before Pipes",
+   "fabula-spec.md",
+   "session 20",
+   "Common Year",
+   "A grid's starting shape",
+   "### Document debt",
+   "v1.7_r002",
+   "r003",
+   "r004",
+   "Language / Glossary",
+   "v1.7_r003",
+   "Deleting a Glossopoeia record leaves entry references to it",
+   "v1.7_r004",
+   "A map template of the user's own, promoted to Cartographia before r004",
+   "v1.7_r005",
+   "Other on multi-selects: done in r005",
+   "CI's two warnings",
+   "v1.7_r006",
+   "v1.7_r007",
+   "v1.7_r008",
+   "v1.7_r009",
+   "v1.7_r010",
+   "v1.7_r011",
+   "The outline's keyboard moves rows, not the focus",
+   "the auto-save's last 250 ms",
+   "v1.7_r012",
+   "A scene picker's option reads its position as plain text",
+   "v1.7_r013",
+   "v1.7_r014",
+   "v1.7_r015",
+   "v1.7_r016",
+   "Fabula's index squeezes a long story title",
+   "v1.7_r017",
+   "A disabled danger button looks like an enabled one",
+   "A field deleted from one of Fabula's kinds keeps its values",
+   "v1.7_r018",
+   "v1.7_r019",
+   "A drag let go the instant after its last move can land short",
+   "an era's name printing over a tick's label",
+   "v1.7_r020",
+   "v1.7_r021",
+   "drawn 36 pixels wider than its frame",
+   "v1.7_r022",
+   "v1.7_r023",
+   "v1.7_r024",
+   "56874e0",
+   "v1.7_r025",
+   "v1.7_r029",
+   "r029 is in"
+  ],
+  "cartulary-doctrine.md": [
+   "r030",
+   "Drakhanas/Cartulary",
+   "session 19",
+   "r033",
+   "r034",
+   "r035",
+   "r036",
+   "r037",
+   "r038",
+   "r039",
+   "r040",
+   "r041",
+   "r042",
+   "r043",
+   "r044",
+   "r045",
+   "r046",
+   "r047",
+   "r048",
+   "r049",
+   "r050",
+   "r051",
+   "`v{VERSION}_r###`",
+   "v1.7_r001",
+   "`v{VERSION}_Release`",
+   "`v{VERSION}_r###_description.py`",
+   "the folder that holds `cartulary-src/`",
+   "v1.6.1",
+   "r052",
+   "session 20",
+   "stage every file in its scope",
+   "stop hook",
+   "every load",
+   "Judge stored data by the rules that produced it",
+   "A user's world carries every upgrade it has been through",
+   "A migration that retires something other records point at by id",
+   "The control decides how far a defect reaches",
+   "A new screen gets looked at before it's staged",
+   "A fork that says what the app does is checked against the app",
+   "A field list's real review is the first use of the form it draws",
+   "A screenshot is read for what the screen says",
+   "A probe reads the saved world only after the save has run",
+   "An older probe that stops at a check the cut changed on purpose",
+   "A control that can't get past its first check",
+   "The same values shown in two places come in the same order",
+   "A flag added to a stored record has to come through every pass that writes the record",
+   "A census of what reads a field is taken from the code",
+   "A refactor that keeps behavior but not bytes is proven by recording the behavior",
+   "A check whose result changes under load has found a race",
+   "A planted defect that crashes the probe has been noticed, not counted",
+   "A planted copy that passes every check has either found a blind check or a world that never reaches the rule",
+   "A queued run whose check count differs from the solo run's is the race too",
+   "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it"
+  ],
+  "journal.txt": [
+   "r030",
+   "session 19",
+   "r031",
+   "r032",
+   "r035",
+   "r036",
+   "r037",
+   "r038",
+   "r039",
+   "r040",
+   "r041",
+   "r042",
+   "r043",
+   "r044",
+   "r045",
+   "r046",
+   "r047",
+   "r048",
+   "r049",
+   "r050",
+   "r051",
+   "v1.6.1",
+   "r052",
+   "session 20",
+   "Common Year",
+   "r002",
+   "r003",
+   "r004",
+   "r005",
+   "r006",
+   "r007",
+   "r008",
+   "r009",
+   "r010",
+   "r011",
+   "r012",
+   "r013",
+   "r014",
+   "r015",
+   "r016",
+   "r017",
+   "r018",
+   "r019",
+   "r020",
+   "r021",
+   "r022",
+   "r023",
+   "r024",
+   "the site's Fabula page",
+   "r025",
+   "r029"
+  ]
+ }
 }

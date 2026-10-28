@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -992,3 +992,38 @@ should, and the help and site checks compare every kind's table to the seed, in
 order, with multi and core, which is the check r024's probe used to make before it
 went with that session's sandbox. Three cuts in one evening, all passed on the
 first staging; Tabula's canvas is next, the big one.
+
+r029 was the cut the plan called least certain, and it took the night. The
+document came easily, because the spec had already decided it: a board node at
+the root, items with integer positions, heights never stored, absent layout a
+rota so nothing migrates. I wrote the load-time coercion the way ensureMapData
+treats a map, never throwing, and the import normalizer the way the rota's is,
+refusing by name, and the probe's malformed board found the one place they
+disagreed with the spec's intent: a root that wasn't a board came back as an
+empty board, its items thrown away, where the spec meant a file from a newer or
+hand-edited build to render. It keeps what it held now. The canvas was the work.
+HTML rather than SVG, because a note has to wrap and render Markdown, one div
+moved and scaled by a transform with the cards absolute on it, the map editor's
+camera grammar ported to an unbounded surface. The first full probe failed its
+drag and its inspector checks for a reason that had nothing to do with either:
+my own probe had placed three cards at the view's center, one on top of the
+other, and was pressing on whichever was uppermost. That's a probe defect, not a
+build defect, but it cost an hour, and the fix was to place every card where the
+next step could reach it, which is also how a person would. The real defect of
+the night was subtler. The smart input opened 120 pixels left of where the Link
+tool was dropped, and only after a note had been edited. The pane was overflow
+hidden, which still makes it a scroll container, and focusing a field inside it
+had scrolled the pane by 120 pixels to bring the field into view, so everything
+in it sat 120 pixels off from where the camera thought it was. The map editor
+never met this because nothing focusable lives inside its SVG. Overflow clip is
+the answer: not a scroll container at all. I changed the in-place editor from the
+spec's blur-commit to committing as typed, a run one history step, after seeing
+the inspector beside it show the stale title until the blur; two views of one
+field have to agree, and the cheaper way to make them agree is to have one state.
+Ninety-eight checks in the end, across this build, the r028 build, and the
+v1.6.1 final rebuilt from its tag, which refused the version-2 file as the spec
+said it would and took the new build's rota export; nine planted copies, each
+caught by the check named for it, though two read as missed until I looked,
+because the probe names its checks with colons and my runner cut the names at
+the first one. Drak passed it on the first staging, past one in the morning.
+r030 is columns and sub-boards, and the document already knows them.
