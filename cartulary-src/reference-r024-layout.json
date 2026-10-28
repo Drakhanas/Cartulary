@@ -171,8 +171,52 @@
       248
     ],
     [
-      "28_fabula.jsx",
-      4776
+      "28_fabula/00_seed.jsx",
+      270
+    ],
+    [
+      "28_fabula/01_index.jsx",
+      334
+    ],
+    [
+      "28_fabula/02_story.jsx",
+      214
+    ],
+    [
+      "28_fabula/03_people.jsx",
+      274
+    ],
+    [
+      "28_fabula/04_outline.jsx",
+      758
+    ],
+    [
+      "28_fabula/05_plot.jsx",
+      673
+    ],
+    [
+      "28_fabula/06_notes.jsx",
+      135
+    ],
+    [
+      "28_fabula/07_meaning.jsx",
+      227
+    ],
+    [
+      "28_fabula/08_threads.jsx",
+      255
+    ],
+    [
+      "28_fabula/09_templates.jsx",
+      296
+    ],
+    [
+      "28_fabula/10_timeline.jsx",
+      760
+    ],
+    [
+      "28_fabula/11_export.jsx",
+      580
     ],
     [
       "29_modals.jsx",
