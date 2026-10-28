@@ -647,7 +647,7 @@ Other on multi-selects went in first, as v1.7's r005 (2026-10-25), since four of
 
 Letters comes before Pipes in v1.7 (Drak, 2026-10-24), so the two pieces of this spec that ride on backlinks' scan of incoming references, an entry's Referenced by list showing its Fabula records and the delete confirmation's count, land with backlinks (Pipes item 1), which is then built once over entries and Fabula together. Until then a delete cleans Fabula's references and keeps cast records as section 9 says, without the count.
 
-About ten cuts, the first estimate; r006 through r024 took nineteen, with r012's addition, Drak's r019 and r021, and the carve among them; item 12 is done, and the plan with it (2026-10-27). What's owed: the split of `28_fabula` into a folder at its section headers, a pure carve, by Drak's call for when Fabula is finished (2026-10-25); the help's debt in the roadmap; and what the timeline leaves for later, also there. The extraction and the timeline are the least certain.
+About ten cuts, the first estimate; r006 through r024 took nineteen, with r012's addition, Drak's r019 and r021, and the carve among them; item 12 is done, and the plan with it (2026-10-27). What's owed: the split of `28_fabula` into a folder at its section headers, a pure carve, by Drak's call for when Fabula is finished (2026-10-25), taken as v1.7's r025 ahead of Stemma v2 (Drak, 2026-10-27, option a: twelve parts at its twelve headers, byte-identical to the r024 build, no pass owed); the help's debt in the roadmap; and what the timeline leaves for later, also there. The extraction and the timeline are the least certain.
 
 ## 11. Acceptance tests
 
