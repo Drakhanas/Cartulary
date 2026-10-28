@@ -199,6 +199,7 @@ function App() {
     fabulaFolds: {}, // v1.7 r008: the Story tab's folded panels, one set for every story
     fabulaOutlineFolds: {}, // v1.7 r011: the Outline tab's folded acts, chapters, and scenes, by id
     fabulaTimeline: {}, // v1.7 r020: the Timeline tab's scope, lanes, and calendar, by story
+    tabulaViews: {}, // v1.7 r029: a tabula's pan and zoom, by board node id
   });
 
   // In-memory snooze for the backup reminder banner. Resets on tab reload.
@@ -254,6 +255,7 @@ function App() {
             fabulaFolds: stored.fabulaFolds && typeof stored.fabulaFolds === "object" && !Array.isArray(stored.fabulaFolds) ? stored.fabulaFolds : {},
             fabulaOutlineFolds: stored.fabulaOutlineFolds && typeof stored.fabulaOutlineFolds === "object" && !Array.isArray(stored.fabulaOutlineFolds) ? stored.fabulaOutlineFolds : {},
             fabulaTimeline: stored.fabulaTimeline && typeof stored.fabulaTimeline === "object" && !Array.isArray(stored.fabulaTimeline) ? stored.fabulaTimeline : {},
+            tabulaViews: stored.tabulaViews && typeof stored.tabulaViews === "object" && !Array.isArray(stored.tabulaViews) ? stored.tabulaViews : {},
           });
         } else {
           // No prefs at all — initialize lastExportAt so a brand-new world
@@ -2997,13 +2999,23 @@ function App() {
   // its canvas. The proper two-step creation modal (stemma name + root smart-input)
   // arrives in step 4 alongside the smart-input widget itself; this is the
   // interim path so step 3 has something testable.
-  const createStemma = () => {
+  // v1.7 r029: the layout is "rota" or "tabula"; a tabula opens on its empty
+  // board (tabulaNewDocument).
+  const createStemma = (layout) => {
     if (isLocked) return;
+    if (layout === "tabula") {
+      const doc = tabulaNewDocument("Untitled Tabula");
+      updateState(s => ({ ...s, stemmas: [...(s.stemmas || []), doc] }));
+      setActiveStemmaId(doc.id);
+      setFocalNodeId(doc.root.id);
+      flash("Tabula created");
+      return;
+    }
     const stemId = `stem-${genId()}`;
     const rootId = `n-${genId()}`;
     const newStemma = {
       id: stemId,
-      name: "Untitled Stemma",
+      name: "Untitled Rota",
       description: "",
       tags: [],
       root: {
@@ -3021,8 +3033,12 @@ function App() {
     updateState(s => ({ ...s, stemmas: [...(s.stemmas || []), newStemma] }));
     setActiveStemmaId(stemId);
     setFocalNodeId(rootId);
-    flash("Stemma created");
+    flash("Rota created");
   };
+
+  // v1.7 r029: a tabula's pan and zoom, kept with the display settings by
+  // board node id, so a board opens where it was left.
+  const setTabulaView = (boardId, view) => setPrefs(p => ({ ...p, tabulaViews: { ...(p.tabulaViews || {}), [boardId]: view } }));
 
   const openStemma = (stemId) => {
     const s = (state.stemmas || []).find(x => x.id === stemId);
@@ -3059,6 +3075,14 @@ function App() {
       entries: scrubEntryRefs(s.entries, s.templates, new Set([stemmaId])),
       fabula: scrubFabulaRefs(s, new Set([stemmaId])),
     }));
+    // v1.7 r029: a tabula's remembered views go with it
+    const gone = (state.stemmas || []).find(st => st.id === stemmaId);
+    if (gone && gone.layout === "tabula") {
+      const boards = [];
+      const walk = (n) => { if (!n) return; if (n.type === "board") boards.push(n.id); (n.items || []).forEach(walk); };
+      walk(gone.root);
+      setPrefs(p => { const tv = { ...(p.tabulaViews || {}) }; boards.forEach(id => { delete tv[id]; }); return { ...p, tabulaViews: tv }; });
+    }
     // If the canvas was open on this stemma, close it
     if (activeStemmaId === stemmaId) {
       setActiveStemmaId(null);
@@ -3319,8 +3343,11 @@ function App() {
   // ids via normalizeImportedStemma → regenerateStemmaIds at import time.
   const exportStemmaJson = (stemma) => {
     if (!stemma) return;
+    // v1.7 r029: a tabula writes envelope 2, which every build before it
+    // refuses outright, where a version-1 board would import into one as its
+    // root alone; a rota stays at 1, so older builds keep importing it.
     const payload = {
-      cartulary_stemma_export: 1,
+      cartulary_stemma_export: stemma.layout === "tabula" ? 2 : 1,
       exported_at: new Date().toISOString(),
       stemma,
     };
@@ -3349,8 +3376,14 @@ function App() {
       let parsed;
       try { parsed = JSON.parse(reader.result); }
       catch (e) { flash("Couldn't parse that file as JSON.", "error"); return; }
-      if (!parsed || parsed.cartulary_stemma_export !== 1 || !parsed.stemma) {
+      if (!parsed || typeof parsed.cartulary_stemma_export !== "number" || !parsed.stemma) {
         flash("That doesn't look like a Cartulary stemma export.", "error");
+        return;
+      }
+      // v1.7 r029: 1 is a rota's envelope, 2 a tabula's; anything higher
+      // came from a newer Cartulary than this one.
+      if (parsed.cartulary_stemma_export > 2) {
+        flash("That stemma was exported by a newer Cartulary than this one; update Cartulary to import it.", "error");
         return;
       }
       const norm = normalizeImportedStemma(parsed.stemma);
@@ -3374,7 +3407,8 @@ function App() {
       }
       insertImportedStemma(regenerated, "new");
       if (missingRefs.length > 0) {
-        flash(`Imported "${regenerated.name}". ${missingRefs.length} linked node${missingRefs.length === 1 ? "" : "s"} became orphans (entry not in this world).`, "warn");
+        const unit = regenerated.layout === "tabula" ? "linked card" : "linked node";
+        flash(`Imported "${regenerated.name}". ${missingRefs.length} ${unit}${missingRefs.length === 1 ? "" : "s"} became orphans (record not in this world).`, "warn");
       } else {
         flash(`Imported stemma "${regenerated.name}".`);
       }
@@ -4169,6 +4203,30 @@ function App() {
               ...getRegisteredGraphNodes(state).filter(n => n.id !== stem.id),
             ];
             const stemmaTemplates = [...state.templates, ...getRegisteredSyntheticTemplates()];
+            // v1.7 r029: a tabula draws on its own canvas, the rota's path
+            // for the pool, the templates, the history, and the opens.
+            if (stem.layout === "tabula") {
+              const boardId = focalNodeId && tabulaBoardNode(stem.root, focalNodeId) ? focalNodeId : stem.root.id;
+              return (
+                <TabulaCanvasView
+                  key={`${stem.id}:${isLocked ? "locked" : "open"}`}
+                  stemma={stem}
+                  boardId={boardId}
+                  entries={stemmaPool}
+                  templates={stemmaTemplates}
+                  isLocked={isLocked}
+                  flash={flash}
+                  onBackToIndex={closeStemmaToIndex}
+                  onReplace={(next) => replaceStemma(stem.id, next)}
+                  onOpenEntry={openEntryFromAnywhere}
+                  onExport={() => exportStemmaJson(stem)}
+                  viewPref={(prefs.tabulaViews || {})[boardId] || null}
+                  onViewPref={setTabulaView}
+                  dirHandle={dirHandle}
+                  imageFolder={state.world.imageFolder}
+                />
+              );
+            }
             return (
               <StemmaCanvasView
                 key={`${stem.id}:${isLocked ? "locked" : "open"}`}
@@ -4957,7 +5015,7 @@ function App() {
                     insertImportedStemma(stemmaImportCollision.imported, "replace", stemmaImportCollision.existing.id);
                     const missing = stemmaImportCollision.missingRefs.length;
                     if (missing > 0) {
-                      flash(`Replaced "${stemmaImportCollision.existing.name}". ${missing} linked node${missing === 1 ? "" : "s"} became orphans.`, "warn");
+                      flash(`Replaced "${stemmaImportCollision.existing.name}". ${missing} linked ${stemmaImportCollision.imported.layout === "tabula" ? "card" : "node"}${missing === 1 ? "" : "s"} became orphans.`, "warn");
                     } else {
                       flash(`Replaced stemma "${stemmaImportCollision.existing.name}".`);
                     }
@@ -4979,7 +5037,7 @@ function App() {
                   insertImportedStemma(stemmaImportCollision.imported, "new", null, newName);
                   const missing = stemmaImportCollision.missingRefs.length;
                   if (missing > 0) {
-                    flash(`Imported as "${newName}". ${missing} linked node${missing === 1 ? "" : "s"} became orphans.`, "warn");
+                    flash(`Imported as "${newName}". ${missing} linked ${stemmaImportCollision.imported.layout === "tabula" ? "card" : "node"}${missing === 1 ? "" : "s"} became orphans.`, "warn");
                   } else {
                     flash(`Imported stemma as "${newName}".`);
                   }

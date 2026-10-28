@@ -36,13 +36,15 @@ itself breaks, 3 when a step couldn't be taken, 4 when the undo walk failed.
 
 `parity.js record` opens a build in Chromium, seeds a new world with four
 Character entries (Arwen, Boromir, Celeborn, Denethor), opens Stemma, makes a
-stemma, and takes these steps: a freeform child at slot 0, a linked child at
+rota (the button is + New Rota since r029, + New Stemma before it; the script
+clicks either), renames it before the first record so the default name of the
+day is never written down, and takes these steps: a freeform child at slot 0, a linked child at
 slot 4 picked from the smart input's suggestions, a freeform child at slot 8; a
 drill into the first child and two children under it, one of each kind; back
 to the root; the root relabeled key by key in the inspector, then an icon and
 a color picked; the third child converted to a linked entry, re-linked to
 another, and converted back to freeform; the first child deleted with its two;
-the stemma renamed. After every step it writes down the stemmas as saved, with
+the stemma renamed again. After every step it writes down the stemmas as saved, with
 every stemma and node id replaced by its number in order of first appearance
 and the times of saving dropped, and what the canvas shows: the top bar's text
 (Undo and Redo left out, since the build before r026 had none), each node's

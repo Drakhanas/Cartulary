@@ -5945,6 +5945,11 @@ const migrate = (state) => {
   // since a load that finds them flagged changes nothing.
   fabulaFlagTemplates(state);
 
+  // v1.7 r029: every tabula coerced to its shape on every load, as a map is
+  // by ensureMapData (docs/stemma-v2-spec.md, section 3); a rota is left as
+  // it is.
+  ensureStemmas(state);
+
   // v1.7 r006: Fabula's slice and its seeded schemas (docs/fabula-spec.md,
   // section 3). Last, so the templates the schemas point at are final.
   ensureFabulaSlice(state);

@@ -10,9 +10,10 @@
 //
 // record opens the build in Chromium (Playwright), seeds a new world with four
 // Character entries, opens Stemma, makes a stemma, and drives the edit
-// sequence in drive() below: adds, a drill-in, the inspector's label, icon and
-// color, convert both ways, re-link, a subtree's delete, the rename, and a
-// trip to the index and back. After every step it writes down the stemmas as
+// sequence in drive() below: the rename (first, so the default name of the
+// day is never recorded), adds, a drill-in, the inspector's label, icon and
+// color, convert both ways, re-link, a subtree's delete, the rename again, and
+// a trip to the index and back. After every step it writes down the stemmas as
 // saved (ids numbered by first appearance, times of saving aside) and what the
 // canvas shows: the name, the breadcrumb, the nodes, the inspector. With
 // --undo it then walks the whole sequence back with Ctrl+Z, checking the saved
@@ -203,8 +204,14 @@ async function inspectorPick(page, name) {
 // The steps. rec(name, undoSteps) records after a step; undoSteps is how many
 // history steps the step made, for the walk.
 async function drive(page, rec) {
-  await page.click('button.btn-accent:has-text("+ New Stemma")');
+  // r029 split the button into + New Rota and + New Tabula; the baseline
+  // before it has + New Stemma. The new stemma is renamed before the first
+  // record, so the default name (Untitled Stemma, then Untitled Rota) is
+  // never written down; the rename is exercised again at the end, where the
+  // undo walk reaches it.
+  await page.click(NEW_ROTA);
   await page.waitForSelector('button[title="Add child node"]');
+  await rename(page, 'Parity Tree');
   await rec('new stemma', 0);
   await clickPlus(page, 0); await smartInput(page, 'Alpha', false); await rec('freeform at 0', 1);
   await clickPlus(page, 4); await smartInput(page, 'Bor', true); await rec('linked Boromir at 4', 1);
@@ -233,12 +240,19 @@ async function drive(page, rec) {
   await clickChild(page, 0);
   await clickFocal(page);
   await inspector(page).locator('button:has-text("Delete node")').click(); await rec('Alpha deleted with its two', 1);
+  await rename(page, 'Parity Tree Two');
+  await rec('renamed', 1);
+}
+
+const NEW_ROTA = 'button.btn-accent:has-text("+ New Rota"), button.btn-accent:has-text("+ New Stemma")';
+
+async function rename(page, to) {
   const name = page.locator('span[title="Click to rename"]');
   await name.click();
   const nameBox = page.locator('input[type="text"][style*="min-width: 200px"]');
-  await nameBox.fill('Parity Tree');
+  await nameBox.fill(to);
   await nameBox.press('Enter');
-  await rec('renamed', 1);
+  await page.waitForTimeout(150);
 }
 
 async function undoWalk(page, steps, read) {
@@ -310,7 +324,7 @@ async function record(build, outdir, opts) {
     if (attempt === 2) throw new Error('the world didn\'t load');
   }
   await page.click(`button.nav-item:has(.nav-name:text-is("${NAV}"))`);
-  await page.waitForSelector('button.btn-accent:has-text("+ New Stemma")');
+  await page.waitForSelector(NEW_ROTA);
 
   const read = async () => { await page.waitForTimeout(700); const w = await idb(page, 'world'); return canon(w.stemmas); };
   const steps = [];
