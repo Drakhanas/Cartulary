@@ -954,3 +954,23 @@ both directions. I nearly reported that copy as caught in one direction only,
 because I'd read its output through tail -3; the trace showed the undo findings
 had been there all along, above the cut. Read the whole output, or write the
 verdict to a file and read that. Drak passed the build on the first staging.
+
+r027 went in next, links past entries, and the plan held except in one place
+where the plan trusted a comment. The cut itself was what the spec said: the
+registry takes a stemma source, the canvas's pool is every registered record, the
+pickers name a hit's source, the inspector offers Open only where something opens,
+a stemma opens from a chip or from Concordance, and its delete counts the entries,
+the Fabula records, and the other stemmas' nodes before it clears what it can
+clear. The render site had already been merging bodies into the pool by hand since
+v1.5, so the general path replaced a special case rather than adding beside one.
+The probe seeded one record of every kind a node can now point at and checked
+thirty-eight things; six copies of the build with one rule undone each failed where
+they should, and the r026 parity run still matched every step. The one surprise:
+I'd written in the spec that wiki-links resolve the registry's names, because the
+registry carries a helper whose comment says it exists for exactly that, and the
+probe's wiki-link check found the link broken. Nothing calls the helper. The entry
+view and the exports resolve a name against entries and bodies only, and only
+Concordance, with an index of its own, draws the edge. It's filed under Pipes,
+where renames rewrite the same code, and the doctrine has the rule: a comment says
+what a helper was for, a caller says whether the feature exists. Drak passed the
+build on the first staging.
