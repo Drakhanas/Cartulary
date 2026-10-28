@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "ff3dfdd0a011f1dce728280c1c54162106d6f2ea2f77f24bc211774341ed283e",
+  "anchor_sha256": "5ab1ab494de70e27ce3ca2ce9645362cb1291f00e1b3953b9dc1d473df6d1689",
   "shell_sha256": "982d572272cf4af4d991071f7cee0e1edc27365caaf88d25a2c1aaba92587ba1",
   "files": [
     [
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      5830
+      5621
     ],
     [
       "13_form-engine-display.jsx",
@@ -104,7 +104,7 @@
     ],
     [
       "21_stemma.jsx",
-      1410
+      1596
     ],
     [
       "22_trunk.jsx",
