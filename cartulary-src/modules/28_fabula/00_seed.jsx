@@ -16,8 +16,11 @@
 // the core list caught up with what r007 through r015 read, a row's details
 // included, each core field took the line the builder shows for what reads
 // it, and the plot point's name help stopped saying a structure makes one
-// (Drak, at r017's plan, 2026-10-26).
-const FABULA_SCHEMA_SEED = 4;
+// (Drak, at r017's plan, 2026-10-26), and 5 since r028, when the Story took
+// Brainstorm, the stemmas behind it, once stemmas were a registered source
+// (r027), and three core fields' lines stopped saying the timeline will,
+// r020 having built it (Drak's plan for Stemma v2, 2026-10-27).
+const FABULA_SCHEMA_SEED = 5;
 
 // The seeded schemas, one per kind, resolved against this world's templates.
 // Field ids are stable and unique within a kind, subfields included, as
@@ -86,6 +89,10 @@ const fabulaSeedSchemas = (templates) => {
         text("slot", "Slot", "One turning point's name."),
       ], core("A Custom structure's turning points, the Plot tab's headings.", { showWhen: { fieldId: "structure", values: ["Custom"] } })),
       ref("threads", "Threads", "The plot threads this story carries; one thread can run through several stories.", ["Plot Thread"], core("The Plot tab lists them.", MANY)),
+      // v1.7 r028: the stemmas behind the story, a registered source since
+      // r027, named and id'd directly since the seed's target() resolves
+      // templates and the two older sources alone. Not core: nothing reads it.
+      f("brainstorm", "Brainstorm", "entry-ref", "The stemmas behind this story, rota or tabula; a chip opens one on its canvas.", { refTemplates: [STEMMA_REF_LABEL], refTemplatesId: [SYNTH_TPL_STEMMA], ...MANY }),
       area("notes", "Notes", "Anything else about the story."),
       ...inPanel("premise", [
         area("why", "Why", "Why you're writing this story."),
@@ -156,7 +163,7 @@ const fabulaSeedSchemas = (templates) => {
       group("turningPoints", "Turning Points", "Where the arc turns, and how; one per row.", [
         kref("turnScene", "Scene", "The scene where it turns.", "scene"),
         text("turnShift", "Shift", "What shifts there."),
-      ], core("The timeline will mark them.")),
+      ], core("The timeline marks them.")),
       area("notes", "Notes", "Anything else about the arc."),
     ]),
     relationship: schema("relationship", "Name", "A name for the pair, such as \"Mira and Tomas\".", [
@@ -201,14 +208,14 @@ const fabulaSeedSchemas = (templates) => {
       area("notes", "Notes", "Anything else about the chapter."),
     ]),
     scene: schema("scene", "Title", "The scene's title.", [
-      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", core("The outline shows it, and the timeline will lane scenes by it.")),
+      kref("pov", "POV", "Whose point of view the scene keeps; left empty, it takes the chapter's.", "cast", core("The outline shows it, and the timeline lanes scenes by it.")),
       ref("setting", "Setting", "Where the scene happens.", PLACES),
       text("goal", "Goal", "What the POV character wants here."),
       text("conflict", "Conflict", "What's in the way."),
       pickOther("outcome", "Outcome", "How the goal comes out.", ["Yes", "No", "Yes, but", "No, and"]),
       text("turn", "Turn", "What has changed by the end."),
       pick("status", "Status", "Where the scene stands.", OUTLINE_STATUS, core("The outline shows it.")),
-      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", core("The timeline will place the scene by it.")),
+      f("when", "When", "calendar-date-range", "When it happens in story time, in your calendar.", core("The timeline places the scene by it.")),
       kref("participants", "Participants", "Who from the cast is in it.", "cast", MANY),
       ref("walkOns", "Walk-ons", "Anyone in it without a cast record.", BEINGS, MANY),
       ref("threads", "Threads", "The threads it moves.", ["Plot Thread"], core("The Plot tab's marks and a thread's page read it.", MANY)),
