@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "5ab1ab494de70e27ce3ca2ce9645362cb1291f00e1b3953b9dc1d473df6d1689",
+  "anchor_sha256": "03e5c1b2e7da7943a62008dd1195a24b1670394449b718c93a8cf0734d8638f0",
   "shell_sha256": "982d572272cf4af4d991071f7cee0e1edc27365caaf88d25a2c1aaba92587ba1",
   "files": [
     [
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      5621
+      5641
     ],
     [
       "13_form-engine-display.jsx",
@@ -104,11 +104,11 @@
     ],
     [
       "21_stemma.jsx",
-      1596
+      1655
     ],
     [
       "22_trunk.jsx",
-      400
+      437
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
