@@ -258,6 +258,22 @@ body.tabula-dragging,body.tabula-dragging *{user-select:none!important}
 .tabula-board .name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tabula-board .src{font-size:11px;color:var(--text-dim)}
 .tabula-holds-delete{max-width:460px}
+.tabula-grip{position:absolute;left:0;top:0;bottom:0;width:14px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11px;letter-spacing:-2px;line-height:1;cursor:grab;user-select:none;opacity:0;transition:opacity .12s ease;border-radius:5px 0 0 5px;z-index:1}
+.tabula-card:hover>.tabula-grip,.tabula-colitem:hover>.tabula-grip,.tabula-card.selected>.tabula-grip,.tabula-colitem.selected>.tabula-grip{opacity:1}
+.tabula-grip:hover{color:var(--accent)}
+.tabula-grip:active{cursor:grabbing}
+.tabula-body{padding-left:14px;min-width:0}
+.tabula-grip-inline{position:static;display:inline-flex;width:auto;margin-right:6px;opacity:1;vertical-align:middle;cursor:grab}
+.tabula-column-hdr{cursor:grab}
+.tabula-column-hdr:active{cursor:grabbing}
+.tabula-column-hdr .tabula-card-edit{cursor:default}
+.tabula-pane.grab .tabula-grip,.tabula-pane.grab .tabula-grip-inline{display:none}
+.tabula-pane.grab .tabula-column-hdr{cursor:inherit}
+.tabula-edge{position:absolute;background:var(--accent);pointer-events:none;border-radius:2px;z-index:2}
+.tabula-edge-left{left:-4px;top:-2px;bottom:-2px;width:3px}
+.tabula-edge-right{right:-4px;top:-2px;bottom:-2px;width:3px}
+.tabula-edge-top{top:-4px;left:-2px;right:-2px;height:3px}
+.tabula-edge-bottom{bottom:-4px;left:-2px;right:-2px;height:3px}
 .collision-options input[type="radio"]{margin-top:3px;flex-shrink:0;cursor:pointer}
 .collision-options label > span{flex:1;display:flex;flex-direction:column;gap:6px}
 .collision-options label .input{margin-top:4px;width:100%}
