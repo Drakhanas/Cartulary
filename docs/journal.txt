@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 29 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page; r037, the gather) ===
+=== 2026-10-27 to 29 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page; r037, the gather; r038, the carve) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1236,3 +1236,19 @@ copy failed, the steps after it weren't chained to it, and the freeze ran
 in the repository. I put the anchor back from git within the minute and
 nothing had been committed, but for that minute the repository held an
 anchor nobody had passed, and I told Drak in the same reply.
+
+r038 was the carve the plan had promised, and it went the way r025's
+did: seven parts at seven headers, the parts rejoining to the file byte
+for byte before the script wrote them, the gate exact, the rebuild
+hashing to the file Drak passed at r037, and nothing owed to the browser.
+The one oddity was a seam two blanks deep, where Tabula's document has
+ended since r029; rule 1 gives both blanks to the next file, so the
+drawing layer's part opens on its third line, and there was nothing to
+decide. What I hadn't expected was in the CI list I'd opened to watch
+r037's turnover: four red runs, one for each tag from r033 to r036. The
+handoff says a revision tag goes on the turnover commit, the one CI went
+green on, and from r033 on I'd handed Drak tag lines naming the cut's own
+commit, where the doc gate is red until the turnover lands. He pushed
+them as I gave them, CI failed on each, and I never looked at the runs a
+tag push starts. The lines to move them went to him the same night. That
+closes Stemma v2, and Letters with it; Pipes is next, its plan first.

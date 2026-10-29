@@ -1,16 +1,16 @@
 {
  "derived": {
-  "module_file_count": 56,
+  "module_file_count": 62,
   "total_lines": 54252,
   "raw_body_lines": 54252,
   "canonical_lines": 51636,
   "decl_count": 773,
-  "no_trailing_newline": 48,
+  "no_trailing_newline": 54,
   "active_anchor": "reference-r037-body.jsx"
  },
  "published": {
   "module_file_count": {
-   "value": 56,
+   "value": 62,
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
@@ -22,8 +22,8 @@
    "pattern": "\\*\\*\\d+ files, [\\d,]+ lines, (\\d+) arcs"
   },
   "no_trailing_nl": {
-   "value": 48,
-   "pattern": "(\\d+) of the 56 files have no trailing newline"
+   "value": 54,
+   "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
    "value": 773,
@@ -77,7 +77,7 @@
    "pattern": "(?i)(nine|\\d+) trunk arcs"
   },
   "carves_proven": {
-   "value": 23,
+   "value": 24,
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
@@ -116,7 +116,7 @@
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
-   "value": 56,
+   "value": 62,
    "pattern": "Module files: \\*\\*(\\d+)\\*\\*"
   },
   "anchor_rotations_made": {
@@ -126,9 +126,9 @@
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r037": {
+  "working_hash_r038": {
    "value": "f5bb9c97c88c3433",
-   "pattern": "working[^\\n]{0,40}at r037 hashes to sha256 `([0-9a-f]{16})`"
+   "pattern": "working[^\\n]{0,40}at r038 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -183,18 +183,18 @@
    "contains": "}"
   },
   {
-   "file": "21_stemma.jsx",
+   "file": "21_stemma/00_helpers-canvas.jsx",
    "line": 2,
    "contains": "Stemma helpers and canvas"
   },
   {
-   "file": "21_stemma.jsx",
+   "file": "21_stemma/00_helpers-canvas.jsx",
    "line": 9,
    "contains": "const STEMMA_SLOTS"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 4601,
+   "file": "21_stemma/06_tabula-canvas.jsx",
+   "line": 1409,
    "contains": "}"
   },
   {
@@ -608,13 +608,13 @@
    "contains": "Fabula: the export (v1.7 r023)"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1587,
+   "file": "21_stemma/01_transforms.jsx",
+   "line": 2,
    "contains": "Stemma transforms"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1600,
+   "file": "21_stemma/01_transforms.jsx",
+   "line": 15,
    "contains": "const addChildToStemmaTree"
   },
   {
@@ -623,23 +623,23 @@
    "contains": "const SYNTH_TPL_STEMMA"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1988,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 2,
    "contains": "Tabula: the document"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 3194,
+   "file": "21_stemma/06_tabula-canvas.jsx",
+   "line": 2,
    "contains": "Tabula: the canvas"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2452,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 466,
    "contains": "const tabulaMoveTo"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 3760,
+   "file": "21_stemma/06_tabula-canvas.jsx",
+   "line": 568,
    "contains": "function TabulaDeleteModal"
   },
   {
@@ -648,68 +648,68 @@
    "contains": "function mapArrowHeads"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2107,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 121,
    "contains": "const tabulaHealAnchors"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2706,
+   "file": "21_stemma/05_tabula-drawing.jsx",
+   "line": 3,
    "contains": "Tabula: the drawing layer"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2764,
+   "file": "21_stemma/05_tabula-drawing.jsx",
+   "line": 61,
    "contains": "function useTabulaDrawing"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 3834,
+   "file": "21_stemma/06_tabula-canvas.jsx",
+   "line": 642,
    "contains": "function TabulaCanvasView"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2037,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 51,
    "contains": "const tabulaHolds"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2051,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 65,
    "contains": "const tabulaNeed"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 2527,
+   "file": "21_stemma/04_tabula-document.jsx",
+   "line": 541,
    "contains": "const tabulaSetLanes"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 3596,
+   "file": "21_stemma/06_tabula-canvas.jsx",
+   "line": 404,
    "contains": "function TabulaInspector"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1739,
+   "file": "21_stemma/01_transforms.jsx",
+   "line": 154,
    "contains": "const stemmaMoveChild"
   },
   {
-   "file": "21_stemma.jsx",
+   "file": "21_stemma/00_helpers-canvas.jsx",
    "line": 997,
    "contains": "function StemmaCanvasView"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1769,
+   "file": "21_stemma/02_markdown.jsx",
+   "line": 2,
    "contains": "Stemma Markdown"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1785,
+   "file": "21_stemma/02_markdown.jsx",
+   "line": 18,
    "contains": "const stemmaMarkdown"
   },
   {
-   "file": "21_stemma.jsx",
-   "line": 1855,
+   "file": "21_stemma/03_index.jsx",
+   "line": 2,
    "contains": "Stemma index view"
   }
  ],
@@ -777,40 +777,52 @@
     "linea"
    ]
   ],
-  "21_stemma.jsx": [
+  "21_stemma/00_helpers-canvas.jsx": [
    [
     1,
     1585,
-    "the helpers and the rota's canvas"
-   ],
+    "helpers and the rota's canvas"
+   ]
+  ],
+  "21_stemma/01_transforms.jsx": [
    [
-    1586,
-    1767,
+    1,
+    182,
     "the transforms"
-   ],
+   ]
+  ],
+  "21_stemma/02_markdown.jsx": [
    [
-    1768,
-    1853,
+    1,
+    86,
     "the Markdown export"
-   ],
+   ]
+  ],
+  "21_stemma/03_index.jsx": [
    [
-    1854,
-    1986,
+    1,
+    133,
     "the index view"
-   ],
+   ]
+  ],
+  "21_stemma/04_tabula-document.jsx": [
    [
-    1987,
-    2703,
+    1,
+    717,
     "Tabula's document"
-   ],
+   ]
+  ],
+  "21_stemma/05_tabula-drawing.jsx": [
    [
-    2704,
-    3192,
+    1,
+    489,
     "Tabula's drawing layer"
-   ],
+   ]
+  ],
+  "21_stemma/06_tabula-canvas.jsx": [
    [
-    3193,
-    4601,
+    1,
+    1409,
     "Tabula's canvas"
    ]
   ],
@@ -1044,7 +1056,11 @@
    "f5bb9c97c88c3433",
    "v1.7_r037",
    "2238809",
-   "eight anchor-rotating gathers"
+   "eight anchor-rotating gathers",
+   "v1.7_r038",
+   "252143c",
+   "five directories",
+   "`21_stemma/05_tabula-drawing`"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1250,7 +1266,10 @@
    "On v1.7 r037 verification",
    "f5bb9c97c88c3433",
    "c8484528f4609b05",
-   "eight are anchor-rotating"
+   "eight are anchor-rotating",
+   "On v1.7 r038 verification",
+   "seventeen flat + five directories",
+   "(48 \u2192 54)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1442,7 +1461,10 @@
    "f5bb9c97c88c3433",
    "2238809",
    "e8fe302",
-   "v1.7_r037_gather_stemma.py"
+   "v1.7_r037_gather_stemma.py",
+   "v1.7_r038",
+   "252143c",
+   "v1.7_r038_carve_stemma_folder.py"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1522,7 +1544,9 @@
    "r036 is in",
    "130d2b4",
    "v1.7_r037",
-   "r037 is in"
+   "r037 is in",
+   "v1.7_r038",
+   "r038 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1579,7 +1603,8 @@
    "A queued run whose check count differs from the solo run's is the race too",
    "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it",
    "A header inserted inside a section passes every header check",
-   "A rehearsal in a copy checks where it stands before it changes anything"
+   "A rehearsal in a copy checks where it stands before it changes anything",
+   "A tag's CI run is read like any other"
   ],
   "journal.txt": [
    "r030",
@@ -1638,7 +1663,8 @@
    "r034",
    "r035",
    "r036",
-   "r037"
+   "r037",
+   "r038"
   ]
  }
 }
