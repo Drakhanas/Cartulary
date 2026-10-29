@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 (session 22, r039, saving: Pipes' first cut) ===
+=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1327,3 +1327,42 @@ can have the images folder, which is the case r040's backups were planned for.
 The turnover found two stale facts the gate had never been told about, the
 handoff's site hash a commit behind and the manifest's body length stale since
 r026, and both are in facts.json now, where the next turnover meets them.
+
+r040 went the same way: four details, one per message, Drak taking the
+first option on three and the second on the fourth, which put a banner
+beside Settings' rows for a folder whose permission has lapsed. Reading the
+load's code before the first of them showed how the folder had been getting
+lost: the app asked the browser for the folder's permission at load, outside
+any click, Chrome refused, and the folder was dropped without a word. A
+lapsed folder is kept now, and the click asks.
+
+I couldn't give the probe a real folder. Reading a folder handle back from
+IndexedDB crashed this sandbox's headless Chromium, both builds of it, so the
+probe's folder is one from the page's own private file system, passed to the
+app through its IndexedDB reads, with stand-ins for the permission, the
+picker, and a write that fails. Chrome's own prompt, and whether it
+remembers, stayed with Drak's pass, and the record says which checks a
+stand-in answered.
+
+The build found two defects before the pass could. Typing a new world name
+wrote a backup under every name on the way, since a world's name is a series
+of its own; a backup now waits for two quiet seconds. And a failed write left
+an empty file that read as the newest backup. Both went in as found and
+forced.
+
+The planted copies caught the probe more often than the app. One dropped the
+connect's catch-up and passed, because with an empty folder the scheduler
+writes a backup two seconds after the load anyway; one counted the wait from
+a backup that landed instead of a try, and passed because C3 read the folder
+before the two seconds ran out; one crashed the probe's own listing on a swap
+file caught mid-write; and one was planted too wide to reach its rule. Each
+check moved to where the timer couldn't answer for the rule, and all
+twenty-two copies fail where they should.
+
+The screenshots found the one thing nothing checked: "Stopped until images
+is reconnected", for the probe's folder named images. It quotes the name
+now, as the banner does, which made a new build and a rerun of everything
+that could see the line. Drak passed it and asked whether Brave's folder
+instructions are in the help. They are, under Browser Compatibility, with
+the flag to set. What that topic and Back Up Your World lack is the backups
+themselves, and r051's row says so now.

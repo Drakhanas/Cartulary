@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 54762,
-  "raw_body_lines": 54762,
-  "canonical_lines": 52122,
-  "decl_count": 790,
+  "total_lines": 55066,
+  "raw_body_lines": 55066,
+  "canonical_lines": 52414,
+  "decl_count": 800,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r039-body.jsx"
+  "active_anchor": "reference-r040-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 54762,
+   "value": 55066,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 790,
+   "value": 800,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 52122,
+   "value": 52414,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 54762,
+   "value": 55066,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 96,
+   "value": 97,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,18 +81,18 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2965126,
+   "value": 2980711,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-four",
-    64
+    "sixty-five",
+    65
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
   "trunk16_lines": {
-   "value": 289,
+   "value": 331,
    "pattern": "`16_trunk` \\((\\d+)\\)"
   },
   "trunk16_tiling": {
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 96,
+   "value": 97,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 96,
+   "value": 97,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-four",
-    64
+    "sixty-five",
+    65
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r039": {
-   "value": "ab71966a032f6058",
-   "pattern": "working[^\\n]{0,40}at r039 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r040": {
+   "value": "5e4562772266fe4f",
+   "pattern": "working[^\\n]{0,40}at r040 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 54762,
+   "value": 55066,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -232,7 +232,7 @@
   },
   {
    "file": "16_trunk.jsx",
-   "line": 289,
+   "line": 331,
    "contains": "}"
   },
   {
@@ -719,13 +719,18 @@
    "file": "21_stemma/03_index.jsx",
    "line": 2,
    "contains": "Stemma index view"
+  },
+  {
+   "file": "11_io-utils.jsx",
+   "line": 44,
+   "contains": "Backups into the images folder (v1.7 r040)"
   }
  ],
  "spans": {
   "16_trunk.jsx": [
    [
     1,
-    289,
+    331,
     "head (SettingsView)"
    ]
   ],
@@ -1049,10 +1054,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r039-body.jsx",
-   "reference-r039-layout.json",
-   "5585102f8f74825a",
-   "ab71966a032f6058",
+   "reference-r040-body.jsx",
+   "reference-r040-layout.json",
+   "bc7d488a7b04885a",
+   "5e4562772266fe4f",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1060,7 +1065,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r040, Pipes' second cut: backups into the images folder",
+   "r041, Pipes' third cut: one link index and a Referenced by list on every page that has one",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1072,7 +1077,14 @@
    "storageAskToKeep",
    "May be cleared",
    "overrideQuotaForOrigin",
-   "pipes-spec.md` (Pipes"
+   "pipes-spec.md` (Pipes",
+   "v1.7_r040",
+   "writeWorldBackup",
+   "BACKUP_SETTLE_MS",
+   "lapsedHandle",
+   "cartulary-backups",
+   "userActivation",
+   "getDirectory()"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1282,13 +1294,18 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r039-layout.json",
+   "reference-r040-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
    "Id repair (v1.7 r039)",
    "Five exist",
-   "03_persistence:453"
+   "03_persistence:453",
+   "reference-r040-body.jsx",
+   "bc7d488a7b04885a",
+   "5e4562772266fe4f",
+   "On v1.7 r040 verification",
+   "Backups into the images folder (v1.7 r040)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1493,7 +1510,15 @@
    "ab71966a032f6058",
    "v1.7_r039_saving.py",
    "txAborted",
-   "Turnover v1.7_r039"
+   "Turnover v1.7_r039",
+   "v1.7_r040",
+   "a13d322",
+   "9751a25",
+   "5e4562772266fe4f",
+   "v1.7_r040_backups.py",
+   "writeWorldBackup",
+   "BACKUP_SETTLE_MS",
+   "Turnover v1.7_r040"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1580,7 +1605,10 @@
    "docs/pipes-spec.md",
    "v1.7_r039",
    "r039 is in",
-   "Two lines r039 left stale"
+   "Two lines r039 left stale",
+   "v1.7_r040",
+   "r040 is in",
+   "What r040 left for r051"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1643,7 +1671,10 @@
    "session 22",
    "A storage write is done when its transaction says so",
    "A planted copy that passes because the probe's stub answers the question under test",
-   "What a browser's test tooling does is found by trying it"
+   "What a browser's test tooling does is found by trying it",
+   "An automatic write whose file is named from what it writes",
+   "A write that can fail after it has made its file removes the file",
+   "A check that one path does something looks before another path"
   ],
   "journal.txt": [
    "r030",
@@ -1705,7 +1736,8 @@
    "r037",
    "r038",
    "Pipes",
-   "session 22"
+   "session 22",
+   "the folder was dropped without a word"
   ]
  }
 }
