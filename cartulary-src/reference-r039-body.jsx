@@ -1158,24 +1158,35 @@ const syncRefTargetNames = (templates, only, legacy) => {
   (only || templates).forEach(t => { if (t && Array.isArray(t.fields)) t.fields.forEach(sync); });
 };
 
-const makeTemplateFromBuiltin = (bt) => ({
-  id: `tpl-${slugify(bt.name)}-${genId().slice(-4)}`,
-  name: bt.name,
-  icon: bt.icon,
-  color: bt.color,
-  kind: bt.kind || "standard",
-  origin: TEMPLATE_ORIGIN.BUILTIN,
-  // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, which finds
-  // them by this flag (docs/fabula-spec.md, section 4).
-  ...(bt.fabulaRole ? { fabulaRole: bt.fabulaRole } : {}),
-  fields: bt.fields.map(f => ({
-    id: `fld-${slugify(f.label)}-${genId().slice(-4)}`,
-    ...f,
-  })),
-});
+// v1.7 r039: the template's id is new to takenTemplateIds, and each field's to
+// takenFieldIds and the fields made before it (freshNameId); both optional.
+const makeTemplateFromBuiltin = (bt, takenTemplateIds, takenFieldIds) => {
+  const fieldIds = new Set(takenFieldIds instanceof Set ? takenFieldIds : []);
+  return {
+    id: freshNameId("tpl", bt.name, takenTemplateIds),
+    name: bt.name,
+    icon: bt.icon,
+    color: bt.color,
+    kind: bt.kind || "standard",
+    origin: TEMPLATE_ORIGIN.BUILTIN,
+    // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, which finds
+    // them by this flag (docs/fabula-spec.md, section 4).
+    ...(bt.fabulaRole ? { fabulaRole: bt.fabulaRole } : {}),
+    fields: bt.fields.map(f => {
+      const id = freshNameId("fld", f.label, fieldIds);
+      fieldIds.add(id);
+      return { id, ...f };
+    }),
+  };
+};
 
 const seedBuiltinTemplates = () => {
-  const tmpls = BUILTIN_TEMPLATES.map(makeTemplateFromBuiltin);
+  const taken = new Set();
+  const tmpls = BUILTIN_TEMPLATES.map(bt => {
+    const t = makeTemplateFromBuiltin(bt, taken);
+    taken.add(t.id);
+    return t;
+  });
   resolveTemplateRefs(tmpls);
   return tmpls;
 };
@@ -1193,6 +1204,30 @@ const fmtDate = (iso) => {
 const isoNow = () => new Date().toISOString();
 
 const slugify = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+// v1.7 r039: an id built from a name and four random characters, drawn again
+// while `taken` holds it, so no two records get one id: an entry's
+// (ent-<slug>-xxxx), a template's (tpl-), a template's field's (fld-). The
+// slug falls back to `fallback` where the name gives none, as each caller's
+// did (docs/pipes-spec.md, section 3).
+const freshNameId = (prefix, name, taken, fallback = "") => {
+  const slug = slugify(typeof name === "string" ? name : "") || fallback;
+  const has = taken && typeof taken.has === "function" ? taken : new Set();
+  let id = `${prefix}-${slug}-${genId().slice(-4)}`;
+  while (has.has(id)) id = `${prefix}-${slug}-${genId().slice(-4)}`;
+  return id;
+};
+
+// Every field id in a list of fields, group subfields at any depth included:
+// the set a template's field ids are unique within.
+const collectFieldIds = (fields, into = new Set()) => {
+  (Array.isArray(fields) ? fields : []).forEach(f => {
+    if (!f || typeof f !== "object") return;
+    if (f.id) into.add(f.id);
+    if (Array.isArray(f.subfields)) collectFieldIds(f.subfields, into);
+  });
+  return into;
+};
 
 // Snapshot formatters. Local-time, fixed-width, scriptorium-register. Format
 // is `YYYY-MM-DD HH:MM` — sortable-looking, unambiguous across locales, no
@@ -1240,6 +1275,12 @@ const openDB = () => new Promise((resolve, reject) => {
   req.onsuccess = (e) => resolve(e.target.result);
   req.onerror = () => reject(req.error);
 });
+
+// v1.7 r039: a write rejects when its transaction aborts as well as when it
+// errs. A write past the quota aborts its transaction with QuotaExceededError
+// and fires no error event, so until r039 the promise never settled and a
+// failed save went unseen (docs/pipes-spec.md, section 3).
+const txAborted = (tx) => tx.error || new DOMException("The write was aborted", "AbortError");
 
 // One-time migration: if the legacy DB exists and the new DB doesn't have data
 // yet, copy world + prefs across. Runs on every startup; cheap if no legacy data.
@@ -1301,6 +1342,7 @@ const migrateLegacyDB = async () => {
         if (legacyPrefs) tx.objectStore(DB_STORE).put(legacyPrefs, DB_PREFS_KEY);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(txAborted(tx));
       });
       console.log("Migrated world data from legacy DB to Cartulary DB");
     }
@@ -1324,15 +1366,46 @@ const dbGet = async () => {
   });
 };
 
-const dbSet = async (value) => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).put(value, DB_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+// v1.7 r039: the world's writes, and the other keys' (dbSetExtra), share one
+// connection kept open for the session (dbConnect), so a write the page's
+// hiding asks for starts in that same task, and each asks its transaction to
+// commit at once where commit() exists rather than when the task ends; both
+// help a write made as the page closes land. A connection the browser
+// closes is opened again at the next write.
+let dbConnection = null;
+let dbConnecting = null;
+const dbConnect = () => {
+  if (dbConnection) return Promise.resolve(dbConnection);
+  if (!dbConnecting) {
+    dbConnecting = openDB().then(db => {
+      db.onversionchange = () => { db.close(); if (dbConnection === db) dbConnection = null; };
+      db.onclose = () => { if (dbConnection === db) dbConnection = null; };
+      dbConnection = db;
+      dbConnecting = null;
+      return db;
+    }, e => { dbConnecting = null; throw e; });
+  }
+  return dbConnecting;
 };
+
+const dbPutKey = (db, key, value) => new Promise((resolve, reject) => {
+  const tx = db.transaction(DB_STORE, "readwrite");
+  tx.objectStore(DB_STORE).put(value, key);
+  tx.oncomplete = () => resolve();
+  tx.onerror = () => reject(tx.error);
+  tx.onabort = () => reject(txAborted(tx));
+  if (typeof tx.commit === "function") tx.commit();
+});
+
+const dbPut = async (key, value) => {
+  if (dbConnection) {
+    try { return await dbPutKey(dbConnection, key, value); }
+    catch (e) { if (!e || e.name !== "InvalidStateError") throw e; dbConnection = null; }
+  }
+  return dbPutKey(await dbConnect(), key, value);
+};
+
+const dbSet = (value) => dbPut(DB_KEY, value);
 
 const dbClear = async () => {
   const db = await openDB();
@@ -1341,6 +1414,7 @@ const dbClear = async () => {
     tx.objectStore(DB_STORE).delete(DB_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
@@ -1361,6 +1435,7 @@ const dbSetPrefs = async (value) => {
     tx.objectStore(DB_STORE).put(value, DB_PREFS_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
@@ -1378,15 +1453,7 @@ const dbGetExtra = async (key) => {
   });
 };
 
-const dbSetExtra = async (key, value) => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).put(value, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-};
+const dbSetExtra = (key, value) => dbPut(key, value);
 
 const dbDeleteExtra = async (key) => {
   const db = await openDB();
@@ -1395,8 +1462,31 @@ const dbDeleteExtra = async (key) => {
     tx.objectStore(DB_STORE).delete(key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
+
+// v1.7 r039: whether the browser keeps Cartulary's storage (true), may clear
+// it when it needs room (false), or can't say (null), from the Storage API.
+// storageAskToKeep asks it to keep the storage while the answer is no, which
+// Chromium and Safari decide by signals of their own and Firefox puts to the
+// user in a popup (docs/pipes-spec.md, section 3).
+const storageIsKept = async () => {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage || typeof navigator.storage.persisted !== "function") return null;
+    return !!(await navigator.storage.persisted());
+  } catch (e) { return null; }
+};
+
+const storageAskToKeep = async () => {
+  const kept = await storageIsKept();
+  if (kept !== false || typeof navigator.storage.persist !== "function") return kept;
+  try { return !!(await navigator.storage.persist()); } catch (e) { return false; }
+};
+
+// v1.7 r039: the waits between a failed save's tries, the last repeating
+// until a save lands (App's runSave).
+const SAVE_RETRY_WAITS_MS = [2000, 5000, 15000, 30000, 60000];
 
 // ─── Version History (snapshots) ───────────────────────────────────────────────
 // Snapshots are stored as regular keys in the existing `data` object store,
@@ -1407,7 +1497,11 @@ const dbDeleteExtra = async (key) => {
 const DB_SNAP_PREFIX = "snap-";
 const SNAPSHOT_THROTTLE_MS = 5 * 60 * 1000;       // 5-minute auto-snapshot gate
 const SNAPSHOT_AUTO_CAP = 10;                      // Keep N most-recent auto-snapshots; pinned exempt
-const SNAPSHOT_PRE_RESTORE_CAP = 3;                // Keep N most-recent "Before restore from..." snapshots; older evict to bound IndexedDB growth from repeat restores
+// v1.7 r039: the snapshots the app pins before a restore, an import, or a
+// reset each keep their newest SNAPSHOT_KIND_CAP, older ones evicted, since
+// an import or a reset no longer clears the pinned snapshots.
+const SNAPSHOT_KIND_CAP = 3;
+const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset"];
 
 // Generic prefix-range helpers. Used by snapshots, but written generically in
 // case other prefix-keyed data shows up later (e.g. drafts-history).
@@ -1450,12 +1544,16 @@ const dbDeleteByPrefix = async (prefix) => {
     req.onerror = () => reject(req.error);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
 // Snapshot value shape:
 //   { timestamp, trigger: 'auto'|'manual', pinned: bool, label: string|null,
-//     sizeBytes: number, worldJson: <world state> }
+//     kind: null|'pre-restore'|'pre-import'|'pre-reset', sizeBytes: number,
+//     worldJson: <world state> }
+// kind marks the app's own pinned snapshots; a restore point the user makes
+// has none, nor do the Before import and Before reset ones from before r039.
 // Key shape: `${DB_SNAP_PREFIX}${timestamp}-{rand4}`. The timestamp is a
 // fixed-width prefix (13 digits until year 2286), so prefix-range queries
 // over the snapshot keyspace return all snapshots cleanly. The random
@@ -1466,7 +1564,7 @@ const dbDeleteByPrefix = async (prefix) => {
 // ordering.
 const snapshotKey = (timestamp) => `${DB_SNAP_PREFIX}${timestamp}-${Math.random().toString(36).slice(2, 6)}`;
 
-const snapshotCreate = async ({ state, trigger, label = null, pinned = false, kind = null }) => {
+const snapshotCreate = async ({ state, trigger, label = null, pinned = false, kind = null, onError = null }) => {
   try {
     const timestamp = Date.now();
     const worldJson = state;
@@ -1495,12 +1593,12 @@ const snapshotCreate = async ({ state, trigger, label = null, pinned = false, ki
     if (trigger === "auto" && !pinned) {
       await snapshotEvictAuto();
     }
-    // Pre-restore snapshots are pinned but capped separately so repeated
-    // restores can't bloat IndexedDB indefinitely. Pre-reset / pre-import
-    // are also pinned but those operations wipe prior history first, so
-    // they don't accumulate the same way.
-    if (kind === "pre-restore") {
-      await snapshotEvictPreRestore();
+    // The snapshots pinned before a restore, an import, or a reset are capped
+    // per kind (SNAPSHOT_KIND_CAP), so repeated restores and imports can't
+    // fill the storage the world needs; since v1.7's r039 an import or a
+    // reset clears only the automatic snapshots, so these accumulate too.
+    if (SNAPSHOT_CAPPED_KINDS.includes(kind)) {
+      await snapshotEvictKind(kind);
     }
     return snap;
   } catch (e) {
@@ -1509,6 +1607,9 @@ const snapshotCreate = async ({ state, trigger, label = null, pinned = false, ki
     } else {
       console.error("Snapshot write failed:", e);
     }
+    // v1.7 r039: the caller hears why, for Version History's note and a
+    // restore point's flash.
+    if (typeof onError === "function") onError(e);
     return null;
   }
 };
@@ -1552,8 +1653,9 @@ const snapshotLatest = async () => {
 };
 
 // FIFO eviction: keep newest SNAPSHOT_AUTO_CAP unpinned snapshots, drop older.
-// Pinned snapshots are skipped entirely — they survive forever until manually
-// deleted or wiped by Reset/Import.
+// Pinned snapshots are skipped entirely: they stay until they're deleted by
+// hand, or evicted by their kind's cap (snapshotEvictKind), since an import
+// or a reset clears only the automatic ones (v1.7 r039).
 const snapshotEvictAuto = async () => {
   const all = await snapshotList();
   const unpinned = all.filter(s => !s.value.pinned);
@@ -1564,19 +1666,19 @@ const snapshotEvictAuto = async () => {
   }
 };
 
-// FIFO eviction for pre-restore snapshots specifically. These are pinned (so
-// snapshotEvictAuto skips them) but accumulate indefinitely if the user
-// restores often. Cap at SNAPSHOT_PRE_RESTORE_CAP — the user only needs the
-// most recent restore-reversals; older ones drop quietly. Pre-reset and
-// pre-import pinned snapshots are NOT subject to this cap because Reset and
-// Import wipe prior history first, so only one of each ever exists at a time.
-const snapshotEvictPreRestore = async () => {
+// FIFO eviction for one kind of the app's pinned snapshots: Before restore,
+// Before import, or Before reset. They're pinned (so snapshotEvictAuto skips
+// them) but accumulate if the user restores or imports often, so each kind
+// keeps its newest SNAPSHOT_KIND_CAP and older ones drop quietly. Before
+// restore had the cap alone until v1.7's r039, when an import and a reset
+// stopped clearing the pinned snapshots.
+const snapshotEvictKind = async (kind) => {
   const all = await snapshotList();
-  const preRestore = all.filter(s => s.value.kind === "pre-restore");
-  if (preRestore.length <= SNAPSHOT_PRE_RESTORE_CAP) return;
-  const toEvict = preRestore.slice(SNAPSHOT_PRE_RESTORE_CAP);  // newest-first; everything past cap is older
+  const ofKind = all.filter(s => s.value.kind === kind);
+  if (ofKind.length <= SNAPSHOT_KIND_CAP) return;
+  const toEvict = ofKind.slice(SNAPSHOT_KIND_CAP);  // newest-first; everything past cap is older
   for (const s of toEvict) {
-    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Pre-restore snapshot evict failed:", e); }
+    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Pinned snapshot evict failed:", e); }
   }
 };
 
@@ -1584,8 +1686,27 @@ const snapshotDelete = async (key) => {
   await dbDeleteExtra(key);
 };
 
-const snapshotDeleteAll = async () => {
-  await dbDeleteByPrefix(DB_SNAP_PREFIX);
+// v1.7 r039: an import or a reset clears the automatic snapshots only; the
+// user's restore points and the app's pinned snapshots stay
+// (docs/pipes-spec.md, section 3).
+const snapshotDeleteAuto = async () => {
+  const all = await snapshotList();
+  for (const s of all) {
+    if (s.value.pinned) continue;
+    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Snapshot delete failed:", e); }
+  }
+};
+
+// v1.7 r039: the name of the world a snapshot holds when it isn't the one
+// open, for its row in Version History, since a restore point now outlives
+// the world it was made in. Worlds are told apart by when they were made
+// where both say, so a renamed world's snapshots stay its own; where neither
+// says, by name.
+const snapshotFromOtherWorld = (snapWorld, world) => {
+  if (!snapWorld || !world) return null;
+  const made = snapWorld.createdAt || null, open = world.createdAt || null;
+  const other = (made || open) ? made !== open : (snapWorld.name || "") !== (world.name || "");
+  return other ? (snapWorld.name || "Untitled World") : null;
 };
 
 // ─── Version History panel (Settings sub-section) ───────────────────────────
@@ -1596,7 +1717,7 @@ const snapshotDeleteAll = async () => {
 // confirm modal — no native confirm(), per Drak spec. The list is local
 // state inside the panel; operations call back into App-supplied handlers
 // and refresh on completion.
-function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) {
+function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete, world, refusedAt }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   // Pending action — drives the inline confirm modal. Shapes:
@@ -1680,6 +1801,11 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
       <div className="version-history-desc">
         Cartulary keeps automatic backups of your recent work. The last {SNAPSHOT_AUTO_CAP} automatic snapshots are retained, plus any restore points you create manually (those stay until you delete them).
       </div>
+      {refusedAt && (
+        <div className="modal-notice modal-notice-warning">
+          The automatic snapshot at {formatSnapshotTimestamp(refusedAt).slice(11)} wasn't kept: the browser's storage for Cartulary is full. Deleting old snapshots makes room.
+        </div>
+      )}
       <div className="version-history-actions">
         <button
           className="btn btn-accent"
@@ -1698,6 +1824,7 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
           {list.map(entry => {
             const s = entry.value;
             const isPinned = !!s.pinned;
+            const otherWorld = snapshotFromOtherWorld(s.worldJson && s.worldJson.world, world);
             return (
               <div key={entry.key} className="snapshot-row">
                 <div className="snapshot-row-info">
@@ -1709,6 +1836,7 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
                     {isPinned && <span className="snapshot-pin-icon" title="Pinned — survives automatic eviction">📌</span>}
                   </div>
                   <div className="snapshot-row-secondary">
+                    {otherWorld && <span className="snapshot-world" title="This snapshot holds a different world from the one open">Another world: {otherWorld}</span>}
                     {s.label && <span className="snapshot-label" title={s.label}>"{s.label}"</span>}
                     <span className="snapshot-size">{formatSnapshotSize(s.sizeBytes)}</span>
                   </div>
@@ -6193,6 +6321,10 @@ const migrate = (state) => {
   if (!Array.isArray(state.templates)) state.templates = [];
   if (!Array.isArray(state.entries)) state.entries = [];
   if (!Array.isArray(state.stemmas)) state.stemmas = [];
+  // v1.7 r039: an entry, a template, or a template's field that shares its
+  // id with an earlier one, or has none, gets a new id before anything else
+  // reads them (repairRecordIds); what changed is kept for the caller.
+  lastIdRepairs = repairRecordIds(state);
   // Cartographia maps slice (v1.6 r001): promote kind:"map" entries to a flat
   // slice. One pass, idempotent, defensive. Runs BEFORE the concordance-position
   // validation below so getRegisteredGraphNodes there already sees migrated maps
@@ -6662,7 +6794,7 @@ const migrate = (state) => {
     if (state.world.seededBuiltins.includes(bt.name)) return;
     const exists = state.templates.some(t => t.name === bt.name);
     if (!exists) {
-      insertAtCanonicalPosition(makeTemplateFromBuiltin(bt), builtinIndex);
+      insertAtCanonicalPosition(makeTemplateFromBuiltin(bt, new Set(state.templates.map(t => t && t.id))), builtinIndex);
       templatesAdded = true;
     }
     state.world.seededBuiltins.push(bt.name);
@@ -6805,7 +6937,7 @@ const migrate = (state) => {
         const alreadyPresent = userTpl.fields.some(f => f.label === bf.label);
         if (!alreadyPresent) {
           userTpl.fields.push({
-            id: `fld-${slugify(bf.label)}-${genId().slice(-4)}`,
+            id: freshNameId("fld", bf.label, collectFieldIds(userTpl.fields)),
             ...bf,
           });
           fieldsAdded = true;
@@ -8917,7 +9049,7 @@ const migrate = (state) => {
             e.templateId === tpl.id && (e.name || "").toLowerCase() === folded
           );
           const newName = nameCollision ? `${originalName} (Region)` : originalName;
-          const newId = `ent-${slugify(newName)}-${genId().slice(-4)}`;
+          const newId = freshNameId("ent", newName, new Set(state.entries.map(e => e && e.id)));
           state.entries.push({
             id: newId,
             templateId: tpl.id,
@@ -11949,12 +12081,137 @@ const migrate = (state) => {
   // section 3). Last, so the templates the schemas point at are final.
   ensureFabulaSlice(state);
 
+  // v1.7 r039: the repairs reported are the ones whose record is still here,
+  // since the merge of same-named templates above folds a renumbered copy
+  // into the earlier one.
+  {
+    const tplById = new Map(state.templates.filter(t => t && t.id).map(t => [t.id, t]));
+    const held = new Set([...state.entries, ...state.cartographia].filter(x => x && x.id).map(x => x.id));
+    lastIdRepairs = lastIdRepairs.filter(r => r.kind === "entry" ? held.has(r.id)
+      : r.kind === "template" ? tplById.has(r.id)
+      : tplById.has(r.templateId) && collectFieldIds(tplById.get(r.templateId).fields).has(r.id));
+  }
+
   return state;
+};
+
+// ─── Id repair (v1.7 r039) ─────────────────────────────────────────────────────
+// A world whose entries, templates, or a template's fields share an id, or
+// lack one, loads with each later copy given a new id (freshNameId), the
+// earlier in storage order keeping its own, instead of being refused, so a
+// reference to the shared id stays with the earlier copy: nothing records
+// which copy a reference meant (docs/pipes-spec.md, section 3). Field ids are
+// unique within their template, at any depth, as validateMigrated checks.
+// migrate() runs it first, so every pass after it sees one record per id,
+// and leaves what it changed in lastIdRepairs, never stored, for the load,
+// the import, or the restore to take (takeIdRepairs) and say in a banner
+// (idRepairMessage).
+let lastIdRepairs = [];
+
+const takeIdRepairs = () => {
+  const out = lastIdRepairs;
+  lastIdRepairs = [];
+  return out;
+};
+
+const repairRecordIds = (state) => {
+  const repairs = [];
+  const text = (v) => (typeof v === "string" ? v : "");
+  const templates = state.templates.filter(t => t && typeof t === "object");
+  const tplIds = new Set(templates.map(t => t.id).filter(Boolean));
+  const seenTpl = new Set();
+  templates.forEach(t => {
+    if (t.id && !seenTpl.has(t.id)) { seenTpl.add(t.id); return; }
+    const why = t.id ? "duplicate" : "missing";
+    t.id = freshNameId("tpl", t.name, tplIds);
+    tplIds.add(t.id);
+    seenTpl.add(t.id);
+    repairs.push({ kind: "template", why, id: t.id, name: text(t.name) });
+  });
+  templates.forEach(t => {
+    if (!Array.isArray(t.fields)) return;
+    const fieldIds = collectFieldIds(t.fields);
+    const seen = new Set();
+    const walk = (fields) => fields.forEach(f => {
+      if (!f || typeof f !== "object") return;
+      if (f.id && !seen.has(f.id)) {
+        seen.add(f.id);
+      } else {
+        const why = f.id ? "duplicate" : "missing";
+        f.id = freshNameId("fld", f.label, fieldIds);
+        fieldIds.add(f.id);
+        seen.add(f.id);
+        repairs.push({ kind: "field", why, id: f.id, templateId: t.id, name: text(f.label), template: text(t.name) });
+      }
+      if (Array.isArray(f.subfields)) walk(f.subfields);
+    });
+    walk(t.fields);
+  });
+  const tplName = new Map();
+  templates.forEach(t => { if (!tplName.has(t.id)) tplName.set(t.id, text(t.name)); });
+  const entries = state.entries.filter(e => e && typeof e === "object");
+  const entryIds = new Set(entries.map(e => e.id).filter(Boolean));
+  const seenEnt = new Set();
+  entries.forEach(e => {
+    if (e.id && !seenEnt.has(e.id)) { seenEnt.add(e.id); return; }
+    const why = e.id ? "duplicate" : "missing";
+    e.id = freshNameId("ent", e.name, entryIds);
+    entryIds.add(e.id);
+    seenEnt.add(e.id);
+    repairs.push({ kind: "entry", why, id: e.id, name: text(e.name), template: tplName.get(e.templateId) || "" });
+  });
+  return repairs;
+};
+
+// The banner's words for what repairRecordIds changed: a sentence for each
+// kind, naming up to five and then how many more.
+const idRepairMessage = (repairs) => {
+  const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const listOf = (labels) => {
+    const shown = labels.slice(0, 5);
+    const more = labels.length - shown.length;
+    if (more > 0) return `${shown.join(", ")} and ${more} more`;
+    return shown.length <= 1 ? (shown[0] || "") : `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`;
+  };
+  const nameOf = (r) => r.name || "(unnamed)";
+  const entryList = (items) => {
+    const tpls = [...new Set(items.map(r => r.template || ""))];
+    if (tpls.length === 1 && tpls[0]) return `${listOf(items.map(nameOf))} (${tpls[0]})`;
+    return listOf(items.map(r => (r.template ? `${nameOf(r)} (${r.template})` : nameOf(r))));
+  };
+  const fieldOf = (r) => `the field ${nameOf(r)}${r.template ? ` in ${r.template}` : ""}`;
+  const shared = (kind) => repairs.filter(r => r.kind === kind && r.why === "duplicate");
+  const out = [];
+  const entries = shared("entry");
+  if (entries.length > 0) {
+    const n = entries.length, one = n === 1;
+    out.push(`${n} ${one ? "entry was" : "entries were"} using an id an earlier entry already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${entryList(entries)}. Anything that pointed at ${one ? "the" : "a"} shared id now points at the earlier entry; links meant for ${one ? "it" : `these ${words[n] || n}`} need checking.`);
+  }
+  const templates = shared("template");
+  if (templates.length > 0) {
+    const n = templates.length, one = n === 1;
+    out.push(`${n} ${one ? "template was" : "templates were"} using an id an earlier template already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${listOf(templates.map(nameOf))}. The entries that named ${one ? "the" : "a"} shared id stay with the earlier template.`);
+  }
+  const fields = shared("field");
+  if (fields.length > 0) {
+    const n = fields.length, one = n === 1;
+    out.push(`${n} ${one ? "field was" : "fields were"} using an id an earlier field of ${one ? "its" : "their"} template already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${listOf(fields.map(fieldOf))}. Values saved under ${one ? "the" : "a"} shared id stay with the earlier field.`);
+  }
+  const missing = repairs.filter(r => r.why === "missing");
+  if (missing.length > 0) {
+    const n = missing.length, one = n === 1;
+    const label = (r) => r.kind === "field" ? fieldOf(r) : r.kind === "template" ? `the template ${nameOf(r)}` : (r.template ? `${nameOf(r)} (${r.template})` : nameOf(r));
+    out.push(`${n} ${one ? "record" : "records"} had no id and got one: ${listOf(missing.map(label))}.`);
+  }
+  return out.join(" ");
 };
 
 // ─── Migration validation ──────────────────────────────────────────────────────
 // Run after migrate() to catch corrupt input that the migration didn't reject.
 // Returns null on success, an error string describing the first violation on failure (Bug 10).
+// Since v1.7's r039 migrate() gives a shared or missing id a new one first
+// (repairRecordIds), so the id checks here are the backstop, and what's
+// refused is what can't be repaired.
 const validateMigrated = (state) => {
   if (!state || typeof state !== "object") return "State is not an object";
   if (!state.world || typeof state.world !== "object") return "Missing world metadata";
@@ -12292,6 +12549,35 @@ function App() {
 
   // Auto-save debounce timer (Bug 1)
   const saveTimerRef = useRef(null);
+  // v1.7 r039, saving (docs/pipes-spec.md, section 3). saveNowRef: the next
+  // write goes out at once rather than after the 250 ms wait, set by a Save
+  // that closes an editor (saveNow). savePendingRef: a change is waiting for
+  // its write, which the page's hiding sends at once. saveSeqRef numbers the
+  // writes; draftClearArmedRef and draftClearSeqRef delete the stored draft
+  // only once the write carrying its Save lands. A failure: saveFailure is
+  // the banner's, { name, message, quota, nextAt }, saveAttemptRef picks the
+  // next wait (SAVE_RETRY_WAITS_MS), and the retry timer makes the try.
+  const saveNowRef = useRef(false);
+  const savePendingRef = useRef(false);
+  const saveSeqRef = useRef(0);
+  const draftClearArmedRef = useRef(false);
+  const draftClearSeqRef = useRef(null);
+  const saveAttemptRef = useRef(0);
+  const saveRetryTimerRef = useRef(null);
+  const saveFailingRef = useRef(false);
+  const [saveFailure, setSaveFailure] = useState(null);
+  const [, setSaveTick] = useState(0);
+  // The browser's answer on keeping Cartulary's storage (storageIsKept):
+  // undefined until it comes, null where it can't say. It's asked to keep
+  // the storage after the session's first edit (askPersistOnce).
+  const [storageKept, setStorageKept] = useState(undefined);
+  const persistAskedRef = useRef(false);
+  // When an automatic snapshot was refused for a full storage, for Version
+  // History's note; the next one kept clears it.
+  const [snapshotRefusedAt, setSnapshotRefusedAt] = useState(null);
+  // What the last load, import, or restore repaired (repairRecordIds), for a
+  // banner that stays until it's dismissed: { title, text }.
+  const [idRepair, setIdRepair] = useState(null);
 
   // Version History throttle gate. lastSnapshotAtRef holds the timestamp of
   // the most recent snapshot (auto OR pinned). Seeded asynchronously from IDB
@@ -12318,6 +12604,7 @@ function App() {
   // (which view, which template, which entry). Cleared on explicit save or
   // confirmed discard. Initial-state refs power the dirty check.
   const draftSaveTimerRef = useRef(null);
+  const pendingDraftRef = useRef(null); // v1.7 r039: the draft write its timer holds, which the page's hiding sends at once
   const initialEntryDraftRef = useRef(null);
   const initialTplDraftRef = useRef(null);
   const initialSchemaDraftRef = useRef(null);
@@ -12527,6 +12814,9 @@ function App() {
             return;
           }
           setState(migrated);
+          // v1.7 r039: what the load repaired, if anything (repairRecordIds).
+          const repairs = takeIdRepairs();
+          if (repairs.length > 0) setIdRepair({ title: "Repaired on load.", text: idRepairMessage(repairs) });
         }
       } catch (e) {
         console.error(e);
@@ -12547,34 +12837,81 @@ function App() {
   // save useEffect fired — because React state references can change for
   // reasons that don't reflect a real edit, while updateState is the only
   // path that bumps updatedAt.
+  // v1.7 r039: the write is runSave's, which a Save that closes an editor
+  // makes at once (saveNowRef) and the page's hiding makes early
+  // (savePendingRef).
   useEffect(() => {
     if (!loaded || !state || loadError) return;
+    stateRef.current = state;
     clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        await dbSet(state);
-      } catch (e) {
-        console.error("Save failed:", e);
-        return;
-      }
-      if (!snapshotSeedReadyRef.current) return;
-      const currentUpdatedAt = state.world?.updatedAt || null;
-      if (currentUpdatedAt === lastSnapshotedUpdatedAtRef.current) return;
-      const now = Date.now();
-      if (now - (lastSnapshotAtRef.current || 0) >= SNAPSHOT_THROTTLE_MS) {
-        // Claim the slot before the async write to prevent a parallel save
-        // from racing through the gate. If the write fails, the next save
-        // attempt will retry once the throttle window opens again.
-        lastSnapshotAtRef.current = now;
-        const snap = await snapshotCreate({ state, trigger: "auto" });
-        if (snap) {
-          lastSnapshotAtRef.current = snap.timestamp;
-          lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
-        }
-      }
-    }, 250);
+    savePendingRef.current = true;
+    // A Save's draft deletion waits for the next write, which carries it.
+    if (draftClearArmedRef.current) {
+      draftClearArmedRef.current = false;
+      draftClearSeqRef.current = saveSeqRef.current + 1;
+    }
+    if (saveNowRef.current) {
+      saveNowRef.current = false;
+      runSave(state);
+      return;
+    }
+    saveTimerRef.current = setTimeout(() => runSave(state), 250);
     return () => clearTimeout(saveTimerRef.current);
   }, [state, loaded, loadError]);
+
+  // v1.7 r039: an automatic snapshot refused for a full storage, for Version
+  // History's note.
+  const noteSnapshotRefused = (e) => { if (e && e.name === "QuotaExceededError") setSnapshotRefusedAt(Date.now()); };
+
+  // v1.7 r039: one write of the world (docs/pipes-spec.md, section 3). On a
+  // success the stored draft goes if a Save asked for that, a failure's
+  // banner goes with a flash, and the automatic snapshot runs as it did. On
+  // a failure the banner shows, and the next try comes after the next of the
+  // waits (SAVE_RETRY_WAITS_MS), which start over only after a success; an
+  // edit tries on its own as well. A try writes the world as it stands then.
+  const runSave = async (st) => {
+    const seq = ++saveSeqRef.current;
+    clearTimeout(saveRetryTimerRef.current);
+    try {
+      await dbSet(st);
+    } catch (e) {
+      console.error("Save failed:", e);
+      const wait = SAVE_RETRY_WAITS_MS[Math.min(saveAttemptRef.current, SAVE_RETRY_WAITS_MS.length - 1)];
+      saveAttemptRef.current += 1;
+      saveFailingRef.current = true;
+      setSaveFailure({ name: (e && e.name) || "Error", message: (e && e.message) || "", quota: !!(e && e.name === "QuotaExceededError"), nextAt: Date.now() + wait });
+      clearTimeout(saveRetryTimerRef.current);
+      saveRetryTimerRef.current = setTimeout(() => { if (stateRef.current) runSave(stateRef.current); }, wait);
+      return;
+    }
+    if (st === stateRef.current) savePendingRef.current = false;
+    saveAttemptRef.current = 0;
+    if (draftClearSeqRef.current != null && seq >= draftClearSeqRef.current) {
+      draftClearSeqRef.current = null;
+      dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
+    }
+    if (saveFailingRef.current) {
+      saveFailingRef.current = false;
+      setSaveFailure(null);
+      setNotice({ text: "Saved", type: "success" });
+    }
+    if (!snapshotSeedReadyRef.current) return;
+    const currentUpdatedAt = st.world?.updatedAt || null;
+    if (currentUpdatedAt === lastSnapshotedUpdatedAtRef.current) return;
+    const now = Date.now();
+    if (now - (lastSnapshotAtRef.current || 0) >= SNAPSHOT_THROTTLE_MS) {
+      // Claim the slot before the async write to prevent a parallel save
+      // from racing through the gate. If the write fails, the next save
+      // attempt will retry once the throttle window opens again.
+      lastSnapshotAtRef.current = now;
+      const snap = await snapshotCreate({ state: st, trigger: "auto", onError: noteSnapshotRefused });
+      if (snap) {
+        lastSnapshotAtRef.current = snap.timestamp;
+        lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
+        setSnapshotRefusedAt(null);
+      }
+    }
+  };
 
   // Seed the snapshot-throttle gate AND the content-change detector from the
   // most recent existing snapshot in IDB. Runs once after initial load
@@ -12636,10 +12973,11 @@ function App() {
       // Claim before the async write — same pattern as the save path.
       lastSnapshotAtRef.current = now;
       try {
-        const snap = await snapshotCreate({ state: stateRef.current, trigger: "auto" });
+        const snap = await snapshotCreate({ state: stateRef.current, trigger: "auto", onError: noteSnapshotRefused });
         if (snap) {
           lastSnapshotAtRef.current = snap.timestamp;
           lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
+          setSnapshotRefusedAt(null);
         }
       } catch (e) {
         console.error("Periodic auto-snapshot failed:", e);
@@ -12661,6 +12999,17 @@ function App() {
       return () => clearTimeout(t);
     }
   }, [notice]);
+
+  // v1.7 r039: what the browser says about keeping Cartulary's storage, read
+  // once at load for Settings; askPersistOnce asks after the first edit.
+  useEffect(() => { storageIsKept().then(setStorageKept); }, []);
+
+  // v1.7 r039: the failed save's banner counts down to its next try.
+  useEffect(() => {
+    if (!saveFailure) return;
+    const id = setInterval(() => setSaveTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [saveFailure]);
 
   // Backup-reminder ticker: re-evaluate the reminder condition every minute
   useEffect(() => {
@@ -12732,6 +13081,7 @@ function App() {
   // Draft auto-save (Bug 2). Debounced. Only fires when the draft is actually
   // dirty relative to the snapshot taken when the editor was opened.
   useEffect(() => {
+    pendingDraftRef.current = null;
     if (!loaded || loadError) return;
     if (!entryDraft && !tplDraft) return;
     if (draftRestoredRef.current) {
@@ -12751,24 +13101,63 @@ function App() {
     if (!isDirty) return;
 
     clearTimeout(draftSaveTimerRef.current);
-    draftSaveTimerRef.current = setTimeout(() => {
-      dbSetExtra(DB_DRAFT_KEY, payload).catch(e => console.error("draft save failed", e));
-    }, 500);
+    pendingDraftRef.current = payload;
+    draftSaveTimerRef.current = setTimeout(writeDraft, 500);
     return () => clearTimeout(draftSaveTimerRef.current);
   }, [entryDraft, tplDraft, loaded, loadError, view, activeTemplateId, activeEntryId]);
 
-  // Warn before tab close / refresh if a draft is dirty (Bug 3).
-  // Auto-save's 500ms debounce means a recent edit may not yet be persisted.
+  // v1.7 r039: the draft's write, from its timer or from the page's hiding.
+  // A draft written since a Save takes the place of the deletion that Save
+  // left for its world write to make.
+  const writeDraft = () => {
+    const payload = pendingDraftRef.current;
+    pendingDraftRef.current = null;
+    if (!payload) return;
+    draftClearArmedRef.current = false;
+    draftClearSeqRef.current = null;
+    dbSetExtra(DB_DRAFT_KEY, payload).catch(e => console.error("draft save failed", e));
+  };
+
+  // Warn before tab close / refresh if a draft is dirty (Bug 3), or, since
+  // v1.7's r039, while the world's saves are failing (saveFailingRef): either
+  // way the change exists only on screen. A pending save needs no warning,
+  // since the page's hiding writes it (below).
   const draftDirtyRef = useRef(() => false); // the latest isDraftDirty, declared further down; the loading renders never reach it
   useEffect(() => {
     const handler = (e) => {
-      if (draftDirtyRef.current()) {
+      if (draftDirtyRef.current() || saveFailingRef.current) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  // v1.7 r039: a pending save, and a pending draft, are written as soon as
+  // the page is hidden, and on pagehide, instead of waiting out their timers;
+  // the hidden write is the one to count on, since a browser may cut a write
+  // short as the page unloads (docs/pipes-spec.md, section 3).
+  const flushRef = useRef(() => {});
+  flushRef.current = () => {
+    if (savePendingRef.current && stateRef.current) {
+      clearTimeout(saveTimerRef.current);
+      runSave(stateRef.current);
+    }
+    if (pendingDraftRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+      writeDraft();
+    }
+  };
+  useEffect(() => {
+    const flush = () => flushRef.current();
+    const onVisibility = () => { if (document.visibilityState === "hidden") flush(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", flush);
+    };
   }, []);
 
   // ── Derived data ──────────────────────────────────────────────────────────────
@@ -12972,9 +13361,35 @@ function App() {
     ? Math.floor((Date.now() - new Date(prefs.lastExportAt).getTime()) / 3600000)
     : 0;
 
+  // v1.7 r039: the failed save's banner, counting down to the next try.
+  const saveFailureDetail = (() => {
+    if (!saveFailure) return "";
+    const secs = Math.max(0, Math.ceil((saveFailure.nextAt - Date.now()) / 1000));
+    const next = secs > 0 ? `Trying again in ${secs} s.` : "Trying again now.";
+    if (saveFailure.quota) return `The browser's storage for Cartulary is full, so your recent changes exist only on this screen. ${next} Export now keeps a copy; deleting old snapshots in Settings, Version History, makes room.`;
+    const why = saveFailure.message ? `${saveFailure.name}: ${saveFailure.message}` : saveFailure.name;
+    return `The browser wouldn't store your world (${why}), so your recent changes exist only on this screen. ${next}`;
+  })();
+
   // ── Actions ──────────────────────────────────────────────────────────────────
 
+  // v1.7 r039: after the session's first edit, ask the browser to keep
+  // Cartulary's storage while it says it may clear it: once a session, and
+  // only inside the user's own action, since Firefox asks with a popup
+  // (docs/pipes-spec.md, section 3).
+  const askPersistOnce = () => {
+    if (persistAskedRef.current) return;
+    if (typeof navigator !== "undefined" && navigator.userActivation && !navigator.userActivation.isActive) return;
+    persistAskedRef.current = true;
+    storageAskToKeep().then(setStorageKept);
+  };
+
+  // v1.7 r039: a Save that closes an editor writes the world at once rather
+  // than after the auto-save's 250 ms wait (the save effect's saveNowRef).
+  const saveNow = () => { saveNowRef.current = true; };
+
   const updateState = (updater) => {
+    askPersistOnce();
     setState(prev => {
       const next = updater(prev);
       next.world = { ...next.world, updatedAt: isoNow() };
@@ -13003,7 +13418,10 @@ function App() {
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
-  const clearDraftAndStorage = () => {
+  // v1.7 r039: after a Save (afterSave) the stored draft is deleted once the
+  // world's write carrying the Save lands, not before, so a reload in between
+  // finds the draft; otherwise at once, as before.
+  const clearDraftAndStorage = (afterSave = false) => {
     setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null); setRecordDraft(null); setSchemaDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
@@ -13013,6 +13431,13 @@ function App() {
     initialRecordDraftRef.current = null;
     initialSchemaDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
+    pendingDraftRef.current = null;
+    if (afterSave) {
+      draftClearArmedRef.current = true;
+      return;
+    }
+    draftClearArmedRef.current = false;
+    draftClearSeqRef.current = null;
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
 
@@ -13220,7 +13645,7 @@ function App() {
     if (descField)              fields[descField.id]  = descriptionText;
     if (notesField)             fields[notesField.id] = notesText;
 
-    const newId = `ent-${slugify(name) || "event"}-${genId().slice(-4)}`;
+    const newId = freshNameId("ent", name, new Set(state.entries.map(e => e.id)), "event");
     const newEntry = {
       id: newId,
       templateId: tpl.id,
@@ -13389,6 +13814,7 @@ function App() {
       mapData: ensureMapData(mapDraft.mapData),
       updatedAt: isoNow(),
     };
+    saveNow();
     updateState(s => {
       const arr = Array.isArray(s.cartographia) ? s.cartographia : [];
       const exists = arr.some(m => m.id === rec.id);
@@ -13474,6 +13900,7 @@ function App() {
     const name = (corpusDraft.name || "").trim();
     if (!name) return;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => {
       const arr = fabArr(fab, "corpora");
       const old = arr.find(c => c.id === corpusDraft.id);
@@ -13659,8 +14086,9 @@ function App() {
   const saveFabulaSchema = () => {
     if (!schemaDraft || isLocked) return;
     const draft = schemaDraft;
+    saveNow();
     updateState(s => ({ ...s, fabula: fabulaSchemaSave(s, draft.kind, draft) }));
-    clearDraftAndStorage();
+    clearDraftAndStorage(true);
     setFabulaFocus("templates");
     flash("Template saved");
   };
@@ -13675,8 +14103,9 @@ function App() {
     const kind = resetSchemaKind;
     setResetSchemaKind(null);
     if (!kind || isLocked) return;
+    saveNow();
     updateState(s => ({ ...s, fabula: fabulaResetSchema(s, kind) }));
-    clearDraftAndStorage();
+    clearDraftAndStorage(true);
     setFabulaFocus("templates");
     flash("Template reset to default");
   };
@@ -13698,6 +14127,7 @@ function App() {
     const name = (storyDraft.name || "").trim();
     if (!name) return;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === storyDraft.id ? { ...st, name, fields: storyDraft.fields || {}, updatedAt: now } : st) }));
     setStoryDraft(null); initialStoryDraftRef.current = null;
     flash("Saved");
@@ -13814,6 +14244,7 @@ function App() {
     const slice = fabulaSliceOf(activeRecord.kind);
     const kind = activeRecord.kind;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => {
       const arr = fabArr(fab, slice);
       const old = arr.find(r => r.id === recordDraft.id);
@@ -13960,8 +14391,9 @@ function App() {
     const lname = draftBase.name.toLowerCase();
     const dupCount = state.entries.filter(e => e.id !== activeEntryId && (e.name || "").toLowerCase() === lname).length;
 
+    saveNow();
     if (view === "entry-new") {
-      newId = `ent-${slugify(entryDraft.name)}-${genId().slice(-4)}`;
+      newId = freshNameId("ent", entryDraft.name, new Set(state.entries.map(e => e.id)));
       const newEntry = {
         id: newId,
         templateId: activeTemplateId,
@@ -13997,7 +14429,7 @@ function App() {
         }),
       }));
     }
-    setActiveEntryId(newId); clearDraftAndStorage(); setView("entry");
+    setActiveEntryId(newId); clearDraftAndStorage(true); setView("entry");
     if (dupCount > 0) {
       flash(`Saved. ${dupCount} other entr${dupCount === 1 ? "y" : "ies"} share this name; wiki-links will resolve to the earliest-stored one.`, "warning");
     } else if (didCalendarConvert) {
@@ -14089,13 +14521,16 @@ function App() {
       kind: tplDraft.kind || "standard",
       fields: cleanFields(tplDraft.fields),
     };
-    // Ensure every field at every depth has an id.
+    // Ensure every field at every depth has an id, each one new to the
+    // template (v1.7 r039, freshNameId).
+    const takenFieldIds = collectFieldIds(cleaned.fields);
     const ensureIds = (fields) => fields.forEach(f => {
-      if (!f.id) f.id = `fld-${slugify(f.label)}-${genId().slice(-4)}`;
+      if (!f.id) { f.id = freshNameId("fld", f.label, takenFieldIds); takenFieldIds.add(f.id); }
       if (f.type === "group" && Array.isArray(f.subfields)) ensureIds(f.subfields);
     });
+    saveNow();
     if (view === "tpl-build") {
-      cleaned.id = `tpl-${slugify(cleaned.name)}-${genId().slice(-4)}`;
+      cleaned.id = freshNameId("tpl", cleaned.name, new Set(state.templates.map(t => t.id)));
       cleaned.origin = TEMPLATE_ORIGIN.USER;
       ensureIds(cleaned.fields);
       // v1.7 r002: target names follow target ids (see syncRefTargetNames).
@@ -14111,7 +14546,7 @@ function App() {
       syncRefTargetNames(state.templates.map(t => t.id === activeTemplateId ? cleaned : t), [cleaned]);
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === activeTemplateId ? cleaned : t) }));
     }
-    clearDraftAndStorage(); setView("list");
+    clearDraftAndStorage(true); setView("list");
     flash("Template saved");
   };
 
@@ -14128,6 +14563,7 @@ function App() {
   const normalizeImportedTemplate = (tpl) => {
     const validTypes = new Set(FIELD_TYPES.map(ft => ft.value));
     const seenFieldIds = new Set();
+    let takenFieldIds = new Set(); // v1.7 r039: every id the template holds, for the de-dupe below
 
     // Recursive cleanup — drops empty-label fields like saveTemplate does.
     const cleanFields = (fields) => fields
@@ -14149,9 +14585,11 @@ function App() {
       if (f.type === "group" && !Array.isArray(f.subfields)) {
         f.subfields = [];
       }
-      // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup.
+      // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup,
+      // with an id new to the template (v1.7 r039).
       if (f.id && seenFieldIds.has(f.id)) {
-        f.id = `fld-${slugify(f.label || "field")}-${genId().slice(-4)}`;
+        f.id = freshNameId("fld", f.label || "field", takenFieldIds);
+        takenFieldIds.add(f.id);
       }
       if (f.id) seenFieldIds.add(f.id);
       // Recurse into group subfields.
@@ -14166,6 +14604,7 @@ function App() {
 
     const cloned = JSON.parse(JSON.stringify(tpl));
     cloned.fields = cleanFields(cloned.fields || []);
+    takenFieldIds = collectFieldIds(cloned.fields);
 
     for (const f of cloned.fields) {
       const err = validateField(f);
@@ -14544,8 +14983,10 @@ function App() {
   // entries that point at it still work; mode "new" generates a fresh id.
   const insertImportedTemplate = (tpl, mode, existingId, overrideName) => {
     if (isLocked) return;
+    // v1.7 r039: a field given an id here gets one new to the template.
+    let takenFieldIds = new Set();
     const ensureIds = (fields) => fields.forEach(f => {
-      if (!f.id) f.id = `fld-${slugify(f.label || "field")}-${genId().slice(-4)}`;
+      if (!f.id) { f.id = freshNameId("fld", f.label || "field", takenFieldIds); takenFieldIds.add(f.id); }
       if (f.type === "group" && Array.isArray(f.subfields)) ensureIds(f.subfields);
     });
     const newTpl = {
@@ -14563,6 +15004,7 @@ function App() {
     // v1.7 r016: an import never brings Fabula's flag, and one imported over
     // Plot Thread or Theme / Motif keeps the flag that template had.
     delete newTpl.fabulaRole;
+    takenFieldIds = collectFieldIds(newTpl.fields);
     ensureIds(newTpl.fields);
     if (mode === "replace" && existingId) {
       newTpl.id = existingId;
@@ -14570,7 +15012,7 @@ function App() {
       if (was && was.fabulaRole) newTpl.fabulaRole = was.fabulaRole;
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === existingId ? newTpl : t) }));
     } else {
-      newTpl.id = `tpl-${slugify(newTpl.name) || "imported"}-${genId().slice(-4)}`;
+      newTpl.id = freshNameId("tpl", newTpl.name, new Set(state.templates.map(t => t.id)), "imported");
       updateState(s => ({ ...s, templates: [...s.templates, newTpl] }));
     }
   };
@@ -14939,14 +15381,17 @@ function App() {
       }
       // Defer the confirmation to the destructive-op modal. If the world
       // being replaced is blank, skip the modal — there's nothing to lose.
+      // v1.7 r039: what the import's load repaired, for its banner.
+      const repairs = takeIdRepairs();
       const isBlank = !state || !(state.entries) || state.entries.length === 0;
       if (isBlank) {
-        executeImport(migrated);
+        executeImport(migrated, repairs);
         return;
       }
       setDestructiveOp({
         type: "import",
         migrated,
+        repairs,
         sourceName: migrated.world?.name || "imported world",
       });
     };
@@ -14967,25 +15412,29 @@ function App() {
   };
 
   // Actual reset execution. Called either directly (blank-world bypass) or
-  // by DestructiveOpModal after the user confirms. Always wipes prior
-  // snapshots — they were for the world about to be discarded. Takes a
-  // pinned "Before reset" snapshot first if the world was non-blank, giving
-  // the user an in-app rollback path even after the wipe.
+  // by DestructiveOpModal after the user confirms. Clears the automatic
+  // snapshots, which were for the world about to be discarded; since v1.7's
+  // r039 the user's restore points and the app's pinned snapshots stay
+  // (snapshotDeleteAuto). Takes a pinned "Before reset" snapshot first if the
+  // world was non-blank, of kind pre-reset, whose newest three are kept,
+  // giving the user an in-app rollback path.
   const executeReset = async () => {
     const isBlank = !state || !(state.entries) || state.entries.length === 0;
-    try { await snapshotDeleteAll(); } catch (e) { console.error("Failed to wipe snapshots:", e); }
+    try { await snapshotDeleteAuto(); } catch (e) { console.error("Failed to clear automatic snapshots:", e); }
     if (!isBlank) {
       try {
         await snapshotCreate({
           state,
           trigger: "manual",
           pinned: true,
+          kind: "pre-reset",
           label: "Before reset",
         });
       } catch (e) { console.error("Pre-reset snapshot failed:", e); }
     }
     const fresh = makeInitialState();
     setState(fresh);
+    setIdRepair(null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     // Reset backup-reminder anchor — fresh world, no edits to back up yet.
@@ -15002,23 +15451,27 @@ function App() {
     flash("New world started");
   };
 
-  // Actual import execution. Same shape as executeReset: wipe prior history,
-  // capture a pre-import pinned snapshot of the world being replaced (if
-  // non-blank), then swap state to the imported world.
-  const executeImport = async (migrated) => {
+  // Actual import execution. Same shape as executeReset: clear the automatic
+  // snapshots, capture a pre-import pinned snapshot of the world being
+  // replaced (if non-blank, of kind pre-import, whose newest three are kept),
+  // then swap state to the imported world, with the banner for what its load
+  // repaired (v1.7 r039).
+  const executeImport = async (migrated, repairs = []) => {
     const isBlank = !state || !(state.entries) || state.entries.length === 0;
-    try { await snapshotDeleteAll(); } catch (e) { console.error("Failed to wipe snapshots:", e); }
+    try { await snapshotDeleteAuto(); } catch (e) { console.error("Failed to clear automatic snapshots:", e); }
     if (!isBlank) {
       try {
         await snapshotCreate({
           state,
           trigger: "manual",
           pinned: true,
+          kind: "pre-import",
           label: "Before import",
         });
       } catch (e) { console.error("Pre-import snapshot failed:", e); }
     }
     setState(migrated);
+    setIdRepair(repairs.length > 0 ? { title: "Repaired on import.", text: idRepairMessage(repairs) } : null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     // Just imported a JSON — that file IS the user's most recent backup.
@@ -15039,11 +15492,13 @@ function App() {
   const createManualSnapshot = async (label) => {
     if (!state) return null;
     const trimmedLabel = (label || "").trim();
+    let refusal = null;
     const snap = await snapshotCreate({
       state,
       trigger: "manual",
       pinned: true,
       label: trimmedLabel || null,
+      onError: (e) => { refusal = e; },
     });
     if (snap) {
       lastSnapshotAtRef.current = snap.timestamp;
@@ -15053,7 +15508,10 @@ function App() {
       lastSnapshotedUpdatedAtRef.current = state.world?.updatedAt || null;
       flash(trimmedLabel ? `Restore point created: ${trimmedLabel}` : "Restore point created");
     } else {
-      flash("Failed to create restore point", "error");
+      // v1.7 r039: a full storage says so.
+      flash(refusal && refusal.name === "QuotaExceededError"
+        ? "The restore point wasn't kept: the browser's storage for Cartulary is full. Deleting old snapshots makes room."
+        : "Failed to create restore point", "error");
     }
     return snap;
   };
@@ -15080,6 +15538,7 @@ function App() {
       flash(`Cannot restore: snapshot migration failed (${e?.message || "unknown error"})`, "error");
       return;
     }
+    const repairs = takeIdRepairs(); // v1.7 r039: what the restore's load repaired, for its banner
     if (!migrated) {
       const versionTooNew = snap.worldJson && typeof snap.worldJson === "object" && snap.worldJson.schemaVersion > SCHEMA_VERSION;
       flash(
@@ -15123,6 +15582,7 @@ function App() {
       }
     }
     setState(migrated);
+    setIdRepair(repairs.length > 0 ? { title: "Repaired on restore.", text: idRepairMessage(repairs) } : null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     lastSnapshotAtRef.current = Date.now();
@@ -15906,7 +16366,7 @@ function App() {
           seeded.delete(name);  // sync the bookkeeping
           return;
         }
-        const fresh = makeTemplateFromBuiltin(BUILTIN_TEMPLATES[builtinIdx]);
+        const fresh = makeTemplateFromBuiltin(BUILTIN_TEMPLATES[builtinIdx], new Set(newTemplates.map(t => t && t.id)));
         insertAt(fresh, builtinIdx);
         seeded.delete(name);
       });
@@ -15933,7 +16393,7 @@ function App() {
 
       // Build a fresh copy of the built-in but preserve the existing template ID
       // so existing entries continue to link correctly.
-      const fresh = makeTemplateFromBuiltin(builtin);
+      const fresh = makeTemplateFromBuiltin(builtin, null, collectFieldIds(userTpl.fields));
       fresh.id = userTpl.id;
 
       // Match factory fields against existing user fields by label. If the user
@@ -16110,6 +16570,29 @@ function App() {
       />
 
       <main className="main">
+        {saveFailure && (
+          <div className="backup-banner save-failed" role="alert">
+            <div className="backup-banner-text">
+              <strong>Not saved.</strong>
+              <span className="backup-banner-detail">{saveFailureDetail}</span>
+            </div>
+            <div className="backup-banner-actions">
+              <button className="btn btn-ghost btn-small" onClick={() => { if (stateRef.current) runSave(stateRef.current); }}>Try now</button>
+              <button className="btn btn-accent btn-small" onClick={exportWorld}>Export now</button>
+            </div>
+          </div>
+        )}
+        {idRepair && (
+          <div className="backup-banner" role="status">
+            <div className="backup-banner-text">
+              <strong>{idRepair.title}</strong>
+              <span className="backup-banner-detail">{idRepair.text}</span>
+            </div>
+            <div className="backup-banner-actions">
+              <button className="btn btn-ghost btn-small" onClick={() => setIdRepair(null)}>Dismiss</button>
+            </div>
+          </div>
+        )}
         {backupReminderActive && (
           <div className="backup-banner" role="alert">
             <div className="backup-banner-text">
@@ -16838,6 +17321,8 @@ function App() {
               onRestoreSnapshot={restoreSnapshot}
               onExportSnapshot={exportSnapshot}
               onDeleteSnapshot={removeSnapshot}
+              storageKept={storageKept}
+              snapshotRefusedAt={snapshotRefusedAt}
             />
           )}
         </div>
@@ -16879,11 +17364,12 @@ function App() {
             const tplId = resetTplId;
             const wasEditingThis = tplDraft && tplDraft.id === tplId;
             setResetTplId(null);
+            saveNow();
             resetTemplate(tplId);
             // If the user was editing this template, bounce back to the list view;
             // they can re-enter the editor to see the freshly reset state.
             if (wasEditingThis) {
-              clearDraftAndStorage();
+              clearDraftAndStorage(true);
               setView(activeTemplateId === tplId ? "list" : "home");
             }
           }}
@@ -16939,7 +17425,7 @@ function App() {
             if (op.type === "reset") {
               executeReset();
             } else if (op.type === "import") {
-              executeImport(op.migrated);
+              executeImport(op.migrated, op.repairs);
             }
           }}
         />
@@ -21714,7 +22200,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
 
 // ─── Settings ──────────────────────────────────────────────────────────────────
 
-function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot }) {
+function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot, storageKept, snapshotRefusedAt }) {
   const fileRef = useRef(null);
   const onPickFile = (e) => {
     const f = e.target.files?.[0];
@@ -21898,6 +22384,28 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
 
       <div className="settings-section">
         <div className="section-hdr">Save File</div>
+        {/* v1.7 r039: what the browser says about keeping Cartulary's storage */}
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <div className="settings-row-title">Browser storage</div>
+            <div className="settings-row-desc">
+              {storageKept === true
+                ? "This browser keeps Cartulary's storage and won't clear it to make room. Clearing its site data still erases it, so keep exporting."
+                : storageKept === false
+                  ? "This browser may clear Cartulary's storage when it needs room, and clearing its site data erases it too. An exported .json is the copy that lasts."
+                  : storageKept === null
+                    ? "This browser doesn't say whether it keeps Cartulary's storage. An exported .json is the copy that lasts."
+                    : ""}
+              {storageKept !== undefined && typeof location !== "undefined" && location.protocol === "file:"
+                ? " Opened from a file, this page's storage follows the browser's rules for local files, which vary from browser to browser (Help: Working With Multiple Worlds)."
+                : ""}
+            </div>
+            <div className={`fsaa-status ${storageKept === true ? "connected" : ""}`} style={{ marginTop: 8 }}>
+              <div className="fsaa-status-dot" />
+              <span>{storageKept === true ? "Kept by this browser" : storageKept === false ? "May be cleared" : storageKept === null ? "No answer from this browser" : "Checking"}</span>
+            </div>
+          </div>
+        </div>
         <div className="settings-row">
           <div className="settings-row-info">
             <div className="settings-row-title">Export world</div>
@@ -21959,6 +22467,8 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
         onRestore={onRestoreSnapshot}
         onExport={onExportSnapshot}
         onDelete={onDeleteSnapshot}
+        world={world}
+        refusedAt={snapshotRefusedAt}
       />
 
       <div className="danger-zone">
@@ -51279,7 +51789,7 @@ const fabulaWithNewThread = (state, storyId, name) => {
   const tplId = fabulaThreadTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: `ent-${slugify(title) || "thread"}-${genId().slice(-4)}`, templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThreads(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 
@@ -51879,7 +52389,7 @@ const fabulaWithNewTheme = (state, storyId, name) => {
   const tplId = fabulaThemeTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: `ent-${slugify(title) || "theme"}-${genId().slice(-4)}`, templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "theme"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThemes(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 
