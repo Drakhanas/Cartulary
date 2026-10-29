@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1179,3 +1179,23 @@ the tool now leaves Markdown out the way it leaves Undo and Redo; the
 README says so. Drak passed it in a few minutes. Two cuts remain before the
 carve, and the help is next, where the mechanical claims about Stemma get
 held to the code's tables as Fabula's were.
+
+r036 is the help, and the help is where a build's claims about itself go
+stale without anyone noticing, so the cut was mostly reading code: every
+number in the new Stemma topic came from a table or a handler before it
+went into a sentence, and the probe reads the sentence back off the page
+and holds it to the build again, the way r024 held Fabula's. Two of my
+first drafts were wrong, and the checking caught both. I wrote that a
+click on any rota node opens the inspector; a click on a child drills in,
+and only the focal opens it, which the probe found by trying. I wrote that
+a wiki-link from the Markdown export links when it's pasted into a
+longform field; it does for an entry or a body, and Pipes item 3 on the
+roadmap already says why it doesn't yet for a map or a stemma. The "not
+in v1" list went whole, Drak's call at the outline: half of it had
+shipped, and he saw no reason to keep the rest. The schema topic was the other half of
+the work, brought level with the site's JSON Structure page, which has
+been the more accurate of the two since the Fabula page; the three help
+lines the roadmap has carried since r005 rode along, as the spec said they
+would. One thing turned up on the way, outside the help: a pin's id is the
+first six characters of the time in base 36, so two pins placed within
+about a second of each other can share one.

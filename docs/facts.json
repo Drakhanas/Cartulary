@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 56,
-  "total_lines": 54132,
-  "raw_body_lines": 54132,
-  "canonical_lines": 51538,
+  "total_lines": 54252,
+  "raw_body_lines": 54252,
+  "canonical_lines": 51636,
   "decl_count": 773,
   "no_trailing_newline": 48,
-  "active_anchor": "reference-r035-body.jsx"
+  "active_anchor": "reference-r036-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 54132,
+   "value": 54252,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -30,11 +30,11 @@
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 51538,
+   "value": 51636,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 54132,
+   "value": 54252,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2920386,
+   "value": 2938128,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-one",
-    61
+    "sixty-two",
+    62
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,14 +121,14 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-one",
-    61
+    "sixty-two",
+    62
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r035": {
-   "value": "5eb6264e8ec6b9e8",
-   "pattern": "working[^\\n]{0,40}at r035 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r036": {
+   "value": "cd78846b6366d1e9",
+   "pattern": "working[^\\n]{0,40}at r036 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -1001,14 +1001,16 @@
    "stemmaRotateChild",
    "beginOrbitDrag",
    "8a23000",
-   "reference-r035-body.jsx",
-   "reference-r035-layout.json",
-   "a16bd8090299ab10",
-   "5eb6264e8ec6b9e8",
    "v1.7_r035",
    "stemmaMarkdown",
    "exportStemmaMarkdown",
-   "c157441"
+   "c157441",
+   "reference-r036-body.jsx",
+   "reference-r036-layout.json",
+   "04abce0dcdd23f98",
+   "cd78846b6366d1e9",
+   "v1.7_r036",
+   "b38c0cc"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1202,10 +1204,14 @@
    "57e4c0e56a00048a",
    "eccada7bdd020445",
    "reference-r035-body.jsx",
-   "reference-r035-layout.json",
    "On v1.7 r035 verification",
    "5eb6264e8ec6b9e8",
-   "a16bd8090299ab10"
+   "a16bd8090299ab10",
+   "reference-r036-body.jsx",
+   "reference-r036-layout.json",
+   "On v1.7 r036 verification",
+   "cd78846b6366d1e9",
+   "04abce0dcdd23f98"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1385,7 +1391,12 @@
    "c157441",
    "843dc10",
    "stemmaMarkdown",
-   "v1.7_r035_markdown_export.py"
+   "v1.7_r035_markdown_export.py",
+   "v1.7_r036",
+   "cd78846b6366d1e9",
+   "b38c0cc",
+   "40a19e1",
+   "v1.7_r036_help.py"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1460,7 +1471,9 @@
    "v1.7_r034",
    "r034 is in",
    "v1.7_r035",
-   "r035 is in"
+   "r035 is in",
+   "v1.7_r036",
+   "r036 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1572,7 +1585,8 @@
    "r032",
    "r033",
    "r034",
-   "r035"
+   "r035",
+   "r036"
   ]
  }
 }
