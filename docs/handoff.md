@@ -227,6 +227,7 @@ Each is stated here once.
 - **Surface any finding that changes the shape of planned work before committing to it.**
 - **"Next" is not a browser pass.** After a byte-changing cut, confirm the pass explicitly.
 - **Drak is not a coder by trade** (a NOC engineer). He directs design, scope, and QA; the AI implements. Name the concrete things to check after a change, and say plainly which file to open and which to save.
+- **A staged build reaches him two ways.** Send it as a file card in the conversation, and when the session is linked to his computer, also write it into `inlining/out/` in his clone at `D:\Git\_Cartulary` (the folder git ignores), where he opens it for the pass. A session that isn't linked sends the card and says the file wasn't written to his folder. Name the file by its staged name and the first sixteen hex digits of its sha256.
 - Doc defects that don't block progress get fixed at turnover, not before the cut.
 - A file card in the conversation is a snapshot: a re-sent draft gets a commit suffix in its filename.
 
