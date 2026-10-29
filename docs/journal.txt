@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1136,3 +1136,28 @@ the last lane sat at its floor either way. Both are fixed by checking more,
 not by checking differently. He passed it in the evening with no further
 asks, which after four amendments I take as the review having done its work
 early rather than late.
+
+r034 was the plain cut after the loud one: Rota's reorder and keys, every
+line of it already written in the spec's section 7, which is what a build
+sheet is for. The one thing the section didn't say was the geometry, and
+the geometry was the whole job: a child dragged along the orbit has to
+know which slot the pointer is over, and the pointer lives in screen
+pixels while the slots live in a square that the zoom scales from its
+corner, so the slot is read from the square's own box and divided back,
+and the probe drags at two zooms to prove it. I drew the swap as it would
+land, the sibling moved into the dragged child's slot with a dashed ring
+while the drag is on, because a swap that only happens on release is a
+surprise and one that is shown is a choice. The plants taught the same
+lesson twice in one evening: two of my ten were not defects, one because
+tearing the listeners down cancels a drag whether or not a flag says so,
+the other because a locked world's apply refuses every edit before any key
+guard is reached, and a third was caught by the wrong check because a
+zoom-blind reading happened to land on the same slot at the angle I had
+chosen. A plant that can't fail a check is a claim about the code, not a
+test of the probe, and I replaced each with one that could. The locked
+reading is the one call I made against the acceptance line's letter: the
+view's keys still move the view there, since section 6 allows pan, zoom,
+and drill in, and only the editing keys and the drag are refused. Drak
+passed it in twenty minutes with no asks, and r035, the Markdown export,
+now has r033's stacks and rows to write as nested lists, which the plan
+could not have known.
