@@ -6,7 +6,7 @@
   "canonical_lines": 51636,
   "decl_count": 773,
   "no_trailing_newline": 48,
-  "active_anchor": "reference-r036-body.jsx"
+  "active_anchor": "reference-r037-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -86,8 +86,8 @@
   },
   "anchor_rotations": {
    "value": [
-    "sixty-two",
-    62
+    "sixty-three",
+    63
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,14 +121,14 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-two",
-    62
+    "sixty-three",
+    63
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r036": {
-   "value": "cd78846b6366d1e9",
-   "pattern": "working[^\\n]{0,40}at r036 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r037": {
+   "value": "f5bb9c97c88c3433",
+   "pattern": "working[^\\n]{0,40}at r037 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -609,12 +609,12 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 258,
+   "line": 1587,
    "contains": "Stemma transforms"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 271,
+   "line": 1600,
    "contains": "const addChildToStemmaTree"
   },
   {
@@ -629,7 +629,7 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2706,
+   "line": 3194,
    "contains": "Tabula: the canvas"
   },
   {
@@ -654,12 +654,12 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2727,
+   "line": 2706,
    "contains": "Tabula: the drawing layer"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2785,
+   "line": 2764,
    "contains": "function useTabulaDrawing"
   },
   {
@@ -689,12 +689,12 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 410,
+   "line": 1739,
    "contains": "const stemmaMoveChild"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 1179,
+   "line": 997,
    "contains": "function StemmaCanvasView"
   },
   {
@@ -780,8 +780,38 @@
   "21_stemma.jsx": [
    [
     1,
+    1585,
+    "the helpers and the rota's canvas"
+   ],
+   [
+    1586,
+    1767,
+    "the transforms"
+   ],
+   [
+    1768,
+    1853,
+    "the Markdown export"
+   ],
+   [
+    1854,
+    1986,
+    "the index view"
+   ],
+   [
+    1987,
+    2703,
+    "Tabula's document"
+   ],
+   [
+    2704,
+    3192,
+    "Tabula's drawing layer"
+   ],
+   [
+    3193,
     4601,
-    "stemma"
+    "Tabula's canvas"
    ]
   ],
   "25_kalendarium.jsx": [
@@ -1005,13 +1035,16 @@
    "stemmaMarkdown",
    "exportStemmaMarkdown",
    "c157441",
-   "reference-r036-body.jsx",
-   "reference-r036-layout.json",
-   "04abce0dcdd23f98",
-   "cd78846b6366d1e9",
    "v1.7_r036",
    "b38c0cc",
-   "130d2b4"
+   "130d2b4",
+   "reference-r037-body.jsx",
+   "reference-r037-layout.json",
+   "c8484528f4609b05",
+   "f5bb9c97c88c3433",
+   "v1.7_r037",
+   "2238809",
+   "eight anchor-rotating gathers"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1209,10 +1242,15 @@
    "5eb6264e8ec6b9e8",
    "a16bd8090299ab10",
    "reference-r036-body.jsx",
-   "reference-r036-layout.json",
    "On v1.7 r036 verification",
    "cd78846b6366d1e9",
-   "04abce0dcdd23f98"
+   "04abce0dcdd23f98",
+   "reference-r037-body.jsx",
+   "reference-r037-layout.json",
+   "On v1.7 r037 verification",
+   "f5bb9c97c88c3433",
+   "c8484528f4609b05",
+   "eight are anchor-rotating"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1399,7 +1437,12 @@
    "40a19e1",
    "v1.7_r036_help.py",
    "130d2b4",
-   "probe_site_stemma.js"
+   "probe_site_stemma.js",
+   "v1.7_r037",
+   "f5bb9c97c88c3433",
+   "2238809",
+   "e8fe302",
+   "v1.7_r037_gather_stemma.py"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1477,7 +1520,9 @@
    "r035 is in",
    "v1.7_r036",
    "r036 is in",
-   "130d2b4"
+   "130d2b4",
+   "v1.7_r037",
+   "r037 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1532,7 +1577,9 @@
    "A planted defect that crashes the probe has been noticed, not counted",
    "A planted copy that passes every check has either found a blind check or a world that never reaches the rule",
    "A queued run whose check count differs from the solo run's is the race too",
-   "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it"
+   "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it",
+   "A header inserted inside a section passes every header check",
+   "A rehearsal in a copy checks where it stands before it changes anything"
   ],
   "journal.txt": [
    "r030",
@@ -1590,7 +1637,8 @@
    "r033",
    "r034",
    "r035",
-   "r036"
+   "r036",
+   "r037"
   ]
  }
 }

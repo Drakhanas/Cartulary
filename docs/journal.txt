@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page) ===
+=== 2026-10-27 to 29 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page; r037, the gather) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1215,3 +1215,24 @@ of any window narrower than about 1,270 pixels.
 One CSS line for the code blocks and one for the narrow tables, and every
 route of the site sits inside its frame at six widths. The carve is the
 last item of the plan.
+
+The carve was meant to be the easy one, a pure split at seven headers
+that the gate proves by bytes. Reading the seams for its plan, member by
+member, turned up two headers away from their blocks: r026's transforms
+sat between the rota's helpers and its canvas, so the whole canvas read
+under the transforms, and r032's drawing layer sat between the tabula's
+canvas header and the canvas itself. Neither had ever failed a check,
+because the pair check looks at a header's first member and both headers
+had the right one. I'd noticed the second at r032 and filed it for the
+carve, which is to say for a cut that couldn't fix it, since a pure carve
+moves no line. Drak took the gather first and the rota's fix with it, so
+r037 moved 203 lines and changed nothing else, and the carve is r038. My
+first draft of the cut's comment said twelve transforms where there are
+nine, and two panels where there's a panel and a modal; I'd counted from
+my memory of the section instead of from the file, and no gate would have
+caught either. The worse slip came while Drak had the build. Rehearsing
+the freeze and the carve in a scratch copy, the command that made the
+copy failed, the steps after it weren't chained to it, and the freeze ran
+in the repository. I put the anchor back from git within the minute and
+nothing had been committed, but for that minute the repository held an
+anchor nobody had passed, and I told Drak in the same reply.
