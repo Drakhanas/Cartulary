@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "bc7d488a7b04885a3f23087ff8d0cd9c68e28cc9248af7adc6573eb8a8c07ae0",
+  "anchor_sha256": "c6674d94876d74ae64da53a48ef6ae10b10e166193b8ae12b26046c2e05f3232",
   "shell_sha256": "67b97d88777f7d8cef92ab9c25edc852de54157e8eb9e16557fad31cabcf0af6",
   "files": [
     [
@@ -52,11 +52,11 @@
     ],
     [
       "12_trunk.jsx",
-      6123
+      6131
     ],
     [
       "13_form-engine-display.jsx",
-      743
+      880
     ],
     [
       "14_form-engine-edit.jsx",
@@ -132,7 +132,7 @@
     ],
     [
       "22_trunk.jsx",
-      437
+      703
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -160,11 +160,11 @@
     ],
     [
       "24_ephemeris/01_shell.jsx",
-      724
+      725
     ],
     [
       "24_ephemeris/02_asbo.jsx",
-      1459
+      1461
     ],
     [
       "24_ephemeris/03_observe.jsx",
@@ -204,7 +204,7 @@
     ],
     [
       "28_fabula/02_story.jsx",
-      214
+      215
     ],
     [
       "28_fabula/03_people.jsx",
