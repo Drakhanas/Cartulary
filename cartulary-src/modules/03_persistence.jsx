@@ -17,6 +17,12 @@ const openDB = () => new Promise((resolve, reject) => {
   req.onerror = () => reject(req.error);
 });
 
+// v1.7 r039: a write rejects when its transaction aborts as well as when it
+// errs. A write past the quota aborts its transaction with QuotaExceededError
+// and fires no error event, so until r039 the promise never settled and a
+// failed save went unseen (docs/pipes-spec.md, section 3).
+const txAborted = (tx) => tx.error || new DOMException("The write was aborted", "AbortError");
+
 // One-time migration: if the legacy DB exists and the new DB doesn't have data
 // yet, copy world + prefs across. Runs on every startup; cheap if no legacy data.
 const migrateLegacyDB = async () => {
@@ -77,6 +83,7 @@ const migrateLegacyDB = async () => {
         if (legacyPrefs) tx.objectStore(DB_STORE).put(legacyPrefs, DB_PREFS_KEY);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(txAborted(tx));
       });
       console.log("Migrated world data from legacy DB to Cartulary DB");
     }
@@ -100,15 +107,46 @@ const dbGet = async () => {
   });
 };
 
-const dbSet = async (value) => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).put(value, DB_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+// v1.7 r039: the world's writes, and the other keys' (dbSetExtra), share one
+// connection kept open for the session (dbConnect), so a write the page's
+// hiding asks for starts in that same task, and each asks its transaction to
+// commit at once where commit() exists rather than when the task ends; both
+// help a write made as the page closes land. A connection the browser
+// closes is opened again at the next write.
+let dbConnection = null;
+let dbConnecting = null;
+const dbConnect = () => {
+  if (dbConnection) return Promise.resolve(dbConnection);
+  if (!dbConnecting) {
+    dbConnecting = openDB().then(db => {
+      db.onversionchange = () => { db.close(); if (dbConnection === db) dbConnection = null; };
+      db.onclose = () => { if (dbConnection === db) dbConnection = null; };
+      dbConnection = db;
+      dbConnecting = null;
+      return db;
+    }, e => { dbConnecting = null; throw e; });
+  }
+  return dbConnecting;
 };
+
+const dbPutKey = (db, key, value) => new Promise((resolve, reject) => {
+  const tx = db.transaction(DB_STORE, "readwrite");
+  tx.objectStore(DB_STORE).put(value, key);
+  tx.oncomplete = () => resolve();
+  tx.onerror = () => reject(tx.error);
+  tx.onabort = () => reject(txAborted(tx));
+  if (typeof tx.commit === "function") tx.commit();
+});
+
+const dbPut = async (key, value) => {
+  if (dbConnection) {
+    try { return await dbPutKey(dbConnection, key, value); }
+    catch (e) { if (!e || e.name !== "InvalidStateError") throw e; dbConnection = null; }
+  }
+  return dbPutKey(await dbConnect(), key, value);
+};
+
+const dbSet = (value) => dbPut(DB_KEY, value);
 
 const dbClear = async () => {
   const db = await openDB();
@@ -117,6 +155,7 @@ const dbClear = async () => {
     tx.objectStore(DB_STORE).delete(DB_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
@@ -137,6 +176,7 @@ const dbSetPrefs = async (value) => {
     tx.objectStore(DB_STORE).put(value, DB_PREFS_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
@@ -154,15 +194,7 @@ const dbGetExtra = async (key) => {
   });
 };
 
-const dbSetExtra = async (key, value) => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(DB_STORE, "readwrite");
-    tx.objectStore(DB_STORE).put(value, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-};
+const dbSetExtra = (key, value) => dbPut(key, value);
 
 const dbDeleteExtra = async (key) => {
   const db = await openDB();
@@ -171,8 +203,31 @@ const dbDeleteExtra = async (key) => {
     tx.objectStore(DB_STORE).delete(key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
+
+// v1.7 r039: whether the browser keeps Cartulary's storage (true), may clear
+// it when it needs room (false), or can't say (null), from the Storage API.
+// storageAskToKeep asks it to keep the storage while the answer is no, which
+// Chromium and Safari decide by signals of their own and Firefox puts to the
+// user in a popup (docs/pipes-spec.md, section 3).
+const storageIsKept = async () => {
+  try {
+    if (typeof navigator === "undefined" || !navigator.storage || typeof navigator.storage.persisted !== "function") return null;
+    return !!(await navigator.storage.persisted());
+  } catch (e) { return null; }
+};
+
+const storageAskToKeep = async () => {
+  const kept = await storageIsKept();
+  if (kept !== false || typeof navigator.storage.persist !== "function") return kept;
+  try { return !!(await navigator.storage.persist()); } catch (e) { return false; }
+};
+
+// v1.7 r039: the waits between a failed save's tries, the last repeating
+// until a save lands (App's runSave).
+const SAVE_RETRY_WAITS_MS = [2000, 5000, 15000, 30000, 60000];
 
 // ─── Version History (snapshots) ───────────────────────────────────────────────
 // Snapshots are stored as regular keys in the existing `data` object store,
@@ -183,7 +238,11 @@ const dbDeleteExtra = async (key) => {
 const DB_SNAP_PREFIX = "snap-";
 const SNAPSHOT_THROTTLE_MS = 5 * 60 * 1000;       // 5-minute auto-snapshot gate
 const SNAPSHOT_AUTO_CAP = 10;                      // Keep N most-recent auto-snapshots; pinned exempt
-const SNAPSHOT_PRE_RESTORE_CAP = 3;                // Keep N most-recent "Before restore from..." snapshots; older evict to bound IndexedDB growth from repeat restores
+// v1.7 r039: the snapshots the app pins before a restore, an import, or a
+// reset each keep their newest SNAPSHOT_KIND_CAP, older ones evicted, since
+// an import or a reset no longer clears the pinned snapshots.
+const SNAPSHOT_KIND_CAP = 3;
+const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset"];
 
 // Generic prefix-range helpers. Used by snapshots, but written generically in
 // case other prefix-keyed data shows up later (e.g. drafts-history).
@@ -226,12 +285,16 @@ const dbDeleteByPrefix = async (prefix) => {
     req.onerror = () => reject(req.error);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(txAborted(tx));
   });
 };
 
 // Snapshot value shape:
 //   { timestamp, trigger: 'auto'|'manual', pinned: bool, label: string|null,
-//     sizeBytes: number, worldJson: <world state> }
+//     kind: null|'pre-restore'|'pre-import'|'pre-reset', sizeBytes: number,
+//     worldJson: <world state> }
+// kind marks the app's own pinned snapshots; a restore point the user makes
+// has none, nor do the Before import and Before reset ones from before r039.
 // Key shape: `${DB_SNAP_PREFIX}${timestamp}-{rand4}`. The timestamp is a
 // fixed-width prefix (13 digits until year 2286), so prefix-range queries
 // over the snapshot keyspace return all snapshots cleanly. The random
@@ -242,7 +305,7 @@ const dbDeleteByPrefix = async (prefix) => {
 // ordering.
 const snapshotKey = (timestamp) => `${DB_SNAP_PREFIX}${timestamp}-${Math.random().toString(36).slice(2, 6)}`;
 
-const snapshotCreate = async ({ state, trigger, label = null, pinned = false, kind = null }) => {
+const snapshotCreate = async ({ state, trigger, label = null, pinned = false, kind = null, onError = null }) => {
   try {
     const timestamp = Date.now();
     const worldJson = state;
@@ -271,12 +334,12 @@ const snapshotCreate = async ({ state, trigger, label = null, pinned = false, ki
     if (trigger === "auto" && !pinned) {
       await snapshotEvictAuto();
     }
-    // Pre-restore snapshots are pinned but capped separately so repeated
-    // restores can't bloat IndexedDB indefinitely. Pre-reset / pre-import
-    // are also pinned but those operations wipe prior history first, so
-    // they don't accumulate the same way.
-    if (kind === "pre-restore") {
-      await snapshotEvictPreRestore();
+    // The snapshots pinned before a restore, an import, or a reset are capped
+    // per kind (SNAPSHOT_KIND_CAP), so repeated restores and imports can't
+    // fill the storage the world needs; since v1.7's r039 an import or a
+    // reset clears only the automatic snapshots, so these accumulate too.
+    if (SNAPSHOT_CAPPED_KINDS.includes(kind)) {
+      await snapshotEvictKind(kind);
     }
     return snap;
   } catch (e) {
@@ -285,6 +348,9 @@ const snapshotCreate = async ({ state, trigger, label = null, pinned = false, ki
     } else {
       console.error("Snapshot write failed:", e);
     }
+    // v1.7 r039: the caller hears why, for Version History's note and a
+    // restore point's flash.
+    if (typeof onError === "function") onError(e);
     return null;
   }
 };
@@ -328,8 +394,9 @@ const snapshotLatest = async () => {
 };
 
 // FIFO eviction: keep newest SNAPSHOT_AUTO_CAP unpinned snapshots, drop older.
-// Pinned snapshots are skipped entirely — they survive forever until manually
-// deleted or wiped by Reset/Import.
+// Pinned snapshots are skipped entirely: they stay until they're deleted by
+// hand, or evicted by their kind's cap (snapshotEvictKind), since an import
+// or a reset clears only the automatic ones (v1.7 r039).
 const snapshotEvictAuto = async () => {
   const all = await snapshotList();
   const unpinned = all.filter(s => !s.value.pinned);
@@ -340,19 +407,19 @@ const snapshotEvictAuto = async () => {
   }
 };
 
-// FIFO eviction for pre-restore snapshots specifically. These are pinned (so
-// snapshotEvictAuto skips them) but accumulate indefinitely if the user
-// restores often. Cap at SNAPSHOT_PRE_RESTORE_CAP — the user only needs the
-// most recent restore-reversals; older ones drop quietly. Pre-reset and
-// pre-import pinned snapshots are NOT subject to this cap because Reset and
-// Import wipe prior history first, so only one of each ever exists at a time.
-const snapshotEvictPreRestore = async () => {
+// FIFO eviction for one kind of the app's pinned snapshots: Before restore,
+// Before import, or Before reset. They're pinned (so snapshotEvictAuto skips
+// them) but accumulate if the user restores or imports often, so each kind
+// keeps its newest SNAPSHOT_KIND_CAP and older ones drop quietly. Before
+// restore had the cap alone until v1.7's r039, when an import and a reset
+// stopped clearing the pinned snapshots.
+const snapshotEvictKind = async (kind) => {
   const all = await snapshotList();
-  const preRestore = all.filter(s => s.value.kind === "pre-restore");
-  if (preRestore.length <= SNAPSHOT_PRE_RESTORE_CAP) return;
-  const toEvict = preRestore.slice(SNAPSHOT_PRE_RESTORE_CAP);  // newest-first; everything past cap is older
+  const ofKind = all.filter(s => s.value.kind === kind);
+  if (ofKind.length <= SNAPSHOT_KIND_CAP) return;
+  const toEvict = ofKind.slice(SNAPSHOT_KIND_CAP);  // newest-first; everything past cap is older
   for (const s of toEvict) {
-    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Pre-restore snapshot evict failed:", e); }
+    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Pinned snapshot evict failed:", e); }
   }
 };
 
@@ -360,8 +427,27 @@ const snapshotDelete = async (key) => {
   await dbDeleteExtra(key);
 };
 
-const snapshotDeleteAll = async () => {
-  await dbDeleteByPrefix(DB_SNAP_PREFIX);
+// v1.7 r039: an import or a reset clears the automatic snapshots only; the
+// user's restore points and the app's pinned snapshots stay
+// (docs/pipes-spec.md, section 3).
+const snapshotDeleteAuto = async () => {
+  const all = await snapshotList();
+  for (const s of all) {
+    if (s.value.pinned) continue;
+    try { await dbDeleteExtra(s.key); } catch (e) { console.error("Snapshot delete failed:", e); }
+  }
+};
+
+// v1.7 r039: the name of the world a snapshot holds when it isn't the one
+// open, for its row in Version History, since a restore point now outlives
+// the world it was made in. Worlds are told apart by when they were made
+// where both say, so a renamed world's snapshots stay its own; where neither
+// says, by name.
+const snapshotFromOtherWorld = (snapWorld, world) => {
+  if (!snapWorld || !world) return null;
+  const made = snapWorld.createdAt || null, open = world.createdAt || null;
+  const other = (made || open) ? made !== open : (snapWorld.name || "") !== (world.name || "");
+  return other ? (snapWorld.name || "Untitled World") : null;
 };
 
 // ─── Version History panel (Settings sub-section) ───────────────────────────
@@ -372,7 +458,7 @@ const snapshotDeleteAll = async () => {
 // confirm modal — no native confirm(), per Drak spec. The list is local
 // state inside the panel; operations call back into App-supplied handlers
 // and refresh on completion.
-function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) {
+function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete, world, refusedAt }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   // Pending action — drives the inline confirm modal. Shapes:
@@ -456,6 +542,11 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
       <div className="version-history-desc">
         Cartulary keeps automatic backups of your recent work. The last {SNAPSHOT_AUTO_CAP} automatic snapshots are retained, plus any restore points you create manually (those stay until you delete them).
       </div>
+      {refusedAt && (
+        <div className="modal-notice modal-notice-warning">
+          The automatic snapshot at {formatSnapshotTimestamp(refusedAt).slice(11)} wasn't kept: the browser's storage for Cartulary is full. Deleting old snapshots makes room.
+        </div>
+      )}
       <div className="version-history-actions">
         <button
           className="btn btn-accent"
@@ -474,6 +565,7 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
           {list.map(entry => {
             const s = entry.value;
             const isPinned = !!s.pinned;
+            const otherWorld = snapshotFromOtherWorld(s.worldJson && s.worldJson.world, world);
             return (
               <div key={entry.key} className="snapshot-row">
                 <div className="snapshot-row-info">
@@ -485,6 +577,7 @@ function VersionHistoryPanel({ onCreateManual, onRestore, onExport, onDelete }) 
                     {isPinned && <span className="snapshot-pin-icon" title="Pinned — survives automatic eviction">📌</span>}
                   </div>
                   <div className="snapshot-row-secondary">
+                    {otherWorld && <span className="snapshot-world" title="This snapshot holds a different world from the one open">Another world: {otherWorld}</span>}
                     {s.label && <span className="snapshot-label" title={s.label}>"{s.label}"</span>}
                     <span className="snapshot-size">{formatSnapshotSize(s.sizeBytes)}</span>
                   </div>

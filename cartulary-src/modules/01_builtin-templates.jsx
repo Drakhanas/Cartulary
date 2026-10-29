@@ -1024,24 +1024,35 @@ const syncRefTargetNames = (templates, only, legacy) => {
   (only || templates).forEach(t => { if (t && Array.isArray(t.fields)) t.fields.forEach(sync); });
 };
 
-const makeTemplateFromBuiltin = (bt) => ({
-  id: `tpl-${slugify(bt.name)}-${genId().slice(-4)}`,
-  name: bt.name,
-  icon: bt.icon,
-  color: bt.color,
-  kind: bt.kind || "standard",
-  origin: TEMPLATE_ORIGIN.BUILTIN,
-  // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, which finds
-  // them by this flag (docs/fabula-spec.md, section 4).
-  ...(bt.fabulaRole ? { fabulaRole: bt.fabulaRole } : {}),
-  fields: bt.fields.map(f => ({
-    id: `fld-${slugify(f.label)}-${genId().slice(-4)}`,
-    ...f,
-  })),
-});
+// v1.7 r039: the template's id is new to takenTemplateIds, and each field's to
+// takenFieldIds and the fields made before it (freshNameId); both optional.
+const makeTemplateFromBuiltin = (bt, takenTemplateIds, takenFieldIds) => {
+  const fieldIds = new Set(takenFieldIds instanceof Set ? takenFieldIds : []);
+  return {
+    id: freshNameId("tpl", bt.name, takenTemplateIds),
+    name: bt.name,
+    icon: bt.icon,
+    color: bt.color,
+    kind: bt.kind || "standard",
+    origin: TEMPLATE_ORIGIN.BUILTIN,
+    // v1.7 r016: Plot Thread and Theme / Motif belong to Fabula, which finds
+    // them by this flag (docs/fabula-spec.md, section 4).
+    ...(bt.fabulaRole ? { fabulaRole: bt.fabulaRole } : {}),
+    fields: bt.fields.map(f => {
+      const id = freshNameId("fld", f.label, fieldIds);
+      fieldIds.add(id);
+      return { id, ...f };
+    }),
+  };
+};
 
 const seedBuiltinTemplates = () => {
-  const tmpls = BUILTIN_TEMPLATES.map(makeTemplateFromBuiltin);
+  const taken = new Set();
+  const tmpls = BUILTIN_TEMPLATES.map(bt => {
+    const t = makeTemplateFromBuiltin(bt, taken);
+    taken.add(t.id);
+    return t;
+  });
   resolveTemplateRefs(tmpls);
   return tmpls;
 };

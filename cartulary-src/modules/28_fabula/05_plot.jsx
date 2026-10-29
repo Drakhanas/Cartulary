@@ -244,7 +244,7 @@ const fabulaWithNewThread = (state, storyId, name) => {
   const tplId = fabulaThreadTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: `ent-${slugify(title) || "thread"}-${genId().slice(-4)}`, templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThreads(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 

@@ -198,6 +198,10 @@ const migrate = (state) => {
   if (!Array.isArray(state.templates)) state.templates = [];
   if (!Array.isArray(state.entries)) state.entries = [];
   if (!Array.isArray(state.stemmas)) state.stemmas = [];
+  // v1.7 r039: an entry, a template, or a template's field that shares its
+  // id with an earlier one, or has none, gets a new id before anything else
+  // reads them (repairRecordIds); what changed is kept for the caller.
+  lastIdRepairs = repairRecordIds(state);
   // Cartographia maps slice (v1.6 r001): promote kind:"map" entries to a flat
   // slice. One pass, idempotent, defensive. Runs BEFORE the concordance-position
   // validation below so getRegisteredGraphNodes there already sees migrated maps
@@ -667,7 +671,7 @@ const migrate = (state) => {
     if (state.world.seededBuiltins.includes(bt.name)) return;
     const exists = state.templates.some(t => t.name === bt.name);
     if (!exists) {
-      insertAtCanonicalPosition(makeTemplateFromBuiltin(bt), builtinIndex);
+      insertAtCanonicalPosition(makeTemplateFromBuiltin(bt, new Set(state.templates.map(t => t && t.id))), builtinIndex);
       templatesAdded = true;
     }
     state.world.seededBuiltins.push(bt.name);
@@ -810,7 +814,7 @@ const migrate = (state) => {
         const alreadyPresent = userTpl.fields.some(f => f.label === bf.label);
         if (!alreadyPresent) {
           userTpl.fields.push({
-            id: `fld-${slugify(bf.label)}-${genId().slice(-4)}`,
+            id: freshNameId("fld", bf.label, collectFieldIds(userTpl.fields)),
             ...bf,
           });
           fieldsAdded = true;
@@ -2922,7 +2926,7 @@ const migrate = (state) => {
             e.templateId === tpl.id && (e.name || "").toLowerCase() === folded
           );
           const newName = nameCollision ? `${originalName} (Region)` : originalName;
-          const newId = `ent-${slugify(newName)}-${genId().slice(-4)}`;
+          const newId = freshNameId("ent", newName, new Set(state.entries.map(e => e && e.id)));
           state.entries.push({
             id: newId,
             templateId: tpl.id,
@@ -5954,12 +5958,137 @@ const migrate = (state) => {
   // section 3). Last, so the templates the schemas point at are final.
   ensureFabulaSlice(state);
 
+  // v1.7 r039: the repairs reported are the ones whose record is still here,
+  // since the merge of same-named templates above folds a renumbered copy
+  // into the earlier one.
+  {
+    const tplById = new Map(state.templates.filter(t => t && t.id).map(t => [t.id, t]));
+    const held = new Set([...state.entries, ...state.cartographia].filter(x => x && x.id).map(x => x.id));
+    lastIdRepairs = lastIdRepairs.filter(r => r.kind === "entry" ? held.has(r.id)
+      : r.kind === "template" ? tplById.has(r.id)
+      : tplById.has(r.templateId) && collectFieldIds(tplById.get(r.templateId).fields).has(r.id));
+  }
+
   return state;
+};
+
+// ─── Id repair (v1.7 r039) ─────────────────────────────────────────────────────
+// A world whose entries, templates, or a template's fields share an id, or
+// lack one, loads with each later copy given a new id (freshNameId), the
+// earlier in storage order keeping its own, instead of being refused, so a
+// reference to the shared id stays with the earlier copy: nothing records
+// which copy a reference meant (docs/pipes-spec.md, section 3). Field ids are
+// unique within their template, at any depth, as validateMigrated checks.
+// migrate() runs it first, so every pass after it sees one record per id,
+// and leaves what it changed in lastIdRepairs, never stored, for the load,
+// the import, or the restore to take (takeIdRepairs) and say in a banner
+// (idRepairMessage).
+let lastIdRepairs = [];
+
+const takeIdRepairs = () => {
+  const out = lastIdRepairs;
+  lastIdRepairs = [];
+  return out;
+};
+
+const repairRecordIds = (state) => {
+  const repairs = [];
+  const text = (v) => (typeof v === "string" ? v : "");
+  const templates = state.templates.filter(t => t && typeof t === "object");
+  const tplIds = new Set(templates.map(t => t.id).filter(Boolean));
+  const seenTpl = new Set();
+  templates.forEach(t => {
+    if (t.id && !seenTpl.has(t.id)) { seenTpl.add(t.id); return; }
+    const why = t.id ? "duplicate" : "missing";
+    t.id = freshNameId("tpl", t.name, tplIds);
+    tplIds.add(t.id);
+    seenTpl.add(t.id);
+    repairs.push({ kind: "template", why, id: t.id, name: text(t.name) });
+  });
+  templates.forEach(t => {
+    if (!Array.isArray(t.fields)) return;
+    const fieldIds = collectFieldIds(t.fields);
+    const seen = new Set();
+    const walk = (fields) => fields.forEach(f => {
+      if (!f || typeof f !== "object") return;
+      if (f.id && !seen.has(f.id)) {
+        seen.add(f.id);
+      } else {
+        const why = f.id ? "duplicate" : "missing";
+        f.id = freshNameId("fld", f.label, fieldIds);
+        fieldIds.add(f.id);
+        seen.add(f.id);
+        repairs.push({ kind: "field", why, id: f.id, templateId: t.id, name: text(f.label), template: text(t.name) });
+      }
+      if (Array.isArray(f.subfields)) walk(f.subfields);
+    });
+    walk(t.fields);
+  });
+  const tplName = new Map();
+  templates.forEach(t => { if (!tplName.has(t.id)) tplName.set(t.id, text(t.name)); });
+  const entries = state.entries.filter(e => e && typeof e === "object");
+  const entryIds = new Set(entries.map(e => e.id).filter(Boolean));
+  const seenEnt = new Set();
+  entries.forEach(e => {
+    if (e.id && !seenEnt.has(e.id)) { seenEnt.add(e.id); return; }
+    const why = e.id ? "duplicate" : "missing";
+    e.id = freshNameId("ent", e.name, entryIds);
+    entryIds.add(e.id);
+    seenEnt.add(e.id);
+    repairs.push({ kind: "entry", why, id: e.id, name: text(e.name), template: tplName.get(e.templateId) || "" });
+  });
+  return repairs;
+};
+
+// The banner's words for what repairRecordIds changed: a sentence for each
+// kind, naming up to five and then how many more.
+const idRepairMessage = (repairs) => {
+  const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const listOf = (labels) => {
+    const shown = labels.slice(0, 5);
+    const more = labels.length - shown.length;
+    if (more > 0) return `${shown.join(", ")} and ${more} more`;
+    return shown.length <= 1 ? (shown[0] || "") : `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`;
+  };
+  const nameOf = (r) => r.name || "(unnamed)";
+  const entryList = (items) => {
+    const tpls = [...new Set(items.map(r => r.template || ""))];
+    if (tpls.length === 1 && tpls[0]) return `${listOf(items.map(nameOf))} (${tpls[0]})`;
+    return listOf(items.map(r => (r.template ? `${nameOf(r)} (${r.template})` : nameOf(r))));
+  };
+  const fieldOf = (r) => `the field ${nameOf(r)}${r.template ? ` in ${r.template}` : ""}`;
+  const shared = (kind) => repairs.filter(r => r.kind === kind && r.why === "duplicate");
+  const out = [];
+  const entries = shared("entry");
+  if (entries.length > 0) {
+    const n = entries.length, one = n === 1;
+    out.push(`${n} ${one ? "entry was" : "entries were"} using an id an earlier entry already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${entryList(entries)}. Anything that pointed at ${one ? "the" : "a"} shared id now points at the earlier entry; links meant for ${one ? "it" : `these ${words[n] || n}`} need checking.`);
+  }
+  const templates = shared("template");
+  if (templates.length > 0) {
+    const n = templates.length, one = n === 1;
+    out.push(`${n} ${one ? "template was" : "templates were"} using an id an earlier template already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${listOf(templates.map(nameOf))}. The entries that named ${one ? "the" : "a"} shared id stay with the earlier template.`);
+  }
+  const fields = shared("field");
+  if (fields.length > 0) {
+    const n = fields.length, one = n === 1;
+    out.push(`${n} ${one ? "field was" : "fields were"} using an id an earlier field of ${one ? "its" : "their"} template already had, so ${one ? "it" : "they"} got ${one ? "a new one" : "new ones"}: ${listOf(fields.map(fieldOf))}. Values saved under ${one ? "the" : "a"} shared id stay with the earlier field.`);
+  }
+  const missing = repairs.filter(r => r.why === "missing");
+  if (missing.length > 0) {
+    const n = missing.length, one = n === 1;
+    const label = (r) => r.kind === "field" ? fieldOf(r) : r.kind === "template" ? `the template ${nameOf(r)}` : (r.template ? `${nameOf(r)} (${r.template})` : nameOf(r));
+    out.push(`${n} ${one ? "record" : "records"} had no id and got one: ${listOf(missing.map(label))}.`);
+  }
+  return out.join(" ");
 };
 
 // ─── Migration validation ──────────────────────────────────────────────────────
 // Run after migrate() to catch corrupt input that the migration didn't reject.
 // Returns null on success, an error string describing the first violation on failure (Bug 10).
+// Since v1.7's r039 migrate() gives a shared or missing id a new one first
+// (repairRecordIds), so the id checks here are the backstop, and what's
+// refused is what can't be repaired.
 const validateMigrated = (state) => {
   if (!state || typeof state !== "object") return "State is not an object";
   if (!state.world || typeof state.world !== "object") return "Missing world metadata";

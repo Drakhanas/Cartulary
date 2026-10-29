@@ -379,6 +379,7 @@ body.tabula-dragging,body.tabula-dragging *{user-select:none!important}
 .btn-ghost:hover:not(:disabled){background:var(--surf2);color:var(--text)}
 .btn-danger{background:transparent;color:var(--danger);border-color:rgba(184,92,76,.35)}
 .btn-danger:hover:not(:disabled){background:var(--danger-bg)}
+.btn-danger:disabled{opacity:.35}
 .btn-icon-toggle{
   width:28px;height:28px;display:flex;align-items:center;justify-content:center;
   padding:0;background:transparent;color:var(--text-dim);border:1px solid var(--border2);border-radius:3px;
@@ -1119,6 +1120,7 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .snapshot-row-secondary{font-size:calc(12px * var(--font-scale));color:var(--text-dim);line-height:1.4;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .snapshot-label{color:var(--text);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px}
 .snapshot-size{flex-shrink:0;font-variant-numeric:tabular-nums}
+.snapshot-world{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px}
 .snapshot-row-actions{display:flex;gap:5px;flex-shrink:0}
 .snapshot-row-actions .btn{padding:4px 9px;font-size:calc(12px * var(--font-scale))}
 .snapshot-create-label{display:flex;flex-direction:column;gap:6px;margin-top:8px}
@@ -1160,6 +1162,9 @@ input[type="date"].input{font-family:'DM Sans',sans-serif;color-scheme:dark}
 .backup-banner-text strong{color:var(--accent);margin-right:6px;letter-spacing:.02em}
 .backup-banner-detail{color:var(--text-dim)}
 .backup-banner-actions{display:flex;gap:8px;flex-shrink:0}
+/* A save that failed (v1.7 r039): the banner in the danger color */
+.backup-banner.save-failed{background:var(--danger-bg);border-bottom-color:rgba(184,92,76,.45)}
+.backup-banner.save-failed .backup-banner-text strong{color:var(--danger)}
 
 /* ── Rich text editor ── */
 .rich-editor{border:1px solid var(--border2);border-radius:3px;background:var(--surf2);overflow:hidden}

@@ -123,6 +123,35 @@ function App() {
 
   // Auto-save debounce timer (Bug 1)
   const saveTimerRef = useRef(null);
+  // v1.7 r039, saving (docs/pipes-spec.md, section 3). saveNowRef: the next
+  // write goes out at once rather than after the 250 ms wait, set by a Save
+  // that closes an editor (saveNow). savePendingRef: a change is waiting for
+  // its write, which the page's hiding sends at once. saveSeqRef numbers the
+  // writes; draftClearArmedRef and draftClearSeqRef delete the stored draft
+  // only once the write carrying its Save lands. A failure: saveFailure is
+  // the banner's, { name, message, quota, nextAt }, saveAttemptRef picks the
+  // next wait (SAVE_RETRY_WAITS_MS), and the retry timer makes the try.
+  const saveNowRef = useRef(false);
+  const savePendingRef = useRef(false);
+  const saveSeqRef = useRef(0);
+  const draftClearArmedRef = useRef(false);
+  const draftClearSeqRef = useRef(null);
+  const saveAttemptRef = useRef(0);
+  const saveRetryTimerRef = useRef(null);
+  const saveFailingRef = useRef(false);
+  const [saveFailure, setSaveFailure] = useState(null);
+  const [, setSaveTick] = useState(0);
+  // The browser's answer on keeping Cartulary's storage (storageIsKept):
+  // undefined until it comes, null where it can't say. It's asked to keep
+  // the storage after the session's first edit (askPersistOnce).
+  const [storageKept, setStorageKept] = useState(undefined);
+  const persistAskedRef = useRef(false);
+  // When an automatic snapshot was refused for a full storage, for Version
+  // History's note; the next one kept clears it.
+  const [snapshotRefusedAt, setSnapshotRefusedAt] = useState(null);
+  // What the last load, import, or restore repaired (repairRecordIds), for a
+  // banner that stays until it's dismissed: { title, text }.
+  const [idRepair, setIdRepair] = useState(null);
 
   // Version History throttle gate. lastSnapshotAtRef holds the timestamp of
   // the most recent snapshot (auto OR pinned). Seeded asynchronously from IDB
@@ -149,6 +178,7 @@ function App() {
   // (which view, which template, which entry). Cleared on explicit save or
   // confirmed discard. Initial-state refs power the dirty check.
   const draftSaveTimerRef = useRef(null);
+  const pendingDraftRef = useRef(null); // v1.7 r039: the draft write its timer holds, which the page's hiding sends at once
   const initialEntryDraftRef = useRef(null);
   const initialTplDraftRef = useRef(null);
   const initialSchemaDraftRef = useRef(null);
@@ -358,6 +388,9 @@ function App() {
             return;
           }
           setState(migrated);
+          // v1.7 r039: what the load repaired, if anything (repairRecordIds).
+          const repairs = takeIdRepairs();
+          if (repairs.length > 0) setIdRepair({ title: "Repaired on load.", text: idRepairMessage(repairs) });
         }
       } catch (e) {
         console.error(e);
@@ -378,34 +411,81 @@ function App() {
   // save useEffect fired — because React state references can change for
   // reasons that don't reflect a real edit, while updateState is the only
   // path that bumps updatedAt.
+  // v1.7 r039: the write is runSave's, which a Save that closes an editor
+  // makes at once (saveNowRef) and the page's hiding makes early
+  // (savePendingRef).
   useEffect(() => {
     if (!loaded || !state || loadError) return;
+    stateRef.current = state;
     clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        await dbSet(state);
-      } catch (e) {
-        console.error("Save failed:", e);
-        return;
-      }
-      if (!snapshotSeedReadyRef.current) return;
-      const currentUpdatedAt = state.world?.updatedAt || null;
-      if (currentUpdatedAt === lastSnapshotedUpdatedAtRef.current) return;
-      const now = Date.now();
-      if (now - (lastSnapshotAtRef.current || 0) >= SNAPSHOT_THROTTLE_MS) {
-        // Claim the slot before the async write to prevent a parallel save
-        // from racing through the gate. If the write fails, the next save
-        // attempt will retry once the throttle window opens again.
-        lastSnapshotAtRef.current = now;
-        const snap = await snapshotCreate({ state, trigger: "auto" });
-        if (snap) {
-          lastSnapshotAtRef.current = snap.timestamp;
-          lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
-        }
-      }
-    }, 250);
+    savePendingRef.current = true;
+    // A Save's draft deletion waits for the next write, which carries it.
+    if (draftClearArmedRef.current) {
+      draftClearArmedRef.current = false;
+      draftClearSeqRef.current = saveSeqRef.current + 1;
+    }
+    if (saveNowRef.current) {
+      saveNowRef.current = false;
+      runSave(state);
+      return;
+    }
+    saveTimerRef.current = setTimeout(() => runSave(state), 250);
     return () => clearTimeout(saveTimerRef.current);
   }, [state, loaded, loadError]);
+
+  // v1.7 r039: an automatic snapshot refused for a full storage, for Version
+  // History's note.
+  const noteSnapshotRefused = (e) => { if (e && e.name === "QuotaExceededError") setSnapshotRefusedAt(Date.now()); };
+
+  // v1.7 r039: one write of the world (docs/pipes-spec.md, section 3). On a
+  // success the stored draft goes if a Save asked for that, a failure's
+  // banner goes with a flash, and the automatic snapshot runs as it did. On
+  // a failure the banner shows, and the next try comes after the next of the
+  // waits (SAVE_RETRY_WAITS_MS), which start over only after a success; an
+  // edit tries on its own as well. A try writes the world as it stands then.
+  const runSave = async (st) => {
+    const seq = ++saveSeqRef.current;
+    clearTimeout(saveRetryTimerRef.current);
+    try {
+      await dbSet(st);
+    } catch (e) {
+      console.error("Save failed:", e);
+      const wait = SAVE_RETRY_WAITS_MS[Math.min(saveAttemptRef.current, SAVE_RETRY_WAITS_MS.length - 1)];
+      saveAttemptRef.current += 1;
+      saveFailingRef.current = true;
+      setSaveFailure({ name: (e && e.name) || "Error", message: (e && e.message) || "", quota: !!(e && e.name === "QuotaExceededError"), nextAt: Date.now() + wait });
+      clearTimeout(saveRetryTimerRef.current);
+      saveRetryTimerRef.current = setTimeout(() => { if (stateRef.current) runSave(stateRef.current); }, wait);
+      return;
+    }
+    if (st === stateRef.current) savePendingRef.current = false;
+    saveAttemptRef.current = 0;
+    if (draftClearSeqRef.current != null && seq >= draftClearSeqRef.current) {
+      draftClearSeqRef.current = null;
+      dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
+    }
+    if (saveFailingRef.current) {
+      saveFailingRef.current = false;
+      setSaveFailure(null);
+      setNotice({ text: "Saved", type: "success" });
+    }
+    if (!snapshotSeedReadyRef.current) return;
+    const currentUpdatedAt = st.world?.updatedAt || null;
+    if (currentUpdatedAt === lastSnapshotedUpdatedAtRef.current) return;
+    const now = Date.now();
+    if (now - (lastSnapshotAtRef.current || 0) >= SNAPSHOT_THROTTLE_MS) {
+      // Claim the slot before the async write to prevent a parallel save
+      // from racing through the gate. If the write fails, the next save
+      // attempt will retry once the throttle window opens again.
+      lastSnapshotAtRef.current = now;
+      const snap = await snapshotCreate({ state: st, trigger: "auto", onError: noteSnapshotRefused });
+      if (snap) {
+        lastSnapshotAtRef.current = snap.timestamp;
+        lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
+        setSnapshotRefusedAt(null);
+      }
+    }
+  };
 
   // Seed the snapshot-throttle gate AND the content-change detector from the
   // most recent existing snapshot in IDB. Runs once after initial load
@@ -467,10 +547,11 @@ function App() {
       // Claim before the async write — same pattern as the save path.
       lastSnapshotAtRef.current = now;
       try {
-        const snap = await snapshotCreate({ state: stateRef.current, trigger: "auto" });
+        const snap = await snapshotCreate({ state: stateRef.current, trigger: "auto", onError: noteSnapshotRefused });
         if (snap) {
           lastSnapshotAtRef.current = snap.timestamp;
           lastSnapshotedUpdatedAtRef.current = currentUpdatedAt;
+          setSnapshotRefusedAt(null);
         }
       } catch (e) {
         console.error("Periodic auto-snapshot failed:", e);
@@ -492,6 +573,17 @@ function App() {
       return () => clearTimeout(t);
     }
   }, [notice]);
+
+  // v1.7 r039: what the browser says about keeping Cartulary's storage, read
+  // once at load for Settings; askPersistOnce asks after the first edit.
+  useEffect(() => { storageIsKept().then(setStorageKept); }, []);
+
+  // v1.7 r039: the failed save's banner counts down to its next try.
+  useEffect(() => {
+    if (!saveFailure) return;
+    const id = setInterval(() => setSaveTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [saveFailure]);
 
   // Backup-reminder ticker: re-evaluate the reminder condition every minute
   useEffect(() => {
@@ -563,6 +655,7 @@ function App() {
   // Draft auto-save (Bug 2). Debounced. Only fires when the draft is actually
   // dirty relative to the snapshot taken when the editor was opened.
   useEffect(() => {
+    pendingDraftRef.current = null;
     if (!loaded || loadError) return;
     if (!entryDraft && !tplDraft) return;
     if (draftRestoredRef.current) {
@@ -582,24 +675,63 @@ function App() {
     if (!isDirty) return;
 
     clearTimeout(draftSaveTimerRef.current);
-    draftSaveTimerRef.current = setTimeout(() => {
-      dbSetExtra(DB_DRAFT_KEY, payload).catch(e => console.error("draft save failed", e));
-    }, 500);
+    pendingDraftRef.current = payload;
+    draftSaveTimerRef.current = setTimeout(writeDraft, 500);
     return () => clearTimeout(draftSaveTimerRef.current);
   }, [entryDraft, tplDraft, loaded, loadError, view, activeTemplateId, activeEntryId]);
 
-  // Warn before tab close / refresh if a draft is dirty (Bug 3).
-  // Auto-save's 500ms debounce means a recent edit may not yet be persisted.
+  // v1.7 r039: the draft's write, from its timer or from the page's hiding.
+  // A draft written since a Save takes the place of the deletion that Save
+  // left for its world write to make.
+  const writeDraft = () => {
+    const payload = pendingDraftRef.current;
+    pendingDraftRef.current = null;
+    if (!payload) return;
+    draftClearArmedRef.current = false;
+    draftClearSeqRef.current = null;
+    dbSetExtra(DB_DRAFT_KEY, payload).catch(e => console.error("draft save failed", e));
+  };
+
+  // Warn before tab close / refresh if a draft is dirty (Bug 3), or, since
+  // v1.7's r039, while the world's saves are failing (saveFailingRef): either
+  // way the change exists only on screen. A pending save needs no warning,
+  // since the page's hiding writes it (below).
   const draftDirtyRef = useRef(() => false); // the latest isDraftDirty, declared further down; the loading renders never reach it
   useEffect(() => {
     const handler = (e) => {
-      if (draftDirtyRef.current()) {
+      if (draftDirtyRef.current() || saveFailingRef.current) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  // v1.7 r039: a pending save, and a pending draft, are written as soon as
+  // the page is hidden, and on pagehide, instead of waiting out their timers;
+  // the hidden write is the one to count on, since a browser may cut a write
+  // short as the page unloads (docs/pipes-spec.md, section 3).
+  const flushRef = useRef(() => {});
+  flushRef.current = () => {
+    if (savePendingRef.current && stateRef.current) {
+      clearTimeout(saveTimerRef.current);
+      runSave(stateRef.current);
+    }
+    if (pendingDraftRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+      writeDraft();
+    }
+  };
+  useEffect(() => {
+    const flush = () => flushRef.current();
+    const onVisibility = () => { if (document.visibilityState === "hidden") flush(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", flush);
+    };
   }, []);
 
   // ── Derived data ──────────────────────────────────────────────────────────────
@@ -803,9 +935,35 @@ function App() {
     ? Math.floor((Date.now() - new Date(prefs.lastExportAt).getTime()) / 3600000)
     : 0;
 
+  // v1.7 r039: the failed save's banner, counting down to the next try.
+  const saveFailureDetail = (() => {
+    if (!saveFailure) return "";
+    const secs = Math.max(0, Math.ceil((saveFailure.nextAt - Date.now()) / 1000));
+    const next = secs > 0 ? `Trying again in ${secs} s.` : "Trying again now.";
+    if (saveFailure.quota) return `The browser's storage for Cartulary is full, so your recent changes exist only on this screen. ${next} Export now keeps a copy; deleting old snapshots in Settings, Version History, makes room.`;
+    const why = saveFailure.message ? `${saveFailure.name}: ${saveFailure.message}` : saveFailure.name;
+    return `The browser wouldn't store your world (${why}), so your recent changes exist only on this screen. ${next}`;
+  })();
+
   // ── Actions ──────────────────────────────────────────────────────────────────
 
+  // v1.7 r039: after the session's first edit, ask the browser to keep
+  // Cartulary's storage while it says it may clear it: once a session, and
+  // only inside the user's own action, since Firefox asks with a popup
+  // (docs/pipes-spec.md, section 3).
+  const askPersistOnce = () => {
+    if (persistAskedRef.current) return;
+    if (typeof navigator !== "undefined" && navigator.userActivation && !navigator.userActivation.isActive) return;
+    persistAskedRef.current = true;
+    storageAskToKeep().then(setStorageKept);
+  };
+
+  // v1.7 r039: a Save that closes an editor writes the world at once rather
+  // than after the auto-save's 250 ms wait (the save effect's saveNowRef).
+  const saveNow = () => { saveNowRef.current = true; };
+
   const updateState = (updater) => {
+    askPersistOnce();
     setState(prev => {
       const next = updater(prev);
       next.world = { ...next.world, updatedAt: isoNow() };
@@ -834,7 +992,10 @@ function App() {
     return confirm(`Discard unsaved changes to ${which}?`);
   };
 
-  const clearDraftAndStorage = () => {
+  // v1.7 r039: after a Save (afterSave) the stored draft is deleted once the
+  // world's write carrying the Save lands, not before, so a reload in between
+  // finds the draft; otherwise at once, as before.
+  const clearDraftAndStorage = (afterSave = false) => {
     setEntryDraft(null); setTplDraft(null); setMapDraft(null); setCorpusDraft(null); setStoryDraft(null); setRecordDraft(null); setSchemaDraft(null);
     initialEntryDraftRef.current = null;
     initialTplDraftRef.current = null;
@@ -844,6 +1005,13 @@ function App() {
     initialRecordDraftRef.current = null;
     initialSchemaDraftRef.current = null;
     clearTimeout(draftSaveTimerRef.current);
+    pendingDraftRef.current = null;
+    if (afterSave) {
+      draftClearArmedRef.current = true;
+      return;
+    }
+    draftClearArmedRef.current = false;
+    draftClearSeqRef.current = null;
     dbDeleteExtra(DB_DRAFT_KEY).catch(e => console.error("draft clear failed", e));
   };
 
@@ -1051,7 +1219,7 @@ function App() {
     if (descField)              fields[descField.id]  = descriptionText;
     if (notesField)             fields[notesField.id] = notesText;
 
-    const newId = `ent-${slugify(name) || "event"}-${genId().slice(-4)}`;
+    const newId = freshNameId("ent", name, new Set(state.entries.map(e => e.id)), "event");
     const newEntry = {
       id: newId,
       templateId: tpl.id,
@@ -1220,6 +1388,7 @@ function App() {
       mapData: ensureMapData(mapDraft.mapData),
       updatedAt: isoNow(),
     };
+    saveNow();
     updateState(s => {
       const arr = Array.isArray(s.cartographia) ? s.cartographia : [];
       const exists = arr.some(m => m.id === rec.id);
@@ -1305,6 +1474,7 @@ function App() {
     const name = (corpusDraft.name || "").trim();
     if (!name) return;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => {
       const arr = fabArr(fab, "corpora");
       const old = arr.find(c => c.id === corpusDraft.id);
@@ -1490,8 +1660,9 @@ function App() {
   const saveFabulaSchema = () => {
     if (!schemaDraft || isLocked) return;
     const draft = schemaDraft;
+    saveNow();
     updateState(s => ({ ...s, fabula: fabulaSchemaSave(s, draft.kind, draft) }));
-    clearDraftAndStorage();
+    clearDraftAndStorage(true);
     setFabulaFocus("templates");
     flash("Template saved");
   };
@@ -1506,8 +1677,9 @@ function App() {
     const kind = resetSchemaKind;
     setResetSchemaKind(null);
     if (!kind || isLocked) return;
+    saveNow();
     updateState(s => ({ ...s, fabula: fabulaResetSchema(s, kind) }));
-    clearDraftAndStorage();
+    clearDraftAndStorage(true);
     setFabulaFocus("templates");
     flash("Template reset to default");
   };
@@ -1529,6 +1701,7 @@ function App() {
     const name = (storyDraft.name || "").trim();
     if (!name) return;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === storyDraft.id ? { ...st, name, fields: storyDraft.fields || {}, updatedAt: now } : st) }));
     setStoryDraft(null); initialStoryDraftRef.current = null;
     flash("Saved");
@@ -1645,6 +1818,7 @@ function App() {
     const slice = fabulaSliceOf(activeRecord.kind);
     const kind = activeRecord.kind;
     const now = isoNow();
+    saveNow();
     updateFabula(fab => {
       const arr = fabArr(fab, slice);
       const old = arr.find(r => r.id === recordDraft.id);
@@ -1791,8 +1965,9 @@ function App() {
     const lname = draftBase.name.toLowerCase();
     const dupCount = state.entries.filter(e => e.id !== activeEntryId && (e.name || "").toLowerCase() === lname).length;
 
+    saveNow();
     if (view === "entry-new") {
-      newId = `ent-${slugify(entryDraft.name)}-${genId().slice(-4)}`;
+      newId = freshNameId("ent", entryDraft.name, new Set(state.entries.map(e => e.id)));
       const newEntry = {
         id: newId,
         templateId: activeTemplateId,
@@ -1828,7 +2003,7 @@ function App() {
         }),
       }));
     }
-    setActiveEntryId(newId); clearDraftAndStorage(); setView("entry");
+    setActiveEntryId(newId); clearDraftAndStorage(true); setView("entry");
     if (dupCount > 0) {
       flash(`Saved. ${dupCount} other entr${dupCount === 1 ? "y" : "ies"} share this name; wiki-links will resolve to the earliest-stored one.`, "warning");
     } else if (didCalendarConvert) {
@@ -1920,13 +2095,16 @@ function App() {
       kind: tplDraft.kind || "standard",
       fields: cleanFields(tplDraft.fields),
     };
-    // Ensure every field at every depth has an id.
+    // Ensure every field at every depth has an id, each one new to the
+    // template (v1.7 r039, freshNameId).
+    const takenFieldIds = collectFieldIds(cleaned.fields);
     const ensureIds = (fields) => fields.forEach(f => {
-      if (!f.id) f.id = `fld-${slugify(f.label)}-${genId().slice(-4)}`;
+      if (!f.id) { f.id = freshNameId("fld", f.label, takenFieldIds); takenFieldIds.add(f.id); }
       if (f.type === "group" && Array.isArray(f.subfields)) ensureIds(f.subfields);
     });
+    saveNow();
     if (view === "tpl-build") {
-      cleaned.id = `tpl-${slugify(cleaned.name)}-${genId().slice(-4)}`;
+      cleaned.id = freshNameId("tpl", cleaned.name, new Set(state.templates.map(t => t.id)));
       cleaned.origin = TEMPLATE_ORIGIN.USER;
       ensureIds(cleaned.fields);
       // v1.7 r002: target names follow target ids (see syncRefTargetNames).
@@ -1942,7 +2120,7 @@ function App() {
       syncRefTargetNames(state.templates.map(t => t.id === activeTemplateId ? cleaned : t), [cleaned]);
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === activeTemplateId ? cleaned : t) }));
     }
-    clearDraftAndStorage(); setView("list");
+    clearDraftAndStorage(true); setView("list");
     flash("Template saved");
   };
 
@@ -1959,6 +2137,7 @@ function App() {
   const normalizeImportedTemplate = (tpl) => {
     const validTypes = new Set(FIELD_TYPES.map(ft => ft.value));
     const seenFieldIds = new Set();
+    let takenFieldIds = new Set(); // v1.7 r039: every id the template holds, for the de-dupe below
 
     // Recursive cleanup — drops empty-label fields like saveTemplate does.
     const cleanFields = (fields) => fields
@@ -1980,9 +2159,11 @@ function App() {
       if (f.type === "group" && !Array.isArray(f.subfields)) {
         f.subfields = [];
       }
-      // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup.
+      // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup,
+      // with an id new to the template (v1.7 r039).
       if (f.id && seenFieldIds.has(f.id)) {
-        f.id = `fld-${slugify(f.label || "field")}-${genId().slice(-4)}`;
+        f.id = freshNameId("fld", f.label || "field", takenFieldIds);
+        takenFieldIds.add(f.id);
       }
       if (f.id) seenFieldIds.add(f.id);
       // Recurse into group subfields.
@@ -1997,6 +2178,7 @@ function App() {
 
     const cloned = JSON.parse(JSON.stringify(tpl));
     cloned.fields = cleanFields(cloned.fields || []);
+    takenFieldIds = collectFieldIds(cloned.fields);
 
     for (const f of cloned.fields) {
       const err = validateField(f);
@@ -2375,8 +2557,10 @@ function App() {
   // entries that point at it still work; mode "new" generates a fresh id.
   const insertImportedTemplate = (tpl, mode, existingId, overrideName) => {
     if (isLocked) return;
+    // v1.7 r039: a field given an id here gets one new to the template.
+    let takenFieldIds = new Set();
     const ensureIds = (fields) => fields.forEach(f => {
-      if (!f.id) f.id = `fld-${slugify(f.label || "field")}-${genId().slice(-4)}`;
+      if (!f.id) { f.id = freshNameId("fld", f.label || "field", takenFieldIds); takenFieldIds.add(f.id); }
       if (f.type === "group" && Array.isArray(f.subfields)) ensureIds(f.subfields);
     });
     const newTpl = {
@@ -2394,6 +2578,7 @@ function App() {
     // v1.7 r016: an import never brings Fabula's flag, and one imported over
     // Plot Thread or Theme / Motif keeps the flag that template had.
     delete newTpl.fabulaRole;
+    takenFieldIds = collectFieldIds(newTpl.fields);
     ensureIds(newTpl.fields);
     if (mode === "replace" && existingId) {
       newTpl.id = existingId;
@@ -2401,7 +2586,7 @@ function App() {
       if (was && was.fabulaRole) newTpl.fabulaRole = was.fabulaRole;
       updateState(s => ({ ...s, templates: s.templates.map(t => t.id === existingId ? newTpl : t) }));
     } else {
-      newTpl.id = `tpl-${slugify(newTpl.name) || "imported"}-${genId().slice(-4)}`;
+      newTpl.id = freshNameId("tpl", newTpl.name, new Set(state.templates.map(t => t.id)), "imported");
       updateState(s => ({ ...s, templates: [...s.templates, newTpl] }));
     }
   };
@@ -2770,14 +2955,17 @@ function App() {
       }
       // Defer the confirmation to the destructive-op modal. If the world
       // being replaced is blank, skip the modal — there's nothing to lose.
+      // v1.7 r039: what the import's load repaired, for its banner.
+      const repairs = takeIdRepairs();
       const isBlank = !state || !(state.entries) || state.entries.length === 0;
       if (isBlank) {
-        executeImport(migrated);
+        executeImport(migrated, repairs);
         return;
       }
       setDestructiveOp({
         type: "import",
         migrated,
+        repairs,
         sourceName: migrated.world?.name || "imported world",
       });
     };
@@ -2798,25 +2986,29 @@ function App() {
   };
 
   // Actual reset execution. Called either directly (blank-world bypass) or
-  // by DestructiveOpModal after the user confirms. Always wipes prior
-  // snapshots — they were for the world about to be discarded. Takes a
-  // pinned "Before reset" snapshot first if the world was non-blank, giving
-  // the user an in-app rollback path even after the wipe.
+  // by DestructiveOpModal after the user confirms. Clears the automatic
+  // snapshots, which were for the world about to be discarded; since v1.7's
+  // r039 the user's restore points and the app's pinned snapshots stay
+  // (snapshotDeleteAuto). Takes a pinned "Before reset" snapshot first if the
+  // world was non-blank, of kind pre-reset, whose newest three are kept,
+  // giving the user an in-app rollback path.
   const executeReset = async () => {
     const isBlank = !state || !(state.entries) || state.entries.length === 0;
-    try { await snapshotDeleteAll(); } catch (e) { console.error("Failed to wipe snapshots:", e); }
+    try { await snapshotDeleteAuto(); } catch (e) { console.error("Failed to clear automatic snapshots:", e); }
     if (!isBlank) {
       try {
         await snapshotCreate({
           state,
           trigger: "manual",
           pinned: true,
+          kind: "pre-reset",
           label: "Before reset",
         });
       } catch (e) { console.error("Pre-reset snapshot failed:", e); }
     }
     const fresh = makeInitialState();
     setState(fresh);
+    setIdRepair(null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     // Reset backup-reminder anchor — fresh world, no edits to back up yet.
@@ -2833,23 +3025,27 @@ function App() {
     flash("New world started");
   };
 
-  // Actual import execution. Same shape as executeReset: wipe prior history,
-  // capture a pre-import pinned snapshot of the world being replaced (if
-  // non-blank), then swap state to the imported world.
-  const executeImport = async (migrated) => {
+  // Actual import execution. Same shape as executeReset: clear the automatic
+  // snapshots, capture a pre-import pinned snapshot of the world being
+  // replaced (if non-blank, of kind pre-import, whose newest three are kept),
+  // then swap state to the imported world, with the banner for what its load
+  // repaired (v1.7 r039).
+  const executeImport = async (migrated, repairs = []) => {
     const isBlank = !state || !(state.entries) || state.entries.length === 0;
-    try { await snapshotDeleteAll(); } catch (e) { console.error("Failed to wipe snapshots:", e); }
+    try { await snapshotDeleteAuto(); } catch (e) { console.error("Failed to clear automatic snapshots:", e); }
     if (!isBlank) {
       try {
         await snapshotCreate({
           state,
           trigger: "manual",
           pinned: true,
+          kind: "pre-import",
           label: "Before import",
         });
       } catch (e) { console.error("Pre-import snapshot failed:", e); }
     }
     setState(migrated);
+    setIdRepair(repairs.length > 0 ? { title: "Repaired on import.", text: idRepairMessage(repairs) } : null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     // Just imported a JSON — that file IS the user's most recent backup.
@@ -2870,11 +3066,13 @@ function App() {
   const createManualSnapshot = async (label) => {
     if (!state) return null;
     const trimmedLabel = (label || "").trim();
+    let refusal = null;
     const snap = await snapshotCreate({
       state,
       trigger: "manual",
       pinned: true,
       label: trimmedLabel || null,
+      onError: (e) => { refusal = e; },
     });
     if (snap) {
       lastSnapshotAtRef.current = snap.timestamp;
@@ -2884,7 +3082,10 @@ function App() {
       lastSnapshotedUpdatedAtRef.current = state.world?.updatedAt || null;
       flash(trimmedLabel ? `Restore point created: ${trimmedLabel}` : "Restore point created");
     } else {
-      flash("Failed to create restore point", "error");
+      // v1.7 r039: a full storage says so.
+      flash(refusal && refusal.name === "QuotaExceededError"
+        ? "The restore point wasn't kept: the browser's storage for Cartulary is full. Deleting old snapshots makes room."
+        : "Failed to create restore point", "error");
     }
     return snap;
   };
@@ -2911,6 +3112,7 @@ function App() {
       flash(`Cannot restore: snapshot migration failed (${e?.message || "unknown error"})`, "error");
       return;
     }
+    const repairs = takeIdRepairs(); // v1.7 r039: what the restore's load repaired, for its banner
     if (!migrated) {
       const versionTooNew = snap.worldJson && typeof snap.worldJson === "object" && snap.worldJson.schemaVersion > SCHEMA_VERSION;
       flash(
@@ -2954,6 +3156,7 @@ function App() {
       }
     }
     setState(migrated);
+    setIdRepair(repairs.length > 0 ? { title: "Repaired on restore.", text: idRepairMessage(repairs) } : null);
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     clearDraftAndStorage(); setView("home");
     lastSnapshotAtRef.current = Date.now();
@@ -3737,7 +3940,7 @@ function App() {
           seeded.delete(name);  // sync the bookkeeping
           return;
         }
-        const fresh = makeTemplateFromBuiltin(BUILTIN_TEMPLATES[builtinIdx]);
+        const fresh = makeTemplateFromBuiltin(BUILTIN_TEMPLATES[builtinIdx], new Set(newTemplates.map(t => t && t.id)));
         insertAt(fresh, builtinIdx);
         seeded.delete(name);
       });
@@ -3764,7 +3967,7 @@ function App() {
 
       // Build a fresh copy of the built-in but preserve the existing template ID
       // so existing entries continue to link correctly.
-      const fresh = makeTemplateFromBuiltin(builtin);
+      const fresh = makeTemplateFromBuiltin(builtin, null, collectFieldIds(userTpl.fields));
       fresh.id = userTpl.id;
 
       // Match factory fields against existing user fields by label. If the user
@@ -3941,6 +4144,29 @@ function App() {
       />
 
       <main className="main">
+        {saveFailure && (
+          <div className="backup-banner save-failed" role="alert">
+            <div className="backup-banner-text">
+              <strong>Not saved.</strong>
+              <span className="backup-banner-detail">{saveFailureDetail}</span>
+            </div>
+            <div className="backup-banner-actions">
+              <button className="btn btn-ghost btn-small" onClick={() => { if (stateRef.current) runSave(stateRef.current); }}>Try now</button>
+              <button className="btn btn-accent btn-small" onClick={exportWorld}>Export now</button>
+            </div>
+          </div>
+        )}
+        {idRepair && (
+          <div className="backup-banner" role="status">
+            <div className="backup-banner-text">
+              <strong>{idRepair.title}</strong>
+              <span className="backup-banner-detail">{idRepair.text}</span>
+            </div>
+            <div className="backup-banner-actions">
+              <button className="btn btn-ghost btn-small" onClick={() => setIdRepair(null)}>Dismiss</button>
+            </div>
+          </div>
+        )}
         {backupReminderActive && (
           <div className="backup-banner" role="alert">
             <div className="backup-banner-text">
@@ -4669,6 +4895,8 @@ function App() {
               onRestoreSnapshot={restoreSnapshot}
               onExportSnapshot={exportSnapshot}
               onDeleteSnapshot={removeSnapshot}
+              storageKept={storageKept}
+              snapshotRefusedAt={snapshotRefusedAt}
             />
           )}
         </div>
@@ -4710,11 +4938,12 @@ function App() {
             const tplId = resetTplId;
             const wasEditingThis = tplDraft && tplDraft.id === tplId;
             setResetTplId(null);
+            saveNow();
             resetTemplate(tplId);
             // If the user was editing this template, bounce back to the list view;
             // they can re-enter the editor to see the freshly reset state.
             if (wasEditingThis) {
-              clearDraftAndStorage();
+              clearDraftAndStorage(true);
               setView(activeTemplateId === tplId ? "list" : "home");
             }
           }}
@@ -4770,7 +4999,7 @@ function App() {
             if (op.type === "reset") {
               executeReset();
             } else if (op.type === "import") {
-              executeImport(op.migrated);
+              executeImport(op.migrated, op.repairs);
             }
           }}
         />

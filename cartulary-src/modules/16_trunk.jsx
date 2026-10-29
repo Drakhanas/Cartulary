@@ -1,7 +1,7 @@
 
 // ─── Settings ──────────────────────────────────────────────────────────────────
 
-function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot }) {
+function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot, storageKept, snapshotRefusedAt }) {
   const fileRef = useRef(null);
   const onPickFile = (e) => {
     const f = e.target.files?.[0];
@@ -185,6 +185,28 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
 
       <div className="settings-section">
         <div className="section-hdr">Save File</div>
+        {/* v1.7 r039: what the browser says about keeping Cartulary's storage */}
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <div className="settings-row-title">Browser storage</div>
+            <div className="settings-row-desc">
+              {storageKept === true
+                ? "This browser keeps Cartulary's storage and won't clear it to make room. Clearing its site data still erases it, so keep exporting."
+                : storageKept === false
+                  ? "This browser may clear Cartulary's storage when it needs room, and clearing its site data erases it too. An exported .json is the copy that lasts."
+                  : storageKept === null
+                    ? "This browser doesn't say whether it keeps Cartulary's storage. An exported .json is the copy that lasts."
+                    : ""}
+              {storageKept !== undefined && typeof location !== "undefined" && location.protocol === "file:"
+                ? " Opened from a file, this page's storage follows the browser's rules for local files, which vary from browser to browser (Help: Working With Multiple Worlds)."
+                : ""}
+            </div>
+            <div className={`fsaa-status ${storageKept === true ? "connected" : ""}`} style={{ marginTop: 8 }}>
+              <div className="fsaa-status-dot" />
+              <span>{storageKept === true ? "Kept by this browser" : storageKept === false ? "May be cleared" : storageKept === null ? "No answer from this browser" : "Checking"}</span>
+            </div>
+          </div>
+        </div>
         <div className="settings-row">
           <div className="settings-row-info">
             <div className="settings-row-title">Export world</div>
@@ -246,6 +268,8 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
         onRestore={onRestoreSnapshot}
         onExport={onExportSnapshot}
         onDelete={onDeleteSnapshot}
+        world={world}
+        refusedAt={snapshotRefusedAt}
       />
 
       <div className="danger-zone">
