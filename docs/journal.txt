@@ -1271,3 +1271,59 @@ hour. I'd put my recommendation first each time, so the plan is mostly
 my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
+
+=== 2026-10-29 (session 22, r039, saving: Pipes' first cut) ===
+
+A fresh chat again, and the cold start held: every gate green on the clone,
+the figures where the handoff said, and one sentence wrong. It counted four
+folder modules where five exist, true until r038 and not after.
+
+Before I brought Drak a single open detail I made the two worst failures
+happen headless on the r038 build, since the spec had read them from the code.
+The load wrote the world once, as it said. The quota didn't behave as it said.
+When I wrote past a capped quota, the request succeeded and the transaction
+aborted with no error event behind it, so the save's promise never settled: no
+banner, no retry, not even the console line the spec expected. A full storage
+would have lost every change after it in silence. That moved the third detail
+from the banner's wording to a fix, and it went to Drak as found and forced,
+not as a fork.
+
+The five details went one per message. Drak took the first option on four and
+the second on the fifth, Firefox in the pass beside Chrome. He asked what sets
+a browser's storage limit, and then pointed out that Cartulary's saves never
+come near it. He's right about the world on its own. The fix was never about
+how likely a full storage is; it was that when one came, nothing would have
+said so.
+
+The cut touched eight modules and the shell, and its script went in on the
+second try: two anchors ended with a newline in the middle of a line. Then the
+save effect turned a Save's armed draft deletion into a write number only on
+the branch that writes at once, so a draft-ending Save that took the waiting
+branch would have left its draft behind. I moved it ahead of the branch and
+replayed the script on a clean tree, which is what the procedure is for.
+
+Most of the session's misreads were mine, and in the probe. I compared banner
+text read through innerText, which joins a strong and a span with no space; I
+read Version History's rows before they had loaded; I looked for a Reset
+Template button that only shows on a changed template; one storage check
+flickered until its stub read the setting when the page first asked for it;
+and I leaned on the CDP quota to refuse a snapshot after the save had hit it,
+and the snapshot slipped under. Each cost a rerun, and none was the app. The
+planted copies caught the probe out once: one of twenty, asking the browser at
+every edit, passed every check, because my stub said yes once asked and the
+app's own rule stopped the second ask before the defect could show. D9 gives
+the stub a no and a second edit, and the copy fails now.
+
+I also walked into a trap the handoff names. I waited on the probes with a
+pgrep loop, the one r012's carry-forward fact says counts its own shell, and
+it never ended. I had read that line at the cold start. And the first stemma
+parity run took HEAD for the new build while I committed in the middle of it,
+so it ran again with both commits named.
+
+Drak's pass found nothing broken and one answer worth having: Chrome and Brave
+say no to keeping a page's storage when the page is a file, and Firefox asks.
+So Settings says May be cleared in the Chromium browsers, the only ones that
+can have the images folder, which is the case r040's backups were planned for.
+The turnover found two stale facts the gate had never been told about, the
+handoff's site hash a commit behind and the manifest's body length stale since
+r026, and both are in facts.json now, where the next turnover meets them.

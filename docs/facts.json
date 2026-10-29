@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 54252,
-  "raw_body_lines": 54252,
-  "canonical_lines": 51636,
-  "decl_count": 773,
+  "total_lines": 54762,
+  "raw_body_lines": 54762,
+  "canonical_lines": 52122,
+  "decl_count": 790,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r037-body.jsx"
+  "active_anchor": "reference-r039-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 54252,
+   "value": 54762,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 773,
+   "value": 790,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 51636,
+   "value": 52122,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 54252,
+   "value": 54762,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 95,
+   "value": 96,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,18 +81,18 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2938128,
+   "value": 2965126,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-three",
-    63
+    "sixty-four",
+    64
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
   "trunk16_lines": {
-   "value": 265,
+   "value": 289,
    "pattern": "`16_trunk` \\((\\d+)\\)"
   },
   "trunk16_tiling": {
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 95,
+   "value": 96,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 95,
+   "value": 96,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,14 +121,22 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-three",
-    63
+    "sixty-four",
+    64
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r038": {
-   "value": "f5bb9c97c88c3433",
-   "pattern": "working[^\\n]{0,40}at r038 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r039": {
+   "value": "ab71966a032f6058",
+   "pattern": "working[^\\n]{0,40}at r039 hashes to sha256 `([0-9a-f]{16})`"
+  },
+  "assembled_body_lines": {
+   "value": 54762,
+   "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
+  },
+  "site_repo_hash": {
+   "value": "f37ebb7cf2a74655",
+   "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -224,7 +232,7 @@
   },
   {
    "file": "16_trunk.jsx",
-   "line": 265,
+   "line": 289,
    "contains": "}"
   },
   {
@@ -484,7 +492,7 @@
   },
   {
    "file": "03_persistence.jsx",
-   "line": 367,
+   "line": 453,
    "contains": "Version History panel"
   },
   {
@@ -514,7 +522,7 @@
   },
   {
    "file": "10_migrate.jsx",
-   "line": 6098,
+   "line": 6227,
    "contains": "marked.use({"
   },
   {
@@ -717,7 +725,7 @@
   "16_trunk.jsx": [
    [
     1,
-    265,
+    289,
     "head (SettingsView)"
    ]
   ],
@@ -892,7 +900,7 @@
    "v1.7 is OPEN",
    "Common Year",
    "stop hook",
-   "112ad4301a10df3c",
+   "f37ebb7cf2a74655",
    "stages the old content",
    "owes a pass of its own",
    "answers the font requests empty",
@@ -1041,10 +1049,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r037-body.jsx",
-   "reference-r037-layout.json",
-   "c8484528f4609b05",
-   "f5bb9c97c88c3433",
+   "reference-r039-body.jsx",
+   "reference-r039-layout.json",
+   "5585102f8f74825a",
+   "ab71966a032f6058",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1052,9 +1060,19 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r039, Pipes' first cut: saving",
+   "r040, Pipes' second cut: backups into the images folder",
    "252143c",
-   "A staged build reaches him two ways"
+   "A staged build reaches him two ways",
+   "v1.7_r039",
+   "Five exist",
+   "freshNameId",
+   "repairRecordIds",
+   "txAborted",
+   "snapshotDeleteAuto",
+   "storageAskToKeep",
+   "May be cleared",
+   "overrideQuotaForOrigin",
+   "pipes-spec.md` (Pipes"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1123,7 +1141,7 @@
    "16337a1350d7e7e6",
    "0731070bf5555171",
    "On v1.7 r004 verification",
-   "10_migrate:6098",
+   "10_migrate:6227",
    "reference-r005-body.jsx",
    "e70e86fef21544cd",
    "cd6875aa3a5295db",
@@ -1256,14 +1274,21 @@
    "cd78846b6366d1e9",
    "04abce0dcdd23f98",
    "reference-r037-body.jsx",
-   "reference-r037-layout.json",
    "On v1.7 r037 verification",
    "f5bb9c97c88c3433",
    "c8484528f4609b05",
    "eight are anchor-rotating",
    "On v1.7 r038 verification",
    "seventeen flat + five directories",
-   "(48 \u2192 54)"
+   "(48 → 54)",
+   "reference-r039-body.jsx",
+   "reference-r039-layout.json",
+   "5585102f8f74825a",
+   "ab71966a032f6058",
+   "On v1.7 r039 verification",
+   "Id repair (v1.7 r039)",
+   "Five exist",
+   "03_persistence:453"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1460,7 +1485,15 @@
    "252143c",
    "v1.7_r038_carve_stemma_folder.py",
    "Pipes planned",
-   "docs/pipes-spec.md"
+   "docs/pipes-spec.md",
+   "session 22",
+   "v1.7_r039",
+   "8fbc47c",
+   "f2790eb",
+   "ab71966a032f6058",
+   "v1.7_r039_saving.py",
+   "txAborted",
+   "Turnover v1.7_r039"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1544,7 +1577,10 @@
    "v1.7_r038",
    "r038 is in",
    "Pipes is planned",
-   "docs/pipes-spec.md"
+   "docs/pipes-spec.md",
+   "v1.7_r039",
+   "r039 is in",
+   "Two lines r039 left stale"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1603,7 +1639,11 @@
    "A header inserted inside a section passes every header check",
    "A rehearsal in a copy checks where it stands before it changes anything",
    "A tag's CI run is read like any other",
-   "A backlog item's facts are read against the tree again at the plan that takes it"
+   "A backlog item's facts are read against the tree again at the plan that takes it",
+   "session 22",
+   "A storage write is done when its transaction says so",
+   "A planted copy that passes because the probe's stub answers the question under test",
+   "What a browser's test tooling does is found by trying it"
   ],
   "journal.txt": [
    "r030",
@@ -1664,7 +1704,8 @@
    "r036",
    "r037",
    "r038",
-   "Pipes"
+   "Pipes",
+   "session 22"
   ]
  }
 }
