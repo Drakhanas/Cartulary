@@ -120,6 +120,29 @@ function App() {
   // Survives view changes within a session; resets on page reload.
   const [chronoDisabledTemplates, setChronoDisabledTemplates] = useState(() => new Set());
   const [dirHandle, setDirHandle] = useState(null);
+  // v1.7 r040, backups into the images folder (docs/pipes-spec.md, section 3).
+  // lapsedHandle: the stored folder whose permission has lapsed, kept for
+  // Reconnect instead of being dropped, with a banner Not now hides until the
+  // next load (folderBannerHidden). backupInfo: the folder's newest backup of
+  // this world, { name, at }; backupError: the last try's failure, { name,
+  // message }. The backups run on refs (runBackup, scheduleBackup):
+  // lastBackupTryAtRef is when the last try began, which the ten minutes
+  // count from; backedUpRef the world's updatedAt that the newest backup
+  // holds; connectCatchUpRef a connect whose catch-up is owed.
+  const [lapsedHandle, setLapsedHandle] = useState(null);
+  const [folderBannerHidden, setFolderBannerHidden] = useState(false);
+  const [backupInfo, setBackupInfo] = useState(null);
+  const [backupError, setBackupError] = useState(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const dirHandleRef = useRef(null);
+  dirHandleRef.current = dirHandle;
+  const backupReadyRef = useRef(false);
+  const backupBusyRef = useRef(false);
+  const backupAgainRef = useRef(false);
+  const backupTimerRef = useRef(null);
+  const lastBackupTryAtRef = useRef(0);
+  const backedUpRef = useRef({ updatedAt: null });
+  const connectCatchUpRef = useRef(false);
 
   // Auto-save debounce timer (Bug 1)
   const saveTimerRef = useRef(null);
@@ -307,15 +330,22 @@ function App() {
     dbSetPrefs(prefs).catch(e => console.error("prefs save failed", e));
   }, [prefs]);
 
-  // Restore image folder handle on mount, verify permission
+  // Restore image folder handle on mount. v1.7 r040: its permission is only
+  // read, since a request outside a click throws in Chrome; a folder whose
+  // permission has lapsed is kept for Reconnect, and one that connects is
+  // caught up with a backup (the backups' effect, below).
   useEffect(() => {
     if (!FSAA_SUPPORTED) return;
     (async () => {
       try {
         const stored = await dbGetExtra(DB_HANDLE_KEY);
         if (stored) {
-          const ok = await verifyHandlePermission(stored, "readwrite");
-          if (ok) setDirHandle(stored);
+          if ((await queryHandlePermission(stored, "readwrite")) === "granted") {
+            connectCatchUpRef.current = true;
+            setDirHandle(stored);
+          } else {
+            setLapsedHandle(stored);
+          }
         }
       } catch (e) { console.error("dirHandle restore failed", e); }
     })();
@@ -330,6 +360,9 @@ function App() {
       const handle = await window.showDirectoryPicker({ mode: "readwrite" });
       const ok = await verifyHandlePermission(handle, "readwrite");
       if (ok) {
+        connectCatchUpRef.current = true;
+        setLapsedHandle(null);
+        setBackupError(null);
         setDirHandle(handle);
         await dbSetExtra(DB_HANDLE_KEY, handle);
         flash("Image folder connected");
@@ -343,8 +376,27 @@ function App() {
 
   const disconnectImageFolder = async () => {
     setDirHandle(null);
+    setLapsedHandle(null);
+    setBackupError(null);
     await dbDeleteExtra(DB_HANDLE_KEY);
     flash("Image folder disconnected");
+  };
+
+  // v1.7 r040: Reconnect, the click that lets the browser ask for the stored
+  // folder again (Chrome 122 and later can offer Allow on every visit here).
+  const reconnectImageFolder = async () => {
+    const handle = lapsedHandle;
+    if (!handle) return;
+    const ok = await verifyHandlePermission(handle, "readwrite");
+    if (!ok) {
+      flash("The browser didn't allow the folder. Change, in Settings, picks it again.", "error");
+      return;
+    }
+    connectCatchUpRef.current = true;
+    setLapsedHandle(null);
+    setBackupError(null);
+    setDirHandle(handle);
+    flash("Image folder reconnected");
   };
 
   // Load on mount (Bug 9: surface errors instead of silently overwriting bad state)
@@ -417,6 +469,8 @@ function App() {
   useEffect(() => {
     if (!loaded || !state || loadError) return;
     stateRef.current = state;
+    // v1.7 r040: and the folder's backup, at most every BACKUP_EVERY_MS.
+    scheduleBackup(state);
     clearTimeout(saveTimerRef.current);
     savePendingRef.current = true;
     // A Save's draft deletion waits for the next write, which carries it.
@@ -734,6 +788,102 @@ function App() {
     };
   }, []);
 
+  // v1.7 r040: backups into the images folder (docs/pipes-spec.md, section 3,
+  // and Drak's calls 1 to 3). The world is written as Export's file at most
+  // every BACKUP_EVERY_MS while it changes: the first change after the wait
+  // at once, once BACKUP_SETTLE_MS pass without another, the changes after a
+  // backup when the wait is up, if the tab is still open, and nothing while
+  // the world doesn't change. A try counts
+  // toward the wait whether or not it lands, so a folder that fails isn't
+  // tried at every save; the next change after the wait, Back up now, or
+  // Reconnect tries again. A try writes the world as it stands then.
+  const runBackup = async ({ force = false } = {}) => {
+    const handle = dirHandleRef.current;
+    const st = stateRef.current;
+    if (!handle || !st) return null;
+    if (backupBusyRef.current) { backupAgainRef.current = true; return null; }
+    if (!force && st.world.updatedAt === backedUpRef.current.updatedAt) return null;
+    clearTimeout(backupTimerRef.current);
+    backupTimerRef.current = null;
+    backupBusyRef.current = true;
+    setBackupBusy(true);
+    lastBackupTryAtRef.current = Date.now();
+    let result;
+    try {
+      const made = await writeWorldBackup(handle, st);
+      backedUpRef.current = { updatedAt: st.world.updatedAt };
+      setBackupInfo(made);
+      setBackupError(null);
+      // A backup counts as one for the backup reminder.
+      setPrefs(p => ({ ...p, lastExportAt: isoNow() }));
+      result = { made };
+    } catch (e) {
+      console.error("Backup failed:", e);
+      const error = { name: (e && e.name) || "Error", message: (e && e.message) || "" };
+      setBackupError(error);
+      result = { error };
+      // A permission the browser took back: the folder has lapsed.
+      if (dirHandleRef.current === handle && (await queryHandlePermission(handle)) !== "granted") {
+        setDirHandle(null);
+        setLapsedHandle(handle);
+        setFolderBannerHidden(false);
+      }
+    }
+    backupBusyRef.current = false;
+    setBackupBusy(false);
+    if (backupAgainRef.current) {
+      backupAgainRef.current = false;
+      scheduleBackup(stateRef.current);
+    }
+    return result;
+  };
+
+  const scheduleBackup = (st) => {
+    if (!st || !dirHandleRef.current || !backupReadyRef.current) return;
+    if (backupBusyRef.current) { backupAgainRef.current = true; return; }
+    if (st.world.updatedAt === backedUpRef.current.updatedAt) return;
+    const now = Date.now();
+    const due = Math.max(lastBackupTryAtRef.current + BACKUP_EVERY_MS, now + BACKUP_SETTLE_MS);
+    clearTimeout(backupTimerRef.current);
+    backupTimerRef.current = setTimeout(() => { backupTimerRef.current = null; runBackup(); }, due - now);
+  };
+
+  // The folder's backups of this world, read when the folder connects and
+  // when the world's name changes. A connect (at load, Connect Folder,
+  // Change, or Reconnect) writes one at once unless the newest is newer than
+  // the world's last change (Drak's call 2), and the wait counts from the
+  // newest.
+  const backupSlug = state && state.world ? backupSlugOf(state.world.name) : null;
+  useEffect(() => {
+    backupReadyRef.current = false;
+    clearTimeout(backupTimerRef.current);
+    backupTimerRef.current = null;
+    if (!loaded || loadError || !backupSlug) return;
+    if (!dirHandle) { setBackupInfo(null); return; }
+    let cancelled = false;
+    (async () => {
+      let newest = null;
+      try { newest = (await listWorldBackups(dirHandle, backupSlug))[0] || null; }
+      catch (e) { console.error("Backup listing failed:", e); }
+      if (cancelled) return;
+      setBackupInfo(newest);
+      const st = stateRef.current;
+      const changedAt = Date.parse((st && st.world && st.world.updatedAt) || "") || 0;
+      const covered = !!newest && newest.at >= changedAt;
+      backedUpRef.current = { updatedAt: covered && st ? st.world.updatedAt : null };
+      // The wait counts from the newest backup here or the last try, whichever
+      // came later, so a renamed world keeps the wait it had.
+      lastBackupTryAtRef.current = Math.max(lastBackupTryAtRef.current, newest ? newest.at : 0);
+      backupReadyRef.current = true;
+      if (connectCatchUpRef.current) {
+        connectCatchUpRef.current = false;
+        if (!covered) { runBackup(); return; }
+      }
+      scheduleBackup(stateRef.current);
+    })();
+    return () => { cancelled = true; };
+  }, [dirHandle, loaded, loadError, backupSlug]);
+
   // ── Derived data ──────────────────────────────────────────────────────────────
   // Hooks must come BEFORE any early return so the hook count stays stable across renders.
 
@@ -972,6 +1122,13 @@ function App() {
   };
 
   const flash = (text, type = "success") => setNotice({ text, type });
+
+  // v1.7 r040: Back up now (Settings), a backup at once, changed or not.
+  const backupNow = async () => {
+    const result = await runBackup({ force: true });
+    if (result && result.made) flash(`Backed up: ${result.made.name}`);
+    else if (result && result.error) flash(`Backup failed: ${result.error.name}${result.error.message ? `: ${result.error.message}` : ""}`, "error");
+  };
 
   // ── Draft dirty-check + storage helpers (Bug 2 + 3) ──────────────────────────
   const isDraftDirty = () => {
@@ -4167,14 +4324,26 @@ function App() {
             </div>
           </div>
         )}
+        {lapsedHandle && !folderBannerHidden && (
+          <div className="backup-banner" role="alert">
+            <div className="backup-banner-text">
+              <strong>Images folder not connected.</strong>
+              <span className="backup-banner-detail">{`The browser wants your OK again before Cartulary can use "${lapsedHandle.name}". Until then, images stored in it may not show, new images are stored inside the world, and backups stop.`}</span>
+            </div>
+            <div className="backup-banner-actions">
+              <button className="btn btn-accent btn-small" onClick={reconnectImageFolder}>Reconnect</button>
+              <button className="btn btn-ghost btn-small" onClick={() => setFolderBannerHidden(true)} title="Hide this until the next load">Not now</button>
+            </div>
+          </div>
+        )}
         {backupReminderActive && (
           <div className="backup-banner" role="alert">
             <div className="backup-banner-text">
               <strong>Time to back up.</strong>
               <span className="backup-banner-detail">
                 {backupReminderHours >= 1
-                  ? `It's been about ${backupReminderHours} hour${backupReminderHours === 1 ? "" : "s"} since your last JSON export, and you have unsaved changes.`
-                  : "You have unsaved changes since your last JSON export."}
+                  ? `It's been about ${backupReminderHours} hour${backupReminderHours === 1 ? "" : "s"} since your last backup or JSON export, and you have unsaved changes.`
+                  : "You have unsaved changes since your last backup or JSON export."}
               </span>
             </div>
             <div className="backup-banner-actions">
@@ -4187,7 +4356,7 @@ function App() {
           <header className="hdr">
             <h1 className="page-title">
               {headerIcon && <span className="title-icon" style={{ color: headerIcon.color }}>{headerIcon.icon}</span>}
-              {headerTitle}
+              <span className="page-title-text" title={headerTitle}>{headerTitle}</span>
             </h1>
             <div className="hdr-actions">
               {/* Show secrets toggle (everywhere except settings) */}
@@ -4897,6 +5066,12 @@ function App() {
               onDeleteSnapshot={removeSnapshot}
               storageKept={storageKept}
               snapshotRefusedAt={snapshotRefusedAt}
+              lapsedHandle={lapsedHandle}
+              onReconnectFolder={reconnectImageFolder}
+              backupInfo={backupInfo}
+              backupError={backupError}
+              backupBusy={backupBusy}
+              onBackupNow={backupNow}
             />
           )}
         </div>

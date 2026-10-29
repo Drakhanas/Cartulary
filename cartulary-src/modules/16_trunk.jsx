@@ -1,8 +1,18 @@
 
 // ─── Settings ──────────────────────────────────────────────────────────────────
 
-function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot, storageKept, snapshotRefusedAt }) {
+function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExportMarkdown, onExportMarkdownZip, onImport, onNewWorld, dirHandle, fsaaSupported, onSetupFolder, onDisconnectFolder, prefs, onUpdatePrefs, isLocked, onNavigateToKalendarium, onCreateManualSnapshot, onRestoreSnapshot, onExportSnapshot, onDeleteSnapshot, storageKept, snapshotRefusedAt, lapsedHandle, onReconnectFolder, backupInfo, backupError, backupBusy, onBackupNow }) {
   const fileRef = useRef(null);
+  // v1.7 r040: the Folder backups row's line under its text.
+  const backupStatus = dirHandle
+    ? (backupError
+        ? `Last backup failed: ${backupError.name}${backupError.message ? `: ${backupError.message}` : ""}`
+        : backupInfo
+          ? `Last backup ${formatSnapshotTimestamp(backupInfo.at)}: ${backupInfo.name}`
+          : "No backup of this world yet")
+    : lapsedHandle
+      ? `Stopped until "${lapsedHandle.name}" is reconnected`
+      : "No folder connected";
   const onPickFile = (e) => {
     const f = e.target.files?.[0];
     if (f) onImport(f);
@@ -145,9 +155,9 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
                 ? "Connect a folder where images are saved. Inserted images are written there as files; without a folder, images embed inline (larger save files)."
                 : "Your browser doesn't support direct folder access. Images will embed inline as base64. For folder-based images, use Chrome or Edge."}
             </div>
-            <div className={`fsaa-status ${dirHandle ? "connected" : ""}`} style={{ marginTop: 8 }}>
+            <div className={`fsaa-status ${dirHandle ? "connected" : lapsedHandle ? "lapsed" : ""}`} style={{ marginTop: 8 }}>
               <div className="fsaa-status-dot" />
-              <span>{dirHandle ? `Connected: ${dirHandle.name}` : (fsaaSupported ? "No folder connected" : "Not supported in this browser")}</span>
+              <span>{dirHandle ? `Connected: ${dirHandle.name}` : lapsedHandle ? `Needs reconnecting: ${lapsedHandle.name}` : (fsaaSupported ? "No folder connected" : "Not supported in this browser")}</span>
             </div>
           </div>
           <div className="settings-row-action" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -157,7 +167,13 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
                     <button className="btn btn-ghost" onClick={onSetupFolder}>Change</button>
                     <button className="btn btn-danger" onClick={onDisconnectFolder}>Disconnect</button>
                   </>
-                : <button className="btn btn-accent" onClick={onSetupFolder}>Connect Folder</button>
+                : lapsedHandle
+                  ? <>
+                      <button className="btn btn-accent" onClick={onReconnectFolder}>Reconnect</button>
+                      <button className="btn btn-ghost" onClick={onSetupFolder}>Change</button>
+                      <button className="btn btn-danger" onClick={onDisconnectFolder}>Disconnect</button>
+                    </>
+                  : <button className="btn btn-accent" onClick={onSetupFolder}>Connect Folder</button>
             )}
           </div>
         </div>
@@ -207,6 +223,32 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
             </div>
           </div>
         </div>
+        {/* v1.7 r040: backups into the images folder */}
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <div className="settings-row-title">Folder backups</div>
+            <div className="settings-row-desc">
+              {fsaaSupported
+                ? `With an images folder connected, Cartulary writes the world into a ${BACKUP_FOLDER} folder inside it as you edit, at most every ten minutes, as the same .json file Export writes, and keeps this world's newest ${BACKUP_KEEP}. Import reads them back.`
+                : "Backups need a folder, and this browser can't give Cartulary one. An exported .json is the copy outside the browser."}
+            </div>
+            {fsaaSupported && (
+              <div className={`fsaa-status ${dirHandle ? (backupError ? "failed" : backupInfo ? "connected" : "") : lapsedHandle ? "lapsed" : ""}`} style={{ marginTop: 8 }}>
+                <div className="fsaa-status-dot" />
+                <span>{backupStatus}</span>
+              </div>
+            )}
+          </div>
+          {fsaaSupported && (
+            <div className="settings-row-action">
+              {dirHandle
+                ? <button className="btn btn-accent" onClick={onBackupNow} disabled={backupBusy}>Back up now</button>
+                : lapsedHandle
+                  ? <button className="btn btn-accent" onClick={onReconnectFolder}>Reconnect</button>
+                  : <button className="btn btn-ghost" onClick={onSetupFolder}>Connect Folder</button>}
+            </div>
+          )}
+        </div>
         <div className="settings-row">
           <div className="settings-row-info">
             <div className="settings-row-title">Export world</div>
@@ -253,7 +295,7 @@ function SettingsView({ world, entries, templates, onUpdateMeta, onExport, onExp
         <div className="settings-row">
           <div className="settings-row-info">
             <div className="settings-row-title">Backup reminder</div>
-            <div className="settings-row-desc">When on, a banner appears at the top of the app once it's been more than 2 hours since your last JSON export and you have unsaved changes. The banner has Export and Snooze 1 hour buttons. Turn this off if you have your own backup workflow.</div>
+            <div className="settings-row-desc">When on, a banner appears at the top of the app once it's been more than 2 hours since your last JSON export or folder backup and you have unsaved changes. The banner has Export and Snooze 1 hour buttons. Turn this off if you have your own backup workflow.</div>
           </div>
           <div className="settings-row-action">
             <div className={`toggle ${prefs.disableBackupReminder ? "" : "on"}`} onClick={() => onUpdatePrefs({ disableBackupReminder: !prefs.disableBackupReminder })}>
