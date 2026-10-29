@@ -103,8 +103,32 @@
       646
     ],
     [
-      "21_stemma.jsx",
-      4601
+      "21_stemma/00_helpers-canvas.jsx",
+      1585
+    ],
+    [
+      "21_stemma/01_transforms.jsx",
+      182
+    ],
+    [
+      "21_stemma/02_markdown.jsx",
+      86
+    ],
+    [
+      "21_stemma/03_index.jsx",
+      133
+    ],
+    [
+      "21_stemma/04_tabula-document.jsx",
+      717
+    ],
+    [
+      "21_stemma/05_tabula-drawing.jsx",
+      489
+    ],
+    [
+      "21_stemma/06_tabula-canvas.jsx",
+      1409
     ],
     [
       "22_trunk.jsx",
