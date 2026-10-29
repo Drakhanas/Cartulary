@@ -35,6 +35,8 @@ a{color:var(--accent); text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:'DM Sans',monospace; background:var(--surf2); color:var(--text-bright);
   padding:.08em .38em; border-radius:.25rem; font-size:.9em; border:1px solid var(--border)}
+pre{max-width:100%; overflow-x:auto}
+@media(max-width:640px){#panel-json-structure table{display:block; overflow-x:auto}}
 h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif; color:var(--text-bright); line-height:1.12; font-weight:600}
 h2{color:var(--accent)}
 h3{color:var(--accent-dim)}
@@ -365,7 +367,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     </a>
     <a class="tile" href="#stemma" data-route="stemma">
       <span class="t-title">Stemma</span>
-      <span class="t-sub">Radial mind maps for tree-shaped ideas</span>
+      <span class="t-sub">Mind maps: radial trees and freeform boards</span>
     </a>
     <a class="tile" href="#kalendarium" data-route="kalendarium">
       <span class="t-title">Kalendarium</span>
@@ -402,7 +404,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <p class="section-kicker">What it is</p>
     <h2>A whole world in one file</h2>
     <p class="lead">A <em>cartulary</em> was the single bound volume a monastery kept to gather every charter, deed, and record that proved what it owned. One book, holding the documented existence of an entire estate. This is that, for a world you made up.</p>
-    <p>Download one HTML file, open it in a browser, and you have a worldbuilding database. Write your characters, cities, factions, gods, and wars as entries. Tie them together. Lay your history on a timeline, your bloodlines on a family tree, your continents on a map, your months on a calendar that runs by your own rules, and the stories you'll tell in it down to their scenes. Build a constructed language down to its sound changes if that's your kind of madness. All of it lives in that one file and your own browser, on your own machine.</p>
+    <p>Download one HTML file, open it in a browser, and you have a worldbuilding database. Write your characters, cities, factions, gods, and wars as entries. Tie them together. Lay your history on a timeline, your bloodlines on a family tree, your continents on a map, your months on a calendar that runs by your own rules, your loose ideas on a board, and the stories you'll tell in it down to their scenes. Build a constructed language down to its sound changes if that's your kind of madness. All of it lives in that one file and your own browser, on your own machine.</p>
     <p>There is no app to install, no account to make, no website you log into. The file <em>is</em> the program. Open it and it runs.</p>
   </section>
 
@@ -619,10 +621,10 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <ul class="concepts">
       <li><span class="term">Single or multiple</span><p>A field can hold one link or many. One Capital city, but many Member factions. Single-value refs can pair side by side with a neighbor; multi-value refs always go full-width.</p></li>
       <li><span class="term">Family role</span><p>You can tag a reference with a family role, Parent of this or Spouse of this, or leave it with none. That tag is what the family tree reads: mark Father, Mother, and the like as Parent refs and the tree assembles itself from them, with no separate tree to draw by hand. Spouse refs can also carry a marriage date and an end date, which the tree and the timelines pick up.</p></li>
-      <li><span class="term">What it can point at</span><p>You can scope a ref to one or more templates, so a Spouse field only offers Characters and a Located In field only offers Locations, instead of dumping every entry in the world into the picker. You can narrow further by field value when you need to: a ref to Characters where Status is Living, say. Besides your templates, a ref can point at Astronomical Bodies, the Glossopoeia record types, and Maps, which the builder lists after the templates.</p></li>
+      <li><span class="term">What it can point at</span><p>You can scope a ref to one or more templates, so a Spouse field only offers Characters and a Located In field only offers Locations, instead of dumping every entry in the world into the picker. You can narrow further by field value when you need to: a ref to Characters where Status is Living, say. Besides your templates, a ref can point at Astronomical Bodies, the Glossopoeia record types, Maps, and Stemmas, which the builder lists after the templates.</p></li>
       <li><span class="term">It can't point at itself</span><p>A link field never lists its own entry as an option. A person can't be their own parent, a place can't contain itself. If an older file somehow holds a self-link, it gets cleaned out when the world loads.</p></li>
     </ul>
-    <p>And the safety net: delete an entry that something else points at, the whole template it belonged to, or a body or a map, and Cartulary clears the dangling links automatically. You're never left with a reference pointing at nothing.</p>
+    <p>And the safety net: delete an entry that something else points at, the whole template it belonged to, or a body, a map, or a stemma, and Cartulary clears the dangling links automatically. You're never left with a reference pointing at nothing.</p>
 
     <h3>Name History</h3>
     <p>A record of what an entry used to be called, and when. Each row is a former name plus an optional From and To date; leave From blank for "since the beginning," leave To blank for "still current." New Amsterdam from 1626 to 1664, then New York from 1664 on. A maiden name with a To date at the wedding year. A faction that rebranded twice.</p>
@@ -844,32 +846,127 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
 
   <div class="panel" id="panel-stemma" data-route="stemma">
   <section>
+    <div class="sub-tiles">
+      <a class="tile" href="#stemma-rota" data-route="stemma-rota">
+        <span class="t-title">The rota</span>
+        <span class="t-sub">The radial tree: slots, node kinds, the inspector, reordering, keys</span>
+      </a>
+      <a class="tile" href="#stemma-tabula" data-route="stemma-tabula">
+        <span class="t-title">The tabula</span>
+        <span class="t-sub">The board: cards, columns and lanes, stacks, sub-boards, lines</span>
+      </a>
+      <a class="tile" href="#stemma-export" data-route="stemma-export">
+        <span class="t-title">Import and export</span>
+        <span class="t-sub">JSON in and out, Markdown out</span>
+      </a>
+    </div>
+
+    <div id="sub-stemma-hub">
     <p class="section-kicker">Stemma</p>
-    <h2>Radial mind maps for tree-shaped ideas</h2>
-    <p class="lead">Stemma is a mind-mapping canvas for tree-shaped thinking that doesn't belong inside a single entry: plot threads, theme webs, organizational charts, decision branches, classification systems. One word of warning, because the name invites it: this is not a family tree. Linea is the family tree, and it builds itself from your data. Stemma is the opposite kind of tool, a freeform canvas you arrange by hand, for structure that lives in your head rather than in your entries.</p>
+    <h2>Trees and boards for the thinking between entries</h2>
+    <p class="lead">Stemma is for the thinking that doesn't belong inside a single entry: plot threads, theme webs, lines of succession, decision trees, a wall of loose notes. One word of warning, because the name invites it: this is not a family tree. <a href="#linea">Linea</a> is the family tree, and it builds itself from your data. Stemma is the other kind of tool, a canvas you arrange by hand, for structure that lives in your head rather than in your entries. It comes in two layouts. A <strong>rota</strong> is a radial tree: one node at the center, its children around it, and a click on any child re-centers the tree on it. A <strong>tabula</strong> is a board: cards where you put them, columns they stack in, boards inside boards, and lines drawn between them.</p>
 
     <h3>A stemma is a document</h3>
-    <p>Each stemma is its own separate document, not a view onto your entries. Click Stemma in the sidebar and you land on the Stemmas index, a list of every stemma in the world, each shown with its name, its node count, the last updated date, and any description and tags it carries. + New Stemma starts one. Every row has its own Export and Delete, and Import at the top brings an outside stemma in. Deleting a stemma from this index is also the only way to remove its root node, which you'll see referenced again below.</p>
+    <p>Each stemma is a document of its own, not a view onto your entries. Click Stemma in the sidebar and you land on the Stemmas index: every stemma in the world with its name, a badge saying Rota or Tabula, a count (nodes for a rota, cards and columns for a tabula), the date it was last updated, and any description and tags it carries. <strong>+ New Rota</strong> and <strong>+ New Tabula</strong> start one, and <strong>Import</strong> brings a <code>.stemma.json</code> in. Every row has its own <strong>Export</strong>, <strong>Markdown</strong>, and <strong>Delete</strong>; a locked world hides Delete, the two new buttons, and Import. Click a row to open it. On either canvas, <strong>&larr; Stemmas</strong> goes back to the index, and a click on the name beside it renames the stemma.</p>
 
-    <h3>The radial canvas</h3>
-    <p>Open a stemma and you get a single focal node at the center, ringed by sixteen fixed slots arranged clockwise from twelve o'clock. Each slot holds one child or stays empty. Click a child to drill in: that child becomes the new center, with its own ring of children around it. A breadcrumb across the top tracks the path you've descended; click any segment to jump back up, or Back to root to return to the top. A child that has children of its own shows a short line radiating outward, so you can tell at a glance which nodes open into something and which are leaves.</p>
-    <p>The stemma's name sits top-left, just right of ← Stemmas, and you rename it by clicking it. To move around the canvas, hold Ctrl (Cmd on a Mac) and scroll to zoom, from half size up to two and a half times; plain scroll pans the view once you're zoomed in far enough to overflow the pane. It's the same zoom gesture the Chronometric timeline uses, and worth noting it's the reverse of Linea, where plain scroll zooms.</p>
+    <h3>Which layout</h3>
+    <p>A rota suits a hierarchy you want to walk: a theme and its motifs, a faction and its cells, a decision and its branches. Sixteen children fit around each node, and there's no limit on depth. A tabula suits nearly everything else: a scratch board of notes, a table of columns, a lineage drawn as an org chart, a board for each act with a board for each of its scenes inside it. A stemma keeps the layout it was made with; there's no turning a rota into a tabula or back.</p>
+
+    <h3>Linked to the rest of the world</h3>
+    <p>A rota's linked node and a tabula's linked card point at a record of the world: an entry, an Astronomical Body, a map, a Glossopoeia or Fabula record, or another stemma. They take the record's icon and color and show its current name, so a rename follows on its own. Delete the record and the node or card becomes an orphan, faded and still showing the name it had when you linked it, until you re-link it or convert it to a freeform node or a note. Stemmas are records too. An Entry Reference field can point at one (a story's Brainstorm field in <a href="#fabula">Fabula</a> does), a linked node in another stemma can, and <a href="#concordance">Concordance</a> draws each stemma as a node with a <strong>links</strong> edge to every record its nodes or cards point at. Deleting a stemma counts the references to it first, then clears them.</p>
+
+    <h3>Undo</h3>
+    <p>Both canvases have <strong>Undo</strong> and <strong>Redo</strong> on their top bar, and Ctrl+Z and Ctrl+Y (Ctrl+Shift+Z redoes too). Every add, delete, move, conversion, and edit is a step, and a drag or a run of typing in one field is one step of its own. The history holds fifty steps and lasts while the canvas is open; leave the stemma and it's gone. It's Stemma's own, as the map editor's is: the rest of Cartulary still has no undo.</p>
+    </div>
+
+    <div id="sub-stemma-rota" style="display:none">
+    <p class="section-kicker">Stemma &middot; The rota</p>
+    <h2>A radial tree you walk into</h2>
+
+    <h3>The canvas</h3>
+    <p>Open a rota and you get a single focal node at the center, ringed by sixteen fixed slots arranged clockwise from twelve o'clock. Each slot holds one child or stays empty. Click a child to drill in: that child becomes the new center, with its own ring of children around it. A breadcrumb across the top tracks the path you've come down; click any segment to jump back up, or <strong>Back to root</strong> to return to the top. A child that has children shows a short line radiating outward, so you can tell at a glance which nodes open into something and which are leaves. There's no depth cap: a tree goes as deep as you take it.</p>
+    <p>To zoom, hold Ctrl (Cmd on a Mac) and scroll, from 50% to 250% in steps of 1.15, or press + and −, with 0 back to 100%. Plain scroll pans the view once you're zoomed in far enough to overflow the pane. That's the reverse of <a href="#linea">Linea</a>, where plain scroll zooms.</p>
 
     <h3>Two kinds of node</h3>
-    <p>Every node is one of two kinds. A freeform node is yours to label, color, and give an icon, for ideas that have no entry to point at: "Act II climax", a morality theme, the missing letter the whole plot turns on. A linked node binds to an existing entry instead, and takes its look from that entry's template, the template's icon and color, with a small chain badge ⛓ marking it as linked. Its label is the entry's current name, so rename the entry and the node renames itself to match.</p>
+    <p>Every node is one of two kinds. A freeform node is yours to label, color, and give an icon, for ideas with no record behind them: "Act II climax", a morality theme, the missing letter the whole plot turns on. A linked node points at a record instead, an entry or any other record of the world, and takes its look from it, the record's icon and color, with a small chain badge ⛓ marking it as linked. Its label is the record's current name, so rename the record and the node follows. If the record is deleted, the node becomes an orphan: desaturated, its label in italics, a broken-link icon in place of the record's, and still showing the name it had when you linked it, so you remember what it stood for.</p>
 
-    <h3>Adding, editing, and deleting nodes</h3>
-    <p>Empty slots show a faint +. Click it for a smart input: type a name and matching entries from your world appear below as you go. Pick one, by mouse or with the arrow keys and Enter, and you get a linked node; ignore the suggestions and press Enter on your own text and you get a freeform node with that label; Esc backs out.</p>
-    <p>Click any node to open the inspector on the right. For a freeform node you edit its label, color, and icon there. For a linked node you get a preview card and a jump straight to the entry. The inspector footer converts a node between the two kinds, either direction, and converting a linked node to freeform keeps its current name as the new label so nothing is lost. The inspector is also where deletion lives: Delete node removes it, and if it has children it takes the whole subtree along with it, with the count spelled out in the confirmation. The root node is the one exception. It can't be deleted on its own; to clear an entire stemma, delete it from the index.</p>
+    <h3>Adding nodes</h3>
+    <p>Empty slots show a faint +. Click one, or press N to take the first empty slot from twelve o'clock, for the smart input: type, and up to eight records whose names match appear below as you go, prefix matches first, a record that isn't an entry with its source beside its name. Pick one, by mouse or with the arrow keys and Enter, and you get a linked node; press Enter without picking and you get a freeform node with what you typed as its label. Esc backs out.</p>
 
-    <h3>Orphans</h3>
-    <p>A linked node depends on its entry continuing to exist. Delete that entry and the node becomes an orphan: desaturated, its label in italics, marked with a broken-link icon, and still showing the name it cached the moment you first linked it, so you remember what it stood for. From the inspector you can re-link it to a different entry, or convert it to freeform and keep that cached name as its label.</p>
+    <h3>The inspector</h3>
+    <p>Click the focal node, the one at the center, to open the inspector on the right; a click on a child drills in, so to inspect a child, drill into it first. For a freeform node you edit its label, color, and icon there. For a linked node you get a preview card and, where the record can be opened, an <strong>Open</strong> button that takes you to it. The footer converts a node between the two kinds, <strong>Convert to linked entry</strong> one way and <strong>Convert to freeform</strong> the other, which keeps the name the node was linked under as its label. <strong>Re-link to different entry</strong> points a linked or orphaned node at another record. <strong>Delete node</strong> removes the node and its whole subtree, after a confirmation that counts what goes with it. The root is the one node you can't delete; to clear a whole rota, delete it from the index.</p>
 
-    <h3>Import and export</h3>
-    <p>Each stemma travels as a single <code>.stemma.json</code> file, exported from the Export button on the canvas or the per-row Export on the index, and brought back in through Import on the index. On the way in, every node id is regenerated so it can't collide with anything you already have, a name clash prompts the same Skip / Replace / Rename choice you've met elsewhere, and any linked node whose entry doesn't exist in the destination world arrives as an orphan, with a count in the import flash. Matching across worlds goes by entry id alone, with no fuzzy name fallback, so linked nodes usually need re-linking by hand after a move between worlds. The <a href="#import-export">Import &amp; Export</a> page collects this alongside every other thing Cartulary can share.</p>
+    <h3>Reordering</h3>
+    <p>Drag a child around the ring and it follows the pointer from slot to slot. Let go on an empty slot and it moves there; let go on a sibling's slot and the two swap, the sibling drawn in the child's old slot while you drag, so you see the trade before you make it. Esc mid-drag cancels, and a press that never moves is still a click that drills in. From the keyboard, Alt+Left and Alt+Right move the focused child to the next free slot, counterclockwise or clockwise.</p>
 
-    <h3>What it doesn't do yet</h3>
-    <p>A few things are deliberately outside this version, worth knowing before you lean on them. Siblings can't be reordered between slots; a node's slot is fixed at the moment you create it. There's no undo (the map editor is the one place in Cartulary that has it), so export before a big rearrangement. Export is JSON only, with no Markdown version yet. And a stemma's tags show on the index but don't fold into the world's tag autocomplete, so they sit a little apart from the tags on your entries.</p>
+    <h3>Keys</h3>
+    <ul class="concepts">
+      <li><span class="term">Left, Right</span><p>Walk the focus around the children, clockwise and back, wrapping round. With nothing focused, Right takes the first child clockwise from twelve o'clock and Left the last.</p></li>
+      <li><span class="term">Enter, Backspace, Home</span><p>Drill into the focused child; go up to the parent; go to the root.</p></li>
+      <li><span class="term">Delete</span><p>Removes the focused child, with the inspector's confirmation.</p></li>
+      <li><span class="term">N</span><p>Opens the smart input on the first empty slot.</p></li>
+      <li><span class="term">Alt+Left, Alt+Right</span><p>Move the focused child to the next free slot either way round.</p></li>
+      <li><span class="term">Esc</span><p>Closes the inspector, then clears the focus.</p></li>
+      <li><span class="term">+, −, 0, Ctrl+scroll</span><p>Zoom in, zoom out, back to 100%. Ctrl+scroll zooms too.</p></li>
+      <li><span class="term">Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z</span><p>Undo and redo.</p></li>
+    </ul>
+    <p>The keys rest while you're typing in a field, while the smart input is open, and during a drag. In a locked world the rota opens read-only: a press on a child still drills in and nothing moves; the walk, Enter, Backspace, Home, Esc, and the zoom still work; Delete, N, and Alt with the arrows do nothing.</p>
+    </div>
+
+    <div id="sub-stemma-tabula" style="display:none">
+    <p class="section-kicker">Stemma &middot; The tabula</p>
+    <h2>A board for everything that isn't a tree</h2>
+    <p class="lead">A tabula is a canvas without edges, in the spirit of a pinboard. Cards sit where you drop them, snapped to a 10-pixel grid, and keep their order front to back, a dragged card landing on top. Columns gather cards into stacks, lanes, and rows; a note, a linked card, or an image can carry columns underneath it; a board card holds a whole board inside it; and lines run between cards and stay stuck to them as they move.</p>
+
+    <h3>The rail</h3>
+    <p>The rail down the left side adds five kinds of card. A <strong>Note</strong> has a title and a Markdown body, where <code>[[wiki-links]]</code> resolve. A <strong>Link</strong> is a card for an entry or any other record of the world, the rota's linked node in card form, and orphans the same way. An <strong>Image</strong> is a picture from a file, or one dropped straight onto the canvas, stored the way a map's image is: in your images folder when one is connected, otherwise inside the save file, with a confirmation for anything over 1&nbsp;MB. A <strong>Column</strong> is a stack that cards drop into. A <strong>Board</strong> is a board inside this one.</p>
+    <p>Click a rail button to add one at the center of the view, or drag it out onto the canvas to put it where you let go; a double-click on empty canvas makes a note. A new note, column, or board opens its title for typing straight away (Enter moves from a note's title to its body, Esc closes the fields), and a new Link opens the smart input right where you put it. Below the five card kinds sit the three line tools, covered under Lines below.</p>
+
+    <h3>Moving around</h3>
+    <p>Ctrl+scroll (Cmd+scroll on a Mac) zooms about the pointer, from 25% to 200% in steps of 1.15, and a pinch does the same. Plain scroll pans, and Shift+scroll pans sideways. Hold Space and drag, or drag with the middle button, to pan from anywhere; in a locked world, any drag on empty canvas pans. The bar in the canvas's corner has −, the zoom, +, and <strong>Fit</strong>, and the keys + and − zoom while 0 fits. Each board remembers where you left it, in this browser beside your theme and font size rather than in the world file; the first time you open one, it fits its cards to the view.</p>
+
+    <h3>Cards</h3>
+    <p>Click a card to select it, and the inspector opens on the right: a note's title, body, and color; a linked card's preview with <strong>Open</strong>, <strong>Re-link to a different record</strong>, and <strong>Convert to note</strong>; an image's caption and <strong>Replace image…</strong>; a column's title, color, and layout; a board's title, color, and icon, with <strong>Open board &rarr;</strong>; and on every card, <strong>Duplicate</strong> and <strong>Delete</strong>. Double-click a note or a column to edit it right on the card.</p>
+    <p>Every card has a grip, the ⋮⋮ strip in its left margin (a column's is its header), and the grip is the only part that drags: a press anywhere else selects, a double-click edits or opens, and nothing moves unless you take the grip. That's what lets you click into a note to follow a link without nudging it. The handle on a placed card's right edge sets its width, from 160 to 800 pixels, an image down to 80, and a column, or a card with stacks under it, up to 2400.</p>
+
+    <h3>Selecting several</h3>
+    <p>Shift+click adds a card to the selection or takes it back out, and a drag across empty canvas draws a marquee that selects every placed card it fully encloses, Shift adding them to what's already selected. With several selected, the panel on the right counts them. Drag any of their grips and the placed ones move together: onto the board by the same distance, into a column in their top-to-bottom order, or into a sub-board as they sit. The arrow keys nudge them by the grid. Ctrl+C copies, Ctrl+V pastes around the middle of the view (into another board or another tabula too), Ctrl+D duplicates beside the originals, Ctrl+A selects everything on the board, and Delete deletes.</p>
+
+    <h3>Columns, lanes, and rows</h3>
+    <p>Drag a card over a column and a line shows where it will land; let go and it joins the stack there. Drag it back out onto the canvas to free it. A column's <strong>Cards per row</strong>, 1 to 6, splits it into lanes side by side, each a stack with a title, so three short lanes read as a table with its headers; the cards keep their places when the count changes, and taking the count back down merges the lanes in order. A column dropped onto a column becomes a lane of it, and a lane can hold lanes in turn, as deep as you like. Drag the divider between two lanes to set the width of the one before it; the last lane takes whatever's left, and no lane goes under 80 pixels.</p>
+    <p><strong>Lay out</strong> switches a column without lanes between <strong>Stack</strong>, its cards one under another, and <strong>Row</strong>, its cards side by side, each as wide as what it holds, the column growing to fit. Delete a column that holds cards and Cartulary asks first: <strong>Move out</strong> puts its cards on the canvas where they stood, and <strong>Delete everything</strong> takes them with it.</p>
+
+    <h3>Stacks under a card</h3>
+    <p>A note, a linked card, or an image can carry columns, drawn underneath it: <strong>Add a stack</strong> in its inspector, or drop a column onto the card. <strong>Stacks under it</strong>, 1 to 6, sets how many sit side by side, each a column with a title and cards, and the card's inspector counts what it holds. This is how a lineage draws as an org chart: a master as a note, the apprentices a row in its stack, each apprentice's own apprentices a row under them, the whole thing widening as it fills. Delete a card with stacks and the same question comes up; <strong>Move out</strong> puts the stacks on the canvas whole, where they stood.</p>
+
+    <h3>Boards inside boards</h3>
+    <p>A board card is a whole board inside this one, its cards and lines kept on it, and its face counts everything below it. Double-click it to open it (the inspector's <strong>Open board &rarr;</strong> does the same); the breadcrumb along the top walks you back out, and <strong>Back</strong> goes up one level. Drag a card onto a board card and it goes inside: a line marks the edge nearest the pointer, and the card lands beside the board's content on that side.</p>
+
+    <h3>Lines</h3>
+    <p>Below the card kinds, the rail has three line tools. <strong>Line</strong> places points click by click; a double-click, Enter, or a right-click finishes the line, and Esc throws it away. <strong>Freehand</strong> draws in one drag, simplified on release, with both ends free. Put a line's end down on a card and it sticks there, following the card wherever it goes; put it down off a card and it stays where you put it. <strong>Select</strong> picks a line to move it, drag its points (an end dropped on a card sticks, dragged off one it comes free), nudge it with the arrows, or delete it. The panel on the right holds the map palette's eight stroke colors, the width, <strong>Smooth</strong>, and <strong>Arrowheads</strong> (none, at the end, or at both ends), editing the selected line or setting the next one's defaults. Esc leaves the line tools for the cards.</p>
+
+    <h3>Keys</h3>
+    <ul class="concepts">
+      <li><span class="term">Esc</span><p>Throws away a line in progress, deselects a line, and leaves a line tool; otherwise closes the smart input, ends an edit, then deselects.</p></li>
+      <li><span class="term">Delete, Backspace</span><p>Delete the selection, or the selected line.</p></li>
+      <li><span class="term">Arrows</span><p>Nudge the selection, or the selected line, by the grid.</p></li>
+      <li><span class="term">Ctrl+C, Ctrl+V, Ctrl+D, Ctrl+A</span><p>Copy, paste, duplicate, select all.</p></li>
+      <li><span class="term">+, −, 0, Space</span><p>Zoom in, zoom out, fit. Space held turns a drag into a pan.</p></li>
+      <li><span class="term">Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z</span><p>Undo and redo, fifty steps while the canvas is open.</p></li>
+    </ul>
+    <p>In a locked world the tabula opens read-only: the rail and Undo and Redo are gone, the inspector's fields are disabled, any drag on empty canvas pans, and the view's keys still work.</p>
+    </div>
+
+    <div id="sub-stemma-export" style="display:none">
+    <p class="section-kicker">Stemma &middot; Import and export</p>
+    <h2>A stemma in a file</h2>
+
+    <h3>JSON, both ways</h3>
+    <p><strong>Export</strong>, on a stemma's row in the index or on its canvas's top bar, downloads it as <code>&lt;slug&gt;.stemma.json</code>. A rota goes out in version 1 of the file's envelope and a tabula in version 2, so a Cartulary from before boards refuses a tabula's file outright rather than misreading it, and still imports a rota. <strong>Import</strong> on the index reads either. On the way in, every id is regenerated so nothing can collide with what you already have; a name already in use opens the Skip / Replace / Rename choice you've met elsewhere; and a linked node or card whose record doesn't exist in this world arrives as an orphan, with a count in the import flash. Matching across worlds goes by record id alone, with no fuzzy name fallback, so after a move between worlds the links usually want re-linking by hand. The file's shape is on the <a href="#js-stemmas">JSON Structure</a> page.</p>
+
+    <h3>Markdown, out only</h3>
+    <p><strong>Markdown</strong>, beside Export in both places, downloads <code>&lt;slug&gt;.stemma.md</code> for reading or pasting elsewhere: the name as a heading, the description, then the content. A rota is a nested list in slot order from twelve o'clock, the root first: a freeform node is its label, a linked node a <code>[[wiki-link]]</code> to its record's name (pasted into a longform field, it links when the record is an entry or a body), an orphan its old name marked unlinked. A tabula is its free cards in reading order, top to bottom and then left to right, as a list; each column is a heading with its cards listed under it, lanes headings a level down, stacks and rows nested lists under their card, a sub-board a section of its own, and an empty column <code>_(empty)_</code>. A note brings its body, an image its file name and caption. Lines don't export. The Markdown can't be imported back; the JSON is the copy that returns. Everything else that travels is on the <a href="#import-export">Import &amp; Export</a> page.</p>
+    </div>
   </section>
   </div><!-- /panel-stemma -->
 
@@ -885,6 +982,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
       <li><span class="term">Entry-ref fields</span><p>A plain reference draws an arrow from the entry holding the field to the one it points at. Family-role refs draw with meaning: a Parent ref points parent to child, matching the family tree, and a Spouse ref draws a line with an arrowhead on both ends.</p></li>
       <li><span class="term">Wiki-links</span><p>Every <code>[[Name]]</code> in any text field becomes an edge from the entry you wrote it in to the entry it resolves to.</p></li>
       <li><span class="term">Map pins</span><p>A pin on a map that links to an entry connects the map to whatever the pin points at, marked with a 📍 on the edge.</p></li>
+      <li><span class="term">Stemma links</span><p>A stemma's linked nodes, in a rota, and its linked cards, on a tabula, connect the stemma to every record they point at, one edge per record, labeled <strong>links</strong>.</p></li>
       <li><span class="term">References buried deeper</span><p>Entry-refs inside a repeating group's rows, and entry-ref cells inside a grid, both feed the graph as well, so a link counts no matter how deep in an entry's structure it sits.</p></li>
     </ul>
     <p>Every edge is directed: the arrowhead tells you which entry references which.</p>
@@ -900,7 +998,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
 
     <h3>The Templates filter</h3>
     <p>The side panel lists every template with a checkbox, and because each row carries that template's color, the panel doubles as the graph's legend, telling you what each color means. Each row also shows a count of how many nodes of that type are currently in the graph. Untick a template and its entries vanish from the graph along with every edge that touched them; tick it back and they return. All and None at the top flip everything at once. Nothing is ticked when Concordance opens, so the graph starts empty and a large world doesn't render as one tangle. Toggling the filter never disturbs the layout you've built: hidden nodes simply stop drawing, their saved positions waiting for them. A node and connection count runs along the bottom edge of the canvas so you can see the current totals at a glance.</p>
-    <p>The list includes more than your regular templates. Astronomical Bodies defined in Ephemeris appear as their own toggleable type, as do Glossopoeia entities -- ConLangs, Lexemes, Phonemes, Grammatical Values, Affixes, Word-Building Processes, Inflection Classes, and Writing Systems -- and, since v1.6, Maps. Since v1.7, <a href="#fabula">Fabula</a>'s records sit behind one <strong>Fabula</strong> row that toggles all eleven kinds at once: a corpus connects to its stories, a story to its threads and themes, a cast record to its character, a scene to its POV, participants, setting, threads, and motifs, and so on. Any of these that reference entries (or each other) produce edges just like a field on a regular template would. Toggle them off to reduce visual noise when you're not focusing on those parts of the world.</p>
+    <p>The list includes more than your regular templates. Astronomical Bodies defined in Ephemeris appear as their own toggleable type, as do Glossopoeia entities -- ConLangs, Lexemes, Phonemes, Grammatical Values, Affixes, Word-Building Processes, Inflection Classes, and Writing Systems -- and, since v1.6, Maps. Since v1.7 stemmas have a row of their own, and <a href="#fabula">Fabula</a>'s records sit behind one <strong>Fabula</strong> row that toggles all eleven kinds at once: a corpus connects to its stories, a story to its threads and themes, a cast record to its character, a scene to its POV, participants, setting, threads, and motifs, and so on. Any of these that reference entries (or each other) produce edges just like a field on a regular template would. Toggle them off to reduce visual noise when you're not focusing on those parts of the world.</p>
 
     <h3>Focus mode</h3>
     <p>A whole-world graph can be a lot to look at. Focus mode narrows it to one neighborhood. Type a name into the Focus box at the top of the side panel, which autocompletes from your world and suggests only entries whose templates are currently visible, and once it matches an entry exactly the graph collapses to that entry and what surrounds it. The Hops input beside it sets how wide "surrounds" reaches: one hop is direct connections only, two is friends of friends, and so on up to fifteen, though in a well-connected world anything past three or four tends to pull in nearly everything. Hops count links as undirected, so a connection counts the same whichever way its arrow points. Click clear to return to the full graph. If the entry you focused is hidden by the Templates filter, the graph quietly falls back to showing everything rather than leaving you staring at a blank canvas.</p>
@@ -1686,7 +1784,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
   <section>
     <p class="section-kicker">Import &amp; Export</p>
     <h2>Moving Cartulary data around</h2>
-    <p class="lead">There's no account and no cloud here; your world is a file on your own disk. So sharing is just exporting a file and handing it over, and importing is the reverse. This page is the full map of what can travel and in what shape: a whole world, a single template, a pack of them, a constructed language, a family tree, a calendar, a pack of map stamps, a single map as an image, a story bible, and the smaller copies: one entry, a Linea tree, a Chronometric chart. The JSON is always the real backup; everything else is a copy for reading, not a save.</p>
+    <p class="lead">There's no account and no cloud here; your world is a file on your own disk. So sharing is just exporting a file and handing it over, and importing is the reverse. This page is the full map of what can travel and in what shape: a whole world, a single template, a pack of them, a constructed language, a stemma, a calendar, a pack of map stamps, a single map as an image, a story bible, and the smaller copies: one entry, a Linea tree, a Chronometric chart. The JSON is always the real backup; everything else is a copy for reading, not a save.</p>
 
     <h3>The whole world</h3>
     <p>The world-level exports live in <a href="#worlds">World settings</a>, except the HTML one, which is on the home screen.</p>
@@ -1707,8 +1805,8 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
     <h3>A constructed language</h3>
     <p>In <a href="#glossopoeia">Glossopoeia</a>, <strong>Export</strong> writes the selected language and all its data (sounds, words, rules, the lot) to a single <strong>.conlang.json</strong>. <strong>Import</strong> loads one as a new, independent language; any cross-language link that can't be resolved in the destination world is dropped, and the count is reported. Separately, <strong>Grammar .md</strong> and <strong>Grammar .html</strong> generate a readable reference grammar and dictionary. Those two are output only, not a re-importable save.</p>
 
-    <h3>A family tree</h3>
-    <p>A <a href="#stemma">Stemma</a> travels as a single <strong>.stemma.json</strong>, exported from the canvas or the per-row Export on the index and brought back through Import. Node ids are regenerated on the way in so nothing collides, and any node linked to an entry the destination world doesn't have arrives as an orphan to re-link, with a count in the import flash. Name collisions follow the rule below.</p>
+    <h3>A stemma</h3>
+    <p>A <a href="#stemma">stemma</a>, a rota or a tabula, travels as a single <strong>.stemma.json</strong>, exported from its row on the index or its canvas's top bar and brought back through Import on the index. A tabula's file is version 2 of the envelope, which a Cartulary from before boards refuses. Ids are regenerated on the way in so nothing collides, and any node or card linked to a record the destination world doesn't have arrives as an orphan to re-link, with a count in the import flash. <strong>Markdown</strong>, beside Export, writes the stemma as a <strong>.stemma.md</strong> for reading, a rota as a nested list and a tabula as lists under headings; it doesn't import back. Name collisions follow the rule below, and the details are on the <a href="#stemma-export">Stemma</a> page.</p>
 
     <h3>A calendar</h3>
     <p>A calendar exports to a <strong>.calendar.json</strong> for use in another world, and imports back. Entries bound to a calendar you replace will reckon against the new structure on the next load. Set them up in <a href="#kalendarium">Kalendarium</a>. Name collisions follow the rule below.</p>
@@ -2112,7 +2210,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
   "height":  number,
   "shapes":  []
 }</code></pre>
-    <p>Each shape carries <code>id</code>, <code>type</code> (<code>rect</code>, <code>ellipse</code>, <code>polygon</code>, <code>stroke</code>, <code>region</code>, <code>text</code>, or <code>stamp</code>), <code>fill</code> and <code>stroke</code> (hex or null), and <code>strokeWidth</code> (1 to 64), then by type: <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code> for rect, ellipse, and stamp; <code>points</code> (<code>[[x, y], ...]</code>) for polygon and stroke; <code>rings</code> (<code>[[[x, y], ...], ...]</code>, drawn even-odd, so a ring inside another is a hole) for region, which the Fill tool makes; <code>smooth</code> for rect, polygon, stroke, and region; <code>text</code>, <code>fontSize</code> (24, 36, or 56), <code>rotation</code>, and <code>arc</code> (degrees, −180..180) for text; <code>stampId</code> and <code>rotation</code> for stamp. Layers draw in array order, so the last one is on top; a layer without <code>kind</code> is vector. Pins are not part of the drawing.</p>
+    <p>Each shape carries <code>id</code>, <code>type</code> (<code>rect</code>, <code>ellipse</code>, <code>polygon</code>, <code>stroke</code>, <code>region</code>, <code>text</code>, or <code>stamp</code>), <code>fill</code> and <code>stroke</code> (hex or null), and <code>strokeWidth</code> (1 to 64), then by type: <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code> for rect, ellipse, and stamp; <code>points</code> (<code>[[x, y], ...]</code>) for polygon and stroke; <code>rings</code> (<code>[[[x, y], ...], ...]</code>, drawn even-odd, so a ring inside another is a hole) for region, which the Fill tool makes; <code>smooth</code> for rect, polygon, stroke, and region; <code>arrow</code> (<code>none</code>, <code>end</code>, or <code>both</code>, the arrowheads) for stroke; <code>text</code>, <code>fontSize</code> (24, 36, or 56), <code>rotation</code>, and <code>arc</code> (degrees, −180..180) for text; <code>stampId</code> and <code>rotation</code> for stamp. Layers draw in array order, so the last one is on top; a layer without <code>kind</code> is vector. Pins are not part of the drawing.</p>
     <p>Pin coordinates are fractions of the canvas (0..1), so they stay positioned correctly at any display size. The canvas size shown in the UI (<code>sizePct</code>) and the zoom are session UI state and not persisted. A malformed drawing is coerced to defaults on load (one layer, a vellum background, the default 1600&nbsp;×&nbsp;1000 size) rather than refused; a shape that can't be rendered is dropped, and a raster layer whose image fails the check loads empty.</p>
     <p><strong>Unlinked pins</strong> (no <code>entryId</code>) are always visible in time mode. <strong>Linked pins marked permanent</strong> are also always visible, regardless of whether the linked entry has date data. <strong>Linked pins without permanent and without date data</strong> on the linked entry are hidden in time mode.</p>
 
@@ -2402,38 +2500,64 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
 
   <section id="js-stemmas">
     <h3>The <code>stemmas</code> array</h3>
-    <p>Each stemma is a labeled radial tree stored as a recursive node structure:</p>
+    <p>Each stemma is a document in one of two layouts: a rota, a radial tree stored as a recursive node structure, or, since v1.7, a tabula, a board of placed items. The document:</p>
     <pre><code>{
-  "id":          string,           // e.g. "stem-{4-char-suffix}"
+  "id":          string,           // e.g. "stem-{time}-{6-char}"
   "name":        string,
   "description": string,
   "tags":        [ string, ... ],
-  "root":        { ...stemma node, recursive },
+  "layout":      "tabula",         // v1.7; a rota has none, so nothing migrates
+  "root":        { ...a rota node, or a tabula's board node },
   "createdAt":   ISO-8601 timestamp,
   "updatedAt":   ISO-8601 timestamp
 }</code></pre>
-    <p>A stemma node is one of two types:</p>
-    <pre><code>// Freeform node
+    <p>A rota node is one of two types:</p>
+    <pre><code>// Freeform node (your own label, not tied to any record)
 {
-  "id":       string,              // e.g. "n-{4-char-suffix}"
+  "id":       string,              // e.g. "n-{time}-{6-char}"
   "slot":     number,              // 0..15 (sixteen radial slots, clockwise from 12 o'clock)
   "type":     "freeform",
   "label":    string,
   "color":    string,              // hex
   "icon":     string,              // single character or symbol
-  "children": [ ...stemma nodes ]
+  "children": [ ...rota nodes ]
 }
 
-// Linked node (references an existing entry)
+// Linked node (points at a record)
 {
   "id":          string,
   "slot":        number,
   "type":        "linked",
-  "entryId":     string,           // references entries[].id
-  "_cachedName": string,           // fallback label if the entry is missing on load
-  "children":    [ ...stemma nodes ]
+  "entryId":     string,           // an entry's id, or a registered record's: a body, a map,
+                                   //   a Glossopoeia or Fabula record, another stemma
+  "_cachedName": string,           // the record's name when linked; shown once it is gone
+  "children":    [ ...rota nodes ]
 }</code></pre>
-    <p>The root node has <code>slot: 0</code> by convention. Child slots are unique within their parent's children. Nesting is unbounded; the UI renders meaningful drill-down for the focal node and its immediate children.</p>
+    <p>The root node has <code>slot: 0</code> by convention. Child slots are unique within their parent's children (the editor enforces this; an import skips a duplicate slot). Nesting is unbounded.</p>
+    <p>A tabula's root is a board node, holding items placed by position, in z-order, and the board's lines:</p>
+    <pre><code>{
+  "id":     string,
+  "type":   "board",
+  "title":  string,
+  "color":  string,                // hex
+  "icon":   string,
+  "items":  [ ...placed items ],   // drawn in array order, the last on top
+  "shapes": [ ...lines ]
+}</code></pre>
+    <p>An item is a note, a linked card, an image, a column, or a board. Placed on a board it carries <code>x</code>, <code>y</code>, and <code>w</code> (integers, canvas pixels at 100%; heights are never stored); inside a column it carries none of them, though a lane may keep a <code>w</code> of its own:</p>
+    <pre><code>// a note; the body is Markdown
+{ "id": string, "type": "note",   "title": string, "body": string, "color": hex }
+// a linked card, as the rota's linked node
+{ "id": string, "type": "linked", "entryId": string, "_cachedName": string }
+// an image: a filename in the images folder ("&lt;stemma id&gt;-&lt;item id&gt;.&lt;ext&gt;") or a data URL
+{ "id": string, "type": "image",  "image": string, "caption": string }
+// a column; flow only on a row, absent on a stack
+{ "id": string, "type": "column", "title": string, "color": hex, "items": [ ... ],
+  "flow": "row" }
+// a sub-board, shaped as above, with its own items and shapes
+{ "id": string, "type": "board",  ... }</code></pre>
+    <p>A column holds cards or lanes, never both: its <code>items</code> are cards, or columns laid side by side (lanes), at any depth. A lane, or a stack under a card, may carry <code>w</code> alone, its width; the last lane takes what's left. Any card but a column or a board may carry <code>items</code> too: columns, its stacks, drawn under it; a card with none has no <code>items</code> key. A line in <code>shapes</code> is the map editor's stroke (<code>id</code>, <code>type: "stroke"</code>, <code>points</code>, <code>fill</code> (null), <code>stroke</code>, <code>strokeWidth</code>, <code>smooth</code>, <code>arrow</code>; see <a href="#js-mapdata">Map data</a>) plus <code>anchors</code>, <code>{ "start": item id | null, "end": item id | null }</code>, the cards its ends stick to on this board. On load a tabula is coerced, never refused: a card loose among lanes goes into the first lane, a stray value lands on a default, and an item of a type the build doesn't know is kept and not drawn.</p>
+    <p>A stemma's own export wraps the document: <code>{ "cartulary_stemma_export": 1 | 2, "exported_at": timestamp, "stemma": {...} }</code>, 1 for a rota and 2 for a tabula. A build without boards refuses envelope 2, and a build refuses any envelope newer than the ones it knows. A tabula's pan and zoom, per board, is kept in the browser with the appearance preferences and isn't part of the save file.</p>
   </section>
 
   <section id="js-concordance">
@@ -2465,7 +2589,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
 
   <section id="js-ids">
     <h3>ID conventions</h3>
-    <p>IDs are arbitrary strings, but Cartulary's own generators follow a consistent pattern: a type prefix, a slug derived from the name, and a randomized suffix to avoid collisions.</p>
+    <p>IDs are arbitrary strings, but Cartulary's own generators follow a consistent pattern: a type prefix, a slug derived from the name or <code>{time}</code>, the moment of creation in base 36, and a randomized suffix to avoid collisions.</p>
     <table style="width:100%;border-collapse:collapse;font-size:.95rem;margin:1rem 0">
       <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:.4em .8em;color:var(--accent)">Object</th><th style="text-align:left;padding:.4em .8em;color:var(--accent)">Format</th></tr></thead>
       <tbody>
@@ -2478,11 +2602,11 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Map shapes</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">shape-{6-char}</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Map stamps</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">{pack id}__{stamp id}</td></tr>
         <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Fabula records</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">fab-{kind}-{time}-{6-char}</td></tr>
-        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Stemmas</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">stem-{4-char}</td></tr>
-        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Stemma nodes</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">n-{4-char}</td></tr>
-        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Calendars (non-primary)</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">cal-{4-char}</td></tr>
-        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Celestial bodies</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">cel-{4-char}</td></tr>
-        <tr><td style="padding:.35em .8em;font-family:monospace">Seasons</td><td style="padding:.35em .8em;font-family:monospace">sea-{4-char}</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Stemmas</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">stem-{time}-{6-char}</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Stemma nodes and tabula items</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">n-{time}-{6-char}</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Calendars (non-primary)</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">cal-{time}-{6-char}</td></tr>
+        <tr><td style="padding:.35em .8em;border-bottom:1px solid var(--border)">Celestial bodies</td><td style="padding:.35em .8em;border-bottom:1px solid var(--border);font-family:monospace">cel-{time}-{6-char}</td></tr>
+        <tr><td style="padding:.35em .8em">Seasons</td><td style="padding:.35em .8em;font-family:monospace">sea-{time}-{6-char}</td></tr>
       </tbody>
     </table>
     <p>You can use any string format in hand-crafted JSON as long as IDs are unique within their required scope. Built-in template IDs follow the same pattern but are generated at seed time and don't change between versions.</p>
@@ -2516,6 +2640,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
       <li>Backfills <code>mapData.drawing</code> on every map record and re-sanitizes every stamp body in <code>mapStamps</code></li>
       <li>Flags the world's Plot Thread and Theme / Motif templates <code>fabulaRole</code> where neither is flagged, and clears a duplicate flag (v1.7)</li>
       <li>Backfills <code>fabula</code> with an empty array for each kind and the seeded schema for each, replaces an unedited schema whose <code>seed</code> is behind the build's, and brings an edited schema's core fields up to the seed (v1.7)</li>
+      <li>Coerces every tabula document in <code>stemmas</code> to its shape, on every load (v1.7); a rota is left as it is</li>
     </ul>
     <p>Migration operates on a defensive clone of the input. Your original file is never written through during this step.</p>
   </section>
@@ -2598,7 +2723,7 @@ footer .foot-fine{margin-top:1.2rem; font-size:.76rem; color:var(--border2); let
   <section id="colo-a11y">
     <h3>Accessibility, honestly</h3>
     <p>An honest statement, not a badge. A good amount of Cartulary works from the keyboard: Escape closes panels and pickers, Enter and clicking away commit edits, Ctrl or Cmd plus scroll zooms the timeline and graph views, and date fields have stepper buttons and typed inputs. Some controls carry ARIA labels, and images use whatever alt text you give them.</p>
-    <p>What doesn't work yet is worth stating plainly. The canvas-based views, the Concordance graph, the Chronometric chart, Fabula's timeline, the Linea family tree, and the Cartographia map, are built for a sighted user with a pointer; they aren't navigable by a screen reader. The map editor around its canvas is the partial exception: one key per tool, arrow keys to nudge, named swatches, and a live region that names the selection, but a shape or a stroke still has to be placed with a mouse, a pen, or a finger. There's been no formal screen-reader pass and no WCAG audit. The interface has two dark themes, the default and a High Contrast one, and no light mode; it doesn't follow your system color-scheme setting. The app doesn't gate its animations on a reduced-motion preference, though this documentation site does. If you depend on accessibility features to work at all, go in knowing those gaps are real.</p>
+    <p>What doesn't work yet is worth stating plainly. The canvas-based views, the Concordance graph, the Chronometric chart, Fabula's timeline, the Linea family tree, Stemma's rotas and tabulas, and the Cartographia map, are built for a sighted user with a pointer; they aren't navigable by a screen reader. Two are partial exceptions. The map editor around its canvas has one key per tool, arrow keys to nudge, named swatches, and a live region that names the selection, but a shape or a stroke still has to be placed with a mouse, a pen, or a finger. Stemma's canvases have keys of their own: a rota is walked, drilled, reordered, and zoomed from the keyboard, and a tabula's selection is nudged, copied, pasted, and deleted, but a card is placed, a line drawn, and a tabula panned with a pointer. There's been no formal screen-reader pass and no WCAG audit. The interface has two dark themes, the default and a High Contrast one, and no light mode; it doesn't follow your system color-scheme setting. The app doesn't gate its animations on a reduced-motion preference, though this documentation site does. If you depend on accessibility features to work at all, go in knowing those gaps are real.</p>
   </section>
 
   <section id="colo-type">
@@ -2694,10 +2819,10 @@ SOFTWARE.</code></pre>
   });
 
   // ---- client-side router: tiles & nav swap content panels (An-lana behavior) ----
-  var LIVE={overview:'panel-overview','get-started':'panel-get-started',concepts:'panel-concepts',worlds:'panel-worlds',templates:'panel-templates',fields:'panel-fields',linea:'panel-linea',fabula:'panel-fabula','fabula-stories':'panel-fabula','fabula-people-plot':'panel-fabula','fabula-outline':'panel-fabula','fabula-meaning':'panel-fabula','fabula-timeline':'panel-fabula','fabula-templates':'panel-fabula',stemma:'panel-stemma',concordance:'panel-concordance',kalendarium:'panel-kalendarium',cartographia:'panel-cartographia','cartographia-editor':'panel-cartographia','cartographia-stamps':'panel-cartographia',timelines:'panel-timelines','timelines-vertical':'panel-timelines','timelines-chronometric':'panel-timelines','import-export':'panel-import-export','json-structure':'panel-json-structure',colophon:'panel-colophon',ephemeris:'panel-ephemeris','ephemeris-asbo':'panel-ephemeris','ephemeris-compute':'panel-ephemeris','ephemeris-force-align':'panel-ephemeris','ephemeris-observe':'panel-ephemeris','ephemeris-event':'panel-ephemeris',glossopoeia:'panel-glossopoeia','glossopoeia-overview':'panel-glossopoeia','glossopoeia-phonology':'panel-glossopoeia','glossopoeia-morphology':'panel-glossopoeia','glossopoeia-pronouns':'panel-glossopoeia','glossopoeia-grammar':'panel-glossopoeia','glossopoeia-lexicon':'panel-glossopoeia','glossopoeia-orthography':'panel-glossopoeia','glossopoeia-corpus':'panel-glossopoeia'};
+  var LIVE={overview:'panel-overview','get-started':'panel-get-started',concepts:'panel-concepts',worlds:'panel-worlds',templates:'panel-templates',fields:'panel-fields',linea:'panel-linea',fabula:'panel-fabula','fabula-stories':'panel-fabula','fabula-people-plot':'panel-fabula','fabula-outline':'panel-fabula','fabula-meaning':'panel-fabula','fabula-timeline':'panel-fabula','fabula-templates':'panel-fabula',stemma:'panel-stemma','stemma-rota':'panel-stemma','stemma-tabula':'panel-stemma','stemma-export':'panel-stemma',concordance:'panel-concordance',kalendarium:'panel-kalendarium',cartographia:'panel-cartographia','cartographia-editor':'panel-cartographia','cartographia-stamps':'panel-cartographia',timelines:'panel-timelines','timelines-vertical':'panel-timelines','timelines-chronometric':'panel-timelines','import-export':'panel-import-export','json-structure':'panel-json-structure',colophon:'panel-colophon',ephemeris:'panel-ephemeris','ephemeris-asbo':'panel-ephemeris','ephemeris-compute':'panel-ephemeris','ephemeris-force-align':'panel-ephemeris','ephemeris-observe':'panel-ephemeris','ephemeris-event':'panel-ephemeris',glossopoeia:'panel-glossopoeia','glossopoeia-overview':'panel-glossopoeia','glossopoeia-phonology':'panel-glossopoeia','glossopoeia-morphology':'panel-glossopoeia','glossopoeia-pronouns':'panel-glossopoeia','glossopoeia-grammar':'panel-glossopoeia','glossopoeia-lexicon':'panel-glossopoeia','glossopoeia-orthography':'panel-glossopoeia','glossopoeia-corpus':'panel-glossopoeia'};
   var SOON={};
-  var SUB={fabula:['sub-fabula-hub'],'fabula-stories':['sub-fabula-stories'],'fabula-people-plot':['sub-fabula-people-plot'],'fabula-outline':['sub-fabula-outline'],'fabula-meaning':['sub-fabula-meaning'],'fabula-timeline':['sub-fabula-timeline'],'fabula-templates':['sub-fabula-templates'],cartographia:['sub-cartographia-hub'],'cartographia-editor':['sub-cartographia-editor'],'cartographia-stamps':['sub-cartographia-stamps'],'timelines-vertical':['sub-timelines-vertical'],'timelines-chronometric':['sub-timelines-chronometric'],timelines:['sub-timelines-shared'],'ephemeris-asbo':['sub-ephemeris-asbo'],'ephemeris-compute':['sub-ephemeris-compute'],'ephemeris-force-align':['sub-ephemeris-force-align'],'ephemeris-observe':['sub-ephemeris-observe'],'ephemeris-event':['sub-ephemeris-event'],ephemeris:['sub-ephemeris-hub'],glossopoeia:['sub-gloss-hub'],'glossopoeia-overview':['sub-gloss-overview'],'glossopoeia-phonology':['sub-gloss-phonology'],'glossopoeia-morphology':['sub-gloss-morphology'],'glossopoeia-pronouns':['sub-gloss-pronouns'],'glossopoeia-grammar':['sub-gloss-grammar'],'glossopoeia-lexicon':['sub-gloss-lexicon'],'glossopoeia-orthography':['sub-gloss-orthography'],'glossopoeia-corpus':['sub-gloss-corpus']};
-  var ALL_SUBS=['sub-fabula-hub','sub-fabula-stories','sub-fabula-people-plot','sub-fabula-outline','sub-fabula-meaning','sub-fabula-timeline','sub-fabula-templates','sub-cartographia-hub','sub-cartographia-editor','sub-cartographia-stamps','sub-timelines-shared','sub-timelines-vertical','sub-timelines-chronometric','sub-ephemeris-hub','sub-ephemeris-asbo','sub-ephemeris-compute','sub-ephemeris-force-align','sub-ephemeris-observe','sub-ephemeris-event','sub-gloss-hub','sub-gloss-overview','sub-gloss-phonology','sub-gloss-morphology','sub-gloss-pronouns','sub-gloss-grammar','sub-gloss-lexicon','sub-gloss-orthography','sub-gloss-corpus'];
+  var SUB={fabula:['sub-fabula-hub'],'fabula-stories':['sub-fabula-stories'],'fabula-people-plot':['sub-fabula-people-plot'],'fabula-outline':['sub-fabula-outline'],'fabula-meaning':['sub-fabula-meaning'],'fabula-timeline':['sub-fabula-timeline'],'fabula-templates':['sub-fabula-templates'],stemma:['sub-stemma-hub'],'stemma-rota':['sub-stemma-rota'],'stemma-tabula':['sub-stemma-tabula'],'stemma-export':['sub-stemma-export'],cartographia:['sub-cartographia-hub'],'cartographia-editor':['sub-cartographia-editor'],'cartographia-stamps':['sub-cartographia-stamps'],'timelines-vertical':['sub-timelines-vertical'],'timelines-chronometric':['sub-timelines-chronometric'],timelines:['sub-timelines-shared'],'ephemeris-asbo':['sub-ephemeris-asbo'],'ephemeris-compute':['sub-ephemeris-compute'],'ephemeris-force-align':['sub-ephemeris-force-align'],'ephemeris-observe':['sub-ephemeris-observe'],'ephemeris-event':['sub-ephemeris-event'],ephemeris:['sub-ephemeris-hub'],glossopoeia:['sub-gloss-hub'],'glossopoeia-overview':['sub-gloss-overview'],'glossopoeia-phonology':['sub-gloss-phonology'],'glossopoeia-morphology':['sub-gloss-morphology'],'glossopoeia-pronouns':['sub-gloss-pronouns'],'glossopoeia-grammar':['sub-gloss-grammar'],'glossopoeia-lexicon':['sub-gloss-lexicon'],'glossopoeia-orthography':['sub-gloss-orthography'],'glossopoeia-corpus':['sub-gloss-corpus']};
+  var ALL_SUBS=['sub-fabula-hub','sub-fabula-stories','sub-fabula-people-plot','sub-fabula-outline','sub-fabula-meaning','sub-fabula-timeline','sub-fabula-templates','sub-stemma-hub','sub-stemma-rota','sub-stemma-tabula','sub-stemma-export','sub-cartographia-hub','sub-cartographia-editor','sub-cartographia-stamps','sub-timelines-shared','sub-timelines-vertical','sub-timelines-chronometric','sub-ephemeris-hub','sub-ephemeris-asbo','sub-ephemeris-compute','sub-ephemeris-force-align','sub-ephemeris-observe','sub-ephemeris-event','sub-gloss-hub','sub-gloss-overview','sub-gloss-phonology','sub-gloss-morphology','sub-gloss-pronouns','sub-gloss-grammar','sub-gloss-lexicon','sub-gloss-orthography','sub-gloss-corpus'];
   function showSub(route){
     var visible=SUB[route]||null;
     ALL_SUBS.forEach(function(id){
