@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1105,3 +1105,34 @@ had counted as drawn. He passed it within the hour and asked for one thing,
 the arrow logic for Cartographia when Pipes comes, which I read as the
 sticking, since the heads are already there by his own call; it's filed as
 Pipes' tenth item with the reading marked as mine.
+
+r033 was planned as lanes and the multi-selection and became four cuts in
+one, because Drak reviewed each build within the hour and asked for the next
+thing each time, and the rule I keep is that a cut not yet passed may be
+amended. Lanes inside lanes came first, a line of his with no explanation
+needed, and the model took it without a new shape: a lane is a column, so a
+column holding columns at any depth is the same rule applied again. Then the
+column under a card, for an apprenticeship line under a named character; I
+proposed a card holding columns rather than a column headed by a card,
+because the tree reads down that way and a card in a stack can branch. Then
+lane widths on a divider, and I asked which width he meant before building,
+since the handle already existed; he had copied the wrong line into his
+reply and corrected it, which is the kind of exchange a build sheet is for.
+The fourth was the one he found hard to explain, and the picture explained
+it: his text tree runs depth to the right, and he wanted it vertical, which
+is an org chart. What that needed was not another nesting kind but a row
+layout and widths that grow from the bottom up, so a master's card is as
+wide as its apprentices' row and nothing three generations down gets
+squeezed; the need is computed each render and never stored, so a file
+carries only what the user set. Each pass was its own list of anchored
+edits in the one script, applied on the tree the pass before leaves, and the
+script reproduces the tree from the turnover commit byte for byte through
+all four, which is how I know the script and the tree are the same thing.
+The probe grew from fifty-five checks to a hundred and seven across four
+documents, and two of the thirty-four plants taught me something about my
+own checks: a dropped list crashed the probe before the check that should
+have failed, and the column growing to fit hid an unbounded divider, because
+the last lane sat at its floor either way. Both are fixed by checking more,
+not by checking differently. He passed it in the evening with no further
+asks, which after four amendments I take as the review having done its work
+early rather than late.

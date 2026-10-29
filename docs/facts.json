@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 56,
-  "total_lines": 53180,
-  "raw_body_lines": 53180,
-  "canonical_lines": 50593,
-  "decl_count": 752,
+  "total_lines": 53824,
+  "raw_body_lines": 53824,
+  "canonical_lines": 51235,
+  "decl_count": 770,
   "no_trailing_newline": 48,
-  "active_anchor": "reference-r032-body.jsx"
+  "active_anchor": "reference-r033-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 53180,
+   "value": 53824,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 56 files have no trailing newline"
   },
   "decl_count": {
-   "value": 752,
+   "value": 770,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 50593,
+   "value": 51235,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 53180,
+   "value": 53824,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2857534,
+   "value": 2902033,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "fifty-eight",
-    58
+    "fifty-nine",
+    59
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,14 +121,14 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "fifty-eight",
-    58
+    "fifty-nine",
+    59
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r032": {
-   "value": "0064466f0530b578",
-   "pattern": "working[^\\n]{0,40}at r032 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r033": {
+   "value": "ca23b535a66d4d89",
+   "pattern": "working[^\\n]{0,40}at r033 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -194,7 +194,7 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 3668,
+   "line": 4312,
    "contains": "}"
   },
   {
@@ -629,17 +629,17 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2144,
+   "line": 2418,
    "contains": "Tabula: the canvas"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2033,
+   "line": 2164,
    "contains": "const tabulaMoveTo"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 3094,
+   "line": 3472,
    "contains": "function TabulaDeleteModal"
   },
   {
@@ -649,23 +649,43 @@
   },
   {
    "file": "21_stemma.jsx",
-   "line": 1778,
+   "line": 1819,
    "contains": "const tabulaHealAnchors"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2165,
+   "line": 2439,
    "contains": "Tabula: the drawing layer"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 2223,
+   "line": 2497,
    "contains": "function useTabulaDrawing"
   },
   {
    "file": "21_stemma.jsx",
-   "line": 3130,
+   "line": 3546,
    "contains": "function TabulaCanvasView"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 1749,
+   "contains": "const tabulaHolds"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 1763,
+   "contains": "const tabulaNeed"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 2239,
+   "contains": "const tabulaSetLanes"
+  },
+  {
+   "file": "21_stemma.jsx",
+   "line": 3308,
+   "contains": "function TabulaInspector"
   }
  ],
  "spans": {
@@ -735,7 +755,7 @@
   "21_stemma.jsx": [
    [
     1,
-    3668,
+    4312,
     "stemma"
    ]
   ],
@@ -933,10 +953,6 @@
    "selectCard",
    "beginDrag",
    "9196063",
-   "reference-r032-body.jsx",
-   "reference-r032-layout.json",
-   "5c71d73583b5427e",
-   "0064466f0530b578",
    "v1.7_r032",
    "tabulaCoerceShape",
    "tabulaHealAnchors",
@@ -946,7 +962,19 @@
    "TabulaShapePanel",
    "mapArrowHeads",
    "tools/stemma-parity/renderer.py",
-   "3aa500a"
+   "3aa500a",
+   "reference-r033-body.jsx",
+   "reference-r033-layout.json",
+   "082ae002aedef2eb",
+   "ca23b535a66d4d89",
+   "v1.7_r033",
+   "tabulaSetLanes",
+   "tabulaNeed",
+   "tabulaMoveMany",
+   "tabulaHolds",
+   "tabulaStacked",
+   "tabulaClampLaneWidth",
+   "0b2d209"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1048,7 +1076,6 @@
    "On v1.7 r011 verification",
    "FabulaOutlineTab",
    "reference-r012-body.jsx",
-   "reference-r032-layout.json",
    "dfdb4a8f0e05eebc",
    "880886f26451d22e",
    "On v1.7 r012 verification",
@@ -1131,7 +1158,12 @@
    "reference-r032-body.jsx",
    "On v1.7 r032 verification",
    "0064466f0530b578",
-   "5c71d73583b5427e"
+   "5c71d73583b5427e",
+   "reference-r033-body.jsx",
+   "On v1.7 r033 verification",
+   "ca23b535a66d4d89",
+   "082ae002aedef2eb",
+   "reference-r033-layout.json"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1292,7 +1324,14 @@
    "3aa500a",
    "93f958c",
    "tabulaHealAnchors",
-   "v1.7_r032_tabula_drawing.py"
+   "v1.7_r032_tabula_drawing.py",
+   "v1.7_r033",
+   "ca23b535a66d4d89",
+   "0b2d209",
+   "aac6f13",
+   "tabulaSetLanes",
+   "tabulaNeed",
+   "v1.7_r033_tabula_four.py"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1361,7 +1400,9 @@
    "r031 is in",
    "v1.7_r032",
    "r032 is in",
-   "Sticky line ends on maps"
+   "Sticky line ends on maps",
+   "v1.7_r033",
+   "r033 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1470,7 +1511,8 @@
    "the site's Fabula page",
    "r025",
    "r029",
-   "r032"
+   "r032",
+   "r033"
   ]
  }
 }
