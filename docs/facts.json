@@ -1084,7 +1084,8 @@
    "lapsedHandle",
    "cartulary-backups",
    "userActivation",
-   "getDirectory()"
+   "getDirectory()",
+   "offered Allow on every visit"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1608,7 +1609,8 @@
    "Two lines r039 left stale",
    "v1.7_r040",
    "r040 is in",
-   "What r040 left for r051"
+   "What r040 left for r051",
+   "offers Allow on every visit"
   ],
   "cartulary-doctrine.md": [
    "r030",
