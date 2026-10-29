@@ -111,8 +111,9 @@ function canon(stemmas) {
   });
 }
 
-// What the canvas shows, once two reads in a row agree. Undo and Redo are
-// the candidate's own and are left out of the top bar's text.
+// What the canvas shows, once two reads in a row agree. Undo and Redo (r026)
+// and Markdown (r035) are the candidate's own and are left out of the top
+// bar's text, since a baseline from before them has no such button.
 async function snapshot(page) {
   const read = () => page.evaluate(() => {
     const back = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === '← Stemmas');
@@ -122,7 +123,7 @@ async function snapshot(page) {
     }
     const bar = back.parentElement;
     const barText = [...bar.children].map(el => el.innerText || el.value || '')
-      .map(t => t.replace(/\b(Undo|Redo)\b/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | ');
+      .map(t => t.replace(/\b(Undo|Redo|Markdown)\b/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | ');
     const canvas = document.querySelector('div[style*="transform: scale("]');
     const nodes = canvas ? [...canvas.querySelectorAll('div[style*="cursor: pointer"]')].map(el => {
       const label = el.lastElementChild ? el.lastElementChild.textContent.trim() : '';

@@ -47,7 +47,7 @@ another, and converted back to freeform; the first child deleted with its two;
 the stemma renamed again. After every step it writes down the stemmas as saved, with
 every stemma and node id replaced by its number in order of first appearance
 and the times of saving dropped, and what the canvas shows: the top bar's text
-(Undo and Redo left out, since the build before r026 had none), each node's
+(Undo and Redo left out, since the build before r026 had none, and Markdown since r035, the same way), each node's
 position, label, color and icon, the count of empty slots, and the inspector's
 text, values and picks. `parity.js compare` reads two such records and prints
 each step's first difference.

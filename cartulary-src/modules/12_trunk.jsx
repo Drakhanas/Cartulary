@@ -3361,6 +3361,22 @@ function App() {
     flash(`Exported stemma "${stemma.name}".`);
   };
 
+  // v1.7 r035: the Markdown export, `<slug>.stemma.md`, the writer's text
+  // over the pool the canvas draws on (the entries and every registered
+  // record but the document itself), so a linked node names its record.
+  const exportStemmaMarkdown = (stemma) => {
+    if (!stemma) return;
+    const pool = [...state.entries, ...getRegisteredGraphNodes(state).filter(n => n.id !== stemma.id)];
+    const blob = new Blob([stemmaMarkdown(stemma, pool)], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slugify(stemma.name) || "stemma"}.stemma.md`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flash(`Exported stemma "${stemma.name}" as Markdown.`);
+  };
+
   // Read an imported stemma file. Either inserts directly (no name clash) or
   // stages a stemmaImportCollision for the modal to resolve. Always
   // regenerates ids before any state touches — design doc §5.2.
@@ -4174,6 +4190,7 @@ function App() {
               onCreate={createStemma}
               onImport={handleImportStemmaFile}
               onExport={exportStemmaJson}
+              onExportMarkdown={exportStemmaMarkdown}
               onDelete={deleteStemma}
             />
           )}
@@ -4221,6 +4238,7 @@ function App() {
                   onReplace={(next) => replaceStemma(stem.id, next)}
                   onOpenEntry={openEntryFromAnywhere}
                   onExport={() => exportStemmaJson(stem)}
+                  onExportMarkdown={() => exportStemmaMarkdown(stem)}
                   viewPref={(prefs.tabulaViews || {})[boardId] || null}
                   onViewPref={setTabulaView}
                   dirHandle={dirHandle}
@@ -4242,6 +4260,7 @@ function App() {
                 onReplace={(next) => replaceStemma(stem.id, next)}
                 onOpenEntry={openEntryFromAnywhere}
                 onExport={() => exportStemmaJson(stem)}
+                onExportMarkdown={() => exportStemmaMarkdown(stem)}
               />
             );
           })()}
