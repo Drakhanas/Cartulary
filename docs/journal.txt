@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help) ===
+=== 2026-10-27 to 28 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1199,3 +1199,19 @@ lines the roadmap has carried since r005 rode along, as the spec said they
 would. One thing turned up on the way, outside the help: a pin's id is the
 first six characters of the time in base 36, so two pins placed within
 about a second of each other can share one.
+
+The site's Stemma page went the way Fabula's did, written from the help
+that had just been brought level, every claim read back against the app
+by a probe that loads both: the site for the sentence, the build for the
+number or the button it names. Drak hadn't made the shape call this time,
+so I took the site's own pattern for a view with parts, a hub and a
+sub-tile per part, three to match the help, and said so before building,
+so he could stop it; he didn't. The old Import & Export page headed the
+stemma's section "A family tree", the one thing the Stemma page itself
+warns readers against; it took reading the two pages together to see it.
+The probe's overflow check found the other old thing: the site's code
+blocks had never been told to scroll, so the JSON page ran off the side
+of any window narrower than about 1,270 pixels.
+One CSS line for the code blocks and one for the narrow tables, and every
+route of the site sits inside its frame at six widths. The carve is the
+last item of the plan.

@@ -1010,7 +1010,8 @@
    "04abce0dcdd23f98",
    "cd78846b6366d1e9",
    "v1.7_r036",
-   "b38c0cc"
+   "b38c0cc",
+   "130d2b4"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1396,7 +1397,9 @@
    "cd78846b6366d1e9",
    "b38c0cc",
    "40a19e1",
-   "v1.7_r036_help.py"
+   "v1.7_r036_help.py",
+   "130d2b4",
+   "probe_site_stemma.js"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1473,7 +1476,8 @@
    "v1.7_r035",
    "r035 is in",
    "v1.7_r036",
-   "r036 is in"
+   "r036 is in",
+   "130d2b4"
   ],
   "cartulary-doctrine.md": [
    "r030",
