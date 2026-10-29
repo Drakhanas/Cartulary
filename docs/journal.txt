@@ -902,7 +902,7 @@ done: twenty r-numbers from the slice to this folder, the carve, the positions, 
 three Chronometric cuts among them, and one site commit, since the field lists passed his
 review two days ago. Stemma v2 next.
 
-=== 2026-10-27 to 29 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page; r037, the gather; r038, the carve) ===
+=== 2026-10-27 to 29 (session 21, Stemma v2 planned: Rota and Tabula, the build sheet; r026, Rota's edit path as pure transforms, with undo; r027, links past entries; r028, Fabula's Brainstorm; r029, Tabula I; r030, Tabula II; r031, the grip and the drop into a sub-board; r032, Tabula III, the drawing layer; r033, Tabula IV, lanes, stacks under cards, lane widths, rows, and the multi-selection; r034, Rota's reorder and keyboard; r035, the Markdown export; r036, the help; the site's Stemma page; r037, the gather; r038, the carve; Pipes planned) ===
 
 A fresh chat, as the handoff asked for, and the cold start held except for one
 figure: the handoff still gave the site's documentation page as the hash it had at
@@ -1252,3 +1252,22 @@ commit, where the doc gate is red until the turnover lands. He pushed
 them as I gave them, CI failed on each, and I never looked at the runs a
 tag push starts. The lines to move them went to him the same night. That
 closes Stemma v2, and Letters with it; Pipes is next, its plan first.
+
+Drak wanted Pipes planned before the session ended, and the first thing
+the plan needed was a fresh look at the roadmap's Pipes items, written on
+2026-10-23 against a tree thirty-eight cuts younger. I sent six readers
+through the code at once, one per item, and spot-checked what came back
+before any of it went into a call. Three of the section's claims were
+wrong, one of them mine from r027's probe, repeated in the doctrine: the
+exports never resolved Name History or bodies. The check also turned up
+what no item had named. The worst is that entry ids are never checked
+for clashes and a world holding two refuses to load; anyone naming their
+characters in Japanese draws every id from the same pool. The other one
+I own is smaller: the Stemma plan called a Long Text field "longform",
+and that word rode into r036's help and the site's page, where Longform
+Note is a different field that shows no links at all. Neither has
+shipped. Drak took the first option on all eight calls in under half an
+hour. I'd put my recommendation first each time, so the plan is mostly
+my shape with his yes on it, and each cut's own plan is where that gets
+tested. The build sheet is written, and the cuts start in a fresh
+session at r039.

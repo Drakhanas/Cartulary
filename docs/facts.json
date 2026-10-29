@@ -888,7 +888,6 @@
    "d9125ed013be5641",
    "c10c693bbacbe9e6",
    "docs/release-notes/v1.6.1/finals-pass.md",
-   "Letters before Pipes",
    "fabula-spec.md",
    "v1.7 is OPEN",
    "Common Year",
@@ -1008,18 +1007,15 @@
    "ensureStemmas",
    "prefs.tabulaViews",
    "overflow: clip",
-   "bb4c7c9",
    "tabulaMoveTo",
    "TabulaDeleteModal",
    "columnTarget",
    "tabulaBoardPath",
-   "2c3fe16",
    "The grip is the only drag surface",
    "dropTarget",
    "boardLanding",
    "selectCard",
    "beginDrag",
-   "9196063",
    "v1.7_r032",
    "tabulaCoerceShape",
    "tabulaHealAnchors",
@@ -1029,7 +1025,6 @@
    "TabulaShapePanel",
    "mapArrowHeads",
    "tools/stemma-parity/renderer.py",
-   "3aa500a",
    "v1.7_r033",
    "tabulaSetLanes",
    "tabulaNeed",
@@ -1037,30 +1032,28 @@
    "tabulaHolds",
    "tabulaStacked",
    "tabulaClampLaneWidth",
-   "0b2d209",
    "v1.7_r034",
    "stemmaMoveChild",
    "stemmaRotateChild",
    "beginOrbitDrag",
-   "8a23000",
    "v1.7_r035",
    "stemmaMarkdown",
    "exportStemmaMarkdown",
-   "c157441",
    "v1.7_r036",
-   "b38c0cc",
    "130d2b4",
    "reference-r037-body.jsx",
    "reference-r037-layout.json",
    "c8484528f4609b05",
    "f5bb9c97c88c3433",
    "v1.7_r037",
-   "2238809",
    "eight anchor-rotating gathers",
    "v1.7_r038",
    "252143c",
    "five directories",
-   "`21_stemma/05_tabula-drawing`"
+   "`21_stemma/05_tabula-drawing`",
+   "docs/pipes-spec.md",
+   "r039, Pipes' first cut: saving",
+   "252143c"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1464,7 +1457,9 @@
    "v1.7_r037_gather_stemma.py",
    "v1.7_r038",
    "252143c",
-   "v1.7_r038_carve_stemma_folder.py"
+   "v1.7_r038_carve_stemma_folder.py",
+   "Pipes planned",
+   "docs/pipes-spec.md"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1546,7 +1541,9 @@
    "v1.7_r037",
    "r037 is in",
    "v1.7_r038",
-   "r038 is in"
+   "r038 is in",
+   "Pipes is planned",
+   "docs/pipes-spec.md"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1604,7 +1601,8 @@
    "A backlog row filed for the next cut that touches a file is read at the plan of every cut that touches it",
    "A header inserted inside a section passes every header check",
    "A rehearsal in a copy checks where it stands before it changes anything",
-   "A tag's CI run is read like any other"
+   "A tag's CI run is read like any other",
+   "A backlog item's facts are read against the tree again at the plan that takes it"
   ],
   "journal.txt": [
    "r030",
@@ -1664,7 +1662,8 @@
    "r035",
    "r036",
    "r037",
-   "r038"
+   "r038",
+   "Pipes"
   ]
  }
 }
