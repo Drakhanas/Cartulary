@@ -207,6 +207,7 @@ function FabulaStoryPage({ state, story, draft, onDraftChange, tab, onSelectTab,
       onUpdateViewPrefs={onUpdateViewPrefs}
       registeredNodes={fabulaStoryNodes(state, story.id)}
       canvasSlot={tabs}
+      footSlot={<ReferencedBy key={story.id} state={state} targetId={story.id} showSecrets={showSecrets} onOpenEntry={onOpenEntry} />}
       {...panelProps}
       {...exportProps}
     />

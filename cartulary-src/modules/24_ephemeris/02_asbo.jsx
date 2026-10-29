@@ -4,7 +4,7 @@ function AsBoModeContent({
   onSaveBody, onDeleteBody, onCreateBody,
   onSelectBody, onCreateChildBody, onSetBodyColor,
   onLoadTutorial,
-  isLocked, startInEditMode,
+  isLocked, startInEditMode, showSecrets,
 }) {
   const body = bodies.find(b => b && b.id === selectedBodyId);
   const [draft, setDraft] = useState(null);
@@ -355,6 +355,8 @@ function AsBoModeContent({
           {Number.isFinite(effAnchorView) && <AsBoFieldRow label="Phase anchor" value={`day ${effAnchorView}`} tooltip={FIELD_TOOLTIPS.phaseAnchorDay} />}
         </AsBoReadonlyBlock>
       )}
+      {/* v1.7 r041: what links to the body, at the end of its page. */}
+      <ReferencedBy key={body.id} state={state} targetId={body.id} showSecrets={showSecrets} onOpenEntry={onOpenEntry} />
     </div>
   );
 }

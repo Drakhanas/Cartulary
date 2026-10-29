@@ -1194,6 +1194,9 @@ function App() {
 
   const openEntryFromAnywhere = (id) => {
     if (!confirmDiscardDraft()) return;
+    // v1.7 r041: the world description's row in a Referenced by list opens
+    // the Project page, where the description is drawn.
+    if (id === LINK_SOURCE_WORLD) { setActiveTagFilter(null); setView("project"); return; }
     const entry = state.entries.find(e => e.id === id);
     if (entry) {
       // Browser-history-like navigation. Entry-from-entry (clicking a chip in
@@ -4746,11 +4749,12 @@ function App() {
                     onUpdateViewPrefs={updateViewPrefs}
                   />
                 }
+                footSlot={<ReferencedBy key={rec.id} state={state} targetId={rec.id} showSecrets={showSecrets} onOpenEntry={openEntryFromAnywhere} />}
               />
             );
           })()}
           {view === "ephemeris" && (
-            <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} />
+            <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} showSecrets={showSecrets} />
           )}
           {view === "fabula" && !schemaDraft && !activeCorpusId && !corpusDraft && !activeStoryId && (
             <FabulaIndexView
@@ -4850,6 +4854,7 @@ function App() {
                     onOpenStory={openStory}
                   />
                 }
+                footSlot={<ReferencedBy key={rec.id} state={state} targetId={rec.id} showSecrets={showSecrets} onOpenEntry={openEntryFromAnywhere} />}
               />
             );
           })()}
@@ -4983,7 +4988,10 @@ function App() {
               onExportEntry={exportEntryMarkdown}
               state={state}
               onUpdateViewPrefs={updateViewPrefs}
-              footSlot={pageTemplate && pageTemplate.fabulaRole ? <FabulaEntryStories state={state} entry={activeEntry} role={pageTemplate.fabulaRole} onOpenEntry={openEntryFromAnywhere} onOpenStory={openStoryFromEntry} /> : undefined}
+              footSlot={<>
+                {pageTemplate && pageTemplate.fabulaRole ? <FabulaEntryStories state={state} entry={activeEntry} role={pageTemplate.fabulaRole} onOpenEntry={openEntryFromAnywhere} onOpenStory={openStoryFromEntry} /> : null}
+                <ReferencedBy key={activeEntry.id} state={state} targetId={activeEntry.id} showSecrets={showSecrets} onOpenEntry={openEntryFromAnywhere} exclude={pageTemplate && pageTemplate.fabulaRole ? (REFERENCED_BY_LISTED[pageTemplate.fabulaRole] || null) : null} />
+              </>}
             />
           )}
           {(view === "entry-edit" || view === "entry-new") && entryDraft && (() => {

@@ -33,7 +33,7 @@ const EPHEMERIS_MODES = [
 // renders an empty pane and the AsBo workspace shows an illustration-plus-
 // intro panel. Create flow stubbed until r004.
 
-function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEvent }) {
+function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEvent, showSecrets }) {
   const eph = state.ephemeris || makeDefaultEphemerisState();
   const bodies = Array.isArray(state.celestialBodies) ? state.celestialBodies : [];
   const currentMode = eph.currentMode || "asbo";
@@ -432,6 +432,7 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
           {currentMode === "asbo" && (
             <AsBoModeContent
               state={state}
+              showSecrets={showSecrets}
               bodies={bodies}
               selectedBodyId={selectedBodyId}
               onOpenEntry={onOpenEntry}

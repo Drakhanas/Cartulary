@@ -266,7 +266,7 @@ function FabulaRecordPage({ state, kind, record, draft, onDraftChange, storyId, 
       state={state}
       onUpdateViewPrefs={onUpdateViewPrefs}
       canvasSlot={note || povNote}
-      footSlot={research}
+      footSlot={<>{research}<ReferencedBy key={record.id} state={state} targetId={record.id} showSecrets={showSecrets} onOpenEntry={onOpenEntry} exclude={kind === "scene" ? REFERENCED_BY_LISTED.scene : null} /></>}
       registeredNodes={nodes}
       badgeExtra={place ? place.path : null}
     />

@@ -320,6 +320,143 @@ function InlineWikiLinkText({ value, entries, templates, bodies, onOpenEntry }) 
   return <>{nodes}</>;
 }
 
+// ─── Referenced by (v1.7 r041) ─────────────────────────────────────────────────
+// docs/pipes-spec.md, section 4, with Drak's calls at the cut: on a record's
+// page, after its fields and its page's own lists, what links to it, from the
+// link index (linksTo, 22_trunk). One row per source, naming it and every
+// field it links through, grouped by kind: entries by template in the
+// templates' order, then Fabula's kinds in Fabula's order, then maps,
+// stemmas, bodies, ConLangs, and the world description (Drak's call 2). Rows
+// run A to Z, numbers in order (Kin 2 before Kin 10), but acts, chapters,
+// and scenes by their place in their story's outline, and a Fabula record
+// below the story names its story. A row opens its source, but a ConLang's,
+// which has no page yet, as its chips open nowhere. A link through a secret
+// field shows only while secrets are shown, and a page nothing links to
+// shows no list. A group past REFERENCED_BY_SHOWN rows shows that many and a
+// Show all button, until the page is left (Drak's call 4).
+
+const REFERENCED_BY_SHOWN = 10;
+
+// The links the thread, theme, and scene pages' own lists show, which their
+// Referenced by leaves out so nothing shows twice (Drak's call 1): a story's,
+// a scene's, a plot point's, or a promise's Threads on a Plot Thread's page,
+// a story's Themes or a scene's Motifs on a Theme's, and a research note's
+// Used In on a scene's (fabulaRoleStories, fabulaNotesOf).
+const REFERENCED_BY_LISTED = {
+  threads: [["story", "threads"], ["scene", "threads"], ["plotPoint", "threads"], ["promise", "threads"]],
+  themes: [["story", "themes"], ["scene", "motifs"]],
+  scene: [["research", "usedIn"]],
+};
+
+// A target's rows in their groups, in the list's order: [{ key, title, icon,
+// color, rows }], each row { src, labels, place, story }.
+const referencedByGroups = (state, targetId, showSecrets, exclude) => {
+  const rows = new Map();
+  linksTo(state, targetId).forEach(l => {
+    if (l.secret && !showSecrets) return;
+    if (exclude && l.src.kind === "fabula" && exclude.some(([kind, field]) => kind === l.src.group && field === l.field)) return;
+    let r = rows.get(l.src.id);
+    if (!r) { r = { src: l.src, labels: [] }; rows.set(l.src.id, r); }
+    if (l.label && !r.labels.includes(l.label)) r.labels.push(l.label);
+  });
+  if (rows.size === 0) return [];
+  const fab = (state && state.fabula) || {};
+  const storyNames = new Map((Array.isArray(fab.stories) ? fab.stories : []).filter(st => st && st.id).map(st => [st.id, st.name || "(untitled story)"]));
+  const storyRank = new Map(fabulaIndexStories(state).map((st, i) => [st.id, i]));
+  const outlines = new Map();
+  const placeOf = (src) => {
+    if (src.kind !== "fabula" || !src.storyId || !["part", "chapter", "scene"].includes(src.group)) return null;
+    if (!outlines.has(src.storyId)) outlines.set(src.storyId, fabulaOutlinePlaces(state, src.storyId));
+    return outlines.get(src.storyId).get(src.id) || null;
+  };
+  const byKey = new Map();
+  rows.forEach(r => {
+    const key = `${r.src.kind}:${r.src.group}`;
+    const place = placeOf(r.src);
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push({ ...r, place: place ? place.path : null, at: place ? place.index : null, story: r.src.storyId ? (storyNames.get(r.src.storyId) || null) : null });
+  });
+  const source = (id) => getRegisteredSourceById(id) || {};
+  const order = [
+    ...((state && state.templates) || []).filter(t => t && t.id).map(t => ({ key: `entry:${t.id}`, title: t.name || "(untitled template)", icon: t.icon, color: t.color })),
+    ...FABULA_KINDS.map(k => ({ key: `fabula:${k.kind}`, title: k.label, icon: source(k.id).icon, color: k.color })),
+    ...[["map", SYNTH_TPL_MAP], ["stemma", SYNTH_TPL_STEMMA], ["body", BODY_REF_SENTINEL], ["conlang", SYNTH_TPL_CONLANG]]
+      .map(([kind, id]) => ({ key: `${kind}:${kind}`, title: source(id).name || kind, icon: source(id).icon, color: source(id).color })),
+    { key: "world:world", title: "World", icon: null, color: null },
+  ];
+  const byName = (a, b) => (a.src.name || "").localeCompare(b.src.name || "", undefined, { sensitivity: "base", numeric: true });
+  const last = Number.MAX_SAFE_INTEGER;
+  const rank = (r) => (storyRank.has(r.src.storyId) ? storyRank.get(r.src.storyId) : last);
+  const byPlace = (a, b) => (rank(a) - rank(b)) || ((a.at == null ? last : a.at) - (b.at == null ? last : b.at)) || byName(a, b);
+  const groups = [];
+  const take = (g, list) => groups.push({ ...g, rows: list.sort(/^fabula:(part|chapter|scene)$/.test(g.key) ? byPlace : byName) });
+  order.forEach(g => {
+    const list = byKey.get(g.key);
+    if (!list) return;
+    byKey.delete(g.key);
+    take(g, list);
+  });
+  // Entries whose template is gone, last.
+  byKey.forEach((list, key) => take({ key, title: "(template deleted)", icon: null, color: null }, list));
+  return groups;
+};
+
+// The list, keyed by its target where it's drawn, so a Show all lasts while
+// the page does.
+function ReferencedBy({ state, targetId, showSecrets, onOpenEntry, exclude }) {
+  const [opened, setOpened] = useState(() => new Set());
+  const groups = useMemo(() => referencedByGroups(state, targetId, showSecrets, exclude), [state, targetId, showSecrets, exclude]);
+  if (groups.length === 0) return null;
+  return (
+    <div className="referenced-by" style={{ marginTop: 26 }}>
+      <div className="field-label"><span>Referenced by</span></div>
+      {groups.map(g => {
+        const all = opened.has(g.key) || g.rows.length <= REFERENCED_BY_SHOWN;
+        return (
+          <div key={g.key} className="referenced-by-group" data-group={g.key} style={{ marginBottom: 16 }}>
+            <div className="referenced-by-heading" style={{ display: "flex", alignItems: "baseline", gap: 7, margin: "0 0 6px", fontSize: 12.5, color: "var(--text-dim)" }}>
+              {g.icon && <span style={{ color: g.color || "var(--text-dim)", fontVariantEmoji: "text" }}>{g.icon}</span>}
+              <span className="referenced-by-title" style={{ color: "var(--text)" }}>{g.title}</span>
+              <span className="referenced-by-count">{g.rows.length}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1, border: "1px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+              {(all ? g.rows : g.rows.slice(0, REFERENCED_BY_SHOWN)).map(r => {
+                const opens = !!onOpenEntry && r.src.kind !== "conlang";
+                const open = () => onOpenEntry(r.src.id);
+                const tail = [r.story, r.labels.join(", ")].filter(Boolean).join(" · ");
+                return (
+                  <div
+                    key={r.src.id}
+                    className="referenced-by-row"
+                    data-source={r.src.id}
+                    role={opens ? "button" : undefined}
+                    tabIndex={opens ? 0 : undefined}
+                    title={opens ? `Open ${r.src.name || "this"}` : undefined}
+                    onClick={opens ? open : undefined}
+                    onKeyDown={opens ? (e => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); open(); } }) : undefined}
+                    style={{ padding: "8px 14px", background: "var(--surf)", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 10, rowGap: 2, cursor: opens ? "pointer" : "default" }}
+                  >
+                    <span className="referenced-by-name" style={{ fontSize: 14, minWidth: 0, overflowWrap: "anywhere" }}>
+                      {r.place && <span className="referenced-by-place" style={{ color: "var(--text-dim)", marginRight: 6 }}>{r.place}</span>}
+                      {r.src.name || "(untitled)"}
+                    </span>
+                    {tail && <span className="referenced-by-fields" style={{ fontSize: 12.5, color: "var(--text-dim)", minWidth: 0, overflowWrap: "anywhere" }}>{tail}</span>}
+                  </div>
+                );
+              })}
+            </div>
+            {!all && (
+              <button type="button" className="btn btn-ghost btn-small referenced-by-more" style={{ marginTop: 6 }} onClick={() => setOpened(s => new Set([...s, g.key]))}>
+                Show all {g.rows.length}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Longform + markdown display ───────────────────────────────────────────────
 
 function LongformDisplay({ value }) {
@@ -493,7 +630,7 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, registere
   if (ftype === "date") return <div className="field-val">{fmtDate(value) || value}</div>;
   if (ftype === "calendar-date") {
     if (!value || value.year == null) return <span className="field-empty">—</span>;
-    return <div className="field-val cal-date-display">{formatCalendarDate(value, calendar)}</div>;
+    return <div className="field-val cal-date-display">{`${value.approximate ? "~" : ""}${formatCalendarDate(value, calendar)}`}</div>;
   }
   if (ftype === "calendar-date-range") {
     if (!value || (!value.start && !value.end)) return <span className="field-empty">—</span>;
