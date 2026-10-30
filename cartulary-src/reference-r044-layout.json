@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "f94ada8bc6a63aa0b085f5d754369ec5caffd46df35bce8f69acc8287c8a33fc",
+  "anchor_sha256": "2f215a9c0f8c0fc36ff99c7f2556fbe2aeb43511af4d5defb461bd119717dbcb",
   "shell_sha256": "67b97d88777f7d8cef92ab9c25edc852de54157e8eb9e16557fad31cabcf0af6",
   "files": [
     [
@@ -16,7 +16,7 @@
     ],
     [
       "03_persistence.jsx",
-      685
+      687
     ],
     [
       "04_trunk.jsx",
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      6158
+      6296
     ],
     [
       "13_form-engine-display.jsx",
@@ -60,11 +60,11 @@
     ],
     [
       "14_form-engine-edit.jsx",
-      1790
+      1805
     ],
     [
       "15_template-builder.jsx",
-      1217
+      1219
     ],
     [
       "16_trunk.jsx",
@@ -72,7 +72,7 @@
     ],
     [
       "17_concordance.jsx",
-      1034
+      1037
     ],
     [
       "18_cartographia/00_model.jsx",
@@ -84,7 +84,7 @@
     ],
     [
       "18_cartographia/02_tools.jsx",
-      2138
+      2147
     ],
     [
       "18_cartographia/03_view.jsx",
@@ -104,7 +104,7 @@
     ],
     [
       "21_stemma/00_helpers-canvas.jsx",
-      1553
+      1560
     ],
     [
       "21_stemma/01_transforms.jsx",
@@ -128,11 +128,11 @@
     ],
     [
       "21_stemma/06_tabula-canvas.jsx",
-      1409
+      1416
     ],
     [
       "22_trunk.jsx",
-      877
+      1292
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -152,7 +152,7 @@
     ],
     [
       "23_glossopoeia/04_view.jsx",
-      859
+      875
     ],
     [
       "24_ephemeris/00_body-kinds.jsx",
@@ -160,7 +160,7 @@
     ],
     [
       "24_ephemeris/01_shell.jsx",
-      721
+      741
     ],
     [
       "24_ephemeris/02_asbo.jsx",
@@ -244,7 +244,7 @@
     ],
     [
       "29_modals.jsx",
-      363
+      459
     ],
     [
       "30_trunk.jsx",
