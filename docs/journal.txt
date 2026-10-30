@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder) ===
+=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1366,3 +1366,33 @@ that could see the line. Drak passed it and asked whether Brave's folder
 instructions are in the help. They are, under Browser Compatibility, with
 the flag to set. What that topic and Back Up Your World lack is the backups
 themselves, and r051's row says so now.
+
+r041 took the first option four times, one message each: the thread, theme,
+and scene pages keep their own lists, the world description shows as a
+source, each record's links are kept between edits, and a long group shows
+ten. Before the third I timed a scan of a generated 10,000-entry world, so
+Drak chose on a number instead of a guess.
+
+The probe world put one character, Aria, at the end of every kind of link
+section 4 lists, so one page could show them all, and a brute-force walk of
+every value in the world checks the index from outside: it finds 47 pairs,
+and so does the index.
+
+The probe needed more fixing than the app. The big world's generator was an
+LCG whose products run past what JavaScript's doubles hold exactly, so it
+fell into a short cycle, a third of the entries had nothing linking to them, and P3 opened one
+and timed a list that never came. The r040 build, as control, passed three
+checks it had no business passing, each one asking that something not show,
+on a build that shows nothing. And writing the planted copies, I asked of
+each rule which check would fail without it, and for nine the answer was
+none: the secret group, the list's reset, the corpus's list, the body page's
+secrets, the name resolver's memo and its order, the two memos Drak's third
+call is about, and the index waiting to be asked. A19 had left the page
+through the sidebar, which rebuilds the whole view, so the reset it checked
+came free. Each of the nine got a check before the copies ran, and all
+fifty-four fail where they should.
+
+The pass was one word. Checking the secrets rule had turned up an older
+defect: an entry's page draws a secret subfield of a group that isn't secret
+while secrets are hidden, and r040 does too. The list counts that link as
+secret, and the page's own fix is filed for the next cut that touches it.

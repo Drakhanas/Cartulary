@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 55066,
-  "raw_body_lines": 55066,
-  "canonical_lines": 52414,
-  "decl_count": 800,
+  "total_lines": 55481,
+  "raw_body_lines": 55481,
+  "canonical_lines": 52815,
+  "decl_count": 813,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r040-body.jsx"
+  "active_anchor": "reference-r041-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 55066,
+   "value": 55481,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 800,
+   "value": 813,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 52414,
+   "value": 52815,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 55066,
+   "value": 55481,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 97,
+   "value": 99,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 2980711,
+   "value": 3004486,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-five",
-    65
+    "sixty-six",
+    66
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 97,
+   "value": 99,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 97,
+   "value": 99,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-five",
-    65
+    "sixty-six",
+    66
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r040": {
-   "value": "5e4562772266fe4f",
-   "pattern": "working[^\\n]{0,40}at r040 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r041": {
+   "value": "d3a127244b7dd805",
+   "pattern": "working[^\\n]{0,40}at r041 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 55066,
+   "value": 55481,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -152,12 +152,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 323,
+   "line": 460,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 325,
+   "line": 462,
    "contains": "function LongformDisplay"
   },
   {
@@ -724,6 +724,16 @@
    "file": "11_io-utils.jsx",
    "line": 44,
    "contains": "Backups into the images folder (v1.7 r040)"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 323,
+   "contains": "Referenced by (v1.7 r041)"
+  },
+  {
+   "file": "22_trunk.jsx",
+   "line": 438,
+   "contains": "Link index (v1.7 r041)"
   }
  ],
  "spans": {
@@ -1054,10 +1064,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r040-body.jsx",
-   "reference-r040-layout.json",
-   "bc7d488a7b04885a",
-   "5e4562772266fe4f",
+   "reference-r041-body.jsx",
+   "reference-r041-layout.json",
+   "c6674d94876d74ae",
+   "d3a127244b7dd805",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1065,7 +1075,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r041, Pipes' third cut: one link index and a Referenced by list on every page that has one",
+   "r042, Pipes' fourth cut: the delete warnings and Concordance drawn from the link index",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1085,7 +1095,13 @@
    "cartulary-backups",
    "userActivation",
    "getDirectory()",
-   "offered Allow on every visit"
+   "offered Allow on every visit",
+   "v1.7_r041",
+   "linkIndexOf",
+   "LINK_INDEX_MEMO",
+   "REFERENCED_BY_LISTED",
+   "Link index (v1.7 r041)",
+   "isn't keyed by its entry"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1295,7 +1311,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r040-layout.json",
+   "reference-r041-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1306,7 +1322,14 @@
    "bc7d488a7b04885a",
    "5e4562772266fe4f",
    "On v1.7 r040 verification",
-   "Backups into the images folder (v1.7 r040)"
+   "Backups into the images folder (v1.7 r040)",
+   "reference-r041-body.jsx",
+   "c6674d94876d74ae",
+   "d3a127244b7dd805",
+   "On v1.7 r041 verification",
+   "Link index (v1.7 r041)",
+   "Referenced by (v1.7 r041)",
+   "at 460 and 462 since its r041"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1519,7 +1542,16 @@
    "v1.7_r040_backups.py",
    "writeWorldBackup",
    "BACKUP_SETTLE_MS",
-   "Turnover v1.7_r040"
+   "Turnover v1.7_r040",
+   "v1.7_r041",
+   "1abfde5",
+   "8de3ffb",
+   "d3a127244b7dd805",
+   "v1.7_r041_link_index.py",
+   "linkIndexOf",
+   "REFERENCED_BY_LISTED",
+   "Turnover v1.7_r041",
+   "98990b6"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1610,7 +1642,10 @@
    "v1.7_r040",
    "r040 is in",
    "What r040 left for r051",
-   "offers Allow on every visit"
+   "offers Allow on every visit",
+   "v1.7_r041",
+   "r041 is in",
+   "A secret subfield shows on an entry"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1676,7 +1711,11 @@
    "What a browser's test tooling does is found by trying it",
    "An automatic write whose file is named from what it writes",
    "A write that can fail after it has made its file removes the file",
-   "A check that one path does something looks before another path"
+   "A check that one path does something looks before another path",
+   "A check that a page's state resets when the page is left",
+   "A check that something doesn't show passes on a build that shows nothing",
+   "A time limit can't tell a memo from none",
+   "A generated world is checked for what the timed page needs"
   ],
   "journal.txt": [
    "r030",
@@ -1739,7 +1778,8 @@
    "r038",
    "Pipes",
    "session 22",
-   "the folder was dropped without a word"
+   "the folder was dropped without a word",
+   "the index waiting to be asked"
   ]
  }
 }
