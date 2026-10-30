@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 55481,
-  "raw_body_lines": 55481,
-  "canonical_lines": 52815,
-  "decl_count": 813,
+  "total_lines": 55508,
+  "raw_body_lines": 55508,
+  "canonical_lines": 52845,
+  "decl_count": 812,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r041-body.jsx"
+  "active_anchor": "reference-r042-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 55481,
+   "value": 55508,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 813,
+   "value": 812,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 52815,
+   "value": 52845,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 55481,
+   "value": 55508,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 99,
+   "value": 100,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3004486,
+   "value": 3007560,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-six",
-    66
+    "sixty-seven",
+    67
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -104,15 +104,15 @@
    "pattern": "github\\.com/(Drakhanas/Cartulary)"
   },
   "cartographia_lines": {
-   "value": 5299,
+   "value": 5287,
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 99,
+   "value": 100,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 99,
+   "value": 100,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-six",
-    66
+    "sixty-seven",
+    67
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r041": {
-   "value": "d3a127244b7dd805",
-   "pattern": "working[^\\n]{0,40}at r041 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r042": {
+   "value": "a2da7ded6fb5abca",
+   "pattern": "working[^\\n]{0,40}at r042 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 55481,
+   "value": 55508,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -152,12 +152,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 460,
+   "line": 465,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 462,
+   "line": 467,
    "contains": "function LongformDisplay"
   },
   {
@@ -252,7 +252,7 @@
   },
   {
    "file": "17_concordance.jsx",
-   "line": 1054,
+   "line": 1030,
    "contains": "}"
   },
   {
@@ -457,12 +457,12 @@
   },
   {
    "file": "18_cartographia/04_index.jsx",
-   "line": 245,
+   "line": 235,
    "contains": "function CartographiaIndexView"
   },
   {
    "file": "18_cartographia/04_index.jsx",
-   "line": 358,
+   "line": 346,
    "contains": "}"
   },
   {
@@ -487,7 +487,7 @@
   },
   {
    "file": "05_field-system.jsx",
-   "line": 552,
+   "line": 514,
    "contains": "v1.3 select / cascade / required helpers"
   },
   {
@@ -702,7 +702,7 @@
   },
   {
    "file": "21_stemma/00_helpers-canvas.jsx",
-   "line": 997,
+   "line": 965,
    "contains": "function StemmaCanvasView"
   },
   {
@@ -732,8 +732,13 @@
   },
   {
    "file": "22_trunk.jsx",
-   "line": 438,
+   "line": 412,
    "contains": "Link index (v1.7 r041)"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 288,
+   "contains": "Record delete (v1.7 r042)"
   }
  ],
  "spans": {
@@ -747,7 +752,7 @@
   "17_concordance.jsx": [
    [
     1,
-    1054,
+    1030,
     "concordance"
    ]
   ],
@@ -782,7 +787,7 @@
   "18_cartographia/04_index.jsx": [
    [
     1,
-    358,
+    346,
     "index"
    ]
   ],
@@ -803,7 +808,7 @@
   "21_stemma/00_helpers-canvas.jsx": [
    [
     1,
-    1585,
+    1553,
     "helpers and the rota's canvas"
    ]
   ],
@@ -824,7 +829,7 @@
   "21_stemma/03_index.jsx": [
    [
     1,
-    133,
+    131,
     "the index view"
    ]
   ],
@@ -1064,10 +1069,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r041-body.jsx",
-   "reference-r041-layout.json",
-   "c6674d94876d74ae",
-   "d3a127244b7dd805",
+   "reference-r042-body.jsx",
+   "reference-r042-layout.json",
+   "37b99408bebc2aee",
+   "a2da7ded6fb5abca",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1075,7 +1080,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r042, Pipes' fourth cut: the delete warnings and Concordance drawn from the link index",
+   "r043, Pipes' fifth cut: one resolver for every `[[link]]`",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1101,7 +1106,13 @@
    "LINK_INDEX_MEMO",
    "REFERENCED_BY_LISTED",
    "Link index (v1.7 r041)",
-   "isn't keyed by its entry"
+   "isn't keyed by its entry",
+   "v1.7_r042",
+   "linkDeleteCounts",
+   "clearLinksTo",
+   "RecordDeleteModal",
+   "Record delete (v1.7 r042)",
+   "whether Concordance draws them again"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1311,7 +1322,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r041-layout.json",
+   "reference-r042-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1329,7 +1340,12 @@
    "On v1.7 r041 verification",
    "Link index (v1.7 r041)",
    "Referenced by (v1.7 r041)",
-   "at 460 and 462 since its r041"
+   "at 465 and 467 since its r042",
+   "reference-r042-body.jsx",
+   "37b99408bebc2aee",
+   "a2da7ded6fb5abca",
+   "On v1.7 r042 verification",
+   "Record delete (v1.7 r042)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1551,7 +1567,14 @@
    "linkIndexOf",
    "REFERENCED_BY_LISTED",
    "Turnover v1.7_r041",
-   "98990b6"
+   "98990b6",
+   "v1.7_r042",
+   "0d74e1c",
+   "9440c6c",
+   "a2da7ded6fb5abca",
+   "v1.7_r042_deletes_concordance.py",
+   "clearLinksTo",
+   "Turnover v1.7_r042"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1645,7 +1668,12 @@
    "offers Allow on every visit",
    "v1.7_r041",
    "r041 is in",
-   "A secret subfield shows on an entry"
+   "A secret subfield shows on an entry",
+   "v1.7_r042",
+   "r042 is in",
+   "Deleting a word leaves the words that name it",
+   "What r042 left for r051",
+   "Concordance can order a merged edge's labels"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1715,7 +1743,12 @@
    "A check that a page's state resets when the page is left",
    "A check that something doesn't show passes on a build that shows nothing",
    "A time limit can't tell a memo from none",
-   "A generated world is checked for what the timed page needs"
+   "A generated world is checked for what the timed page needs",
+   "A delete is checked against the whole stored world",
+   "A warning that says what the world will look like",
+   "A cache keyed by a record's identity",
+   "A check's own steps survive the defect it hunts",
+   "A comparison that sorts first"
   ],
   "journal.txt": [
    "r030",
@@ -1779,7 +1812,8 @@
    "Pipes",
    "session 22",
    "the folder was dropped without a word",
-   "the index waiting to be asked"
+   "the index waiting to be asked",
+   "a diff of the whole stored world"
   ]
  }
 }

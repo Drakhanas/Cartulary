@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists) ===
+=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1396,3 +1396,39 @@ The pass was one word. Checking the secrets rule had turned up an older
 defect: an entry's page draws a secret subfield of a group that isn't secret
 while secrets are hidden, and r040 does too. The list counts that link as
 secret, and the page's own fix is filed for the next cut that touches it.
+
+r042 took the first option twice: every delete clears the stored links it
+counts, a pin keeping its label, stemma nodes and cards left orphaned,
+[[links]] left as typed; and Concordance finds a [[link]]'s target the way
+the index does, which is the entry page's way, and costs it the edges to
+maps, stemmas, and Fabula and Glossopoeia records for now.
+
+The probe's spine was a diff of the whole stored world around each delete,
+held to an exact list. It found nothing wrong in the app, and on its first
+runs it made two lists longer: a story's outline losing a deleted scene's
+node, and Ephemeris dropping its selection. Neither was a defect, and I
+wouldn't have thought to ask about either.
+
+Reading the build before staging found a line I'd written wrong. "Show as
+broken" was what the index said while the record was there, and where two
+entries share a name, the other one takes the link once the first is gone.
+The modal says so now, from a resolver built without what goes.
+
+The planted copies caught the probe once: the copies that broke Esc and the
+outside click left a modal over the page, the next step couldn't click, and
+the scenario died before M3 was scored. And r041's probe, rerun on the
+build, caught the build once. One list per record, in the record's order,
+was what Concordance's labels needed and what the Referenced by rows didn't
+want. My probe left the rows to r041's and compared Concordance's labels
+sorted, so it couldn't have told the order either way.
+
+Drak passed it. The finding I named with the staging, a word's delete leaving
+the words that name it holding its id, is filed where the row r042 closed
+used to be. Writing the turnover turned up a promise the pass message made
+and the spec doesn't: that r043 brings back Concordance's edges to a
+language by name. Section 5 leaves Glossopoeia records out of the one
+resolver until they have a page, so r043's plan settles it, and the banner
+says so. And the independent read of the turnover found the one case
+where the order still differs from r041's: an edge that merges a record's
+link with the parent declaration at its other end. I ran it on both
+builds before filing it.
