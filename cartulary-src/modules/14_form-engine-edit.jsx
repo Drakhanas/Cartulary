@@ -289,6 +289,30 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
   );
 }
 
+// A [[ suggestion's marks (v1.7 r043): an entry's ◈ and a body's ◉, as
+// before, and any other record its source's icon; beside a record's own
+// name, what it is, if it isn't an entry; and on hover, the record a former
+// or other name stands for, or the record's kind.
+const wikiLinkOptionIcon = (c) => (c.rec.kind === "entry" ? "◈" : c.rec.kind === "body" ? "◉" : ((getRegisteredSourceById(c.rec.source) || {}).icon || "◈"));
+const wikiLinkOptionKind = (c) => {
+  if (c.rec.kind === "entry") return "";
+  if (c.rec.kind === "body") return "body";
+  if (c.rec.kind === "conlang") return "ConLang";
+  const src = getRegisteredSourceById(c.rec.source);
+  return src ? (src.label || src.name).toLowerCase() : "";
+};
+const wikiLinkOptionTitle = (c) => {
+  if (c.isBody) return c.viaHistory ? `Other name for body "${c.entry.name}"` : "Celestial body";
+  if (c.viaHistory) return `Former name of "${c.entry.name}"`;
+  return wikiRecordKind(c.rec) || null;
+};
+
+// The keys the list answers while it's open (v1.7 r043). Each editor marks
+// one its keydown handler took, and its keyup handler leaves that key alone:
+// read again on the way up, an arrow key put the highlight back on the
+// first line and Esc opened the list again.
+const WIKI_LINK_LIST_KEYS = new Set(["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"]);
+
 // Single-line text input with wiki-link autocomplete. Edit-side parallel to
 // InlineWikiLinkText's display-side rendering. Modeled on RichTextEditor's
 // autocomplete bits — same candidate-building logic (primary names first,
@@ -296,12 +320,15 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
 // same portal-based popup positioning. Differs only in being single-line:
 // no toolbar, no auto-grow, no markdown shortcuts, no preview toggle.
 //
-// When the user types `[[`, the popup lists matching entries. Pressing Enter
+// When the user types `[[`, the popup lists matching names (since v1.7's
+// r043, what the world's one resolver reaches, wikiLinkCandidates). Pressing Enter
 // or Tab inserts the entry name and the closing `]]`. Pressing Escape closes
 // without inserting. The popup follows the input's viewport position, flipping
 // upward when there's no room below (same as RichTextEditor).
 function WikiLinkInput({ value, onChange, entries, templates, bodies, placeholder }) {
   const inputRef = useRef(null);
+  const wiki = useWikiResolver(entries, templates, bodies);
+  const listKeyRef = useRef(null);
   const [wikiPopup, setWikiPopup] = useState(null);
   const v = value || "";
 
@@ -309,6 +336,7 @@ function WikiLinkInput({ value, onChange, entries, templates, bodies, placeholde
   // input has no newlines so the `[^\]\n|]*` exclusion is functionally just
   // "not ] or |", same outcome.
   const handleKeyUp = (e) => {
+    if (listKeyRef.current === e.key) { listKeyRef.current = null; return; }
     const inp = inputRef.current;
     if (!inp) return;
     const cursor = inp.selectionStart;
@@ -316,55 +344,7 @@ function WikiLinkInput({ value, onChange, entries, templates, bodies, placeholde
     const m = before.match(/\[\[([^\]\n|]*)$/);
     if (m) {
       const query = m[1].toLowerCase();
-      const seen = new Set();
-      const candidates = [];
-      (entries || []).forEach(en => {
-        if (!en.name) return;
-        if (en.name.toLowerCase().includes(query)) {
-          candidates.push({ entry: en, displayName: en.name, insertName: en.name, viaHistory: false });
-          seen.add(en.id + ":" + en.name.toLowerCase());
-        }
-      });
-      if (Array.isArray(templates)) {
-        const tplById = Object.fromEntries(templates.map(t => [t.id, t]));
-        (entries || []).forEach(en => {
-          const tpl = tplById[en.templateId];
-          getEntryNameHistory(en, tpl).forEach(altName => {
-            if (!altName.toLowerCase().includes(query)) return;
-            const key = en.id + ":" + altName.toLowerCase();
-            if (seen.has(key)) return;
-            if (en.name && en.name.toLowerCase() === altName.toLowerCase()) return;
-            candidates.push({ entry: en, displayName: altName, insertName: altName, viaHistory: true });
-            seen.add(key);
-          });
-        });
-      }
-      // r026: bodies as a third candidate tier. Indexed by primary name +
-      // comma-split "Other Names". Body candidates use `isBody: true` so
-      // the popup renderer can differentiate them visually.
-      (bodies || []).forEach(b => {
-        if (!b || !b.name) return;
-        if (b.name.toLowerCase().includes(query)) {
-          const key = b.id + ":" + b.name.toLowerCase();
-          if (!seen.has(key)) {
-            candidates.push({ entry: b, displayName: b.name, insertName: b.name, viaHistory: false, isBody: true });
-            seen.add(key);
-          }
-        }
-        if (typeof b.otherNames === "string" && b.otherNames.trim()) {
-          b.otherNames.split(",").forEach(alias => {
-            const trimmed = alias.trim();
-            if (!trimmed) return;
-            if (!trimmed.toLowerCase().includes(query)) return;
-            const key = b.id + ":" + trimmed.toLowerCase();
-            if (seen.has(key)) return;
-            if (b.name && b.name.toLowerCase() === trimmed.toLowerCase()) return;
-            candidates.push({ entry: b, displayName: trimmed, insertName: trimmed, viaHistory: true, isBody: true });
-            seen.add(key);
-          });
-        }
-      });
-      const sliced = candidates.slice(0, 8);
+      const sliced = wikiLinkCandidates(wiki, query, 8);
       if (sliced.length > 0) {
         const POPUP_MAX_H = 240;
         const GAP = 4;
@@ -404,6 +384,7 @@ function WikiLinkInput({ value, onChange, entries, templates, bodies, placeholde
 
   const handleKeyDown = (e) => {
     if (!wikiPopup) return;
+    if (WIKI_LINK_LIST_KEYS.has(e.key)) listKeyRef.current = e.key;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setWikiPopup(p => ({ ...p, activeIdx: (p.activeIdx + 1) % p.candidates.length }));
@@ -460,19 +441,15 @@ function WikiLinkInput({ value, onChange, entries, templates, bodies, placeholde
               className={`wikilink-opt ${i === wikiPopup.activeIdx ? "active" : ""}`}
               onMouseDown={(ev) => { ev.preventDefault(); acceptWikiSuggestion(c.insertName); }}
               onMouseEnter={() => setWikiPopup(p => ({ ...p, activeIdx: i }))}
-              title={
-                c.isBody
-                  ? (c.viaHistory ? `Other name for body "${c.entry.name}"` : "Celestial body")
-                  : (c.viaHistory ? `Former name of "${c.entry.name}"` : null)
-              }
+              title={wikiLinkOptionTitle(c)}
             >
-              <span className="wikilink-opt-icon">{c.isBody ? "◉" : "◈"}</span>
+              <span className="wikilink-opt-icon">{wikiLinkOptionIcon(c)}</span>
               <span>{c.displayName}</span>
               {c.viaHistory && (
                 <span className="wikilink-opt-history-hint"> → {c.entry.name}</span>
               )}
-              {c.isBody && !c.viaHistory && (
-                <span className="wikilink-opt-tmpl">body</span>
+              {!c.viaHistory && wikiLinkOptionKind(c) && (
+                <span className="wikilink-opt-tmpl">{wikiLinkOptionKind(c)}</span>
               )}
             </div>
           ))}
@@ -1345,6 +1322,8 @@ function LongformEditor({ value, onChange, placeholder }) {
 
 function RichTextEditor({ value, onChange, entries, templates, bodies, dirHandle, onRequestFolderSetup, placeholder, onOpenEntry, flash }) {
   const taRef = useRef(null);
+  const wiki = useWikiResolver(entries, templates, bodies);
+  const listKeyRef = useRef(null);
   const wrapperRef = useRef(null);
   const [showPreview, setShowPreview] = useState(false);
   const [wikiPopup, setWikiPopup] = useState(null);  // { x, y, query, candidates, activeIdx }
@@ -1451,6 +1430,7 @@ function RichTextEditor({ value, onChange, entries, templates, bodies, dirHandle
 
   // Wiki-link autocomplete: when user types `[[`, show entry picker
   const handleKeyUp = (e) => {
+    if (listKeyRef.current === e.key) { listKeyRef.current = null; return; }
     const ta = taRef.current;
     if (!ta) return;
     const cursor = ta.selectionStart;
@@ -1458,64 +1438,12 @@ function RichTextEditor({ value, onChange, entries, templates, bodies, dirHandle
     const m = before.match(/\[\[([^\]\n|]*)$/);
     if (m) {
       const query = m[1].toLowerCase();
-      // Build candidates: primary-name matches first, then name-history matches.
-      // Each candidate carries displayName (what the user sees in the popup) and
-      // insertName (what gets inserted into the link). For primary matches both
-      // are entry.name. For history matches, displayName is the historical name
-      // (so the user picks the version they wanted) and insertName is the same
-      // historical name (so [[New Amsterdam]] resolves correctly via the
-      // history-fallback path in MarkdownDisplay).
-      const seen = new Set();
-      const candidates = [];
-      entries.forEach(en => {
-        if (!en.name) return;
-        if (en.name.toLowerCase().includes(query)) {
-          candidates.push({ entry: en, displayName: en.name, insertName: en.name, viaHistory: false });
-          seen.add(en.id + ":" + en.name.toLowerCase());
-        }
-      });
-      if (Array.isArray(templates)) {
-        const tplById = Object.fromEntries(templates.map(t => [t.id, t]));
-        entries.forEach(en => {
-          const tpl = tplById[en.templateId];
-          getEntryNameHistory(en, tpl).forEach(altName => {
-            if (!altName.toLowerCase().includes(query)) return;
-            const key = en.id + ":" + altName.toLowerCase();
-            if (seen.has(key)) return;
-            // Don't add a history-name candidate if the primary name already
-            // matched and is identical (case-insensitive).
-            if (en.name && en.name.toLowerCase() === altName.toLowerCase()) return;
-            candidates.push({ entry: en, displayName: altName, insertName: altName, viaHistory: true });
-            seen.add(key);
-          });
-        });
-      }
-      // r026: body candidates as a third tier. Primary body name + comma-
-      // split "Other Names" aliases. Body matches sit below all entry
-      // matches in popup order so entries always rank first.
-      (bodies || []).forEach(b => {
-        if (!b || !b.name) return;
-        if (b.name.toLowerCase().includes(query)) {
-          const key = b.id + ":" + b.name.toLowerCase();
-          if (!seen.has(key)) {
-            candidates.push({ entry: b, displayName: b.name, insertName: b.name, viaHistory: false, isBody: true });
-            seen.add(key);
-          }
-        }
-        if (typeof b.otherNames === "string" && b.otherNames.trim()) {
-          b.otherNames.split(",").forEach(alias => {
-            const trimmed = alias.trim();
-            if (!trimmed) return;
-            if (!trimmed.toLowerCase().includes(query)) return;
-            const key = b.id + ":" + trimmed.toLowerCase();
-            if (seen.has(key)) return;
-            if (b.name && b.name.toLowerCase() === trimmed.toLowerCase()) return;
-            candidates.push({ entry: b, displayName: trimmed, insertName: trimmed, viaHistory: true, isBody: true });
-            seen.add(key);
-          });
-        }
-      });
-      const slicedCandidates = candidates.slice(0, 8);
+      // v1.7 r043: what the world's one resolver reaches, each name once, in
+      // its order: entries' primary names, then former names, then bodies'
+      // names and other names, then maps, stemmas, Fabula's records, and
+      // languages. A former name inserts itself, so [[New Amsterdam]] keeps
+      // the name the writer picked and still reaches its entry.
+      const slicedCandidates = wikiLinkCandidates(wiki, query, 8);
       if (slicedCandidates.length > 0) {
         // Position popup using viewport coords. The popup renders via portal
         // (see render below) so it floats free of any ancestor clipping;
@@ -1568,6 +1496,7 @@ function RichTextEditor({ value, onChange, entries, templates, bodies, dirHandle
   const handleKeyDown = (e) => {
     // Wiki popup nav
     if (wikiPopup) {
+      if (WIKI_LINK_LIST_KEYS.has(e.key)) listKeyRef.current = e.key;
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setWikiPopup(p => ({ ...p, activeIdx: (p.activeIdx + 1) % p.candidates.length }));
@@ -1650,19 +1579,15 @@ function RichTextEditor({ value, onChange, entries, templates, bodies, dirHandle
               className={`wikilink-opt ${i === wikiPopup.activeIdx ? "active" : ""}`}
               onMouseDown={(ev) => { ev.preventDefault(); acceptWikiSuggestion(c.insertName); }}
               onMouseEnter={() => setWikiPopup(p => ({ ...p, activeIdx: i }))}
-              title={
-                c.isBody
-                  ? (c.viaHistory ? `Other name for body "${c.entry.name}"` : "Celestial body")
-                  : (c.viaHistory ? `Former name of "${c.entry.name}"` : null)
-              }
+              title={wikiLinkOptionTitle(c)}
             >
-              <span className="wikilink-opt-icon">{c.isBody ? "◉" : "◈"}</span>
+              <span className="wikilink-opt-icon">{wikiLinkOptionIcon(c)}</span>
               <span>{c.displayName}</span>
               {c.viaHistory && (
                 <span className="wikilink-opt-history-hint"> → {c.entry.name}</span>
               )}
-              {c.isBody && !c.viaHistory && (
-                <span className="wikilink-opt-tmpl">body</span>
+              {!c.viaHistory && wikiLinkOptionKind(c) && (
+                <span className="wikilink-opt-tmpl">{wikiLinkOptionKind(c)}</span>
               )}
             </div>
           ))}

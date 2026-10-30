@@ -97,29 +97,33 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     // each by its field's own label or its own words, and the links the scan
     // never read: Fabula's fields at any depth, bodies' and ConLangs'
     // reference fields, and the [[links]] outside entries. [[links]] resolve
-    // by the entry view's rules, as the index reads them (Drak's call 2), so
-    // until r043 one to a map, a stemma, or a Fabula or Glossopoeia record
-    // draws no edge, and a name two entries share goes to the first. The
-    // labels stay Concordance's own: a pin's 📍, a stemma's "links", and a
-    // corpus's "includes". A ConLang's Variety Of and Descended From stay the
-    // registry's edges, parent to child.
-    linkIndexOf(state).byTarget.forEach((list, target) => {
-      if (!idSet.has(target)) return;
-      list.forEach(l => {
-        const src = l.src;
-        if (!idSet.has(src.id)) return;
-        if (l.secret && !showSecrets) return;
-        if (src.kind === "conlang" && (l.field === "varietyOf" || l.field === "descendedFrom")) return;
-        const own = l.text || l.leaf;
-        if (l.rel === "parent") { addLink(target, src.id, own, "directed"); return; }
-        if (l.rel === "spouse") { addLink(src.id, target, own, "spouse"); return; }
-        let label = own;
-        if (src.kind === "stemma") label = "links";
-        else if (src.kind === "map" && l.field === "pins") label = l.text ? `📍 ${l.text}` : "📍 pin";
-        else if (src.kind === "fabula" && l.field === "storyIds") label = "includes";
-        addLink(src.id, target, label, "directed");
-      });
-    });
+    // through the world's one resolver since r043 (wikiResolverOf): a former
+    // name, a body's other name, a map's, a stemma's, a Fabula record's, or a
+    // language's name draws its edge (Drak's call 2 at r043), and a name two
+    // entries share goes to the first. The labels stay Concordance's own: a
+    // pin's 📍, a stemma's "links", and a corpus's "includes". A ConLang's
+    // Variety Of and Descended From stay the registry's edges, parent to
+    // child. Since r043 the links come in the order their records were read
+    // (the index's links and targets), so an edge that merges a record's link
+    // with a parent declaration at its other end takes its labels in its
+    // records' order, as at r041.
+    const index = linkIndexOf(state);
+    for (let i = 0; i < index.links.length; i++) {
+      const l = index.links[i], target = index.targets[i];
+      if (!idSet.has(target)) continue;
+      const src = l.src;
+      if (!idSet.has(src.id)) continue;
+      if (l.secret && !showSecrets) continue;
+      if (src.kind === "conlang" && (l.field === "varietyOf" || l.field === "descendedFrom")) continue;
+      const own = l.text || l.leaf;
+      if (l.rel === "parent") { addLink(target, src.id, own, "directed"); continue; }
+      if (l.rel === "spouse") { addLink(src.id, target, own, "spouse"); continue; }
+      let label = own;
+      if (src.kind === "stemma") label = "links";
+      else if (src.kind === "map" && l.field === "pins") label = l.text ? `📍 ${l.text}` : "📍 pin";
+      else if (src.kind === "fabula" && l.field === "storyIds") label = "includes";
+      addLink(src.id, target, label, "directed");
+    }
 
     // v1.5 r076: registered intra-source edges, the relations that aren't
     // links the index reads: a body's orbit (star -> planet -> moon), a

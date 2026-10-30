@@ -198,18 +198,23 @@ const getEntryNameHistory = (entry, template) => {
 // resolved, and content rendered as flowing Markdown. Companion to JSON export.
 // Useful as AI reference, player handouts, printed documentation, etc.
 
-const resolveWikiLinksForMd = (text, entryByLowerName) => {
+// v1.7 r043: through the world's one resolver (wikiResolverOf), so a former
+// name, a body, a map, a stemma, a Fabula record, and a language write their
+// names too. A link whose words aren't its record's name says which record
+// it means.
+const resolveWikiLinksForMd = (text, wiki) => {
   if (!text || typeof text !== "string") return text || "";
   return text.replace(/\[\[([^\]\n]+)\]\]/g, (match, inner) => {
     const pipe = inner.indexOf("|");
     const target = pipe >= 0 ? inner.substring(0, pipe).trim() : inner.trim();
     const display = pipe >= 0 ? inner.substring(pipe + 1).trim() : null;
-    const entry = entryByLowerName[target.toLowerCase()];
-    if (!entry) return match;
-    if (display && display.toLowerCase() !== target.toLowerCase()) {
-      return `${display} (referring to ${entry.name})`;
+    const rec = wiki ? wiki.find(target.toLowerCase()) : null;
+    if (!rec) return match;
+    const shown = display || target;
+    if (shown.toLowerCase() !== rec.name.trim().toLowerCase()) {
+      return `${shown} (referring to ${rec.name})`;
     }
-    return entry.name;
+    return rec.name;
   });
 };
 
@@ -222,7 +227,13 @@ const resolveWikiLinksForMd = (text, entryByLowerName) => {
 // v1.7 r023: given articleIds, the ids of what the file holds (a Fabula
 // bible's), a link to an entry the file doesn't hold is the entry's name in
 // an entry-ref-record span instead of an anchor.
-const resolveWikiLinksForHtml = (text, entryByLowerName, escape, articleIds) => {
+// v1.7 r043: through the world's one resolver (wikiResolverOf), by Drak's
+// call 1 at the cut: an entry, or a map, whose article the world's export
+// carries, is a link to its article; a body, a stemma, a Fabula record, or a
+// language is its name in an entry-ref-record span titled with its kind, as
+// a reference to one is (refLinkHtml); and given articleIds, whatever the
+// file holds links to its article, and anything else is its name.
+const resolveWikiLinksForHtml = (text, wiki, escape, articleIds) => {
   if (!text || typeof text !== "string") return escape(text || "");
   // Process wiki-links FIRST, before escaping, to find anchor targets.
   // Then escape the surrounding text but leave our generated anchors alone.
@@ -239,11 +250,12 @@ const resolveWikiLinksForHtml = (text, entryByLowerName, escape, articleIds) => 
     const pipe = inner.indexOf("|");
     const target = pipe >= 0 ? inner.substring(0, pipe).trim() : inner.trim();
     const display = pipe >= 0 ? inner.substring(pipe + 1).trim() : target;
-    const entry = entryByLowerName[target.toLowerCase()];
-    if (entry && articleIds && !articleIds.has(entry.id)) {
-      parts.push(`<span class="entry-ref-record" title="World entry">${escape(display)}</span>`);
-    } else if (entry) {
-      parts.push(`<a class="wiki-link" href="#entry-${escape(entry.id)}">${escape(display)}</a>`);
+    const rec = wiki ? wiki.find(target.toLowerCase()) : null;
+    const linked = rec && (articleIds ? articleIds.has(rec.id) : (rec.kind === "entry" || rec.kind === "map"));
+    if (linked) {
+      parts.push(`<a class="wiki-link" href="#entry-${escape(rec.id)}">${escape(display)}</a>`);
+    } else if (rec) {
+      parts.push(`<span class="entry-ref-record" title="${escape(rec.kind === "entry" ? "World entry" : wikiRecordKind(rec))}">${escape(display)}</span>`);
     } else {
       parts.push(`<span class="broken-link" title="No entry named '${escape(target)}'">${escape(display)}</span>`);
     }

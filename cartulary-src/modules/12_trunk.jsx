@@ -4276,7 +4276,12 @@ function App() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  // v1.7 r043: the [[link]] resolver, for everything drawn below that reads a
+  // [[link]], kept while no name it reads changes (wikiResolverOf).
+  const wikiResolver = wikiResolverOf(state);
+
   return (
+    <WikiResolverContext.Provider value={wikiResolver}>
     <div className="root">
       <Sidebar
         state={state}
@@ -5738,6 +5743,7 @@ function App() {
         </div>
       )}
     </div>
+    </WikiResolverContext.Provider>
   );
 }
 

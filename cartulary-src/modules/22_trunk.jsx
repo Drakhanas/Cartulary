@@ -398,16 +398,130 @@ const getRegisteredGraphEdges = (state) => {
   return edges;
 };
 
-// Name -> id map for registered nodes (lowercased) for wiki-link resolution
-// parity with entries. First writer wins on duplicate names, same as the
-// entry nameToId.
-const getRegisteredNameToId = (state) => {
-  const map = {};
-  getRegisteredGraphNodes(state).forEach(n => {
-    const k = (n.name || "").trim().toLowerCase();
-    if (k && !(k in map)) map[k] = n.id;
+// ─── The [[link]] resolver (v1.7 r043) ─────────────────────────────────────────
+// docs/pipes-spec.md, section 5, with Drak's calls at the cut: one function
+// finds what a [[name]] names, for the entry view, Tabula notes, the link
+// index (and through it Referenced by, Concordance, and the delete counts),
+// the world's HTML and Markdown exports, Fabula's export, and the [[
+// autocomplete. An entry's primary name first, the first stored winning a
+// tie; then its template's Name History; then a body's name and other
+// names; then maps, stemmas, and Fabula's records by name, Fabula's in its
+// order of kinds; then languages (Drak's call 2), which a [[link]] reaches
+// without opening anything, as a reference chip to one has since r003.
+// Glossopoeia's other records stay out. A name a record claimed first is no
+// one else's, so a [[link]] by it, and the autocomplete, reach that record.
+
+// The last resolver built, the slices it was built from, and the names
+// outside entries it read, so that an edit renaming nothing (a map's
+// drawing, a tabula's typing, a body's orbit) keeps it.
+const WIKI_RESOLVER_MEMO = { keys: null, others: null, resolver: null };
+
+// Every id and name the resolver reads outside entries, as one string.
+const wikiOtherNames = (st) => {
+  const out = [];
+  const add = (list, other) => (Array.isArray(list) ? list : []).forEach(r => {
+    if (r && r.id) out.push(r.id, typeof r.name === "string" ? r.name : "", other && typeof r.otherNames === "string" ? r.otherNames : "");
   });
-  return map;
+  const fab = st.fabula || {};
+  add(st.celestialBodies, true);
+  add(st.cartographia);
+  add(st.stemmas);
+  FABULA_KINDS.forEach(k => add(fab[k.slice]));
+  add(st.glossopoeia && st.glossopoeia.conlangs);
+  return JSON.stringify(out);
+};
+
+// A resolver for the world in st, leaving out the records whose ids skip
+// holds (a delete's count asks where the names will lead once they're gone).
+// find(name) gives the record a trimmed, lowercased name reaches, as
+// { id, kind, source, name, opens }, kind entry, body, map, stemma, fabula,
+// or conlang, source its template or its registry source; resolve(name) its
+// id; and names every name that reaches a record, in the order above, for
+// the autocomplete.
+const wikiResolverBuild = (st, skip) => {
+  const byKey = new Map();
+  const names = [];
+  const claim = (raw, rec, via) => {
+    if (typeof raw !== "string") return;
+    const name = raw.trim();
+    const key = name.toLowerCase();
+    if (!key || byKey.has(key)) return;
+    byKey.set(key, rec);
+    names.push({ name, key, rec, via });
+  };
+  const kept = (list) => (Array.isArray(list) ? list : []).filter(r => r && typeof r.id === "string" && r.id && !(skip && skip.has(r.id)));
+  const record = (r, kind, source) => ({ id: r.id, kind, source, name: typeof r.name === "string" ? r.name : "", opens: kind !== "conlang" });
+  const ents = kept(st.entries).map(e => [e, record(e, "entry", e.templateId)]);
+  ents.forEach(([e, rec]) => claim(e.name, rec, "name"));
+  const tplById = new Map((Array.isArray(st.templates) ? st.templates : []).filter(t => t && t.id).map(t => [t.id, t]));
+  ents.forEach(([e, rec]) => getEntryNameHistory(e, tplById.get(e.templateId)).forEach(n => claim(n, rec, "history")));
+  kept(st.celestialBodies).forEach(b => {
+    if (typeof b.name !== "string" || !b.name) return;
+    const rec = record(b, "body", BODY_REF_SENTINEL);
+    claim(b.name, rec, "name");
+    if (typeof b.otherNames === "string") b.otherNames.split(",").forEach(n => claim(n, rec, "other"));
+  });
+  kept(st.cartographia).forEach(m => claim(m.name, record(m, "map", SYNTH_TPL_MAP), "name"));
+  kept(st.stemmas).forEach(s => claim(s.name, record(s, "stemma", SYNTH_TPL_STEMMA), "name"));
+  const fab = st.fabula || {};
+  FABULA_KINDS.forEach(k => kept(fab[k.slice]).forEach(r => claim(r.name, record(r, "fabula", k.id), "name")));
+  kept(st.glossopoeia && st.glossopoeia.conlangs).forEach(c => claim(c.name, record(c, "conlang", SYNTH_TPL_CONLANG), "name"));
+  const find = (key) => byKey.get(key) || null;
+  const resolve = (key) => { const rec = byKey.get(key); return rec ? rec.id : null; };
+  return { find, resolve, names };
+};
+
+// The world's resolver, built once and kept while what it reads is the same
+// (WIKI_RESOLVER_MEMO).
+const wikiResolverOf = (state) => {
+  const st = state || {};
+  const fab = st.fabula || {};
+  const keys = [st.entries, st.templates, st.celestialBodies, st.cartographia, st.stemmas, ...FABULA_KINDS.map(k => fab[k.slice]), st.glossopoeia && st.glossopoeia.conlangs];
+  const m = WIKI_RESOLVER_MEMO;
+  if (m.resolver && m.keys.every((k, i) => k === keys[i])) return m.resolver;
+  const others = wikiOtherNames(st);
+  if (m.resolver && m.keys[0] === keys[0] && m.keys[1] === keys[1] && m.others === others) {
+    m.keys = keys;
+    return m.resolver;
+  }
+  m.keys = keys;
+  m.others = others;
+  m.resolver = wikiResolverBuild(st, null);
+  return m.resolver;
+};
+
+// The resolver App draws with, for whatever below it reads a [[link]].
+const WikiResolverContext = React.createContext(null);
+
+// A component's resolver: App's, or, drawn where nothing provides one, one
+// built from the entries, templates, and bodies it was given.
+const useWikiResolver = (entries, templates, bodies) => {
+  const given = React.useContext(WikiResolverContext);
+  const own = useMemo(() => (given ? null : wikiResolverBuild({ entries, templates, celestialBodies: bodies }, null)), [given, entries, templates, bodies]);
+  return given || own;
+};
+
+// What the [[ autocomplete offers for a lowercased query: up to max names
+// that hold it, each once, for the record it reaches, in the resolver's
+// order, shaped as the popups read them.
+const wikiLinkCandidates = (wiki, query, max) => {
+  const q = typeof query === "string" ? query : "";
+  const names = wiki ? wiki.names : [];
+  const out = [];
+  for (let i = 0; i < names.length && out.length < max; i++) {
+    const n = names[i];
+    if (!n.key.includes(q)) continue;
+    out.push({ entry: { id: n.rec.id, name: n.rec.name }, displayName: n.name, insertName: n.name, viaHistory: n.via !== "name", isBody: n.rec.kind === "body", rec: n.rec });
+  }
+  return out;
+};
+
+// What a record a [[link]] reaches is called beside its name: its source's
+// name ("Astronomical Body", "Map", "Scene (Fabula)", "ConLang"), as a
+// reference chip's title has it, or nothing for an entry.
+const wikiRecordKind = (rec) => {
+  const src = rec && rec.kind !== "entry" ? getRegisteredSourceById(rec.source) : null;
+  return src ? src.name : "";
 };
 // ─── Link index (v1.7 r041) ────────────────────────────────────────────────────
 // docs/pipes-spec.md, section 4, with Drak's calls at the cut: every link in
@@ -419,9 +533,9 @@ const getRegisteredNameToId = (state) => {
 // ConLangs' reference fields, map pins, a rota's linked nodes, and a tabula's
 // linked cards. [[links]]: in the Short Text and Long Text of entries and
 // Fabula records at any depth, a map's three fields, a body's six narrative
-// fields, a tabula's notes, and the world description, read by the entry
-// view's rules (wikiNameResolver) until r043 makes one resolver for every
-// place a link is read. A record's links are read once and kept until the
+// fields, a tabula's notes, and the world description, read since r043 by
+// the one resolver (wikiResolverOf), and by the entry view's rules before
+// it. A record's links are read once and kept until the
 // record, or the schema it's read through, changes (Drak's call 3), and the
 // index is put together again from what's kept when anything changes, when a
 // page first asks for it (linksTo). A record's link to itself doesn't count,
@@ -435,46 +549,11 @@ const getRegisteredNameToId = (state) => {
 const LINK_SOURCE_WORLD = "__world_description__";
 
 // What the index keeps between builds: the last build and the slices it was
-// built from, the name resolver and its inputs, each record's links (by the
-// record, with what they were read through), and the fields read for
-// Fabula's kinds and ConLangs while the world keeps no schema of its own.
-const LINK_INDEX_MEMO = { keys: null, index: null, names: null, records: new WeakMap(), schemas: new Map(), mapFields: null };
-
-// The entry view's [[name]] rules (MarkdownDisplay, InlineWikiLinkText),
-// lifted: an entry's primary name first, the first stored winning a tie, then
-// its template's Name History, then a body's name and other names. Takes a
-// trimmed, lowercased name; gives an id or null.
-const wikiNameResolver = (entries, templates, bodies) => {
-  const kept = LINK_INDEX_MEMO.names;
-  if (kept && kept.entries === entries && kept.templates === templates && kept.bodies === bodies) return kept.resolve;
-  const primary = new Map(), history = new Map(), bodyNames = new Map();
-  const ents = Array.isArray(entries) ? entries : [];
-  ents.forEach(e => {
-    if (!e || !e.id || typeof e.name !== "string") return;
-    const k = e.name.trim().toLowerCase();
-    if (k && !primary.has(k)) primary.set(k, e.id);
-  });
-  const tplById = new Map((Array.isArray(templates) ? templates : []).filter(t => t && t.id).map(t => [t.id, t]));
-  ents.forEach(e => {
-    if (!e || !e.id) return;
-    getEntryNameHistory(e, tplById.get(e.templateId)).forEach(n => {
-      const k = n.trim().toLowerCase();
-      if (k && !primary.has(k) && !history.has(k)) history.set(k, e.id);
-    });
-  });
-  (Array.isArray(bodies) ? bodies : []).forEach(b => {
-    if (!b || !b.id || typeof b.name !== "string") return;
-    const add = (n) => {
-      const k = n.trim().toLowerCase();
-      if (k && !primary.has(k) && !history.has(k) && !bodyNames.has(k)) bodyNames.set(k, b.id);
-    };
-    add(b.name);
-    if (typeof b.otherNames === "string") b.otherNames.split(",").forEach(add);
-  });
-  const resolve = (k) => primary.get(k) || history.get(k) || bodyNames.get(k) || null;
-  LINK_INDEX_MEMO.names = { entries, templates, bodies, resolve };
-  return resolve;
-};
+// built from, each record's links (by the record, with what they were read
+// through), and the fields read for Fabula's kinds and ConLangs while the
+// world keeps no schema of its own. The names are the resolver's own
+// (WIKI_RESOLVER_MEMO) since r043.
+const LINK_INDEX_MEMO = { keys: null, index: null, records: new WeakMap(), schemas: new Map(), mapFields: null };
 
 // A link as the index keeps it, made once when its record is read (r042): the
 // record it's in (src); what it points at (to), a stored link's id or a
@@ -565,11 +644,13 @@ const linkKindFields = (state, kind) => {
   return fields;
 };
 
-// The index, { byTarget }: each target's links as linkPush makes them, src
-// the source as { id, kind, group, name, storyId }, its kind entry, fabula,
-// map, stemma, body, conlang, or world, and its group its template, its
-// Fabula kind, or its kind again. Put together again only when a slice it
-// reads has changed.
+// The index, { byTarget, links, targets }: each target's links as linkPush
+// makes them, src the source as { id, kind, group, name, storyId }, its kind
+// entry, fabula, map, stemma, body, conlang, or world, and its group its
+// template, its Fabula kind, or its kind again; and since r043 every link in
+// the order its record was read (links), beside its target (targets), which
+// Concordance draws in. Put together again only when a slice it reads has
+// changed.
 const linkIndexOf = (state) => {
   const st = state || {};
   const fab = st.fabula || {};
@@ -578,19 +659,22 @@ const linkIndexOf = (state) => {
   const keys = [st.entries, st.templates, st.fabula, st.cartographia, st.stemmas, st.celestialBodies, glo.conlangs, desc];
   const memo = LINK_INDEX_MEMO;
   if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
-  const resolve = wikiNameResolver(st.entries, st.templates, st.celestialBodies);
+  const wiki = wikiResolverOf(st);
   const byTarget = new Map();
+  const links = [], targets = [];
   // A kept link goes into its target's list as it is; a [[link]]'s target is
   // found by name at every build, since names change without the link.
   const add = (x) => {
     const ls = x.links;
     for (let i = 0; i < ls.length; i++) {
       const l = ls[i];
-      const target = l.kind === "wiki" ? resolve(l.to) : l.to;
+      const target = l.kind === "wiki" ? wiki.resolve(l.to) : l.to;
       if (typeof target !== "string" || !target || target === l.src.id) continue;
       let list = byTarget.get(target);
       if (!list) { list = []; byTarget.set(target, list); }
       list.push(l);
+      links.push(l);
+      targets.push(target);
     }
   };
   // Entries, through their templates.
@@ -690,7 +774,7 @@ const linkIndexOf = (state) => {
     add(x);
   }
   memo.keys = keys;
-  memo.index = { byTarget };
+  memo.index = { byTarget, links, targets };
   return memo.index;
 };
 
@@ -712,20 +796,12 @@ const linkDeleteCounts = (state, ids, going) => {
   const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set() };
   const list = Array.isArray(ids) ? ids : [...(ids || [])];
   const outside = going instanceof Set ? going : new Set(list);
-  // The names as they'll resolve after the delete, put together once, when
-  // a [[link]] asks, and without taking the index's own resolver's place.
+  // The names as they'll resolve after the delete, built once, when a
+  // [[link]] asks, without what goes, and apart from the world's resolver.
   let after = null;
   const resolvesAfter = (name) => {
-    if (!after) {
-      const st = state || {};
-      const kept = LINK_INDEX_MEMO.names;
-      after = wikiNameResolver(
-        (Array.isArray(st.entries) ? st.entries : []).filter(e => !(e && outside.has(e.id))),
-        st.templates,
-        (Array.isArray(st.celestialBodies) ? st.celestialBodies : []).filter(b => !(b && outside.has(b.id))));
-      LINK_INDEX_MEMO.names = kept;
-    }
-    return after(name);
+    if (!after) after = wikiResolverBuild(state || {}, outside);
+    return after.resolve(name);
   };
   list.forEach(id => linksTo(state, id).forEach(l => {
     if (outside.has(l.src.id)) return;

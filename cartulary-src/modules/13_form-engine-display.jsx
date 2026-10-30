@@ -146,7 +146,7 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{field.label}</span>
                 {field.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={field} value={val} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} showSecrets={showSecrets} />
             </div>
           );
         }
@@ -162,14 +162,14 @@ function EntryView({ entry, template, templates, entries, onOpenEntry, onSelectT
                 <span>{a.label}</span>
                 {a.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={a} value={aVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} showSecrets={showSecrets} />
             </div>
             <div className={`field-group ${b.secret ? "secret" : ""}`}>
               <div className="field-label" title={b.label}>
                 <span>{b.label}</span>
                 {b.secret && <span className="secret-tag">SECRET</span>}
               </div>
-              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} />
+              <FieldValueDisplay field={b} value={bVal} entries={entries} templates={templates} bodies={state?.celestialBodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} entry={entry} template={template} currentMomentDay={currentMomentDay} showSecrets={showSecrets} />
             </div>
           </div>
         );
@@ -228,53 +228,13 @@ function FieldPanelHeading({ panel, folded, onToggle }) {
 // syntax resolved to clickable cross-references. Display-side only — text-input edit
 // surfaces remain plain (autocomplete for `[[` in text inputs is a separate task).
 //
-// Resolution mirrors MarkdownDisplay's logic: primary entry name beats name-history
-// alias, first match wins by storage order, case-insensitive. Broken links (no
-// matching entry) render with the same .wiki-link-broken affordance as in markdown.
+// Since v1.7's r043 a [[link]] resolves through the world's one resolver
+// (useWikiResolver), as MarkdownDisplay's do; a language is drawn found and
+// opens nothing, and a broken link keeps the .wiki-link-broken affordance.
 //
 // Reuses the broadened .wiki-link CSS so visual treatment matches markdown rendering.
 function InlineWikiLinkText({ value, entries, templates, bodies, onOpenEntry }) {
-  const { primaryByLower, historyByLower, bodiesByLower } = useMemo(() => {
-    const primary = new Map();
-    (entries || []).forEach(e => {
-      if (!e.name) return;
-      const k = e.name.trim().toLowerCase();
-      if (!primary.has(k)) primary.set(k, e);
-    });
-    const history = new Map();
-    if (Array.isArray(templates)) {
-      const tplById = Object.fromEntries(templates.map(t => [t.id, t]));
-      (entries || []).forEach(e => {
-        const tpl = tplById[e.templateId];
-        const altNames = getEntryNameHistory(e, tpl);
-        altNames.forEach(n => {
-          const k = (n || "").trim().toLowerCase();
-          if (!k) return;
-          if (!primary.has(k) && !history.has(k)) history.set(k, e);
-        });
-      });
-    }
-    // r026: bodies as a third resolution tier, below entries on name
-    // collision. Indexed by primary name + comma-split otherNames.
-    const bodiesMap = new Map();
-    (bodies || []).forEach(b => {
-      if (!b || !b.name) return;
-      const k = b.name.trim().toLowerCase();
-      if (k && !primary.has(k) && !history.has(k) && !bodiesMap.has(k)) {
-        bodiesMap.set(k, b);
-      }
-      if (typeof b.otherNames === "string" && b.otherNames.trim()) {
-        b.otherNames.split(",").forEach(alias => {
-          const ak = alias.trim().toLowerCase();
-          if (!ak) return;
-          if (!primary.has(ak) && !history.has(ak) && !bodiesMap.has(ak)) {
-            bodiesMap.set(ak, b);
-          }
-        });
-      }
-    });
-    return { primaryByLower: primary, historyByLower: history, bodiesByLower: bodiesMap };
-  }, [entries, templates, bodies]);
+  const wiki = useWikiResolver(entries, templates, bodies);
 
   if (!value || typeof value !== "string" || !value.includes("[[")) {
     return <>{value || ""}</>;
@@ -295,9 +255,12 @@ function InlineWikiLinkText({ value, entries, templates, bodies, onOpenEntry }) 
     const pipe = inner.indexOf("|");
     const target = pipe >= 0 ? inner.substring(0, pipe).trim() : inner;
     const display = pipe >= 0 ? inner.substring(pipe + 1).trim() : inner;
-    const lookup = target.toLowerCase();
-    const found = primaryByLower.get(lookup) || historyByLower.get(lookup) || bodiesByLower.get(lookup);
-    if (found) {
+    const found = wiki.find(target.toLowerCase());
+    if (found && !found.opens) {
+      nodes.push(
+        <span key={`wl-${key++}`} className="wiki-link wiki-link-found wiki-link-record" style={WIKI_LINK_RECORD_STYLE} title={wikiRecordKind(found)}>{display}</span>
+      );
+    } else if (found) {
       const id = found.id;
       nodes.push(
         <a key={`wl-${key++}`} className="wiki-link wiki-link-found" href="#"
@@ -319,6 +282,10 @@ function InlineWikiLinkText({ value, entries, templates, bodies, onOpenEntry }) 
   }
   return <>{nodes}</>;
 }
+
+// A [[link]] to a record that opens nothing (since v1.7's r043, a language,
+// Drak's call 2): drawn found, and still on hover, as a reference chip to one.
+const WIKI_LINK_RECORD_STYLE = { cursor: "default", background: "var(--accent-glow)", color: "var(--accent)" };
 
 // ─── Referenced by (v1.7 r041) ─────────────────────────────────────────────────
 // docs/pipes-spec.md, section 4, with Drak's calls at the cut: on a record's
@@ -480,6 +447,7 @@ function LongformDisplay({ value }) {
 
 function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, dirHandle }) {
   const containerRef = useRef(null);
+  const wiki = useWikiResolver(entries, templates, bodies);
 
   const html = useMemo(() => {
     if (!markdown) return "";
@@ -487,60 +455,24 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
     try { h = marked.parse(markdown); }
     catch (e) { console.error("md parse failed", e); return `<p>${markdown}</p>`; }
 
-    // Build name resolution table:
-    //   1. Primary names (entry.name) — first match wins by storage order
-    //   2. name-history names — fallback only used if no primary match exists
-    //   3. r026: celestial body names — fallback below entries so existing
-    //      entry/history matches always win on name collision. Includes the
-    //      body's primary name plus comma-split "Other Names" string.
-    // Primary always beats history. If two entries share an alias, first wins.
-    const primaryByLower = new Map();
-    entries.forEach(e => {
-      if (!e.name) return;
-      const k = e.name.trim().toLowerCase();
-      if (!primaryByLower.has(k)) primaryByLower.set(k, e);
-    });
-    const historyByLower = new Map();
-    if (Array.isArray(templates)) {
-      const tplById = Object.fromEntries(templates.map(t => [t.id, t]));
-      entries.forEach(e => {
-        const tpl = tplById[e.templateId];
-        const altNames = getEntryNameHistory(e, tpl);
-        altNames.forEach(n => {
-          const k = n.trim().toLowerCase();
-          if (!primaryByLower.has(k) && !historyByLower.has(k)) {
-            historyByLower.set(k, e);
-          }
-        });
-      });
-    }
-    const bodiesByLower = new Map();
-    if (Array.isArray(bodies)) {
-      bodies.forEach(b => {
-        if (!b || !b.name) return;
-        const k = b.name.trim().toLowerCase();
-        if (k && !primaryByLower.has(k) && !historyByLower.has(k) && !bodiesByLower.has(k)) {
-          bodiesByLower.set(k, b);
-        }
-        if (typeof b.otherNames === "string" && b.otherNames.trim()) {
-          b.otherNames.split(",").forEach(alias => {
-            const ak = alias.trim().toLowerCase();
-            if (!ak) return;
-            if (!primaryByLower.has(ak) && !historyByLower.has(ak) && !bodiesByLower.has(ak)) {
-              bodiesByLower.set(ak, b);
-            }
-          });
-        }
-      });
-    }
-
-    // Post-process wiki-links
+    // Post-process wiki-links. Since v1.7's r043 each resolves through the
+    // world's one resolver (wikiResolverOf, 22_trunk): an entry by its
+    // primary name or its Name History, a body by its name or another name,
+    // a map, a stemma, or a Fabula record by its name, all of which open, and
+    // a language, which is drawn found and opens nothing (Drak's call 2).
     const tmp = document.createElement("div");
     tmp.innerHTML = h;
     tmp.querySelectorAll(".wiki-link").forEach(link => {
       const name = (link.dataset.name || "").trim().toLowerCase();
-      const found = primaryByLower.get(name) || historyByLower.get(name) || bodiesByLower.get(name);
-      if (found) {
+      const found = wiki.find(name);
+      if (found && !found.opens) {
+        const span = document.createElement("span");
+        span.className = "wiki-link wiki-link-found wiki-link-record";
+        span.title = wikiRecordKind(found);
+        Object.assign(span.style, WIKI_LINK_RECORD_STYLE);
+        span.textContent = link.textContent;
+        link.replaceWith(span);
+      } else if (found) {
         link.dataset.entryId = found.id;
         link.classList.add("wiki-link-found");
       } else {
@@ -549,7 +481,7 @@ function MarkdownDisplay({ markdown, entries, templates, bodies, onOpenEntry, di
       }
     });
     return tmp.innerHTML;
-  }, [markdown, entries, templates, bodies]);
+  }, [markdown, wiki]);
 
   // Wiki-link click handler
   useEffect(() => {
@@ -626,7 +558,7 @@ const resolveRefTarget = (id, entries, bodies, registeredNodes) => {
   return { name: n.name, place: n.place || null, open: n.templateId === SYNTH_TPL_MAP || n.templateId === BODY_REF_SENTINEL || n.templateId === SYNTH_TPL_STEMMA || fabulaRecordOpens(n.templateId), kind: src ? src.name : "" };
 };
 
-function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay }) {
+function FieldValueDisplay({ field, value, entries, templates, bodies, registeredNodes, onOpenEntry, imageFolder, dirHandle, calendar, entry, template, currentMomentDay, showSecrets }) {
   const ftype = field.type;
   if (ftype === "textarea") return <MarkdownDisplay markdown={value || ""} entries={entries} templates={templates} bodies={bodies} onOpenEntry={onOpenEntry} dirHandle={dirHandle} />;
   if (ftype === "longform") return <LongformDisplay value={value || ""} />;
@@ -771,12 +703,15 @@ function FieldValueDisplay({ field, value, entries, templates, bodies, registere
             {(field.subfields || []).map(sub => {
               // v1.3: showWhen evaluated against this instance's values
               if (!isFieldVisible(sub, inst)) return null;
+              // v1.7 r043: a secret subfield shows only while secrets do, as
+              // both exports have it, and is marked as a secret field is.
+              if (sub.secret && !showSecrets) return null;
               const subval = inst[sub.id];
               if (subval === "" || subval == null || (Array.isArray(subval) && subval.length === 0)) return null;
               return (
-                <div key={sub.id} className="field-group" style={{ marginBottom: 12 }}>
-                  <div className="field-label">{sub.label}</div>
-                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} />
+                <div key={sub.id} className={`field-group ${sub.secret ? "secret" : ""}`} style={{ marginBottom: 12 }}>
+                  <div className="field-label">{sub.label}{sub.secret && <span className="secret-tag">SECRET</span>}</div>
+                  <FieldValueDisplay field={sub} value={subval} entries={entries} templates={templates} bodies={bodies} registeredNodes={registeredNodes} onOpenEntry={onOpenEntry} imageFolder={imageFolder} dirHandle={dirHandle} calendar={calendar} showSecrets={showSecrets} />
                 </div>
               );
             })}

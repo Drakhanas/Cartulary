@@ -77,8 +77,6 @@ const fabulaBible = (state, story) => {
 // entry is bound to.
 const fabulaBibleContext = (state, bibles, options) => {
   const entryById = Object.fromEntries((state.entries || []).filter(e => e && e.id).map(e => [e.id, e]));
-  const entryByLowerName = {};
-  (state.entries || []).forEach(e => { if (e && e.name) entryByLowerName[e.name.trim().toLowerCase()] = e; });
   const nodeById = {};
   const articleIds = new Set();
   const walk = (nodes) => nodes.forEach(n => { articleIds.add(n.record.id); walk(n.children); });
@@ -90,7 +88,8 @@ const fabulaBibleContext = (state, bibles, options) => {
     b.threads.forEach(t => articleIds.add(t.entry.id));
     b.themeGroups.forEach(g => g.themes.forEach(t => articleIds.add(t.entry.id)));
   });
-  return { entryById, nodeById, entryByLowerName, calendar: getCalendar(state, null), options, imageManifest: null, articleIds };
+  // v1.7 r043: [[links]] through the world's one resolver.
+  return { entryById, nodeById, wiki: wikiResolverOf(state), calendar: getCalendar(state, null), options, imageManifest: null, articleIds };
 };
 
 // A record's title in the bible: its position and its name.
@@ -212,7 +211,7 @@ const fabulaBibleMarkdown = (state, bible, ctx, options, depth) => {
     push(`**${beatsField.label || "Beats"}${beatsField.secret ? " [SECRET]" : ""}:**`, "");
     beats.forEach((b, i) => {
       push(`${i + 1}. ${(typeof b.beat === "string" && b.beat.trim()) || "(no line)"}`);
-      if (typeof b.whatHappens === "string" && b.whatHappens.trim()) push(`   ${resolveWikiLinksForMd(b.whatHappens.trim(), ctx.entryByLowerName).replace(/\n+/g, "\n   ")}`);
+      if (typeof b.whatHappens === "string" && b.whatHappens.trim()) push(`   ${resolveWikiLinksForMd(b.whatHappens.trim(), ctx.wiki).replace(/\n+/g, "\n   ")}`);
     });
     push("");
   };
@@ -401,7 +400,7 @@ const fabulaBibleHtml = (state, bible, ctx, options, depth) => {
     if (!beatsField || (beatsField.secret && !options.includeSecrets)) return "";
     const beats = fabulaBeats(scene).filter(b => b && ((typeof b.beat === "string" && b.beat.trim()) || (typeof b.whatHappens === "string" && b.whatHappens.trim())));
     if (!beats.length) return "";
-    const items = beats.map(b => `<li><div class="beat-line">${esc((typeof b.beat === "string" && b.beat.trim()) || "(no line)")}</div>${typeof b.whatHappens === "string" && b.whatHappens.trim() ? `<div class="beat-what">${resolveWikiLinksForHtml(b.whatHappens.trim(), ctx.entryByLowerName, esc, ctx.articleIds)}</div>` : ""}</li>`).join("");
+    const items = beats.map(b => `<li><div class="beat-line">${esc((typeof b.beat === "string" && b.beat.trim()) || "(no line)")}</div>${typeof b.whatHappens === "string" && b.whatHappens.trim() ? `<div class="beat-what">${resolveWikiLinksForHtml(b.whatHappens.trim(), ctx.wiki, esc, ctx.articleIds)}</div>` : ""}</li>`).join("");
     return `<section class="entry-block beats"><h3>${esc(beatsField.label || "Beats")}${beatsField.secret ? ' <span class="secret-marker">[SECRET]</span>' : ""}</h3><ol class="beat-list">${items}</ol></section>`;
   };
   const node = (n, level) => {

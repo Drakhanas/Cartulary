@@ -56,6 +56,9 @@ const renderFieldForMd = (field, val, ctx) => {
 
   switch (field.type) {
     case "text":
+      // v1.7 r043: a Short Text's [[links]] too, as the entry view reads them.
+      return resolveWikiLinksForMd(String(val), ctx.wiki);
+
     case "number":
     case "url":
       return String(val);
@@ -108,7 +111,20 @@ const renderFieldForMd = (field, val, ctx) => {
     }
 
     case "textarea":
-      return resolveWikiLinksForMd(val, ctx.entryByLowerName);
+      return resolveWikiLinksForMd(val, ctx.wiki);
+
+    // v1.7 r043: written as the HTML export writes it, where it was
+    // "[object Object]".
+    case "name-history": {
+      const items = Array.isArray(val) ? val.filter(it => it && it.name) : [];
+      if (items.length === 0) return null;
+      const fmt = (d) => (d && d.year != null ? (d.approximate ? "~" : "") + formatCalendarDate(d, calendar) : null);
+      return items.map(it => {
+        const from = fmt(it.from), to = fmt(it.to);
+        const dates = from && to ? `${from} – ${to}` : from ? `from ${from}` : to ? `until ${to}` : "";
+        return dates ? `${it.name} (${dates})` : it.name;
+      }).join("; ");
+    }
 
     case "longform":
       return longformToMarkdown(val);
@@ -270,9 +286,9 @@ const renderEntryBodyMarkdown = (entry, tpl, ctx, options) => {
 const buildSingleEntryMarkdown = (entry, template, state, options = { includeSecrets: false }) => {
   const { entries, world } = state;
   const entryById = Object.fromEntries(entries.map(e => [e.id, e]));
-  const entryByLowerName = {};
-  entries.forEach(e => { if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e; });
-  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest: null };
+  // v1.7 r043: [[links]] through the world's one resolver, and the entry's
+  // dates in its own calendar, as the HTML export has them by default.
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), wiki: wikiResolverOf(state), calendar: getCalendar(state, entry.calendarId), options, imageManifest: null };
 
   const out = [];
   out.push(`# ${entry.name || "(unnamed)"}`);
@@ -499,19 +515,16 @@ const buildFamilyTreeMarkdown = (focalId, state) => {
 const buildMarkdownExport = (state, options = { includeSecrets: false }) => {
   const { templates, entries, world } = state;
   const entryById = Object.fromEntries(entries.map(e => [e.id, e]));
-  const entryByLowerName = {};
-  entries.forEach(e => {
-    if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e;
-  });
   const imageManifest = options.collectImages ? { bySource: {}, entries: [], inlineCount: 0 } : null;
-  const ctx = { entryById, nodeById: registeredNodeIndex(state), entryByLowerName, calendar: world.calendar, options, imageManifest };
+  // v1.7 r043: [[links]] through the world's one resolver.
+  const ctx = { entryById, nodeById: registeredNodeIndex(state), wiki: wikiResolverOf(state), calendar: world.calendar, options, imageManifest };
 
   const out = [];
   // Header block
   out.push(`# ${world.name || "Untitled World"}`);
   out.push("");
   if (world.description) {
-    out.push(resolveWikiLinksForMd(world.description, entryByLowerName));
+    out.push(resolveWikiLinksForMd(world.description, ctx.wiki));
     out.push("");
   }
   out.push(`*Exported ${new Date().toISOString().slice(0, 10)} as Markdown.*  `);
@@ -570,7 +583,9 @@ const buildMarkdownExport = (state, options = { includeSecrets: false }) => {
     sorted.forEach(entry => {
       out.push(`### ${entry.name || "(unnamed)"}`);
       out.push("");
-      out.push(...renderEntryBodyMarkdown(entry, tpl, ctx, options));
+      // v1.7 r043: each entry's dates in its own calendar, as the HTML
+      // export has them by default, where every date was the primary's.
+      out.push(...renderEntryBodyMarkdown(entry, tpl, { ...ctx, calendar: getCalendar(state, entry.calendarId) }, options));
     });
   });
 
@@ -773,10 +788,13 @@ const refLinkHtml = (id, ctx) => {
 // hrefs. Returns null when the value is empty / should be suppressed.
 const renderFieldForHtml = (field, val, ctx) => {
   if (val == null || val === "" || (Array.isArray(val) && val.length === 0)) return null;
-  const { entryById, entryByLowerName, options } = ctx;
+  const { entryById, options } = ctx;
 
   switch (field.type) {
     case "text":
+      // v1.7 r043: a Short Text's [[links]] too, as the entry view reads them.
+      return resolveWikiLinksForHtml(String(val), ctx.wiki, htmlEscape, ctx.articleIds);
+
     case "number":
       return htmlEscape(val);
 
@@ -837,7 +855,7 @@ const renderFieldForHtml = (field, val, ctx) => {
       // Resolve wiki-links to anchor hrefs, then run through marked.parse to
       // process the surrounding markdown. marked treats the inline anchor HTML
       // as-is and processes the rest as markdown.
-      const withLinks = resolveWikiLinksForHtml(val, entryByLowerName, htmlEscape, ctx.articleIds);
+      const withLinks = resolveWikiLinksForHtml(val, ctx.wiki, htmlEscape, ctx.articleIds);
       if (typeof marked !== "undefined" && marked.parse) {
         try {
           return marked.parse(withLinks);
@@ -1351,8 +1369,6 @@ const buildHtmlExport = async (state, options, dirHandle) => {
 
   // Indexes
   const entryById = Object.fromEntries(entries.map(e => [e.id, e]));
-  const entryByLowerName = {};
-  entries.forEach(e => { if (e.name) entryByLowerName[e.name.trim().toLowerCase()] = e; });
 
   // Pre-render image manifest pass: collect every image reference across the
   // world (entry fields, group subfields, map backgrounds), then resolve each
@@ -1386,7 +1402,8 @@ const buildHtmlExport = async (state, options, dirHandle) => {
   const baseCtx = {
     entryById,
     nodeById: registeredNodeIndex(state),
-    entryByLowerName,
+    // v1.7 r043: [[links]] through the world's one resolver.
+    wiki: wikiResolverOf(state),
     options,
     currentMomentDay,
     imageManifest,
@@ -1464,7 +1481,7 @@ const buildHtmlExport = async (state, options, dirHandle) => {
   const worldName = htmlEscape(world.name || "Untitled World");
   const worldDescPlain = world.description ? String(world.description).replace(/\s+/g, " ").trim().slice(0, 200) : "";
   const descHtml = world.description
-    ? `<div class="world-desc">${marked && marked.parse ? marked.parse(resolveWikiLinksForHtml(world.description, entryByLowerName, htmlEscape)) : htmlEscape(world.description)}</div>`
+    ? `<div class="world-desc">${marked && marked.parse ? marked.parse(resolveWikiLinksForHtml(world.description, baseCtx.wiki, htmlEscape)) : htmlEscape(world.description)}</div>`
     : "";
 
   // World metadata — last-updated date alongside export date when present.
