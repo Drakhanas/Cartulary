@@ -2430,44 +2430,6 @@ const scrubEntryRefs = (entries, templates, deletedIds) => {
   });
 };
 
-// v1.5 r080: count entries holding at least one entry-ref (incl. grid cells
-// and group subfields) pointing at targetId. Lightweight — no clone, short-
-// circuits per entry — so it's cheap to call in render for delete-impact
-// warnings. Mirrors scrubEntryRefs's traversal so the count matches exactly
-// what a scrub would remove.
-const countInboundEntryRefs = (entries, templates, targetId) => {
-  if (!targetId) return 0;
-  const tplById = Object.fromEntries((templates || []).map(t => [t.id, t]));
-  const refsTarget = (fields, valueMap) => {
-    if (!fields || !valueMap) return false;
-    return fields.some(f => {
-      if (f.type === "entry-ref") {
-        const v = valueMap[f.id];
-        if (v == null || v === "") return false;
-        if (Array.isArray(v)) return v.some(item => (typeof item === "string" ? item : item?.id) === targetId);
-        if (typeof v === "object") return v.id === targetId;
-        if (typeof v === "string") return v === targetId;
-        return false;
-      }
-      if (f.type === "group" && Array.isArray(valueMap[f.id])) {
-        return valueMap[f.id].some(inst => refsTarget(f.subfields || [], inst));
-      }
-      if (f.type === "grid") {
-        let found = false;
-        forEachGridRefCell(valueMap[f.id], (rid, cid, cell) => { if (cell.value === targetId) found = true; });
-        return found;
-      }
-      return false;
-    });
-  };
-  let count = 0;
-  (entries || []).forEach(e => {
-    const tpl = tplById[e.templateId];
-    if (tpl && e.fields && refsTarget(tpl.fields, e.fields)) count++;
-  });
-  return count;
-};
-
 // Strip self-references from all entry-ref fields. Self-refs are never
 // legitimate (a person can't be their own parent, a faction can't be its own
 // ally) and the editor now blocks them at input time. This pass cleans up
@@ -14084,16 +14046,14 @@ function App() {
   const deleteMap = (id) => {
     if (isLocked) return;
     // v1.7 r003: maps are reference targets, so the delete clears references
-    // to this one from every entry's fields, groups and grids included, as a
-    // body's delete does; both confirmations count them first
-    // (mapDeleteMessage). Any lingering concordance position keyed by this id
-    // is dropped on next load by migrate's position validation; live, it
-    // simply stops rendering.
-    updateState(s => ({
-      ...s,
-      cartographia: (s.cartographia || []).filter(m => m.id !== id),
-      entries: scrubEntryRefs(s.entries, s.templates, new Set([id])),
-    }));
+    // to this one, and since r042 every link the index reads (clearLinksTo),
+    // which the delete modal counts first. Any lingering concordance position
+    // keyed by this id is dropped on next load by migrate's position
+    // validation; live, it simply stops rendering.
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id]));
+      return { ...cleared, cartographia: (cleared.cartographia || []).filter(m => m.id !== id) };
+    });
     if (activeMapId === id) {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
@@ -14169,7 +14129,12 @@ function App() {
   // Deleting a corpus leaves its stories in Fabula, in no corpus.
   const deleteCorpus = (id) => {
     if (isLocked) return;
-    updateFabula(fab => ({ ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) }));
+    // v1.7 r042: what links to it, a stemma's card, is left orphaned
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id]));
+      const fab = cleared.fabula || {};
+      return { ...cleared, fabula: { ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) } };
+    });
     if (activeCorpusId === id) {
       setActiveCorpusId(null);
       setCorpusDraft(null); initialCorpusDraftRef.current = null;
@@ -14200,12 +14165,13 @@ function App() {
   // story's storyId) go with it; the confirmation says how many.
   const deleteStory = (id) => {
     if (isLocked) return;
-    updateFabula(fab => ({
-      ...fab,
-      ...fabulaDropStoryRecords(fab, id),
-      stories: fabArr(fab, "stories").filter(st => st.id !== id),
-      corpora: fabArr(fab, "corpora").map(c => (c.storyIds || []).includes(id) ? { ...c, storyIds: c.storyIds.filter(x => x !== id) } : c),
-    }));
+    // v1.7 r042: the links into it and its records go first, everywhere the
+    // index reads, its corpus's reading order among them (clearLinksTo)
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id, ...fabulaStoryRecordIds(s, id)]));
+      const fab = cleared.fabula || {};
+      return { ...cleared, fabula: { ...fab, ...fabulaDropStoryRecords(fab, id), stories: fabArr(fab, "stories").filter(st => st.id !== id) } };
+    });
   };
 
   // The Corpus dropdown: into a corpus, at the end of its reading order, or
@@ -14389,10 +14355,15 @@ function App() {
   const deleteOpenStory = () => {
     const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
     if (!rec || isLocked) return;
-    if (!confirm(fabulaStoryDeleteMessage(state, rec))) return;
-    deleteStory(rec.id);
-    setStoryDraft(null); initialStoryDraftRef.current = null;
-    setActiveStoryId(null);
+    askRecordDelete({
+      state, ids: [rec.id, ...fabulaStoryRecordIds(state, rec.id)],
+      title: `Delete the story "${rec.name || "untitled story"}"?`, goes: fabulaStoryGoes(state, rec),
+      onConfirm: () => {
+        deleteStory(rec.id);
+        setStoryDraft(null); initialStoryDraftRef.current = null;
+        setActiveStoryId(null);
+      },
+    });
   };
 
   // The Story tab's folds belong to the browser, one set for every story
@@ -14522,15 +14493,21 @@ function App() {
     const rec = fabulaRecordOf(activeRecord.kind, activeRecord.id);
     if (!rec) return;
     if (fabulaOutlineHolding(state, activeRecord.kind, rec).length > 0) { setFabulaHoldsAsk({ kind: activeRecord.kind, id: rec.id }); return; }
-    if (!confirm(fabulaRecordDeleteMessage(state, activeRecord.kind, rec))) return;
-    finishFabulaDelete(activeRecord.kind, rec, false);
+    const kind = activeRecord.kind;
+    askRecordDelete({
+      state, ids: [rec.id], title: `Delete the ${FABULA_NOUNS[kind].one} "${rec.name || "untitled"}"?`,
+      onConfirm: () => finishFabulaDelete(kind, rec, false),
+    });
   };
 
+  // v1.7 r042: what went is cleared everywhere the index reads; Fabula's
+  // records are gone by then, which costs nothing, since a pin's name comes
+  // from an entry or a body.
   const finishFabulaDelete = (kind, rec, lift) => {
     if (isLocked) return;
     updateState(s => {
       const { fab, gone } = fabulaOutlineDelete(s.fabula || {}, kind, rec, lift);
-      return { ...s, fabula: scrubFabulaRefs({ ...s, fabula: fab }, gone) };
+      return clearLinksTo({ ...s, fabula: fab }, gone);
     });
     setFabulaHoldsAsk(null);
     setRecordDraft(null); initialRecordDraftRef.current = null;
@@ -14687,19 +14664,24 @@ function App() {
     }
   };
 
+  // v1.7 r042: the delete modal asks, counting what links to the entry, in
+  // place of the bare prompt, and the delete clears those links everywhere
+  // the index reads (clearLinksTo); a cast record whose character it was
+  // stays, marked (v1.7 r009).
   const deleteEntry = () => {
     if (!activeEntryId) return;
-    if (!confirm(`Delete "${activeEntry?.name}"?`)) return;
-    updateState(s => {
-      const deletedIds = new Set([activeEntryId]);
-      const remaining = s.entries.filter(e => e.id !== activeEntryId);
-      // v1.7 r009: Fabula's references to it go too, and a cast record whose
-      // character it was stays, marked (spec, section 9).
-      const names = new Map([[activeEntryId, activeEntry ? activeEntry.name : ""]]);
-      return { ...s, entries: scrubEntryRefs(remaining, s.templates, deletedIds), fabula: scrubFabulaRefs(s, deletedIds, names) };
+    const id = activeEntryId;
+    askRecordDelete({
+      state, ids: [id], title: `Delete "${activeEntry?.name}"?`,
+      onConfirm: () => {
+        updateState(s => {
+          const cleared = clearLinksTo(s, new Set([id]));
+          return { ...cleared, entries: cleared.entries.filter(e => e.id !== id) };
+        });
+        setActiveEntryId(null); clearDraftAndStorage(); setView("list");
+        flash("Deleted");
+      },
     });
-    setActiveEntryId(null); clearDraftAndStorage(); setView("list");
-    flash("Deleted");
   };
 
   // In-place edit of a calendar-date or calendar-date-range field on an entry.
@@ -15271,27 +15253,23 @@ function App() {
     const msg = count > 0
       ? `Delete template "${activeTemplate.name}" and its ${count} ${count === 1 ? "entry" : "entries"}?`
       : `Delete template "${activeTemplate.name}"?`;
-    if (!confirm(msg)) return;
-    updateState(s => {
-      const deletedEntryIds = new Set(
-        s.entries.filter(e => e.templateId === activeTemplateId).map(e => e.id)
-      );
-      const remainingTemplates = s.templates.filter(t => t.id !== activeTemplateId);
-      const remainingEntries = s.entries.filter(e => e.templateId !== activeTemplateId);
-      // v1.7 r009: Fabula's references to its entries go too (spec, section 9).
-      const names = new Map(s.entries.filter(e => deletedEntryIds.has(e.id)).map(e => [e.id, e.name]));
-      return {
-        ...s,
-        templates: remainingTemplates,
-        entries: scrubEntryRefs(remainingEntries, remainingTemplates, deletedEntryIds),
-        fabula: scrubFabulaRefs(s, deletedEntryIds, names),
-      };
+    // v1.7 r042: the delete modal asks, counting what links to its entries,
+    // and the delete clears those links everywhere the index reads.
+    const tid = activeTemplateId;
+    askRecordDelete({
+      state, ids: state.entries.filter(e => e.templateId === tid).map(e => e.id), title: msg,
+      onConfirm: () => {
+        updateState(s => {
+          const cleared = clearLinksTo(s, new Set(s.entries.filter(e => e.templateId === tid).map(e => e.id)));
+          return { ...cleared, templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
+        });
+        setActiveTemplateId(null); clearDraftAndStorage();
+        // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section
+        // of Fabula's index, which then offers Restore.
+        if (fabRole) landOnFabulaSection(fabRole); else setView("home");
+        flash("Template deleted");
+      },
     });
-    setActiveTemplateId(null); clearDraftAndStorage();
-    // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section of
-    // Fabula's index, which then offers Restore.
-    if (fabRole) landOnFabulaSection(fabRole); else setView("home");
-    flash("Template deleted");
   };
 
   // ── Pack handlers (v1.5) ─────────────────────────────────────────────────────
@@ -15942,15 +15920,13 @@ function App() {
   const deleteStemma = (stemmaId) => {
     if (isLocked) return;
     // v1.7 r027: a stemma is a reference target, so its delete clears the
-    // references to it from every entry's fields and from Fabula's records,
-    // as a map's and a body's do; the index's confirmation counts them first
-    // (stemmaDeleteMessage). Linked nodes in other stemmas orphan.
-    updateState(s => ({
-      ...s,
-      stemmas: (s.stemmas || []).filter(st => st.id !== stemmaId),
-      entries: scrubEntryRefs(s.entries, s.templates, new Set([stemmaId])),
-      fabula: scrubFabulaRefs(s, new Set([stemmaId])),
-    }));
+    // references to it, and since r042 every stored link the index reads
+    // (clearLinksTo), which the delete modal counts first. Linked nodes in
+    // other stemmas orphan.
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([stemmaId]));
+      return { ...cleared, stemmas: (cleared.stemmas || []).filter(st => st.id !== stemmaId) };
+    });
     // v1.7 r029: a tabula's remembered views go with it
     const gone = (state.stemmas || []).find(st => st.id === stemmaId);
     if (gone && gone.layout === "tabula") {
@@ -16930,7 +16906,7 @@ function App() {
               {view === "cartographia" && activeMapId && !mapDraft && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = (state.cartographia || []).find(m => m.id === activeMapId);
-                  if (rec && confirm(mapDeleteMessage(rec, state))) deleteMap(activeMapId);
+                  if (rec) askRecordDelete({ state, ids: [rec.id], title: `Delete map "${rec.name}"?`, onConfirm: () => deleteMap(rec.id) });
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
@@ -16965,7 +16941,12 @@ function App() {
               {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
-                  if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
+                  const n = rec && Array.isArray(rec.storyIds) ? rec.storyIds.length : 0;
+                  if (rec) askRecordDelete({
+                    state, ids: [rec.id], title: `Delete the corpus "${rec.name || "this corpus"}"?`,
+                    goes: n === 0 ? null : `Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`,
+                    onConfirm: () => deleteCorpus(rec.id),
+                  });
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editCorpus}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back</button>
@@ -17679,6 +17660,8 @@ function App() {
           />
         );
       })()}
+
+      <RecordDeleteModal />
 
       {destructiveOp && (
         <DestructiveOpModal
@@ -18996,13 +18979,18 @@ const REFERENCED_BY_LISTED = {
 // color, rows }], each row { src, labels, place, story }.
 const referencedByGroups = (state, targetId, showSecrets, exclude) => {
   const rows = new Map();
-  linksTo(state, targetId).forEach(l => {
-    if (l.secret && !showSecrets) return;
-    if (exclude && l.src.kind === "fabula" && exclude.some(([kind, field]) => kind === l.src.group && field === l.field)) return;
-    let r = rows.get(l.src.id);
-    if (!r) { r = { src: l.src, labels: [] }; rows.set(l.src.id, r); }
+  const shown = linksTo(state, targetId).filter(l => !(l.secret && !showSecrets)
+    && !(exclude && l.src.kind === "fabula" && exclude.some(([kind, field]) => kind === l.src.group && field === l.field)));
+  shown.forEach(l => { if (!rows.has(l.src.id)) rows.set(l.src.id, { src: l.src, labels: [] }); });
+  // A row names the fields of its stored links first, then those of its
+  // [[links]], each in its record's order, as at r041; since r042 the index
+  // keeps a record's links in one list in its record's order, for
+  // Concordance's labels.
+  [false, true].forEach(wiki => shown.forEach(l => {
+    if ((l.kind === "wiki") !== wiki) return;
+    const r = rows.get(l.src.id);
     if (l.label && !r.labels.includes(l.label)) r.labels.push(l.label);
-  });
+  }));
   if (rows.size === 0) return [];
   const fab = (state && state.fabula) || {};
   const storyNames = new Map((Array.isArray(fab.stories) ? fab.stories : []).filter(st => st && st.id).map(st => [st.id, st.name || "(untitled story)"]));
@@ -23000,12 +22988,6 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     // entry->body / body->body edges.
     const idSet = new Set([...ents.map(e => e.id), ...regNodes.map(n => n.id)]);
 
-    // Name → id lookup for resolving wiki-links (lowercase, exact-match).
-    // Entries first, then registered nodes (first writer wins on collision).
-    const nameToId = {};
-    ents.forEach(e => { nameToId[e.name.trim().toLowerCase()] = e.id; });
-    regNodes.forEach(n => { const k = (n.name || "").trim().toLowerCase(); if (k && !(k in nameToId)) nameToId[k] = n.id; });
-
     const nodes = [
       ...ents.map(e => ({
         id: e.id,
@@ -23034,60 +23016,42 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       links.push({ source: sourceId, target: targetId, label, kind });
     };
 
-    const wikiRe = /\[\[([^\]\n]+)\]\]/g;
-
-    ents.forEach(e => {
-      const tpl = tplById[e.templateId];
-      if (!tpl) return;
-
-      const walk = (fields, fieldValues) => {
-        fields.forEach(f => {
-          if (f.secret && !showSecrets) return;
-          const val = fieldValues[f.id];
-
-          if (f.type === "entry-ref") {
-            if (f.relationKind === "parent") {
-              // Field is on child, refs are parents. Reverse so arrow points parent → child (matches family tree).
-              const items = getRelationValues(val, f.multi);
-              items.forEach(({ id: rid, label }) => addLink(rid, e.id, (label && label.trim()) || f.label, "directed"));
-            } else if (f.relationKind === "spouse") {
-              const items = getRelationValues(val, f.multi);
-              items.forEach(({ id: rid, label }) => addLink(e.id, rid, (label && label.trim()) || f.label, "spouse"));
-            } else {
-              const refIds = f.multi ? (Array.isArray(val) ? val : []) : (val ? [val] : []);
-              refIds.forEach(rid => addLink(e.id, rid, f.label, "directed"));
-            }
-          } else if ((f.type === "textarea" || f.type === "text") && typeof val === "string" && val.length) {
-            // Scan for wiki-links, supporting [[target]] and [[target|custom label]]
-            let m;
-            wikiRe.lastIndex = 0;
-            while ((m = wikiRe.exec(val)) !== null) {
-              const inner = m[1].trim();
-              const pipe = inner.indexOf("|");
-              const targetName = pipe >= 0 ? inner.substring(0, pipe).trim() : inner;
-              const customLabel = pipe >= 0 ? inner.substring(pipe + 1).trim() : null;
-              const targetId = nameToId[targetName.toLowerCase()];
-              if (targetId) addLink(e.id, targetId, customLabel || f.label);
-            }
-          } else if (f.type === "group" && Array.isArray(val)) {
-            val.forEach(inst => walk(f.subfields || [], inst));
-          } else if (f.type === "grid") {
-            // Grid cells that are entry-refs produce directed edges, labeled
-            // by the grid field. (Family roles live on relationKind fields, not
-            // cells, so grid cells never feed Linea — only this general graph.)
-            forEachGridRefCell(coerceGridValue(val), (rid, cid, cell) => {
-              if (typeof cell.value === "string" && cell.value) addLink(e.id, cell.value, f.label, "directed");
-            });
-          }
-        });
-      };
-      walk(tpl.fields, e.fields || {});
+    // v1.7 r042: every link from the index (docs/pipes-spec.md, section 4,
+    // with Drak's calls at the cut). Entries' links as the scan here drew
+    // them, a parent declaration parent to child and a spouse's both ways,
+    // each by its field's own label or its own words, and the links the scan
+    // never read: Fabula's fields at any depth, bodies' and ConLangs'
+    // reference fields, and the [[links]] outside entries. [[links]] resolve
+    // by the entry view's rules, as the index reads them (Drak's call 2), so
+    // until r043 one to a map, a stemma, or a Fabula or Glossopoeia record
+    // draws no edge, and a name two entries share goes to the first. The
+    // labels stay Concordance's own: a pin's 📍, a stemma's "links", and a
+    // corpus's "includes". A ConLang's Variety Of and Descended From stay the
+    // registry's edges, parent to child.
+    linkIndexOf(state).byTarget.forEach((list, target) => {
+      if (!idSet.has(target)) return;
+      list.forEach(l => {
+        const src = l.src;
+        if (!idSet.has(src.id)) return;
+        if (l.secret && !showSecrets) return;
+        if (src.kind === "conlang" && (l.field === "varietyOf" || l.field === "descendedFrom")) return;
+        const own = l.text || l.leaf;
+        if (l.rel === "parent") { addLink(target, src.id, own, "directed"); return; }
+        if (l.rel === "spouse") { addLink(src.id, target, own, "spouse"); return; }
+        let label = own;
+        if (src.kind === "stemma") label = "links";
+        else if (src.kind === "map" && l.field === "pins") label = l.text ? `📍 ${l.text}` : "📍 pin";
+        else if (src.kind === "fabula" && l.field === "storyIds") label = "includes";
+        addLink(src.id, target, label, "directed");
+      });
     });
 
-    // v1.5 r076: registered intra-source edges (e.g. body orbital hierarchy,
-    // star -> planet -> moon). Fed through addLink so they dedup and respect
-    // the now body-inclusive idSet — orbits edges only draw when the body
-    // source is toggled on, since toggled-off bodies aren't in idSet.
+    // v1.5 r076: registered intra-source edges, the relations that aren't
+    // links the index reads: a body's orbit (star -> planet -> moon), a
+    // language's dialects and descent, and Glossopoeia's words, sounds, and
+    // grammar. Fed through addLink so they dedup and respect the
+    // body-inclusive idSet: orbits edges only draw when the body source is
+    // toggled on, since toggled-off bodies aren't in idSet.
     getRegisteredGraphEdges(state).forEach(ed => addLink(ed.source, ed.target, ed.label, ed.kind || "directed"));
 
     // Post-process: merge same-direction same-kind edges between the same
@@ -23178,7 +23142,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     }
 
     return { nodes, links, perTemplateCount };
-  }, [state.entries, state.templates, state.celestialBodies, enabledTemplates, showSecrets, focusEntryId, focusDepth]);
+  }, [state.entries, state.templates, state.celestialBodies, state.fabula, state.cartographia, state.stemmas, state.glossopoeia, enabledTemplates, showSecrets, focusEntryId, focusDepth]);
 
   // Set up d3 force simulation
   useEffect(() => {
@@ -29164,16 +29128,6 @@ function MapStampsPanel({ state, isLocked, onChange, flash }) {
   );
 }
 
-// v1.7 r003: a map's delete confirmation, counting the entries that reference
-// it, as a body's delete does; deleteMap clears those references.
-const mapDeleteMessage = (rec, state) => {
-  const n = countInboundEntryRefs(state.entries, state.templates, rec.id);
-  const refs = n === 0 ? ""
-    : n === 1 ? " Referenced by 1 entry. Deleting this map removes that reference; the entry stays intact."
-    : ` Referenced by ${n} entries. Deleting this map removes those references; the entries stay intact.`;
-  return `Delete map "${rec.name}"?${refs} This cannot be undone.`;
-};
-
 function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, onStampsChange, flash }) {
   const maps = (Array.isArray(state.cartographia) ? state.cartographia : [])
     .slice()
@@ -29272,9 +29226,7 @@ function CartographiaIndexView({ state, isLocked, onOpen, onCreate, onDelete, on
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(mapDeleteMessage(rec, state))) {
-                          onDelete(rec.id);
-                        }
+                        askRecordDelete({ state, ids: [rec.id], title: `Delete map "${rec.name}"?`, onConfirm: () => onDelete(rec.id) });
                       }}
                       title="Delete this map"
                     >Delete</button>
@@ -31913,22 +31865,6 @@ const countStemmaDescendants = (node) => {
   return node.children.reduce((acc, c) => acc + 1 + countStemmaDescendants(c), 0);
 };
 
-// The ids every linked node of a document points at, each once (v1.7 r027).
-// The registry's stemma source reads it for Concordance's edges, and the
-// delete message for the nodes elsewhere that would orphan. Walks the radial
-// tree, or a board's items (r029).
-const stemmaLinkedTargets = (stemma) => {
-  const out = new Set();
-  const walk = (node) => {
-    if (!node) return;
-    if (node.type === "linked" && node.entryId) out.add(node.entryId);
-    (node.children || []).forEach(walk);
-  };
-  if (stemma && stemma.layout === "tabula") tabulaWalk(stemma.root, (it) => { if (it.type === "linked" && it.entryId) out.add(it.entryId); });
-  else walk(stemma && stemma.root);
-  return out;
-};
-
 // A registered source's label for a picker's hit or the inspector: the
 // source's own label where it has one (a Fabula kind's), else its name.
 const stemmaSourceLabel = (sourceId) => {
@@ -31945,22 +31881,6 @@ const stemmaTargetOpens = (record) => {
   if (!record.synthetic) return true;
   const t = record.templateId;
   return t === SYNTH_TPL_MAP || t === BODY_REF_SENTINEL || t === SYNTH_TPL_STEMMA || fabulaRecordOpens(t);
-};
-
-// The index's delete confirmation (v1.7 r027), the map's pattern: it counts
-// the references to the stemma from entries and from Fabula's records, which
-// the delete clears, and the linked nodes in other stemmas, which orphan.
-const stemmaDeleteMessage = (stemma, state) => {
-  const entries = countInboundEntryRefs(state.entries, state.templates, stemma.id);
-  const fab = fabulaInboundCounts(state, stemma.id).reduce((n, [, c]) => n + c, 0);
-  const nodes = (state.stemmas || []).reduce((n, s) => (s && s.id !== stemma.id && stemmaLinkedTargets(s).has(stemma.id) ? n + 1 : n), 0);
-  const parts = [];
-  if (entries > 0) parts.push(`${entries} ${entries === 1 ? "entry" : "entries"}`);
-  if (fab > 0) parts.push(`${fab} Fabula ${fab === 1 ? "record" : "records"}`);
-  let refs = "";
-  if (parts.length > 0) refs += ` Referenced by ${parts.join(" and ")}. Deleting this stemma removes ${entries + fab === 1 ? "that reference" : "those references"}; ${entries + fab === 1 ? "the record stays" : "the records stay"} intact.`;
-  if (nodes > 0) refs += ` ${nodes} other ${nodes === 1 ? "stemma links" : "stemmas link"} to it; ${nodes === 1 ? "its node becomes an orphan" : "their nodes become orphans"}.`;
-  return `Delete stemma "${stemma.name}"?${refs} This cannot be undone.`;
 };
 
 // Render a single stemma node — focal or child, freeform or linked. Resolves
@@ -33676,9 +33596,7 @@ function StemmaIndexView({ state, isLocked, onOpen, onCreate, onImport, onExport
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(stemmaDeleteMessage(s, state))) {
-                          onDelete(s.id);
-                        }
+                        askRecordDelete({ state, ids: [s.id], title: `Delete stemma "${s.name}"?`, onConfirm: () => onDelete(s.id) });
                       }}
                       title="Delete this stemma"
                     >Delete</button>
@@ -36601,31 +36519,15 @@ const NODE_SOURCE_REGISTRY = [
         .filter(m => m && m.id)
         .map(m => ({ id: m.id, name: (m.name || "Untitled Map"), kind: "map" })),
     getColor: () => "#7ec8c8",
-    // Outbound pin edges: for each pin with a target entry, map -> entry, with
-    // the same 📍-prefixed label rule the kind:"map" entry walk used in v1.5.
-    // A field that references a map adds its own edge into the map, from the
-    // field walk in Concordance.
-    getEdges: (state) => {
-      const maps = Array.isArray(state.cartographia) ? state.cartographia : [];
-      const edges = [];
-      maps.forEach(m => {
-        const pins = (m && m.mapData && Array.isArray(m.mapData.pins)) ? m.mapData.pins : [];
-        pins.forEach(pin => {
-          if (pin && pin.entryId) {
-            const label = (pin.label && pin.label.trim()) ? `\ud83d\udccd ${pin.label}` : "\ud83d\udccd pin";
-            edges.push({ source: m.id, target: pin.entryId, label, kind: "directed" });
-          }
-        });
-      });
-      return edges;
-    },
+    // Its pins are links the link index reads (v1.7 r041), and Concordance
+    // draws them from there since r042, as it does a field's link to a map.
   },
   // v1.7 r027: stemmas, both layouts (docs/stemma-v2-spec.md, section 5).
   // Eligible on purpose, as maps are: a field can point at a stemma, a linked
   // node in another stemma can, and Fabula's Brainstorm field will (r028).
-  // The kind is the document's layout. The edges run from the document to
-  // every record its linked nodes point at, one per target: Concordance
-  // draws them, and Pipes' backlinks will read them as the stemma's mentions.
+  // The kind is the document's layout. Its linked nodes, cards, and notes are
+  // links the link index reads (v1.7 r041), and Concordance draws them from
+  // there since r042.
   {
     id: SYNTH_TPL_STEMMA,
     name: STEMMA_REF_LABEL,
@@ -36637,22 +36539,13 @@ const NODE_SOURCE_REGISTRY = [
         .filter(s => s && s.id)
         .map(s => ({ id: s.id, name: (s.name || "Untitled Stemma"), kind: s.layout === "tabula" ? "tabula" : "rota" })),
     getColor: () => "#c8a96e",
-    getEdges: (state) => {
-      const edges = [];
-      (Array.isArray(state.stemmas) ? state.stemmas : []).forEach(s => {
-        if (!s || !s.id) return;
-        stemmaLinkedTargets(s).forEach(target => {
-          if (target !== s.id) edges.push({ source: s.id, target, label: "links", kind: "directed" });
-        });
-      });
-      return edges;
-    },
   },
   // v1.7 r007: Fabula's record kinds (FABULA_KINDS), one source each. Not
   // eligible: no template's field can point at one, and the template builder
   // offers eligible sources only. group puts all eleven behind one toggle in
-  // Concordance's filter, named by groupName. Their records and edges are read
-  // beside Fabula's view (fabulaRegistryInstances, fabulaRegistryEdges).
+  // Concordance's filter, named by groupName. Their records are read beside
+  // Fabula's view (fabulaRegistryInstances), and their links by the link
+  // index, which Concordance draws from since v1.7's r042.
   ...FABULA_KINDS.map(k => ({
     id: k.id,
     name: k.name,
@@ -36664,7 +36557,6 @@ const NODE_SOURCE_REGISTRY = [
     groupName: "Fabula",
     getInstances: (state) => fabulaRegistryInstances(state, k),
     getColor: () => k.color,
-    getEdges: (state) => fabulaRegistryEdges(state, k),
   })),
 ];
 
@@ -36760,7 +36652,10 @@ const getRegisteredNameToId = (state) => {
 // record, or the schema it's read through, changes (Drak's call 3), and the
 // index is put together again from what's kept when anything changes, when a
 // page first asks for it (linksTo). A record's link to itself doesn't count,
-// and a scene's belonging to its story isn't a link.
+// and a scene's belonging to its story isn't a link. Since r042 a link also
+// carries a parent or spouse declaration's relation, its field's own label,
+// and its own words, for Concordance, which draws from the index too, and a
+// delete counts and clears through it (linkDeleteCounts, clearLinksTo).
 
 // The world description as a source: its row in Referenced by opens the
 // Project page, where the description is drawn (Drak's call 2).
@@ -36808,10 +36703,22 @@ const wikiNameResolver = (entries, templates, bodies) => {
   return resolve;
 };
 
+// A link as the index keeps it, made once when its record is read (r042): the
+// record it's in (src); what it points at (to), a stored link's id or a
+// [[link]]'s name, trimmed and lowercased, for the name resolver; its kind,
+// "ref" or "wiki"; the field it runs through, by the top-level field's id,
+// which a page's own list is matched by (field), and by label, a group's
+// subfield under its group (label) and alone (leaf); whether that field is
+// secret; a parent or spouse declaration's relation (rel); and the link's own
+// words (text): a declaration's label, a [[link|shown]]'s shown part, or a
+// pin's label. The index hands these out as they are.
+const linkPush = (x, to, kind, field, label, leaf, secret, rel, text) => {
+  x.links.push({ src: x.src, to, kind, field, label, leaf, secret, rel: rel || null, text: text || null });
+};
+
 // The [[links]] in a text, each by its target's name, trimmed and lowercased,
-// pushed onto x.wiki as [name, field, label, secret]; [[target|shown]] by its
-// target, as the entry view reads it.
-const linkWikiNames = (text, fid, label, secret, x) => {
+// [[target|shown]] by its target, as the entry view reads it.
+const linkWikiNames = (text, fid, label, leaf, secret, x) => {
   if (typeof text !== "string" || text.indexOf("[[") < 0) return;
   const re = /\[\[([^\]\n]+)\]\]/g;
   let m;
@@ -36819,15 +36726,14 @@ const linkWikiNames = (text, fid, label, secret, x) => {
     const inner = m[1].trim();
     const pipe = inner.indexOf("|");
     const name = (pipe >= 0 ? inner.substring(0, pipe) : inner).trim().toLowerCase();
-    if (name) x.wiki.push(name, fid, label, secret);
+    if (name) linkPush(x, name, "wiki", fid, label, leaf, secret, null, pipe >= 0 ? inner.substring(pipe + 1).trim() : null);
   }
 };
 
-// A record's links through a template's fields: a reference's ids onto
-// x.stored and the [[links]] in Short Text and Long Text onto x.wiki, each as
-// [what, field, label, secret], down through groups (a subfield labeled under
-// its group, and secret when either is) and a grid's reference cells. field
-// is the top-level field's id, which a page's own list is matched by.
+// A record's links through a template's fields: a reference's ids and the
+// [[links]] in Short Text and Long Text, down through groups (a subfield
+// labeled under its group, and secret when either is) and a grid's reference
+// cells. A parent or spouse declaration keeps its relation and its label.
 const linkFieldWalk = (fields, values, x, up) => {
   if (!values || typeof values !== "object") return;
   (Array.isArray(fields) ? fields : []).forEach(f => {
@@ -36835,32 +36741,36 @@ const linkFieldWalk = (fields, values, x, up) => {
     const v = values[f.id];
     if (v == null || v === "") return;
     const fid = up ? up.fid : f.id;
-    const label = up ? `${up.label} › ${f.label || ""}` : (f.label || "");
+    const leaf = f.label || "";
+    const label = up ? `${up.label} › ${leaf}` : leaf;
     const secret = (up ? up.secret : false) || !!f.secret;
     if (f.type === "entry-ref") {
+      const rel = f.relationKind === "parent" || f.relationKind === "spouse" ? f.relationKind : null;
       (Array.isArray(v) ? v : [v]).forEach(it => {
         const id = typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null);
-        if (typeof id === "string" && id) x.stored.push(id, fid, label, secret);
+        if (typeof id !== "string" || !id) return;
+        const said = rel && it && typeof it === "object" && typeof it.label === "string" ? it.label.trim() : null;
+        linkPush(x, id, "ref", fid, label, leaf, secret, rel, said);
       });
     } else if (f.type === "text" || f.type === "textarea") {
-      linkWikiNames(v, fid, label, secret, x);
+      linkWikiNames(v, fid, label, leaf, secret, x);
     } else if (f.type === "group" && Array.isArray(v)) {
       v.forEach(inst => linkFieldWalk(f.subfields, inst, x, { fid, label, secret }));
     } else if (f.type === "grid") {
       forEachGridRefCell(coerceGridValue(v), (rid, cid, cell) => {
-        if (typeof cell.value === "string" && cell.value) x.stored.push(cell.value, fid, label, secret);
+        if (typeof cell.value === "string" && cell.value) linkPush(x, cell.value, "ref", fid, label, leaf, secret, null, null);
       });
     }
   });
 };
 
-// One record's links, read by read(x) into x.src, x.stored, and x.wiki, or
-// kept from an earlier build when the record and what it was read through
-// (deps) are the same objects.
+// One record's links, read by read(x) into x.src and x.links, or kept from
+// an earlier build when the record and what it was read through (deps) are
+// the same objects.
 const linkRecordLinks = (rec, deps, read) => {
   const hit = LINK_INDEX_MEMO.records.get(rec);
   if (hit && hit.deps === deps) return hit;
-  const x = { deps, src: null, stored: [], wiki: [] };
+  const x = { deps, src: null, links: [] };
   read(x);
   LINK_INDEX_MEMO.records.set(rec, x);
   return x;
@@ -36882,11 +36792,11 @@ const linkKindFields = (state, kind) => {
   return fields;
 };
 
-// The index, { byTarget }: each target's links as { src, field, label,
-// secret, kind }, kind "ref" or "wiki", and src the source as { id, kind,
-// group, name, storyId }, its kind entry, fabula, map, stemma, body, conlang,
-// or world, and its group its template, its Fabula kind, or its kind again.
-// Put together again only when a slice it reads has changed.
+// The index, { byTarget }: each target's links as linkPush makes them, src
+// the source as { id, kind, group, name, storyId }, its kind entry, fabula,
+// map, stemma, body, conlang, or world, and its group its template, its
+// Fabula kind, or its kind again. Put together again only when a slice it
+// reads has changed.
 const linkIndexOf = (state) => {
   const st = state || {};
   const fab = st.fabula || {};
@@ -36897,16 +36807,18 @@ const linkIndexOf = (state) => {
   if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
   const resolve = wikiNameResolver(st.entries, st.templates, st.celestialBodies);
   const byTarget = new Map();
-  const put = (target, src, field, label, secret, kind) => {
-    if (typeof target !== "string" || !target || target === src.id) return;
-    let links = byTarget.get(target);
-    if (!links) { links = []; byTarget.set(target, links); }
-    links.push({ src, field, label, secret, kind });
-  };
+  // A kept link goes into its target's list as it is; a [[link]]'s target is
+  // found by name at every build, since names change without the link.
   const add = (x) => {
-    const s = x.stored, w = x.wiki;
-    for (let i = 0; i < s.length; i += 4) put(s[i], x.src, s[i + 1], s[i + 2], s[i + 3], "ref");
-    for (let i = 0; i < w.length; i += 4) put(resolve(w[i]), x.src, w[i + 1], w[i + 2], w[i + 3], "wiki");
+    const ls = x.links;
+    for (let i = 0; i < ls.length; i++) {
+      const l = ls[i];
+      const target = l.kind === "wiki" ? resolve(l.to) : l.to;
+      if (typeof target !== "string" || !target || target === l.src.id) continue;
+      let list = byTarget.get(target);
+      if (!list) { list = []; byTarget.set(target, list); }
+      list.push(l);
+    }
   };
   // Entries, through their templates.
   const tplById = new Map((Array.isArray(st.templates) ? st.templates : []).filter(t => t && t.id).map(t => [t.id, t]));
@@ -36929,24 +36841,25 @@ const linkIndexOf = (state) => {
         x.src = { id: r.id, kind: "fabula", group: k.kind, name: r.name || "", storyId: k.kind === "corpus" || k.kind === "story" ? null : (r.storyId || null) };
         linkFieldWalk(fields, r.fields, x, null);
         if (k.kind === "corpus" && Array.isArray(r.storyIds)) {
-          r.storyIds.forEach(id => { if (typeof id === "string" && id) x.stored.push(id, "storyIds", "Reading order", false); });
+          r.storyIds.forEach(id => { if (typeof id === "string" && id) linkPush(x, id, "ref", "storyIds", "Reading order", "Reading order", false, null, null); });
         }
       }));
     });
   });
-  // Maps: their three fields and their pins.
+  // Maps: their pins, then their three fields, so in Concordance a pin's
+  // label leads its edge's, as when the registry drew the pins alone (r042).
   if (!memo.mapFields) memo.mapFields = cartographiaMapSchema().fields;
   (Array.isArray(st.cartographia) ? st.cartographia : []).forEach(m => {
     if (!m || !m.id) return;
     add(linkRecordLinks(m, memo.mapFields, (x) => {
       x.src = { id: m.id, kind: "map", group: "map", name: m.name || "", storyId: null };
-      linkFieldWalk(memo.mapFields, m.fields, x, null);
       const pins = m.mapData && Array.isArray(m.mapData.pins) ? m.mapData.pins : [];
       pins.forEach(pin => {
         if (!pin || typeof pin.entryId !== "string" || !pin.entryId) return;
         const named = typeof pin.label === "string" ? pin.label.trim() : "";
-        x.stored.push(pin.entryId, "pins", named ? `Pin: ${named}` : "Pin", false);
+        linkPush(x, pin.entryId, "ref", "pins", named ? `Pin: ${named}` : "Pin", "Pin", false, null, named);
       });
+      linkFieldWalk(memo.mapFields, m.fields, x, null);
     }));
   });
   // Stemmas: a rota's linked nodes, a tabula's linked cards and notes.
@@ -36956,13 +36869,13 @@ const linkIndexOf = (state) => {
       x.src = { id: s.id, kind: "stemma", group: "stemma", name: s.name || "", storyId: null };
       if (s.layout === "tabula") {
         tabulaWalk(s.root, (it) => {
-          if (it.type === "linked" && typeof it.entryId === "string" && it.entryId) x.stored.push(it.entryId, "card", "card", false);
-          else if (it.type === "note") linkWikiNames(it.body, "note", "note", false, x);
+          if (it.type === "linked" && typeof it.entryId === "string" && it.entryId) linkPush(x, it.entryId, "ref", "card", "card", "card", false, null, null);
+          else if (it.type === "note") linkWikiNames(it.body, "note", "note", "note", false, x);
         });
       } else {
         const walk = (node) => {
           if (!node) return;
-          if (node.type === "linked" && typeof node.entryId === "string" && node.entryId) x.stored.push(node.entryId, "node", "linked node", false);
+          if (node.type === "linked" && typeof node.entryId === "string" && node.entryId) linkPush(x, node.entryId, "ref", "node", "linked node", "linked node", false, null, null);
           (node.children || []).forEach(walk);
         };
         walk(s.root);
@@ -36978,11 +36891,11 @@ const linkIndexOf = (state) => {
       [["visibleFrom", "Visible From"], ["notableLocations", "Notable Locations"], ["inhabitedBy", "Inhabited By"], ["sacredTo", "Sacred to"]].forEach(([k, label]) => {
         (Array.isArray(b[k]) ? b[k] : []).forEach(it => {
           const id = typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null);
-          if (typeof id === "string" && id) x.stored.push(id, k, label, false);
+          if (typeof id === "string" && id) linkPush(x, id, "ref", k, label, label, false, null, null);
         });
       });
       [["physicalProperties", "Physical Properties"], ["climateConditions", "Climate / Conditions"], ["mythologicalSignificance", "Mythological Significance"], ["description", "Description"], ["history", "History"], ["notes", "Notes"]]
-        .forEach(([k, label]) => linkWikiNames(b[k], k, label, false, x));
+        .forEach(([k, label]) => linkWikiNames(b[k], k, label, label, false, x));
     }));
   });
   // ConLangs, through the ConLang schema's reference fields.
@@ -36999,8 +36912,8 @@ const linkIndexOf = (state) => {
   }
   // The world description.
   if (desc) {
-    const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, stored: [], wiki: [] };
-    linkWikiNames(desc, "description", "", false, x);
+    const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, links: [] };
+    linkWikiNames(desc, "description", "", "", false, x);
     add(x);
   }
   memo.keys = keys;
@@ -37010,6 +36923,109 @@ const linkIndexOf = (state) => {
 
 // What links to one record: its links in the index, or none.
 const linksTo = (state, id) => (typeof id === "string" && id ? (linkIndexOf(state).byTarget.get(id) || []) : []);
+
+// What a delete of the records in ids reaches, from the index (r042, Drak's
+// call 1 at the cut), counting only links from records outside going (ids,
+// unless a delete counts part of what goes, as the holding modal does): the
+// records whose stored links to them it clears, by kind (refs: entry,
+// fabula:<kind>, body, or conlang, each a set of source ids); the map pins it
+// unlinks, those with a label (pins) and those without (pinsBare); the stemma
+// nodes and cards it leaves orphaned and the stemmas they're in; and the
+// places whose [[links]] to them stay as typed, broken (wiki) or, where
+// another record answers to the name once what goes is gone, leading there
+// (wikiMoved). A link through a secret field counts, since the delete clears
+// it either way.
+const linkDeleteCounts = (state, ids, going) => {
+  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set() };
+  const list = Array.isArray(ids) ? ids : [...(ids || [])];
+  const outside = going instanceof Set ? going : new Set(list);
+  // The names as they'll resolve after the delete, put together once, when
+  // a [[link]] asks, and without taking the index's own resolver's place.
+  let after = null;
+  const resolvesAfter = (name) => {
+    if (!after) {
+      const st = state || {};
+      const kept = LINK_INDEX_MEMO.names;
+      after = wikiNameResolver(
+        (Array.isArray(st.entries) ? st.entries : []).filter(e => !(e && outside.has(e.id))),
+        st.templates,
+        (Array.isArray(st.celestialBodies) ? st.celestialBodies : []).filter(b => !(b && outside.has(b.id))));
+      LINK_INDEX_MEMO.names = kept;
+    }
+    return after(name);
+  };
+  list.forEach(id => linksTo(state, id).forEach(l => {
+    if (outside.has(l.src.id)) return;
+    if (l.kind === "wiki") { (resolvesAfter(l.to) ? out.wikiMoved : out.wiki).add(l.src.id); return; }
+    if (l.src.kind === "stemma") { out.stemmas.add(l.src.id); if (l.field === "card") out.cards += 1; else out.nodes += 1; return; }
+    if (l.src.kind === "map") { if (l.text) out.pins += 1; else out.pinsBare += 1; return; }
+    const key = l.src.kind === "fabula" ? `fabula:${l.src.group}` : l.src.kind;
+    if (!out.refs.has(key)) out.refs.set(key, new Set());
+    out.refs.get(key).add(l.src.id);
+  }));
+  return out;
+};
+
+// The world without the stored links into ids, as every delete leaves it
+// (r042, Drak's call 1 at the cut): entries', Fabula records', bodies', and
+// ConLangs' references cleared, a cast record whose character goes kept and
+// marked (scrubFabulaRefs), and a corpus's reading order without them; a map
+// pin unlinked, keeping its label or taking the record's name if it had
+// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them; and
+// [[links]] left as typed. A slice or a record it doesn't change keeps its
+// identity, so what's kept from the last build of the index stays kept. The
+// records themselves are the caller's to remove, after this, so their names
+// are still there to read.
+const clearLinksTo = (state, ids) => {
+  const going = ids instanceof Set ? ids : new Set(ids || []);
+  if (!state || going.size === 0) return state;
+  const keep = (was, now) => (now.length === was.length && now.every((x, i) => x === was[i]) ? was : now);
+  const names = new Map();
+  (Array.isArray(state.entries) ? state.entries : []).forEach(e => { if (e && going.has(e.id)) names.set(e.id, e.name || ""); });
+  if (names.size < going.size) getRegisteredGraphNodes(state).forEach(n => { if (going.has(n.id) && !names.has(n.id)) names.set(n.id, n.name || ""); });
+  const now = isoNow();
+  const ents = Array.isArray(state.entries) ? state.entries : [];
+  const next = { ...state, entries: keep(ents, scrubEntryRefs(ents, Array.isArray(state.templates) ? state.templates : [], going)) };
+  let fab = scrubFabulaRefs(state, going, names);
+  if (fab && Array.isArray(fab.corpora) && fab.corpora.some(c => c && Array.isArray(c.storyIds) && c.storyIds.some(id => going.has(id)))) {
+    fab = { ...fab, corpora: fab.corpora.map(c => (c && Array.isArray(c.storyIds) && c.storyIds.some(id => going.has(id)) ? { ...c, storyIds: c.storyIds.filter(id => !going.has(id)), updatedAt: now } : c)) };
+  }
+  next.fabula = fab;
+  const refId = (it) => (typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null));
+  if (Array.isArray(state.celestialBodies)) {
+    next.celestialBodies = keep(state.celestialBodies, state.celestialBodies.map(b => {
+      if (!b) return b;
+      let out = b;
+      ["visibleFrom", "notableLocations", "inhabitedBy", "sacredTo"].forEach(k => {
+        if (Array.isArray(b[k]) && b[k].some(it => going.has(refId(it)))) out = { ...out, [k]: b[k].filter(it => !going.has(refId(it))) };
+      });
+      return out;
+    }));
+  }
+  const glo = state.glossopoeia;
+  if (glo && Array.isArray(glo.conlangs) && glo.conlangs.length > 0) {
+    const tpl = { id: SYNTH_TPL_CONLANG, fields: linkKindFields(state, "conlang") };
+    const tagged = glo.conlangs.map(c => (c && typeof c === "object" ? { ...c, templateId: tpl.id } : { templateId: null }));
+    const scrubbed = scrubEntryRefs(tagged, [tpl], going);
+    if (scrubbed.some((c, i) => c !== tagged[i])) {
+      next.glossopoeia = { ...glo, conlangs: scrubbed.map((c, i) => {
+        if (c === tagged[i]) return glo.conlangs[i];
+        const { templateId, ...rest } = c;
+        return rest;
+      }) };
+    }
+  }
+  if (Array.isArray(state.cartographia)) {
+    next.cartographia = keep(state.cartographia, state.cartographia.map(m => {
+      const pins = m && m.mapData && Array.isArray(m.mapData.pins) ? m.mapData.pins : null;
+      if (!pins || !pins.some(p => p && going.has(p.entryId))) return m;
+      return { ...m, mapData: { ...m.mapData, pins: pins.map(p => (p && going.has(p.entryId)
+        ? { ...p, entryId: null, label: (typeof p.label === "string" && p.label.trim()) ? p.label : (names.get(p.entryId) || "") }
+        : p)) }, updatedAt: now };
+    }));
+  }
+  return next;
+};
 
 // ─── Glossopoeia (conlang core view, v1.5) ──────────────────────────────────
 // The ConLang container schema, built per-world so its entry-ref fields resolve
@@ -38114,6 +38130,15 @@ function glossGlossSentence(sentence, g, langId) {
 const GLOSS_LANG_ARRAYS = ["lexemes","phonemes","syllableStructures","stressPatterns","phonotacticConstraints","phonologicalRules","grammaticalValues","affixes","wordBuildingProcesses","inflectionClasses","pronounSets","phraseOrders","sentenceMarkings","constructions","relativizations","clauseLinkings","writingSystems","graphemes","spellingRules","corpusEntries"];
 const GLOSS_IMPORT_PREFIX = { conlangs:"lng", lexemes:"lex", phonemes:"phon", syllableStructures:"syl", stressPatterns:"str", phonotacticConstraints:"pcon", phonologicalRules:"prul", grammaticalValues:"gval", affixes:"afx", wordBuildingProcesses:"wbp", inflectionClasses:"infl", pronounSets:"pron", phraseOrders:"phro", sentenceMarkings:"snm", constructions:"con", relativizations:"rel", clauseLinkings:"cln", writingSystems:"wsy", graphemes:"grf", spellingRules:"spr", corpusEntries:"cor" };
 
+// A language's id and the ids of every record it holds (v1.7 r042), what
+// its delete takes with it, for the delete modal's count and clearLinksTo.
+const glossLangRecordIds = (state, langId) => {
+  const g = (state && state.glossopoeia) || {};
+  const ids = new Set([langId]);
+  GLOSS_LANG_ARRAYS.forEach(key => (Array.isArray(g[key]) ? g[key] : []).forEach(r => { if (r && r.langId === langId && r.id) ids.add(r.id); }));
+  return ids;
+};
+
 function exportConlangFile(state, langId, flash) {
   const g = state.glossopoeia || {};
   const conlang = (g.conlangs || []).find(c => c && c.id === langId);
@@ -38969,7 +38994,7 @@ function GlossEntityList({ records, schema, state, isLocked, onWrite, onCreate, 
             {!isLocked && (
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 8 }}>
                 <button className="btn btn-ghost btn-small" onClick={duplicate}>Duplicate</button>
-                <button className="btn btn-danger btn-small" onClick={() => { if (confirm(`Delete "${sel.name || ("this " + n)}"?`)) { onDelete(sel.id); setSelId(null); } }}>Delete</button>
+                <button className="btn btn-danger btn-small" onClick={() => { const rec = sel; askRecordDelete({ state, ids: [rec.id], title: `Delete "${rec.name || ("this " + n)}"?`, onConfirm: () => { onDelete(rec.id); setSelId(null); } }); }}>Delete</button>
               </div>
             )}
             <EntryForm draft={sel} template={schema} entries={state.entries} templates={state.templates} bodies={state.celestialBodies} registeredNodes={getRegisteredGraphNodes(state)} onChange={onWrite} showSecrets={true} imageFolder={state.world.imageFolder} allTags={[]} dirHandle={null} calendar={state.world.calendar} primaryCalendar={state.world.calendar} additionalCalendars={[]} selfEntryId={sel.id} flash={null} previewMode={false} ipaSymbols={ipaSymbols} />
@@ -39343,9 +39368,12 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
       return { ...s, glossopoeia: { ...gg, conlangs: [...list, rec], ui: { ...(gg.ui || {}), activeLangId: id, workspace: "overview" } } };
     });
   };
+  // v1.7 r042: each delete clears what links to what goes, everywhere the
+  // link index reads, before the records go (clearLinksTo).
   const deleteConlang = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, glossLangRecordIds(s0, id));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.conlangs) ? gg.conlangs : []).filter(c => c && c.id !== id);
       const next = { ...gg, conlangs: list };
@@ -39414,7 +39442,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
   };
   const deleteLexeme = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, new Set([id]));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.lexemes) ? gg.lexemes : []).filter(x => x && x.id !== id);
       return { ...s, glossopoeia: { ...gg, lexemes: list } };
@@ -39470,7 +39499,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
   };
   const deletePhoneme = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, new Set([id]));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.phonemes) ? gg.phonemes : []).filter(p => p && p.id !== id);
       return { ...s, glossopoeia: { ...gg, phonemes: list, ...glossScrubPhonemeRefs(gg, new Set([id])) } };
@@ -39507,7 +39537,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
     },
     del: (id) => {
       if (isLocked) return;
-      updateState(s => {
+      updateState(s0 => {
+        const s = clearLinksTo(s0, new Set([id]));
         const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
         const list = (Array.isArray(gg[arrayKey]) ? gg[arrayKey] : []).filter(x => x && x.id !== id);
         return { ...s, glossopoeia: { ...gg, [arrayKey]: list } };
@@ -39652,7 +39683,15 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
         {!isLocked && activeLang && (
           <button
             className="btn btn-danger btn-small"
-            onClick={() => { if (confirm(`Delete "${activeLang.name || "this language"}"? This removes the language and its Glossopoeia data.`)) deleteConlang(activeLang.id); }}
+            onClick={() => {
+              const lang = activeLang;
+              const words = ((state.glossopoeia && state.glossopoeia.lexemes) || []).filter(x => x && x.langId === lang.id).length;
+              askRecordDelete({
+                state, ids: [...glossLangRecordIds(state, lang.id)], title: `Delete "${lang.name || "this language"}"?`,
+                goes: words > 0 ? `Its ${words === 1 ? "word" : `${words} words`} and the rest of its Glossopoeia data go with it.` : "Its Glossopoeia data goes with it.",
+                onConfirm: () => deleteConlang(lang.id),
+              });
+            }}
           >Delete</button>
         )}
         {activeLang && (
@@ -39881,7 +39920,7 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
                           ) : <span />}
                           <div style={{ display: "flex", gap: 6 }}>
                             <button className="btn btn-ghost btn-small" onClick={dupLexeme}>Duplicate</button>
-                            <button className="btn btn-danger btn-small" onClick={() => { if (confirm(`Delete "${selectedLexeme.name || "this word"}"?`)) deleteLexeme(selectedLexeme.id); }}>Delete word</button>
+                            <button className="btn btn-danger btn-small" onClick={() => { const lx = selectedLexeme; askRecordDelete({ state, ids: [lx.id], title: `Delete "${lx.name || "this word"}"?`, onConfirm: () => deleteLexeme(lx.id) }); }}>Delete word</button>
                           </div>
                         </div>
                       )}
@@ -40539,7 +40578,11 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
   // event-keyed (not body-keyed), so it's untouched.
   const deleteBody = (bodyId) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      // v1.7 r042: every link the index reads into the body goes first,
+      // entries' and Fabula's references among them, as v1.5's r080 and
+      // v1.7's r009 cleared them here (clearLinksTo).
+      const s = clearLinksTo(s0, new Set([bodyId]));
       const cur = s.ephemeris || makeDefaultEphemerisState();
       const remaining = (s.celestialBodies || [])
         .filter(b => b && b.id !== bodyId)
@@ -40612,14 +40655,6 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
 
       return {
         ...s,
-        // v1.5 r080: silently scrub inbound entry refs to the deleted body.
-        // Body ids are stored as ref values; scrubEntryRefs is id-agnostic, so
-        // it strips them from entry-ref / grid / group fields the same way it
-        // does for a deleted entry. Intentional deletion is not data loss, so
-        // no dead label — the reference just clears.
-        entries: scrubEntryRefs(s.entries, s.templates, new Set([bodyId])),
-        // v1.7 r009: and Fabula's references to it, the same way.
-        fabula: scrubFabulaRefs(s, new Set([bodyId])),
         celestialBodies: remaining,
         world: nextWorld,
         calendars: nextCalendars,
@@ -41051,14 +41086,12 @@ function AsBoModeContent({
 }) {
   const body = bodies.find(b => b && b.id === selectedBodyId);
   const [draft, setDraft] = useState(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  // Reset edit + confirm state when the selection changes. Switching bodies
+  // Reset edit state when the selection changes. Switching bodies
   // mid-edit discards the draft — same pattern as entry editing elsewhere
   // in Cartulary. No unsaved-changes warning in r007; that's r008 polish.
   useEffect(() => {
     setDraft(null);
-    setConfirmingDelete(false);
   }, [selectedBodyId]);
 
   // Auto-enter edit mode when a freshly-created body lands here. The
@@ -41213,32 +41246,18 @@ function AsBoModeContent({
         {!isLocked && (
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             <button onClick={() => setDraft({ ...body })} style={{ padding: "6px 14px", background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 3, fontSize: 12, cursor: "pointer" }}>Edit</button>
+            {/* v1.7 r042: the delete modal asks, counting what links to the
+                body, where a second click and a line here asked before. */}
             <button
-              onClick={() => { if (confirmingDelete) { onDeleteBody(body.id); } else { setConfirmingDelete(true); } }}
-              style={{ padding: "6px 14px", background: confirmingDelete ? "#a04848" : "transparent", color: confirmingDelete ? "#fff" : "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}
-              title={confirmingDelete ? "Click again to confirm delete" : "Delete this body"}
+              onClick={() => askRecordDelete({ state, ids: [body.id], title: `Delete "${body.name || "this body"}"?`, onConfirm: () => onDeleteBody(body.id) })}
+              style={{ padding: "6px 14px", background: "transparent", color: "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}
+              title="Delete this body"
             >
-              {confirmingDelete ? "Confirm delete" : "Delete"}
+              Delete
             </button>
-            {confirmingDelete && (
-              <button onClick={() => setConfirmingDelete(false)} style={{ padding: "6px 10px", background: "transparent", color: "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}>Cancel</button>
-            )}
           </div>
         )}
       </div>
-      {confirmingDelete && (() => {
-        // v1.5 r080: show the blast radius before a body delete commits. The
-        // delete silently scrubs inbound entry refs (deleteBody → scrubEntryRefs);
-        // this surfaces how many links will go first, mirroring the calendar
-        // destructive-op warning. The entries themselves are untouched.
-        const refCount = countInboundEntryRefs(state.entries, state.templates, body.id);
-        if (refCount === 0) return null;
-        return (
-          <div style={{ fontSize: 12, color: "#d08a8a", marginBottom: 12, padding: "6px 10px", border: "1px solid #a04848", borderRadius: 3, background: "rgba(160,72,72,0.08)" }}>
-            Referenced by {refCount} {refCount === 1 ? "entry" : "entries"}. Deleting this body removes {refCount === 1 ? "that reference" : "those references"}; the {refCount === 1 ? "entry stays" : "entries stay"} intact.
-          </div>
-        );
-      })()}
       {parent ? (
         <div style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 20 }}>
           {isComputable && isComputableKind(parent.kind) ? "Orbits " : "Under "}
@@ -50689,53 +50708,13 @@ const ensureFabulaSlice = (state) => {
 // where its reading order changes by drag or by the arrows. A story is a row
 // until its page comes, in r008. App holds the state and the handlers, as it
 // does for maps, and passes them down. What the node-source registry reads
-// for Fabula's kinds lives here too: a kind's records as nodes, and each
-// corpus's stories as its edges, so Concordance draws a corpus to its
-// stories. Links inside a record's fields aren't edges yet.
+// for Fabula's kinds lives here too, a kind's records as nodes; their links,
+// a corpus's stories among them, Concordance draws from the link index since
+// v1.7's r042.
 const fabulaRegistryInstances = (state, k) =>
   ((state && state.fabula && Array.isArray(state.fabula[k.slice])) ? state.fabula[k.slice] : [])
     .filter(r => r && r.id)
     .map(r => ({ id: r.id, name: r.name || "(untitled)", kind: k.kind }));
-
-const fabulaRegistryEdges = (state, k) => {
-  const fab = (state && state.fabula) || {};
-  const edges = [];
-  if (k.kind === "corpus") {
-    const storyIds = new Set((Array.isArray(fab.stories) ? fab.stories : []).map(st => st && st.id).filter(Boolean));
-    (Array.isArray(fab.corpora) ? fab.corpora : []).forEach(c => {
-      if (!c || !c.id || !Array.isArray(c.storyIds)) return;
-      c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
-    });
-  }
-  // v1.7 r009: the links that exist so far (spec, section 9), each labeled as
-  // its field is: a story to its threads and themes, a cast record to its
-  // character, an arc to its cast, a relationship to its two, since r011
-  // a scene to its POV, participants, setting, and threads, and since r015
-  // its motifs, since r013 a plot point to its scene and threads and a
-  // promise to its setup and payoff scenes and its threads, and since r014 a
-  // research note to the entries it applies to and the scenes it's used in.
-  // Concordance drops an edge whose other end isn't drawn.
-  const seeded = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads", "motifs"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"], research: ["appliesTo", "usedIn"] }[k.kind] || [];
-  // Since v1.7's r017 a link field of the user's own draws its edges too,
-  // labeled as the field is (spec, section 9): any reference whose id no
-  // seed uses, a corpus's included. A seeded link the user has deleted, or
-  // made something other than a reference, draws none: its values stay in
-  // the records unseen, as a template's deleted field's do.
-  const fields = fabulaKindFields(state, k.kind);
-  const seedIds = fabulaSeedIds(k.kind);
-  const refIds = new Set(fields.filter(f => f && f.id && f.type === "entry-ref").map(f => f.id));
-  const links = [...seeded.filter(id => refIds.has(id)), ...[...refIds].filter(id => !seedIds.has(id))];
-  if (links.length === 0) return edges;
-  (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => {
-    if (!r || !r.id) return;
-    links.forEach(fid => {
-      const f = fields.find(x => x.id === fid);
-      const v = (r.fields || {})[fid];
-      (Array.isArray(v) ? v : [v]).forEach(t => { if (typeof t === "string" && t) edges.push({ source: r.id, target: t, label: f ? f.label : fid, kind: "directed" }); });
-    });
-  });
-  return edges;
-};
 
 // A kind's schema as the template EntryForm and EntryView take: the world's
 // stored schema, or the seed when the world has none, its reference fields
@@ -50781,14 +50760,6 @@ const fabulaStoryCounts = (state, storyId) => {
   const fab = state.fabula || {};
   const count = (slice) => (Array.isArray(fab[slice]) ? fab[slice] : []).filter(r => r && r.storyId === storyId).length;
   return { cast: count("cast"), scenes: count("scenes") };
-};
-
-const fabulaCorpusDeleteMessage = (corpus) => {
-  const n = Array.isArray(corpus.storyIds) ? corpus.storyIds.length : 0;
-  const name = corpus.name || "this corpus";
-  return n === 0
-    ? `Delete the corpus "${name}"?`
-    : `Delete the corpus "${name}"? Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`;
 };
 
 function FabulaStoryLine({ state, story, onOpen }) {
@@ -50894,7 +50865,11 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
       }
       trailing={
         <button className="btn" style={{ ...smallBtn, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }} onClick={() => {
-          if (confirm(fabulaStoryDeleteMessage(state, st))) onDeleteStory(st.id);
+          askRecordDelete({
+            state, ids: [st.id, ...fabulaStoryRecordIds(state, st.id)],
+            title: `Delete the story "${st.name || "untitled story"}"?`, goes: fabulaStoryGoes(state, st),
+            onConfirm: () => onDeleteStory(st.id),
+          });
         }} title="Delete this story">Delete</button>
       }
     />
@@ -51283,10 +51258,13 @@ const fabulaKindFields = (state, kind) => {
 // scrubEntryRefs gives entries (groups and grids included). names maps a
 // deleted entry's id to its name, for a cast record whose character it was:
 // that record stays, its Character cleared and marked characterDeleted.
+// Since v1.7's r042, which runs it on every delete, a record it doesn't
+// change keeps its identity, as scrubEntryRefs keeps an entry's, and so does
+// a kind's list, and Fabula itself, when nothing in them changes.
 const scrubFabulaRefs = (state, deletedIds, names) => {
   const fab = state && state.fabula;
   if (!fab || !deletedIds || deletedIds.size === 0) return fab;
-  const next = { ...fab };
+  let next = fab;
   FABULA_KINDS.forEach(k => {
     const arr = Array.isArray(fab[k.slice]) ? fab[k.slice] : null;
     if (!arr || arr.length === 0) return;
@@ -51295,41 +51273,37 @@ const scrubFabulaRefs = (state, deletedIds, names) => {
       const c = r && r.fields && r.fields.character;
       return typeof c === "string" && deletedIds.has(c) ? { ...r, characterDeleted: { name: (names && names.get(c)) || "" } } : r;
     });
-    next[k.slice] = scrubEntryRefs(marked.map(r => ({ ...r, templateId: k.id })), [tpl], deletedIds).map(({ templateId, ...r }) => r);
+    const tagged = marked.map(r => ({ ...r, templateId: k.id }));
+    const scrubbed = scrubEntryRefs(tagged, [tpl], deletedIds);
+    if (marked.every((r, i) => r === arr[i]) && scrubbed.every((r, i) => r === tagged[i])) return;
+    if (next === fab) next = { ...fab };
+    next[k.slice] = scrubbed.map((r, i) => {
+      if (r === tagged[i]) return marked[i];
+      const { templateId, ...rest } = r;
+      return rest;
+    });
   });
   return next;
 };
 
-// How many of each kind's records point at id: [[kind, n]], for a delete's
-// confirmation.
-const fabulaInboundCounts = (state, id) => {
+// The ids of a story's own records, which its delete takes with it (v1.7
+// r042), for the delete modal's count and clearLinksTo.
+const fabulaStoryRecordIds = (state, storyId) => {
   const fab = (state && state.fabula) || {};
-  return FABULA_KINDS.map(k => {
-    const arr = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.id !== id);
-    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
-    return [k.kind, countInboundEntryRefs(arr.map(r => ({ ...r, templateId: k.id })), [tpl], id)];
-  }).filter(([, n]) => n > 0);
+  return FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
+    .flatMap(k => (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.storyId === storyId).map(r => r.id));
 };
 
-const fabulaRecordDeleteMessage = (state, kind, rec) => {
-  const head = `Delete the ${FABULA_NOUNS[kind].one} "${rec.name || "untitled"}"?`;
-  const counts = fabulaInboundCounts(state, rec.id);
-  if (counts.length === 0) return head;
-  const total = counts.reduce((a, [, n]) => a + n, 0);
-  const said = fabulaJoin(counts.map(([kk, n]) => kk === "story" ? "the story" : fabulaCount(kk, n)));
-  return `${head} ${said.charAt(0).toUpperCase()}${said.slice(1)} ${total === 1 ? "points" : "point"} at it; ${total === 1 ? "it stays" : "they stay"}, without it.`;
-};
-
-// What deleting a story takes with it: its own records, by kind.
-const fabulaStoryDeleteMessage = (state, story) => {
+// What deleting a story takes with it, its own records by kind, as the
+// delete modal's line, or null when it holds none.
+const fabulaStoryGoes = (state, story) => {
   const fab = (state && state.fabula) || {};
   const counts = FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
     .map(k => [k.kind, (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.storyId === story.id).length])
     .filter(([, n]) => n > 0);
-  const head = `Delete the story "${story.name || "untitled story"}"?`;
-  if (counts.length === 0) return head;
+  if (counts.length === 0) return null;
   const one = counts.length === 1 && counts[0][1] === 1;
-  return `${head} Its ${fabulaJoin(counts.map(([kk, n]) => fabulaCount(kk, n)))} ${one ? "goes" : "go"} with it.`;
+  return `Its ${fabulaJoin(counts.map(([kk, n]) => fabulaCount(kk, n)))} ${one ? "goes" : "go"} with it.`;
 };
 
 // Fabula's slices below the story level without one story's records.
@@ -51753,17 +51727,6 @@ const fabulaOutlineHolding = (state, kind, rec) => {
   const at = story ? fabulaOutlineFind(fabulaOutlineTree(state, story), rec.id) : null;
   const down = (n) => n.children.flatMap(c => [c, ...down(c)]);
   return at ? down(at.list[at.index]) : [];
-};
-
-// How many of each kind's records, outside what goes, point at any of the
-// ids given: [[kind, n]], for what Delete everything would clear.
-const fabulaInboundCountsAll = (state, ids, going) => {
-  const fab = (state && state.fabula) || {};
-  return FABULA_KINDS.map(k => {
-    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
-    const arr = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && !going.has(r.id));
-    return [k.kind, arr.filter(r => ids.some(id => countInboundEntryRefs([{ ...r, templateId: k.id }], [tpl], id) > 0)).length];
-  }).filter(([, n]) => n > 0);
 };
 
 // Fabula's records below the story level, without the ids given.
@@ -52239,19 +52202,20 @@ function FabulaHoldsDeleteModal({ state, kind, record, onMoveUp, onDeleteAll, on
   const story = (Array.isArray(fab.stories) ? fab.stories : []).find(st => st && st.id === record.storyId);
   const at = story ? fabulaOutlineFind(fabulaOutlineTree(state, story), record.id) : null;
   const where = at && at.parent ? `in its ${FABULA_NOUNS[at.parent.kind].one}` : "at the story's own level";
-  // What points at what it holds stays when everything goes, without the
-  // reference, and says so, as Delete does for the record itself.
-  const pointing = fabulaInboundCountsAll(state, held.map(n => n.id), new Set([record.id, ...held.map(n => n.id)]));
-  const total = pointing.reduce((a, [, n]) => a + n, 0);
-  const said = fabulaJoin(pointing.map(([kk, n]) => (kk === "story" ? "the story" : fabulaCount(kk, n))));
-  const warn = total ? ` ${said.charAt(0).toUpperCase()}${said.slice(1)} ${total === 1 ? "points" : "point"} at what it holds; if everything goes, ${total === 1 ? "it stays, without the reference" : "they stay, without the references"}.` : "";
+  // v1.7 r042: what the delete does to what links to the record, and to what
+  // it holds if everything goes, counted from the link index, as the delete
+  // modal counts.
+  const own = recordDeleteLines(state, [record.id]);
+  const heldIds = held.map(n => n.id);
+  const ifAll = recordDeleteLines(state, heldIds, new Set([record.id, ...heldIds]));
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal fabula-holds-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-        <div className="modal-hdr">Delete the {FABULA_NOUNS[kind].one}</div>
+        <div className="modal-hdr">Delete the {FABULA_NOUNS[kind].one} "{record.name || "untitled"}"?</div>
         <div className="modal-body">
-          <p style={{ margin: "0 0 10px" }}>{fabulaRecordDeleteMessage(state, kind, record)}</p>
-          <p style={{ margin: 0 }}>It holds {holds}. Move up puts what it holds in its place, {where}; Delete everything deletes it all.{warn}</p>
+          {own.map((line, i) => <p key={i} style={{ margin: "0 0 10px" }}>{line}</p>)}
+          <p style={{ margin: 0 }}>It holds {holds}. Move up puts what it holds in its place, {where}; Delete everything deletes it all.</p>
+          {ifAll.length > 0 && <p style={{ margin: "10px 0 0" }}>If everything goes: {ifAll.join(" ")}</p>}
         </div>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
@@ -53563,20 +53527,6 @@ function FabulaEntryStories({ state, entry, role, editing, onOpenEntry, onOpenSt
 // the user's, and its options unless the seed locks them, and every other
 // field is the user's whole. Save marks a schema edited; Reset to Default
 // puts the seed back and clears the values the seed has no field for.
-
-// The ids a kind's seed uses at its top level, which a field of the user's
-// own never takes. They don't depend on the world's templates.
-const fabulaSeedIds = (() => {
-  let cache = null;
-  return (kind) => {
-    if (!cache) {
-      const all = fabulaSeedSchemas([]);
-      cache = {};
-      Object.keys(all).forEach(kk => { cache[kk] = new Set(all[kk].fields.map(f => f.id)); });
-    }
-    return cache[kind] || new Set();
-  };
-})();
 
 // An edited schema's core fields brought up to the seed (spec, section 3).
 // Each takes the seed's field with the user's label, help line, Secret, and
@@ -55469,6 +55419,83 @@ function RestoreBuiltinsModal({ deletedNames, onCancel, onConfirm }) {
           >
             Restore {selected.size === 0 ? "" : `(${selected.size})`}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Record delete (v1.7 r042) ─────────────────────────────────────────────────
+// docs/pipes-spec.md, section 4, with Drak's calls at the cut: one modal for
+// every record a link can point at, an entry, a template with its entries, a
+// body, a map, a stemma, a story, a corpus, a Fabula record, or a Glossopoeia
+// record, where a confirm or an inline prompt asked before. It says what goes
+// with the record, if anything, and what the delete does to what links to
+// it, counted from the link index (linkDeleteCounts): the stored links it
+// clears, by the kind of record they're in, the map pins it unlinks, the
+// stemma nodes and cards it leaves orphaned, and the [[links]] that stay as
+// typed. Anything can ask (askRecordDelete); App draws it once.
+
+const RECORD_DELETE = { open: null };
+
+// ask: { state, ids, title, goes, onConfirm }, ids what goes, goes a line for
+// what goes with the record, or null.
+const askRecordDelete = (ask) => {
+  if (RECORD_DELETE.open) { RECORD_DELETE.open(ask); return; }
+  if (window.confirm(ask.title)) ask.onConfirm();
+};
+
+// What a delete of the records in ids does to what links to them, one
+// sentence a line, "it" or "them" by how many go; going as linkDeleteCounts
+// takes it.
+const recordDeleteLines = (state, ids, going) => {
+  const list = Array.isArray(ids) ? ids : [...(ids || [])];
+  const c = linkDeleteCounts(state, list, going);
+  const it = list.length > 1 ? "them" : "it";
+  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const kinds = [["entry", "entry", "entries"], ...FABULA_KINDS.map(k => [`fabula:${k.kind}`, FABULA_NOUNS[k.kind].one, FABULA_NOUNS[k.kind].many]), ["body", "body", "bodies"], ["conlang", "language", "languages"]];
+  const lines = [];
+  const from = kinds.filter(([key]) => c.refs.has(key)).map(([key, one, many]) => [c.refs.get(key).size, one, many]);
+  const holders = from.reduce((n, [k]) => n + k, 0);
+  if (from.length > 0) lines.push(`Removes ${it} from ${fabulaJoin(from.map(([n, one, many]) => count(n, one, many)))}, which ${holders === 1 ? "stays" : "stay"}.`);
+  if (c.pins > 0) lines.push(c.pins === 1 ? "A map pin loses its link and keeps its label." : `${c.pins} map pins lose their links and keep their labels.`);
+  if (c.pinsBare > 0) lines.push(c.pinsBare === 1 ? "A map pin without a label loses its link and takes the name it pointed at." : `${c.pinsBare} map pins without labels lose their links and take the names they pointed at.`);
+  const held = c.nodes + c.cards;
+  if (held > 0) lines.push(`${fabulaJoin([c.nodes ? count(c.nodes, "linked node", "linked nodes") : null, c.cards ? count(c.cards, "card", "cards") : null].filter(Boolean))} in ${count(c.stemmas.size, "stemma", "stemmas")} ${held === 1 ? "stays" : "stay"}, unlinked.`);
+  if (c.wiki.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wiki.size, "place", "places")} stay as typed and show as broken.`);
+  if (c.wikiMoved.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wikiMoved.size, "place", "places")} stay as typed and will lead to ${list.length > 1 ? "other records by the same names" : "another record by the same name"}.`);
+  return lines;
+};
+
+// The modal, drawn once by App; askRecordDelete opens it. Esc and a click
+// outside cancel, as Cancel does.
+function RecordDeleteModal() {
+  const [ask, setAsk] = useState(null);
+  useEffect(() => {
+    RECORD_DELETE.open = setAsk;
+    return () => { if (RECORD_DELETE.open === setAsk) RECORD_DELETE.open = null; };
+  }, []);
+  useEffect(() => {
+    if (!ask) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setAsk(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [ask]);
+  const lines = useMemo(() => (ask ? [...(ask.goes ? [ask.goes] : []), ...recordDeleteLines(ask.state, ask.ids)] : []), [ask]);
+  if (!ask) return null;
+  const doDelete = () => { setAsk(null); ask.onConfirm(); };
+  return (
+    <div className="modal-backdrop" onClick={() => setAsk(null)}>
+      <div className="modal record-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">{ask.title}</div>
+        {lines.length > 0 && (
+          <div className="modal-body">
+            {lines.map((line, i) => <p key={i} className="record-delete-line" style={{ margin: i === 0 ? 0 : "8px 0 0" }}>{line}</p>)}
+          </div>
+        )}
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setAsk(null)}>Cancel</button>
+          <button className="btn btn-danger record-delete-confirm" onClick={doDelete} autoFocus>Delete</button>
         </div>
       </div>
     </div>

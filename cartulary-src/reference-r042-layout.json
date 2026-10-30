@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "c6674d94876d74ae64da53a48ef6ae10b10e166193b8ae12b26046c2e05f3232",
+  "anchor_sha256": "37b99408bebc2aeec528f13111b8205def0b87baeb34658ce845aa55d8e8d964",
   "shell_sha256": "67b97d88777f7d8cef92ab9c25edc852de54157e8eb9e16557fad31cabcf0af6",
   "files": [
     [
@@ -24,7 +24,7 @@
     ],
     [
       "05_field-system.jsx",
-      774
+      736
     ],
     [
       "06_calendar-engine.jsx",
@@ -52,11 +52,11 @@
     ],
     [
       "12_trunk.jsx",
-      6131
+      6152
     ],
     [
       "13_form-engine-display.jsx",
-      880
+      885
     ],
     [
       "14_form-engine-edit.jsx",
@@ -72,7 +72,7 @@
     ],
     [
       "17_concordance.jsx",
-      1054
+      1030
     ],
     [
       "18_cartographia/00_model.jsx",
@@ -92,7 +92,7 @@
     ],
     [
       "18_cartographia/04_index.jsx",
-      358
+      346
     ],
     [
       "19_chronometric.jsx",
@@ -104,7 +104,7 @@
     ],
     [
       "21_stemma/00_helpers-canvas.jsx",
-      1585
+      1553
     ],
     [
       "21_stemma/01_transforms.jsx",
@@ -116,7 +116,7 @@
     ],
     [
       "21_stemma/03_index.jsx",
-      133
+      131
     ],
     [
       "21_stemma/04_tabula-document.jsx",
@@ -132,7 +132,7 @@
     ],
     [
       "22_trunk.jsx",
-      703
+      801
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -140,7 +140,7 @@
     ],
     [
       "23_glossopoeia/01_substrate.jsx",
-      1025
+      1034
     ],
     [
       "23_glossopoeia/02_grammar.jsx",
@@ -152,7 +152,7 @@
     ],
     [
       "23_glossopoeia/04_view.jsx",
-      845
+      859
     ],
     [
       "24_ephemeris/00_body-kinds.jsx",
@@ -160,11 +160,11 @@
     ],
     [
       "24_ephemeris/01_shell.jsx",
-      725
+      721
     ],
     [
       "24_ephemeris/02_asbo.jsx",
-      1461
+      1445
     ],
     [
       "24_ephemeris/03_observe.jsx",
@@ -200,7 +200,7 @@
     ],
     [
       "28_fabula/01_index.jsx",
-      334
+      290
     ],
     [
       "28_fabula/02_story.jsx",
@@ -208,11 +208,11 @@
     ],
     [
       "28_fabula/03_people.jsx",
-      274
+      273
     ],
     [
       "28_fabula/04_outline.jsx",
-      758
+      748
     ],
     [
       "28_fabula/05_plot.jsx",
@@ -232,7 +232,7 @@
     ],
     [
       "28_fabula/09_templates.jsx",
-      296
+      282
     ],
     [
       "28_fabula/10_timeline.jsx",
@@ -244,7 +244,7 @@
     ],
     [
       "29_modals.jsx",
-      286
+      363
     ],
     [
       "30_trunk.jsx",
