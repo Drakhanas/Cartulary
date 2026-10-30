@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]) ===
+=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1476,3 +1476,45 @@ four screens at 900 pixels wide, and only the entry page was. The rest were
 claims about what came before r043, among them the exports' old rules and
 how long a [[link]] has reached a body, a count of rows, and lines in the
 spec and the roadmap that r043 made stale and I hadn't touched.
+
+r044 took the first option three times: the box that adds the old name
+starts unticked, a rename that updates links saves a restore point and
+stops a board's Undo, and a language asks too, when its name field is
+left, since its name is written as it's typed.
+
+The modal was the smaller half. The harder one was every place a name
+gets saved, each with its own shape: a Save that runs again with the
+answer, a bar that renames through a history, a language with no Save at
+all, a body in a view with its own state. Reading the build before the
+probe found the defect I'd have shipped: the rota listens for keys on the
+document, so with the modal over it, Enter would have drilled into a node
+instead of pressing the button, and Delete would have asked to delete it.
+The modal takes the keys at the window now, and H1 holds it there.
+
+The probe's first run failed fifteen checks, and none of them was the
+rename. Twelve were a save writing what it always writes, every empty field
+of an entry's template, a map without a createdAt, Ephemeris's selection.
+Naming them, for the record saved and nothing else, made the comparison
+exact again. Three were mine: two checks looked in the wrong place, and
+two templates called Relic were folded into one by the load before any
+check ran. Later, a Location couldn't be saved at all because its Type is
+required, so the modal I was waiting for never had a chance to open.
+
+I told Drak at the staging that a map's Save dropping its createdAt was a
+defect. Writing the turnover, I read the save format, and a map record has
+no createdAt: the save is doing what the format says. It's filed under
+Tolerated, with the correction said where it was wrong.
+
+At the pass Drak asked how much of the regression list I could test
+myself. The probe had all of it but step 7's arrows and Ctrl+Z under the
+modal, pressed after the turnover's read; what's left for him is Firefox,
+the browsers as shipped, his own world, and how the words read. He wants
+it said with every staging now, and the handoff says so. He passed it.
+
+The independent read of this turnover found fourteen defects, and two of
+the three claims it asked me to check were wrong too. The keys were the
+one that mattered: the modal takes every keydown but not the focus, and
+three Shift+Tabs and an Enter deleted a tabula card under it. It's filed.
+Seven more scenarios ran on both builds for the rest, the story page's
+Save and the arrows under the modal among them, and the five that check
+r044's rules pass on it and fail on r043.
