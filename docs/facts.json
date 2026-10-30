@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 56212,
-  "raw_body_lines": 56212,
-  "canonical_lines": 53507,
-  "decl_count": 847,
+  "total_lines": 57000,
+  "raw_body_lines": 57000,
+  "canonical_lines": 54262,
+  "decl_count": 880,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r044-body.jsx"
+  "active_anchor": "reference-r045-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 56212,
+   "value": 57000,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 847,
+   "value": 880,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 53507,
+   "value": 54262,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 56212,
+   "value": 57000,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 103,
+   "value": 104,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3046299,
+   "value": 3091202,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-nine",
-    69
+    "seventy",
+    70
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 103,
+   "value": 104,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 103,
+   "value": 104,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-nine",
-    69
+    "seventy",
+    70
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r044": {
-   "value": "37c54a48dce5643c",
-   "pattern": "working[^\\n]{0,40}at r044 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r045": {
+   "value": "2bad73ff257297bf",
+   "pattern": "working[^\\n]{0,40}at r045 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 56212,
+   "value": 57000,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -152,12 +152,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 432,
+   "line": 1165,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 434,
+   "line": 1167,
    "contains": "function LongformDisplay"
   },
   {
@@ -727,7 +727,7 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 290,
+   "line": 1023,
    "contains": "Referenced by (v1.7 r041)"
   },
   {
@@ -764,6 +764,16 @@
    "file": "29_modals.jsx",
    "line": 373,
    "contains": "const RECORD_RENAME"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 93,
+   "contains": "Entry queries (v1.7 r045)"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 109,
+   "contains": "const QUERY_EMPTY"
   }
  ],
  "spans": {
@@ -1094,10 +1104,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r044-body.jsx",
-   "reference-r044-layout.json",
-   "2f215a9c0f8c0fc3",
-   "37c54a48dce5643c",
+   "reference-r045-body.jsx",
+   "reference-r045-layout.json",
+   "a1cc22fac483969e",
+   "2bad73ff257297bf",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1105,7 +1115,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r045, Pipes' seventh cut: the filter builder",
+   "r046, Pipes' eighth cut: saved lists",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1148,7 +1158,12 @@
    "Renames (v1.7 r044)",
    "Record rename (v1.7 r044)",
    "which of its regression steps the sandbox already ran",
-   "linkRefFieldsOnly"
+   "linkRefFieldsOnly",
+   "v1.7_r045",
+   "Entry queries (v1.7 r045)",
+   "queryFieldsOf",
+   "fieldNumberValue",
+   "Entry queries and the entry list's scope"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1358,7 +1373,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r044-layout.json",
+   "reference-r045-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1376,7 +1391,7 @@
    "On v1.7 r041 verification",
    "Link index (v1.7 r041)",
    "Referenced by (v1.7 r041)",
-   "at 432 and 434 since its r043",
+   "at 1165 and 1167 since its r045",
    "reference-r042-body.jsx",
    "37b99408bebc2aee",
    "a2da7ded6fb5abca",
@@ -1392,7 +1407,12 @@
    "37c54a48dce5643c",
    "On v1.7 r044 verification",
    "Renames (v1.7 r044)",
-   "Record rename (v1.7 r044)"
+   "Record rename (v1.7 r044)",
+   "reference-r045-body.jsx",
+   "a1cc22fac483969e",
+   "2bad73ff257297bf",
+   "On v1.7 r045 verification",
+   "Entry queries (v1.7 r045)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1635,7 +1655,14 @@
    "37c54a48dce5643c",
    "v1.7_r044_rename_modal.py",
    "renamePlan",
-   "Turnover v1.7_r044"
+   "Turnover v1.7_r044",
+   "v1.7_r045",
+   "bc877b6",
+   "f027c72",
+   "2bad73ff257297bf",
+   "v1.7_r045_filter_builder.py",
+   "queryShown",
+   "Turnover v1.7_r045"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1743,7 +1770,14 @@
    "What r044 left for r051",
    "A rename to a name another record answers to",
    "A map record has no createdAt",
-   "The rename modal doesn't hold the focus"
+   "The rename modal doesn't hold the focus",
+   "v1.7_r045",
+   "r045 is in",
+   "What r045 left for r051",
+   "A real-world Date field shows the day before its date",
+   "The search reads a Long Text's markdown as typed",
+   "A condition can't name a subfield of a group inside a group",
+   "A dropdown's Other text reads as Other to a condition"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1825,7 +1859,10 @@
    "A fix skips what the handler took",
    "A modal over a page that listens on the document",
    "A probe that compares the whole stored world names what the save writes",
-   "A world built for a probe goes through the app's load first"
+   "A world built for a probe goes through the app's load first",
+   "A check whose expected answer is read off the page",
+   "A check for a fallback reads a case",
+   "A check that a mark shows counts the mark"
   ],
   "journal.txt": [
    "r030",
@@ -1892,7 +1929,9 @@
    "the index waiting to be asked",
    "a diff of the whole stored world",
    "mounting it fresh",
-   "Naming them, for the record saved and nothing else"
+   "Naming them, for the record saved and nothing else",
+   "nineteen searches meant for hidden secrets passed anyway",
+   "the world had Crew all along"
   ]
  }
 }

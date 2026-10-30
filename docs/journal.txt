@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal) ===
+=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1518,3 +1518,48 @@ three Shift+Tabs and an Enter deleted a tabula card under it. It's filed.
 Seven more scenarios ran on both builds for the rest, the story page's
 Save and the arrows under the modal among them, and the five that check
 r044's rules pass on it and fail on r043.
+
+r045 took the first option three times: a condition on one line, a date
+entered with the entry form's own control in any of the world's
+calendars, and chips above the list for what's in force.
+
+I'd thought of the search fix as the small half. It wasn't. Matching what
+the page shows means saying, type by type, what the page shows: a
+dropdown's choice and not its stored shape, a date in the entry's own
+calendar, a reference as its record's name, a [[link]] as the words it
+shows, a grid as its labels and cells, a field behind its show-when as
+nothing at all. queryShown follows FieldValueDisplay case by case, and the
+probe holds it there by reading every entry's page and asking the search
+what it found.
+
+That oracle has a weakness, and the first run showed it to me: it agrees
+with the app in whatever state the page is in. The step that hid secrets
+clicked nothing, because the page the app opens on has no toggle, and the
+nineteen searches meant for hidden secrets passed anyway. The two checks
+with fixed answers failed and gave it away. The step reads the toggle back
+now, and throws if it didn't take.
+
+The probe found one defect of mine before Drak could: the rows stayed open
+when a new scope was picked, because the entry list wasn't keyed by its
+scope. It is now, and A4 holds it there.
+
+One planted copy passed the first run, the one that lets a label keep its
+first template's kind when another template gives it a different one. I
+blamed the world, but it had Crew, a reference on Vehicle and a number on
+Ship, and no check read Crew across All entries: the check was blind. K6
+reads Weight there now, and the copy fails at it.
+
+Two things went on the roadmap rather than into the cut. A real-world Date
+field shows the day before its date anywhere west of UTC, since a bare
+2026-10-30 is read as midnight UTC; it's older than the repository, and
+the search reads it as the page shows it. And my search reads a Long
+Text's markdown as typed, its [[links]] aside, so a link's address counts
+where the page shows only its words.
+
+Drak passed it.
+
+The independent read of this turnover found eleven defects. The one I
+minded most was my own diagnosis: I'd written a doctrine entry blaming the
+world for the copy that passed, and the world had Crew all along. It also
+found two gaps in the build, a group inside a group out of the conditions'
+reach and a dropdown's Other text read as Other, and Drak had them filed.
