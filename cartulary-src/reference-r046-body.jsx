@@ -6126,6 +6126,9 @@ const makeInitialState = () => migrate({
   // Map stamps imported from stamp packs (v1.6 pillar 3). World-scoped,
   // [{id, name, viewBox, body}]. Empty on fresh worlds; see ensureMapStamps.
   mapStamps: [],
+  // Saved lists (v1.7 r046), an entry list's query with a name; see
+  // normalizeEntryLists in 10_migrate.
+  lists: [],
 });
 
 // ─── Field normalization ───────────────────────────────────────────────────────
@@ -6315,6 +6318,57 @@ const retargetRetired = (f, retired) => {
   }
 };
 
+// v1.7 r046: the saved lists as the entry list reads them (docs/pipes-spec.md,
+// section 6). Each is { id, name, scope, mode, conditions }: a scope is
+// { kind: "all" }, { kind: "template", templateId }, or { kind: "tag", tag };
+// mode is "all" or "any"; a condition is { id, field, op, value, value2,
+// values, calendarId }, its field "name", "tags", "template", "linked", or
+// { labels, end }, the labels from a template's field down through the
+// groups to the one it reads, end "start" or "end" for a date range. A value
+// is text, or a date as { year, monthIndex, day }; values, a list of text.
+// A list without an id, or on one an earlier list has, takes a new one; a
+// condition whose field or operator can't be read goes. Nothing else is
+// dropped.
+const normalizeEntryLists = (raw) => {
+  const PSEUDO = ["name", "tags", "template", "linked"];
+  const date = (d) => (d && typeof d === "object" && Number.isFinite(d.year)
+    ? { year: Math.floor(d.year), monthIndex: Number.isFinite(d.monthIndex) ? Math.max(0, Math.floor(d.monthIndex)) : 0, day: Number.isFinite(d.day) ? Math.max(1, Math.floor(d.day)) : 1 }
+    : null);
+  const value = (v) => (typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : (date(v) || ""));
+  const field = (f) => {
+    if (typeof f === "string") return PSEUDO.includes(f) ? f : null;
+    if (!f || typeof f !== "object" || !Array.isArray(f.labels) || f.labels.length === 0) return null;
+    if (!f.labels.every(x => typeof x === "string" && x.trim())) return null;
+    const labels = f.labels.map(x => x.trim());
+    return f.end === "start" || f.end === "end" ? { labels, end: f.end } : { labels };
+  };
+  const ids = new Set();
+  return (Array.isArray(raw) ? raw : []).filter(l => l && typeof l === "object").map(l => {
+    let id = typeof l.id === "string" && l.id ? l.id : "";
+    if (!id || ids.has(id)) id = `list-${genId()}`;
+    ids.add(id);
+    const s = l.scope && typeof l.scope === "object" ? l.scope : {};
+    const scope = s.kind === "template" && typeof s.templateId === "string" && s.templateId ? { kind: "template", templateId: s.templateId }
+      : s.kind === "tag" && typeof s.tag === "string" && s.tag ? { kind: "tag", tag: s.tag }
+      : { kind: "all" };
+    const cids = new Set();
+    const conditions = (Array.isArray(l.conditions) ? l.conditions : []).map(c => {
+      if (!c || typeof c !== "object" || typeof c.op !== "string" || !c.op) return null;
+      const f = field(c.field);
+      if (!f) return null;
+      let cid = typeof c.id === "string" && c.id ? c.id : "";
+      if (!cid || cids.has(cid)) cid = `qc-${genId()}`;
+      cids.add(cid);
+      return {
+        id: cid, field: f, op: c.op, value: value(c.value), value2: value(c.value2),
+        values: Array.isArray(c.values) ? c.values.filter(v => typeof v === "string") : [],
+        calendarId: typeof c.calendarId === "string" && c.calendarId ? c.calendarId : null,
+      };
+    }).filter(Boolean);
+    return { id, name: typeof l.name === "string" && l.name.trim() ? l.name : "Untitled list", scope, mode: l.mode === "any" ? "any" : "all", conditions };
+  });
+};
+
 const migrate = (state) => {
   // Currently only schemaVersion 1 exists. Future migrations go here.
   if (!state || typeof state !== "object") return null;
@@ -6430,6 +6484,9 @@ const migrate = (state) => {
       description: typeof p.description === "string" ? p.description : "",
       templateIds: Array.isArray(p.templateIds) ? p.templateIds.filter(id => typeof id === "string") : [],
     }));
+  // Saved lists (v1.7 r046): backfilled for worlds from before them, and
+  // each list's shape made what the entry list reads (normalizeEntryLists).
+  state.lists = normalizeEntryLists(state.lists);
   // currentMoment: world-level "story now" anchor used by auto-age computation
   // on character-template entries. Shape: { year, monthIndex, day } in primary's
   // frame, or null. Stored Y/M/D (not absoluteDay) so it follows the calendar-
@@ -12603,6 +12660,12 @@ function App() {
   // v1.7 r045: the entry list's conditions, all or any (EntryList), page
   // state as the search is, and cleared with it when a scope is picked.
   const [entryQuery, setEntryQuery] = useState(QUERY_EMPTY);
+  // v1.7 r046: the saved list open on the entry list, and its name while
+  // the header renames it (listRenameRef holds the list being renamed).
+  const [activeListId, setActiveListId] = useState(null);
+  const [listRenaming, setListRenaming] = useState(false);
+  const [listNameText, setListNameText] = useState("");
+  const listRenameRef = useRef(null);
   const [showSecrets, setShowSecrets] = useState(true);
   const [notice, setNotice] = useState(null);  // { type, text }
   const [resetTplId, setResetTplId] = useState(null);  // Template being considered for reset
@@ -13513,16 +13576,20 @@ function App() {
     return entries;
   }, [state, activeTagFilter, activeTemplateId, variantAxisInfo, view]);
   // The fields a condition can name: the scope's templates' (queryFieldsOf),
-  // with Template among them where the scope spans more than one.
-  const queryFields = useMemo(() => {
-    if (!state || view !== "list") return [];
+  // with Template among them where the scope spans more than one; and since
+  // v1.7 r046 every field they hold, secrets included (queryAllFields), so a
+  // saved list's condition on a secret field is told from one whose field
+  // is gone.
+  const queryTemplates = useMemo(() => {
+    if (!state || view !== "list") return null;
     const all = Array.isArray(state.templates) ? state.templates : [];
     const ids = activeTagFilter ? new Set(listScope.map(e => e.templateId)) : activeTemplateId ? new Set([activeTemplateId]) : null;
-    const tpls = ids ? all.filter(t => t && ids.has(t.id)) : all;
-    return queryFieldsOf(tpls, tpls.length > 1, showSecrets);
-  }, [state, view, activeTemplateId, activeTagFilter, listScope, showSecrets]);
+    return ids ? all.filter(t => t && ids.has(t.id)) : all;
+  }, [state, view, activeTemplateId, activeTagFilter, listScope]);
+  const queryFields = useMemo(() => (queryTemplates ? queryFieldsOf(queryTemplates, queryTemplates.length > 1, showSecrets) : []), [queryTemplates, showSecrets]);
+  const queryAllFields = useMemo(() => (!queryTemplates ? [] : showSecrets ? queryFields : queryFieldsOf(queryTemplates, queryTemplates.length > 1, true)), [queryTemplates, queryFields, showSecrets]);
   const filteredEntries = useMemo(() => {
-    let entries = queryApply(state, listScope, entryQuery, queryFields, showSecrets);
+    let entries = queryApply(state, listScope, entryQuery, queryFields, showSecrets, queryAllFields);
     const q = search.trim().toLowerCase();
     if (q) entries = entries.filter(e => queryTextOf(state, e, showSecrets).includes(q));
     const [k, dir] = sortBy.split("-");
@@ -13535,7 +13602,7 @@ function App() {
       return av < bv ? -1 * mult : av > bv ? 1 * mult : 0;
     });
     return entries;
-  }, [state, listScope, entryQuery, queryFields, search, sortBy, showSecrets]);
+  }, [state, listScope, entryQuery, queryFields, queryAllFields, search, sortBy, showSecrets]);
 
   // v1.7 r016: Plot Thread and Theme / Motif live under Fabula, so whatever
   // would land on one's list page (Back with nothing behind it, Delete, a new
@@ -13591,6 +13658,13 @@ function App() {
 
   const isLocked = state.world.locked;
   const activeTemplate = state.templates.find(t => t.id === activeTemplateId);
+  // v1.7 r046: the saved list open on the entry list, while the page's scope
+  // is still the list's.
+  const activeList = (() => {
+    if (view !== "list" || !activeListId) return null;
+    const l = (Array.isArray(state.lists) ? state.lists : []).find(x => x && x.id === activeListId);
+    return l && listScopeMatches(l.scope, activeTemplateId, activeTagFilter) ? l : null;
+  })();
   const activeEntry = state.entries.find(e => e.id === activeEntryId);
   // v1.7 r016: on an entry page, a new entry, or the builder of Plot Thread
   // or Theme / Motif, the sidebar lights Fabula, which holds them.
@@ -13707,20 +13781,103 @@ function App() {
   const selectTemplate = (id) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(id); setActiveTagFilter(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
   };
 
   const selectTag = (tag) => {
     if (!confirmDiscardDraft()) return;
     setActiveTagFilter(tag); setActiveTemplateId(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
   };
 
   // v1.7 r045: the list over every entry in the world, whatever its template.
   const selectAllEntries = () => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
+  };
+
+  // v1.7 r046: a saved list opens the entry list in its scope with its
+  // conditions, under its own name; picking a scope leaves it as saved.
+  const openList = (id) => {
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (!list || !confirmDiscardDraft()) return;
+    const sc = list.scope || { kind: "all" };
+    setActiveTemplateId(sc.kind === "template" ? sc.templateId : null);
+    setActiveTagFilter(sc.kind === "tag" ? sc.tag : null);
+    setActiveEntryId(null);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(queryFromList(list)); setActiveListId(id); setListRenaming(false); setView("list");
+  };
+
+  // The Filter's Save: a new list keeps the page's scope, all or any, and
+  // the conditions in force; an open list's Save keeps the conditions in
+  // it, its name and scope as they were.
+  const saveListAs = (name) => {
+    const n = (name || "").trim();
+    if (isLocked || !n) return;
+    const id = `list-${genId()}`;
+    const list = { id, name: n, scope: listScopeOf(activeTemplateId, activeTagFilter), mode: entryQuery.mode === "any" ? "any" : "all", conditions: listConditionsOf(entryQuery, queryFields, queryAllFields) };
+    updateState(s => ({ ...s, lists: [...(Array.isArray(s.lists) ? s.lists : []), list] }));
+    setActiveListId(id);
+    flash("List saved");
+  };
+  const updateActiveList = () => {
+    if (isLocked || !activeList) return;
+    const id = activeList.id;
+    const mode = entryQuery.mode === "any" ? "any" : "all";
+    const conditions = listConditionsOf(entryQuery, queryFields, queryAllFields);
+    updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).map(l => (l && l.id === id ? { ...l, mode, conditions } : l)) }));
+    flash("List saved");
+  };
+
+  // Rename and Delete list sit in an open list's header (Drak's call 2 at
+  // the cut): Rename turns the title into a box, Enter or leaving it keeping
+  // the name and Esc putting the old one back; Delete asks in the delete
+  // modal, which says the entries stay.
+  const renameList = (id, name) => {
+    const n = (name || "").trim();
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (isLocked || !n || !list || list.name === n) return;
+    updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).map(l => (l && l.id === id ? { ...l, name: n } : l)) }));
+    flash("Renamed");
+  };
+  const startRenameList = () => {
+    if (!activeList || isLocked) return;
+    listRenameRef.current = activeList.id;
+    setListNameText(activeList.name);
+    setListRenaming(true);
+  };
+  const endRenameList = (keep) => {
+    const id = listRenameRef.current;
+    listRenameRef.current = null;
+    if (id && keep) renameList(id, listNameText);
+    setListRenaming(false);
+  };
+  const deleteList = (id) => {
+    if (isLocked) return;
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (!list) return;
+    askRecordDelete({
+      state, ids: [id], title: `Delete the list "${list.name}"?`, goes: "Its entries stay; only the list goes.",
+      onConfirm: () => {
+        updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).filter(l => l && l.id !== id) }));
+        setActiveListId(null); setListRenaming(false); setEntryQuery(QUERY_EMPTY);
+        flash("List deleted");
+      },
+    });
+  };
+
+  // A list's row moves by its handle in the sidebar, as a template's does.
+  const reorderLists = (fromIdx, toIdx) => {
+    if (isLocked) return;
+    updateState(s => {
+      const ls = Array.isArray(s.lists) ? s.lists : [];
+      if (fromIdx < 0 || fromIdx >= ls.length || toIdx < 0 || toIdx > ls.length) return s;
+      const next = [...ls];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...s, lists: next };
+    });
   };
 
   const selectView = (v) => {
@@ -13728,7 +13885,7 @@ function App() {
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
     setActiveRecord(null); setFabulaBack([]);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView(v);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView(v);
   };
 
   const openEntryFromAnywhere = (id) => {
@@ -13746,7 +13903,8 @@ function App() {
       if (view === "entry" && activeEntryId) {
         setEntryNavStack(s => [...s, { view: "entry", entryId: activeEntryId }]);
       } else {
-        setEntryNavStack([{ view, entryId: null }]);
+        // v1.7 r046: a list frame keeps the scope it was left on
+        setEntryNavStack([{ view, entryId: null, scope: view === "list" ? { templateId: activeTemplateId || null, tag: activeTagFilter || null } : null }]);
       }
       setActiveTemplateId(entry.templateId); setActiveTagFilter(null);
       setActiveEntryId(id); clearDraftAndStorage(); setView("entry");
@@ -13845,7 +14003,7 @@ function App() {
     if (view === "entry" && activeEntryId) {
       setEntryNavStack(s => [...s, { view: "entry", entryId: activeEntryId }]);
     } else {
-      setEntryNavStack([{ view, entryId: null }]);
+      setEntryNavStack([{ view, entryId: null, scope: view === "list" ? { templateId: activeTemplateId || null, tag: activeTagFilter || null } : null }]);
     }
     setActiveEntryId(id); setView("entry");
   };
@@ -13974,6 +14132,14 @@ function App() {
     }));
   };
 
+  // v1.7 r046: an entry gone from under the page lands on the list the
+  // chain of entries started from, on its own scope, as Back does.
+  const landOnListScope = () => {
+    const base = entryNavStack[0];
+    if (base && base.view === "list" && base.scope) { setActiveTemplateId(base.scope.templateId); setActiveTagFilter(base.scope.tag); }
+    setView("list");
+  };
+
   // Back button on entry view. Pops the top of the nav stack and restores
   // its view + entryId. Empty stack — or stack-top pointing at a deleted
   // entry — falls back to "list". Setters are called outside the
@@ -13994,9 +14160,12 @@ function App() {
       } else {
         // Entry was deleted while we were navigating away. Fall through
         // to list rather than landing on a dead entry id.
-        setView("list");
+        landOnListScope();
       }
     } else {
+      // v1.7 r046: back on a list's own scope, which an entry followed
+      // from it may have changed
+      if (top.view === "list" && top.scope) { setActiveTemplateId(top.scope.templateId); setActiveTagFilter(top.scope.tag); }
       setView(top.view);
     }
     setEntryNavStack(s => s.slice(0, -1));
@@ -14830,7 +14999,7 @@ function App() {
           const cleared = clearLinksTo(s, new Set([id]));
           return { ...cleared, entries: cleared.entries.filter(e => e.id !== id) };
         });
-        setActiveEntryId(null); clearDraftAndStorage(); setView("list");
+        setActiveEntryId(null); clearDraftAndStorage(); landOnListScope();
         flash("Deleted");
       },
     });
@@ -14918,6 +15087,8 @@ function App() {
       syncRefTargetNames([...state.templates, cleaned], [cleaned]);
       updateState(s => ({ ...s, templates: [...s.templates, cleaned] }));
       setActiveTemplateId(cleaned.id);
+      // v1.7 r046: on its own page, as a pick in the sidebar leaves it
+      setActiveTagFilter(null); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false);
     } else {
       // Edit mode: preserve whatever origin the template already has. If the
       // user is editing a built-in, it stays a built-in (still subject to
@@ -15433,10 +15604,15 @@ function App() {
     const tid = activeTemplateId;
     askRecordDelete({
       state, ids: state.entries.filter(e => e.templateId === tid).map(e => e.id), title: msg,
+      // v1.7 r046: a saved list scoped to it stays, showing no entries, and
+      // a Template condition naming it loses it.
+      goes: listTemplateGoes(state, tid) || undefined,
       onConfirm: () => {
         updateState(s => {
           const cleared = clearLinksTo(s, new Set(s.entries.filter(e => e.templateId === tid).map(e => e.id)));
-          return { ...cleared, templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
+          const tset = new Set([tid]);
+          const lists = Array.isArray(cleared.lists) && cleared.lists.some(l => listNames(l, tset)) ? cleared.lists.map(l => (listNames(l, tset) ? listWithout(l, tset) : l)) : cleared.lists;
+          return { ...cleared, ...(lists !== cleared.lists ? { lists } : {}), templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
         });
         setActiveTemplateId(null); clearDraftAndStorage();
         // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section
@@ -16877,7 +17053,8 @@ function App() {
   let headerTitle = "";
   let headerIcon = null;
   if (view === "list") {
-    if (activeTagFilter) headerTitle = `# ${activeTagFilter}`;
+    if (activeList) { headerTitle = activeList.name; headerIcon = { icon: "☰", color: "var(--accent)" }; }
+    else if (activeTagFilter) headerTitle = `# ${activeTagFilter}`;
     else if (activeTemplate) { headerTitle = activeTemplate.name; headerIcon = activeTemplate; }
     else if (!activeTemplateId) headerTitle = "All entries";
   } else if ((view === "entry" || view === "entry-edit") && activeEntry) {
@@ -16969,6 +17146,9 @@ function App() {
         onSelectTemplate={selectTemplate}
         onSelectTag={selectTag}
         onSelectAllEntries={selectAllEntries}
+        activeListId={activeList ? activeList.id : null}
+        onOpenList={openList}
+        onReorderLists={isLocked ? null : reorderLists}
         onSelectView={selectView}
         onOpenSettings={() => { setView("settings"); }}
         onNewTemplate={openNewTemplate}
@@ -17054,7 +17234,15 @@ function App() {
           <header className="hdr">
             <h1 className="page-title">
               {headerIcon && <span className="title-icon" style={{ color: headerIcon.color }}>{headerIcon.icon}</span>}
-              <span className="page-title-text" title={headerTitle}>{headerTitle}</span>
+              {listRenaming && activeList && !isLocked
+                ? <input className="input page-title-input" autoFocus aria-label="List name" value={listNameText}
+                    onFocus={e => e.target.select()} onChange={e => setListNameText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { e.preventDefault(); endRenameList(true); }
+                      else if (e.key === "Escape") { e.preventDefault(); endRenameList(false); }
+                    }}
+                    onBlur={() => endRenameList(true)} style={{ fontSize: "inherit", fontFamily: "inherit", padding: "0 8px", minWidth: 240 }} />
+                : <span className="page-title-text" title={headerTitle}>{headerTitle}</span>}
             </h1>
             <div className="hdr-actions">
               {/* Show secrets toggle (everywhere except settings) */}
@@ -17067,7 +17255,9 @@ function App() {
               )}
 
               {view === "list" && <>
-                {activeTemplate && (
+                {activeList && !isLocked && <button className="btn btn-ghost entry-list-rename" onClick={startRenameList} title="Rename this list">Rename</button>}
+                {activeList && !isLocked && <button className="btn btn-danger entry-list-delete" onClick={() => deleteList(activeList.id)} title="Delete this list; its entries stay">Delete list</button>}
+                {activeTemplate && !activeList && (
                   <div className="export-menu-wrap">
                     <button
                       className="btn btn-ghost"
@@ -17089,7 +17279,7 @@ function App() {
                     </>}
                   </div>
                 )}
-                {activeTemplate && !isLocked && <button className="btn btn-ghost" onClick={openEditTemplate}>Edit Template</button>}
+                {activeTemplate && !activeList && !isLocked && <button className="btn btn-ghost" onClick={openEditTemplate}>Edit Template</button>}
                 {activeTemplate && !isLocked && <button className="btn btn-accent" onClick={() => openNewEntry()}>+ New Entry</button>}
               </>}
               {view === "entry" && <>
@@ -17653,14 +17843,14 @@ function App() {
                 onRename={(name) => renamePack(pack.id, name)}
                 onSetDescription={(desc) => setPackDescription(pack.id, desc)}
                 onDelete={() => deletePack(pack.id)}
-                onSelectTemplate={(tid) => { setActiveTemplateId(tid); setView("list"); }}
+                onSelectTemplate={selectTemplate}
                 onAddTemplate={(tid) => addTemplateToPack(pack.id, tid)}
                 onRemoveTemplate={(tid) => removeTemplateFromPack(pack.id, tid)}
                 onExport={() => exportPack(pack)}
               />
             );
           })()}
-          {view === "project" && <ProjectView state={state} onOpenEntry={openEntryFromAnywhere} dirHandle={dirHandle} onSelectTemplate={(tid) => { setActiveTemplateId(tid); setView("list"); }} onChangeView={setView} onOpenHtmlExportModal={() => setShowHtmlExportModal(true)} />}
+          {view === "project" && <ProjectView state={state} onOpenEntry={openEntryFromAnywhere} dirHandle={dirHandle} onSelectTemplate={selectTemplate} onChangeView={setView} onOpenHtmlExportModal={() => setShowHtmlExportModal(true)} />}
           {view === "list" && (
             <EntryList
               entries={filteredEntries}
@@ -17669,7 +17859,7 @@ function App() {
               onSearch={setSearch}
               sortBy={sortBy}
               onSort={setSortBy}
-              key={activeTagFilter ? `tag:${activeTagFilter}` : activeTemplateId ? `tpl:${activeTemplateId}` : "all"}
+              key={activeList ? `list:${activeList.id}` : activeTagFilter ? `tag:${activeTagFilter}` : activeTemplateId ? `tpl:${activeTemplateId}` : "all"}
               onSelect={openEntry}
               showTemplate={!!activeTagFilter || !activeTemplateId}
               variantAxis={variantAxisInfo}
@@ -17677,6 +17867,12 @@ function App() {
               query={entryQuery}
               onQuery={setEntryQuery}
               queryFields={queryFields}
+              queryAllFields={queryAllFields}
+              list={activeList}
+              listChanged={activeList ? listDiffers(activeList, entryQuery, queryFields, queryAllFields) : false}
+              onSaveList={isLocked ? null : saveListAs}
+              onUpdateList={updateActiveList}
+              scopeNote={activeList && activeList.scope && activeList.scope.kind === "template" && !activeTemplate ? "This list's template is gone (template not found), so it shows no entries." : null}
               total={listScope.length}
               scopeEntries={listScope}
               state={state}
@@ -18436,11 +18632,12 @@ function App() {
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onSelectAllEntries, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
+function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onSelectAllEntries, activeListId, onOpenList, onReorderLists, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
   const importFileRef = useRef(null);
   const packImportFileRef = useRef(null);
   const tplDrag = useDragReorder(onReorderTemplate || (() => {}));
   const viewDrag = useDragReorder(onReorderViews || (() => {}));
+  const listDrag = useDragReorder(onReorderLists || (() => {}));
 
   // Sidebar-resize drag. Listens at window level so the cursor can leave the
   // 6px handle without ending the gesture; clamps width to a sane range.
@@ -18583,7 +18780,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           </button>
           {/* v1.7 r045: the list over every entry, whatever its template */}
           {onSelectAllEntries && (() => {
-            const isActive = activeView === "list" && !activeTemplateId && !activeTagFilter;
+            const isActive = activeView === "list" && !activeTemplateId && !activeTagFilter && !activeListId;
             const n = Array.isArray(state.entries) ? state.entries.length : 0;
             return (
               <button className={`nav-item nav-item-all ${isActive ? "active" : ""}`} onClick={onSelectAllEntries} title="Every entry in the world, whatever its template">
@@ -18596,7 +18793,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           {!templatesCollapsed && displayedTemplates.length === 0 && <div style={{ padding: "5px 14px", fontSize: 12, color: "var(--text-dim)", fontStyle: "italic" }}>No templates yet</div>}
           {!templatesCollapsed && displayedTemplates.map(({ t, originalIdx }) => {
             const idx = originalIdx;
-            const isActive = activeView === "list" && activeTemplateId === t.id;
+            const isActive = activeView === "list" && activeTemplateId === t.id && !activeListId;
             const canDrag = !isLocked && onReorderTemplate;
             const isDragged = tplDrag.draggedIdx === idx;
             const isOver = tplDrag.overIdx === idx;
@@ -18625,6 +18822,35 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           })}
         </div>
 
+        {/* v1.7 r046: the saved lists, after Templates (Drak's call 1 at the cut) */}
+        {Array.isArray(state.lists) && state.lists.length > 0 && (
+          <div className="nav-section nav-lists" style={{ marginTop: 12 }}>
+            <div className="nav-label"><span>Lists</span></div>
+            {state.lists.map((l, idx) => {
+              if (!l) return null;
+              const isActive = activeView === "list" && activeListId === l.id;
+              const canDrag = !isLocked && !!onReorderLists;
+              const isDragged = listDrag.draggedIdx === idx;
+              const isOver = listDrag.overIdx === idx;
+              const before = isOver && listDrag.dropPosition === "before" && !isDragged;
+              const after = isOver && listDrag.dropPosition === "after" && !isDragged;
+              return (
+                <div
+                  key={l.id}
+                  className={`nav-item-wrap ${isActive ? "active" : ""} ${isDragged ? "dragging" : ""} ${before ? "drop-before" : ""} ${after ? "drop-after" : ""}`}
+                  {...(canDrag ? listDrag.rowProps(idx) : {})}
+                >
+                  {canDrag && <span className="nav-drag-handle" title="Drag to reorder" {...listDrag.handleProps(idx)}>⋮⋮</span>}
+                  <button className={`nav-item nav-item-list ${isActive ? "active" : ""}`} onClick={() => onOpenList && onOpenList(l.id)} title={l.name}>
+                    <span className="nav-icon" style={isActive ? { color: "var(--accent)" } : {}}>☰</span>
+                    <span className="nav-name">{l.name}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {Array.isArray(packs) && packs.length > 0 && (
           <div className="nav-section" style={{ marginTop: 12 }}>
             <div className="nav-label"><span>Packs</span></div>
@@ -18645,7 +18871,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
                   {memberTpls.map(t => (
                     <button
                       key={t.id}
-                      className={`nav-item ${activeTemplateId === t.id && activeView === "list" ? "active" : ""}`}
+                      className={`nav-item ${activeTemplateId === t.id && activeView === "list" && !activeListId ? "active" : ""}`}
                       onClick={() => onSelectTemplate(t.id)}
                       style={{ paddingLeft: 28 }}
                     >
@@ -18664,8 +18890,8 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           <div className="nav-section" style={{ marginTop: 12 }}>
             <div className="nav-label"><span>Tags</span></div>
             {allTags.map(tag => (
-              <button key={tag} className={`nav-item ${activeTagFilter === tag ? "active" : ""}`} onClick={() => onSelectTag(tag)}>
-                <span className="nav-icon" style={activeTagFilter === tag ? { color: "var(--accent)" } : {}}>#</span>
+              <button key={tag} className={`nav-item ${activeTagFilter === tag && !activeListId ? "active" : ""}`} onClick={() => onSelectTag(tag)}>
+                <span className="nav-icon" style={activeTagFilter === tag && !activeListId ? { color: "var(--accent)" } : {}}>#</span>
                 <span className="nav-name">{tag}</span>
                 <span className="nav-count">{tagCounts[tag]}</span>
               </button>
@@ -18858,7 +19084,7 @@ function PackDetailView({ pack, templates, isLocked, onRename, onSetDescription,
 
 // ─── Entry list ────────────────────────────────────────────────────────────────
 
-function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSelect, showTemplate, variantAxis, onSetVariant, query, onQuery, queryFields, total, scopeEntries, state, showSecrets }) {
+function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSelect, showTemplate, variantAxis, onSetVariant, query, onQuery, queryFields, queryAllFields, total, scopeEntries, state, showSecrets, list, listChanged, onSaveList, onUpdateList, scopeNote }) {
   // Variant picker renders only when the axis is configured AND there's
   // something to pick (derived values exist, or a stale active needs to be
   // visible so the user can switch back to All). A stale active — a value no
@@ -18868,11 +19094,13 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
   // v1.7 r045: Filter opens the conditions' rows (EntryQueryRows), and while
   // they're closed the conditions in force show as chips (Drak's call 3), a
   // chip opening the rows at its condition; while anything narrows the list,
-  // the count says how many of the scope's entries it shows.
+  // the count says how many of the scope's entries it shows. Since r046 the
+  // rows' Save keeps the query in a list (onSaveList, or onUpdateList for
+  // the open one), and a condition the scope can't read stays in force.
   const [filterOpen, setFilterOpen] = useState(false);
   const [focusId, setFocusId] = useState(null);
   const q = query || QUERY_EMPTY;
-  const ready = onQuery ? queryReadyConditions(q, queryFields) : [];
+  const ready = onQuery ? queryReadyConditions(q, queryFields, queryAllFields) : [];
   const narrowed = ready.length > 0 || !!(search && search.trim());
   const openRows = (id) => {
     if (q.conditions.length === 0) onQuery({ ...q, conditions: [queryNewCondition((queryFields || [])[0])] });
@@ -18913,7 +19141,8 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
         </select>
         {onQuery && narrowed && <span className="entry-list-count" style={{ fontSize: 12.5, color: "var(--text-dim)", whiteSpace: "nowrap", flexShrink: 0 }}>{entries.length} of {total}</span>}
       </div>
-      {onQuery && filterOpen && <EntryQueryRows query={q} fields={queryFields || []} state={state} entries={scopeEntries} templates={templates} showSecrets={showSecrets} focusId={focusId} onQuery={onQuery} onDone={closeRows} />}
+      {scopeNote && <div className="entry-list-note" style={{ padding: "10px 20px 0", fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>{scopeNote}</div>}
+      {onQuery && filterOpen && <EntryQueryRows query={q} fields={queryFields || []} allFields={queryAllFields || queryFields || []} state={state} entries={scopeEntries} templates={templates} showSecrets={showSecrets} focusId={focusId} onQuery={onQuery} onDone={closeRows} list={list} listChanged={listChanged} onSaveList={onSaveList} onUpdateList={onUpdateList} />}
       {onQuery && !filterOpen && ready.length > 0 && <EntryQueryChips query={q} ready={ready} state={state} showSecrets={showSecrets} onOpenAt={openRows} onQuery={onQuery} />}
       <div className="entry-list">
         {entries.length === 0
@@ -18949,8 +19178,8 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry queries (v1.7 r045) ─────────────────────────────────────────────────
 // docs/pipes-spec.md, section 6, with Drak's calls at the cut: the entry
-// list's conditions and its search read what an entry's page shows, never a
-// field's label, an id, or a stored key. A condition is a field, an
+// list's search reads what an entry's page shows, and its conditions a
+// field by its label, never an id or a stored key. A condition is a field, an
 // operator, and a value on one line (call 1); a date in one is entered with
 // the entry form's own control, in any of the world's calendars, and
 // compared by absoluteDay, as Chronometric places dates (call 2); and the
@@ -18992,34 +19221,39 @@ const QUERY_OPS = {
   linked: [["either", "either way"], ["to", "to"], ["from", "from"]],
 };
 
-// A field's key: its label, a subfield's label under a group's, and a date
-// range's end, each as a condition matches it.
-const queryFieldKey = (label, sub, end) => JSON.stringify(["f", queryLower(label), sub ? queryLower(sub) : null, end || null]);
+// A field's key: the labels down to it, from its template's field through
+// the groups that hold it (since v1.7 r046, where a group's subfield had
+// one level), and a date range's end, each as a condition matches it.
+const queryFieldKey = (labels, end) => JSON.stringify(["f", (Array.isArray(labels) ? labels : [labels]).map(queryLower), end || null]);
 
 // A key read back: a pseudo-field's name (Name, Tags, Template, Linked
-// with), or { label, sub, end }; null for anything else.
+// with), or { labels, end }; null for anything else.
 const queryParse = (key) => {
   if (key === "name" || key === "tags" || key === "template" || key === "linked") return { pseudo: key };
   if (typeof key !== "string") return null;
   try {
     const p = JSON.parse(key);
-    return Array.isArray(p) && p[0] === "f" && typeof p[1] === "string" ? { label: p[1], sub: p[2] || null, end: p[3] || null } : null;
+    return Array.isArray(p) && p[0] === "f" && Array.isArray(p[1]) && p[1].length > 0 && p[1].every(x => typeof x === "string") ? { labels: p[1], end: p[2] || null } : null;
   } catch (e) { return null; }
 };
 
 // The fields a condition can name over a scope's templates, in their order:
 // Name first; each label a template gives a field, case aside, with the kind
 // its fields hold (text where two templates give it different kinds) and
-// the options they offer; a group's subfields under the group's label; a
-// date range's start and end as two, as Chronometric draws a range; then
-// Tags, Template where the scope spans templates, and Linked with. A secret
-// field is offered only while secrets show.
+// the options they offer; a group's subfields under the group's label, and
+// since v1.7 r046 a group's inside it under both, at any depth; a date
+// range's start and end as two, as Chronometric draws a range; then Tags,
+// Template where the scope spans templates, and Linked with. A secret field
+// is offered only while secrets show. Each carries its key, its label as a
+// row names it, and its field as a saved list keeps it, the labels as the
+// first template to give them has them.
 const queryFieldsOf = (templates, spans, showSecrets) => {
-  const out = [{ key: "name", label: "Name", kind: "text", options: [] }];
+  const out = [{ key: "name", field: "name", label: "Name", kind: "text", options: [] }];
   const byKey = new Map();
-  const add = (key, label, kind, f) => {
+  const add = (labels, end, label, kind, f) => {
+    const key = queryFieldKey(labels, end);
     let x = byKey.get(key);
-    if (!x) { x = { key, label, kind, options: [] }; byKey.set(key, x); out.push(x); }
+    if (!x) { x = { key, field: end ? { labels, end } : { labels }, label, kind, options: [] }; byKey.set(key, x); out.push(x); }
     else if (x.kind !== kind) x.kind = "text";
     const opt = (o) => {
       const v = typeof o === "string" ? o : (o && typeof o.value === "string" ? o.value : "");
@@ -19028,63 +19262,57 @@ const queryFieldsOf = (templates, spans, showSecrets) => {
     (Array.isArray(f.options) ? f.options : []).forEach(opt);
     if (f.optionsByParent && typeof f.optionsByParent === "object") Object.values(f.optionsByParent).forEach(list => (Array.isArray(list) ? list : []).forEach(opt));
   };
-  const one = (f, group) => {
+  const walk = (fields, above) => (Array.isArray(fields) ? fields : []).forEach(f => {
     if (!f || typeof f.label !== "string" || !f.label.trim() || (f.secret && !showSecrets)) return;
-    const label = group ? `${group.label} › ${f.label}` : f.label;
-    const key = (end) => (group ? queryFieldKey(group.label, f.label, end) : queryFieldKey(f.label, null, end));
+    const labels = [...above, f.label];
+    if (f.type === "group") { walk(f.subfields, labels); return; }
+    const label = labels.join(" › ");
     if (f.type === "calendar-date-range") {
-      add(key("start"), `${label} · start`, "date", f);
-      add(key("end"), `${label} · end`, "date", f);
+      add(labels, "start", `${label} · start`, "date", f);
+      add(labels, "end", `${label} · end`, "date", f);
       return;
     }
-    if (QUERY_KINDS[f.type]) add(key(null), label, QUERY_KINDS[f.type], f);
-  };
-  (Array.isArray(templates) ? templates : []).forEach(t => (t && Array.isArray(t.fields) ? t.fields : []).forEach(f => {
-    if (f && f.type === "group") {
-      if (typeof f.label === "string" && f.label.trim() && !(f.secret && !showSecrets)) (Array.isArray(f.subfields) ? f.subfields : []).forEach(s => one(s, f));
-    } else one(f, null);
-  }));
-  out.push({ key: "tags", label: "Tags", kind: "multi", options: [] });
-  if (spans) out.push({ key: "template", label: "Template", kind: "template", options: [] });
-  out.push({ key: "linked", label: "Linked with", kind: "linked", options: [] });
+    if (QUERY_KINDS[f.type]) add(labels, null, label, QUERY_KINDS[f.type], f);
+  });
+  (Array.isArray(templates) ? templates : []).forEach(t => walk(t && t.fields, []));
+  out.push({ key: "tags", field: "tags", label: "Tags", kind: "multi", options: [] });
+  if (spans) out.push({ key: "template", field: "template", label: "Template", kind: "template", options: [] });
+  out.push({ key: "linked", field: "linked", label: "Linked with", kind: "linked", options: [] });
   return out;
 };
+
+// Whether a template's fields hold the labels from i down, ending at a field
+// a condition reads: a date range where end is set, never a group.
+const queryHasPath = (fields, labels, i, end) => (Array.isArray(fields) ? fields : []).some(f => {
+  if (!f || queryLower(f.label) !== labels[i]) return false;
+  if (i < labels.length - 1) return f.type === "group" && queryHasPath(f.subfields, labels, i + 1, end);
+  return f.type !== "group" && (end ? f.type === "calendar-date-range" : f.type !== "calendar-date-range");
+});
 
 // An entry's values for a parsed field, each { field, value }: null when the
 // entry's template has no such field, and otherwise the values the page
 // would show, a field hidden by its show-when or as a secret while secrets
-// are hidden left out, a group's rows each in turn, and a date range's end
-// read as a date.
+// are hidden left out, a group's rows each in turn, at every depth since
+// v1.7 r046, and a date range's end read as a date.
 const queryValuesOf = (entry, tpl, p, showSecrets) => {
   const fields = tpl && Array.isArray(tpl.fields) ? tpl.fields : [];
-  const vals = (entry && entry.fields) || {};
+  if (!p || !Array.isArray(p.labels) || !queryHasPath(fields, p.labels, 0, p.end)) return null;
   const seen = (f) => !(f.secret && !showSecrets);
-  const isRange = (f) => f.type === "calendar-date-range";
-  let has = false;
+  const last = p.labels.length - 1;
   const out = [];
-  const take = (f, v) => {
-    if (!p.end) { out.push({ field: f, value: v }); return; }
-    out.push({ field: { ...f, type: "calendar-date" }, value: v && typeof v === "object" ? v[p.end] : null });
-  };
-  fields.forEach(f => {
-    if (!f || queryLower(f.label) !== p.label) return;
-    if (p.sub) {
+  const walk = (list, vals, i) => (Array.isArray(list) ? list : []).forEach(f => {
+    if (!f || queryLower(f.label) !== p.labels[i] || !seen(f) || !isFieldVisible(f, vals)) return;
+    if (i < last) {
       if (f.type !== "group") return;
-      const subs = (Array.isArray(f.subfields) ? f.subfields : []).filter(s => s && queryLower(s.label) === p.sub && (p.end ? isRange(s) : !isRange(s)));
-      if (subs.length === 0) return;
-      has = true;
-      if (!seen(f) || !isFieldVisible(f, vals)) return;
-      (Array.isArray(vals[f.id]) ? vals[f.id] : []).forEach(inst => {
-        if (!inst || typeof inst !== "object") return;
-        subs.forEach(s => { if (seen(s) && isFieldVisible(s, inst)) take(s, inst[s.id]); });
-      });
+      (Array.isArray(vals[f.id]) ? vals[f.id] : []).forEach(inst => { if (inst && typeof inst === "object") walk(f.subfields, inst, i + 1); });
       return;
     }
-    if (f.type === "group" || (p.end ? !isRange(f) : isRange(f))) return;
-    has = true;
-    if (seen(f) && isFieldVisible(f, vals)) take(f, vals[f.id]);
+    if (f.type === "group" || (p.end ? f.type !== "calendar-date-range" : f.type === "calendar-date-range")) return;
+    const v = vals[f.id];
+    out.push(p.end ? { field: { ...f, type: "calendar-date" }, value: v && typeof v === "object" ? v[p.end] : null } : { field: f, value: v });
   });
-  return has ? out : null;
+  walk(fields, (entry && entry.fields) || {}, 0);
+  return out;
 };
 
 // Whether a value is empty as its field's type holds it.
@@ -19273,8 +19501,10 @@ const queryTest = (c, kind, it, ctx) => {
     return c.op === "is" ? s === want : s.includes(want);
   }
   if (kind === "choice") {
-    const o = queryLower(selectValueOnly(v));
-    return c.op === "anyOf" ? (c.values || []).some(x => queryLower(x) === o) : o === queryLower(c.value);
+    // the option picked, or since v1.7 r046 an Other's text, as the page shows it
+    const o = queryLower(selectValueOnly(v)), d = queryLower(formatSelectDisplay(v));
+    const is = (x) => { const w = queryLower(x); return w !== "" && (w === o || w === d); };
+    return c.op === "anyOf" ? (c.values || []).some(is) : is(c.value);
   }
   if (kind === "multi") {
     const picks = queryPicks(f, v);
@@ -19352,19 +19582,39 @@ const queryReady = (c, kind) => {
   return queryValueSet(kind, c.value);
 };
 
-// A query's conditions in force, each { c, f } with the field it names in
-// fields.
-const queryReadyConditions = (query, fields) => {
+// Whether a condition whose field isn't found has what its operator would
+// need, whatever the field's kind (v1.7 r046).
+const queryReadyAnyKind = (c) => {
+  if (!c || typeof c.op !== "string") return false;
+  const set = (v) => (typeof v === "string" ? v.trim() !== "" : !!(v && typeof v === "object" && v.year != null));
+  if (c.op === "empty" || c.op === "filled") return true;
+  if (c.op === "anyOf" || c.op === "hasAny" || c.op === "hasAll") return Array.isArray(c.values) && c.values.length > 0;
+  if (c.op === "between") return set(c.value) && set(c.value2);
+  return set(c.value);
+};
+
+// A query's conditions in force, each { c, f, missing, secret }: a condition
+// with what its operator needs on a field of fields; and since v1.7 r046 one
+// on a secret field while secrets are hidden (f from all, the fields with
+// secrets), which reads the field as empty, as the page does, and one on a
+// field no template of the scope has (missing), which holds for no entry.
+const queryReadyConditions = (query, fields, all) => {
   const byKey = new Map((Array.isArray(fields) ? fields : []).map(f => [f.key, f]));
-  return (query && Array.isArray(query.conditions) ? query.conditions : [])
-    .map(c => ({ c, f: c ? byKey.get(c.key) : null }))
-    .filter(x => x.f && queryReady(x.c, x.f.kind));
+  const allByKey = Array.isArray(all) ? new Map(all.map(f => [f.key, f])) : byKey;
+  return (query && Array.isArray(query.conditions) ? query.conditions : []).map(c => {
+    if (!c) return null;
+    const f = byKey.get(c.key);
+    if (f) return queryReady(c, f.kind) ? { c, f, missing: false, secret: false } : null;
+    const h = allByKey.get(c.key);
+    if (h) return queryReady(c, h.kind) ? { c, f: h, missing: false, secret: true } : null;
+    return queryReadyAnyKind(c) ? { c, f: null, missing: true, secret: false } : null;
+  }).filter(Boolean);
 };
 
 // The entries a query keeps, in their order: all of them while no condition
-// is in force.
-const queryApply = (state, entries, query, fields, showSecrets) => {
-  const ready = queryReadyConditions(query, fields);
+// is in force. A condition on a field not found holds for none (r046).
+const queryApply = (state, entries, query, fields, showSecrets, all) => {
+  const ready = queryReadyConditions(query, fields, all);
   if (ready.length === 0) return entries;
   const ctx = queryContextOf(state, showSecrets);
   const any = query.mode === "any";
@@ -19372,7 +19622,7 @@ const queryApply = (state, entries, query, fields, showSecrets) => {
     if (!e) return false;
     ctx.cal = ctx.calOf(e);
     const tpl = ctx.tplById.get(e.templateId) || null;
-    const hold = (x) => queryHolds(x.c, x.f.kind, e, tpl, ctx);
+    const hold = (x) => !x.missing && queryHolds(x.c, x.f.kind, e, tpl, ctx);
     return any ? ready.some(hold) : ready.every(hold);
   });
 };
@@ -19381,7 +19631,7 @@ const queryApply = (state, entries, query, fields, showSecrets) => {
 const queryNewCondition = (field, id) => {
   const kind = field ? field.kind : "text";
   const ops = QUERY_OPS[kind] || QUERY_OPS.text;
-  return { id: id || `qc-${genId()}`, key: field ? field.key : "name", op: ops[0][0], value: kind === "date" ? null : "", value2: kind === "date" ? null : "", values: [], calendarId: null };
+  return { id: id || `qc-${genId()}`, key: field ? field.key : "name", field: field ? field.field : "name", label: field ? field.label : "Name", op: ops[0][0], value: kind === "date" ? null : "", value2: kind === "date" ? null : "", values: [], calendarId: null };
 };
 
 // What a choice's or a multi-select's condition offers: its fields' options
@@ -19405,7 +19655,8 @@ const queryValueOptions = (state, entries, field, showSecrets) => {
       if (p.pseudo) return;
       (queryValuesOf(e, ctx.tplById.get(e.templateId) || null, p, showSecrets) || []).forEach(it => {
         const t = it.field.type, v = it.value;
-        if (t === "select") push(selectValueOnly(v));
+        // since v1.7 r046 an Other's text too, as the page shows it
+        if (t === "select") { push(selectValueOnly(v)); push(formatSelectDisplay(v)); }
         else if (t === "multiselect") (Array.isArray(v) ? v : []).forEach(x => push(x == null ? "" : String(x)));
         else if (t === "tags") (Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : []).forEach(x => push(x == null ? "" : String(x)));
       });
@@ -19465,8 +19716,19 @@ const queryChipText = (c, f, ctx) => {
 
 // The conditions' rows, opened by the list's Filter (Drak's call 1): All or
 // Any above them, a row each, + Condition under them, and Done, which
-// closes them, a row still without its value going with it.
-function EntryQueryRows({ query, fields, state, entries, templates, showSecrets, focusId, onQuery, onDone }) {
+// closes them, a row still without its value going with it. Since v1.7
+// r046, Save list keeps the query in force as a new list under a name; with
+// a list open, Save keeps it in that list and Save as new makes another.
+function EntryQueryRows({ query, fields, allFields, state, entries, templates, showSecrets, focusId, onQuery, onDone, list, listChanged, onSaveList, onUpdateList }) {
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState("");
+  const saveNew = () => {
+    const n = name.trim();
+    if (!n || !onSaveList) return;
+    onSaveList(n);
+    setNaming(false);
+    setName("");
+  };
   const set = (patch) => onQuery({ ...query, ...patch });
   const setCond = (id, next) => set({ conditions: query.conditions.map(c => (c.id === id ? next : c)) });
   const mode = (m, words) => (
@@ -19479,12 +19741,28 @@ function EntryQueryRows({ query, fields, state, entries, templates, showSecrets,
           <span>Show entries matching</span>{mode("all", "All")}{mode("any", "Any")}<span>of these conditions</span>
         </div>
         {query.conditions.map(c => (
-          <EntryQueryRow key={c.id} cond={c} fields={fields} state={state} entries={entries} templates={templates} showSecrets={showSecrets} focus={c.id === focusId}
+          <EntryQueryRow key={c.id} cond={c} fields={fields} allFields={allFields} state={state} entries={entries} templates={templates} showSecrets={showSecrets} focus={c.id === focusId}
             onChange={(next) => setCond(c.id, next)} onRemove={() => set({ conditions: query.conditions.filter(x => x.id !== c.id) })} />
         ))}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-ghost btn-small entry-query-add" onClick={() => set({ conditions: [...query.conditions, queryNewCondition(fields[0])] })}>+ Condition</button>
           <span style={{ flex: 1 }} />
+          {onSaveList && (naming ? (
+            <>
+              <input className="input entry-list-name" autoFocus aria-label="List name" placeholder="List name" value={name} onChange={e => setName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") { e.preventDefault(); saveNew(); }
+                  else if (e.key === "Escape") { e.preventDefault(); setNaming(false); setName(""); }
+                }} style={{ width: 200 }} />
+              <button type="button" className="btn btn-accent btn-small entry-list-save-new" disabled={!name.trim()} onClick={saveNew}>Save</button>
+              <button type="button" className="btn btn-ghost btn-small entry-list-name-cancel" onClick={() => { setNaming(false); setName(""); }}>Cancel</button>
+            </>
+          ) : (
+            <>
+              {list && <button type="button" className="btn btn-ghost btn-small entry-list-save" disabled={!listChanged} title="Keep these conditions in the list" onClick={() => onUpdateList && onUpdateList()}>Save</button>}
+              <button type="button" className="btn btn-ghost btn-small entry-list-save-as" onClick={() => setNaming(true)}>{list ? "Save as new…" : "Save list…"}</button>
+            </>
+          ))}
           {query.conditions.length > 0 && <button type="button" className="btn btn-ghost btn-small" onClick={() => set({ conditions: [] })}>Clear</button>}
           <button type="button" className="btn btn-small btn-accent entry-query-done" onClick={onDone}>Done</button>
         </div>
@@ -19495,7 +19773,7 @@ function EntryQueryRows({ query, fields, state, entries, templates, showSecrets,
 
 // One condition's row: its field, its operator, the value's control by the
 // field's kind, and × to remove it. A new field starts the row over.
-function EntryQueryRow({ cond, fields, state, entries, templates, showSecrets, focus, onChange, onRemove }) {
+function EntryQueryRow({ cond, fields, allFields, state, entries, templates, showSecrets, focus, onChange, onRemove }) {
   const ref = useRef(null);
   useEffect(() => {
     if (!focus || !ref.current) return;
@@ -19503,13 +19781,23 @@ function EntryQueryRow({ cond, fields, state, entries, templates, showSecrets, f
     if (el) el.focus();
   }, [focus]);
   const field = fields.find(f => f.key === cond.key) || null;
+  // v1.7 r046: a condition on a secret field while secrets are hidden keeps
+  // its place, saying no more than that, and goes only by its ×.
+  if (!field && (allFields || []).some(f => f.key === cond.key)) {
+    return (
+      <div ref={ref} className="entry-query-row entry-query-row-secret" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ flex: "1 1 auto", fontSize: 13, color: "var(--text-dim)", fontStyle: "italic", padding: "6px 0" }}>A condition on a secret field, shown while secrets show</span>
+        <button type="button" className="btn btn-ghost btn-small entry-query-remove" title="Remove this condition" aria-label="Remove this condition" onClick={onRemove} style={{ flexShrink: 0 }}>×</button>
+      </div>
+    );
+  }
   const ops = field ? QUERY_OPS[field.kind] || [] : [];
   // the row's controls wrap among themselves, and its × keeps to the right
   return (
     <div ref={ref} className="entry-query-row" style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
       <div style={{ flex: "1 1 auto", minWidth: 0, display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap" }}>
         <select className="input sort-sel entry-query-field" value={field ? cond.key : ""} onChange={e => { const f = fields.find(x => x.key === e.target.value); if (f) onChange(queryNewCondition(f, cond.id)); }} style={{ maxWidth: 220 }}>
-          {!field && <option value="">(field not found)</option>}
+          {!field && <option value="">{cond.label ? `${cond.label} (field not found)` : "(field not found)"}</option>}
           {fields.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
         </select>
         {field && (
@@ -19642,7 +19930,7 @@ function EntryQueryChips({ query, ready, state, showSecrets, onOpenAt, onQuery }
         <React.Fragment key={x.c.id}>
           {i > 0 && <span className="entry-query-join" style={{ fontSize: 12, color: "var(--text-dim)" }}>{query.mode === "any" ? "or" : "and"}</span>}
           <span className="entry-query-chip" style={{ display: "inline-flex", alignItems: "center", border: "1px solid var(--border)", borderRadius: 12, background: "var(--surf2)", fontSize: 12.5 }}>
-            <button type="button" className="entry-query-chip-text" title="Change this condition" onClick={() => onOpenAt(x.c.id)} style={{ ...plain, color: "var(--text)", padding: "3px 4px 3px 10px" }}>{queryChipText(x.c, x.f, ctx)}</button>
+            <button type="button" className={`entry-query-chip-text${x.missing ? " entry-query-chip-missing" : ""}`} title="Change this condition" onClick={() => onOpenAt(x.c.id)} style={{ ...plain, color: x.missing ? "var(--danger)" : "var(--text)", padding: "3px 4px 3px 10px" }}>{x.secret ? "A condition on a secret field" : x.missing ? `${x.c.label || "A field"}: field not found` : queryChipText(x.c, x.f, ctx)}</button>
             <button type="button" className="entry-query-chip-remove" title="Remove this condition" aria-label="Remove this condition" onClick={() => remove(x.c.id)} style={{ ...plain, color: "var(--text-dim)", padding: "3px 9px 3px 4px" }}>×</button>
           </span>
         </React.Fragment>
@@ -19651,6 +19939,97 @@ function EntryQueryChips({ query, ready, state, showSecrets, onOpenAt, onQuery }
     </div>
   );
 }
+
+// ─── Saved lists (v1.7 r046) ───────────────────────────────────────────────────
+// docs/pipes-spec.md, section 6, with Drak's calls at the cut: the Filter's
+// Save names the query in force, and the world keeps it (state.lists,
+// normalized at every load by normalizeEntryLists, 10_migrate): its name,
+// its scope (every entry, a template by id, or a tag), all or any, and its
+// conditions. A condition keeps its field by the labels down to it (with a
+// date range's end), so a field renamed or gone shows as not found until
+// its row picks another, and a record or a template by id, so a rename
+// leaves it and a delete empties it (clearLinksTo, 22_trunk). The sidebar
+// lists them after Templates (call 1); an open list is renamed and deleted
+// from its header, and its row in the sidebar moves by its handle (call 2).
+
+// A pseudo-field's label, as a row and a chip name it.
+const LIST_PSEUDO_LABELS = { name: "Name", tags: "Tags", template: "Template", linked: "Linked with" };
+
+// A kept field's key, as the query's fields carry it, and its label, as a
+// row names it.
+const listFieldKey = (field) => (typeof field === "string" ? field
+  : field && Array.isArray(field.labels) ? queryFieldKey(field.labels, field.end || null) : "");
+const listFieldLabel = (field) => (typeof field === "string" ? (LIST_PSEUDO_LABELS[field] || field)
+  : field && Array.isArray(field.labels) ? `${field.labels.join(" › ")}${field.end ? ` · ${field.end}` : ""}` : "");
+
+// A condition's value as a list keeps it: text as typed, a date as its
+// year, month, and day, and anything else as nothing.
+const listValueOf = (v) => (typeof v === "string" ? v
+  : typeof v === "number" && Number.isFinite(v) ? String(v)
+  : v && typeof v === "object" && v.year != null ? { year: v.year, monthIndex: v.monthIndex || 0, day: v.day || 1 } : "");
+
+// A list's query, as the entry list holds it: each condition with its
+// field's key and its label.
+const queryFromList = (list) => ({
+  mode: list && list.mode === "any" ? "any" : "all",
+  conditions: (list && Array.isArray(list.conditions) ? list.conditions : []).filter(c => c && c.field).map(c => ({
+    id: c.id || `qc-${genId()}`, key: listFieldKey(c.field), field: c.field, label: listFieldLabel(c.field), op: c.op,
+    value: c.value == null ? "" : c.value, value2: c.value2 == null ? "" : c.value2,
+    values: Array.isArray(c.values) ? [...c.values] : [], calendarId: c.calendarId || null,
+  })),
+});
+
+// The conditions a list keeps of a query: those in force, each as kept.
+const listConditionsOf = (query, fields, all) => queryReadyConditions(query, fields, all).map(({ c, f }) => ({
+  id: c.id, field: f ? f.field : c.field, op: c.op, value: listValueOf(c.value), value2: listValueOf(c.value2),
+  values: Array.isArray(c.values) ? c.values.filter(v => typeof v === "string") : [], calendarId: c.calendarId || null,
+}));
+
+// Whether the page's query differs from what a list keeps.
+const listDiffers = (list, query, fields, all) => {
+  if (!list) return false;
+  const now = { mode: query && query.mode === "any" ? "any" : "all", conditions: listConditionsOf(query, fields, all) };
+  const was = { mode: list.mode === "any" ? "any" : "all", conditions: listConditionsOf(queryFromList(list), fields, all) };
+  return JSON.stringify(now) !== JSON.stringify(was);
+};
+
+// The page's scope as a list keeps it, and whether a list's is the page's.
+const listScopeOf = (templateId, tag) => (tag ? { kind: "tag", tag } : templateId ? { kind: "template", templateId } : { kind: "all" });
+const listScopeMatches = (scope, templateId, tag) => {
+  const s = scope || { kind: "all" };
+  if (s.kind === "tag") return tag === s.tag;
+  if (s.kind === "template") return !tag && templateId === s.templateId;
+  return !tag && !templateId;
+};
+
+// Whether a list's conditions name any of ids, and the list with those
+// values emptied, each condition kept in its place.
+const listNames = (list, ids) => !!list && Array.isArray(list.conditions) && list.conditions.some(c => c && (
+  (typeof c.value === "string" && ids.has(c.value)) || (typeof c.value2 === "string" && ids.has(c.value2))
+  || (Array.isArray(c.values) && c.values.some(v => ids.has(v)))));
+const listWithout = (list, ids) => ({
+  ...list,
+  conditions: list.conditions.map(c => (c && listNames({ conditions: [c] }, ids) ? {
+    ...c,
+    value: typeof c.value === "string" && ids.has(c.value) ? "" : c.value,
+    value2: typeof c.value2 === "string" && ids.has(c.value2) ? "" : c.value2,
+    values: Array.isArray(c.values) ? c.values.filter(v => !ids.has(v)) : c.values,
+  } : c)),
+});
+
+// What a template's delete does to the saved lists, a line for its modal,
+// or none: a list scoped to it stays and shows no entries, and a Template
+// condition naming it loses it.
+const listTemplateGoes = (state, tid) => {
+  const ls = state && Array.isArray(state.lists) ? state.lists : [];
+  const ids = new Set([tid]);
+  const scoped = ls.filter(l => l && l.scope && l.scope.kind === "template" && l.scope.templateId === tid).length;
+  const named = ls.filter(l => listNames(l, ids)).length;
+  const lines = [];
+  if (scoped) lines.push(scoped === 1 ? "A saved list scoped to it stays and will show no entries." : `${scoped} saved lists scoped to it stay and will show no entries.`);
+  if (named) lines.push(named === 1 ? "A saved list's conditions lose it; the list stays." : `${named} saved lists' conditions lose it; the lists stay.`);
+  return lines.length ? lines.join(" ") : null;
+};
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 
@@ -37915,10 +38294,11 @@ const linksTo = (state, id) => (typeof id === "string" && id ? (linkIndexOf(stat
 // nodes and cards it leaves orphaned and the stemmas they're in; and the
 // places whose [[links]] to them stay as typed, broken (wiki) or, where
 // another record answers to the name once what goes is gone, leading there
-// (wikiMoved). A link through a secret field counts, since the delete clears
-// it either way.
+// (wikiMoved); and since v1.7 r046 the saved lists whose conditions name
+// them (lists). A link through a secret field counts, since the delete
+// clears it either way.
 const linkDeleteCounts = (state, ids, going) => {
-  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set() };
+  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set(), lists: new Set() };
   const list = Array.isArray(ids) ? ids : [...(ids || [])];
   const outside = going instanceof Set ? going : new Set(list);
   // The names as they'll resolve after the delete, built once, when a
@@ -37937,6 +38317,8 @@ const linkDeleteCounts = (state, ids, going) => {
     if (!out.refs.has(key)) out.refs.set(key, new Set());
     out.refs.get(key).add(l.src.id);
   }));
+  const named = new Set(list);
+  (state && Array.isArray(state.lists) ? state.lists : []).forEach(l => { if (l && listNames(l, named)) out.lists.add(l.id); });
   return out;
 };
 
@@ -37945,11 +38327,12 @@ const linkDeleteCounts = (state, ids, going) => {
 // ConLangs' references cleared, a cast record whose character goes kept and
 // marked (scrubFabulaRefs), and a corpus's reading order without them; a map
 // pin unlinked, keeping its label or taking the record's name if it had
-// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them; and
-// [[links]] left as typed. A slice or a record it doesn't change keeps its
-// identity, so what's kept from the last build of the index stays kept. The
-// records themselves are the caller's to remove, after this, so their names
-// are still there to read.
+// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them;
+// since v1.7 r046 a saved list's conditions naming them emptied, kept in
+// their places; and [[links]] left as typed. A slice or a record it doesn't
+// change keeps its identity, so what's kept from the last build of the
+// index stays kept. The records themselves are the caller's to remove,
+// after this, so their names are still there to read.
 const clearLinksTo = (state, ids) => {
   const going = ids instanceof Set ? ids : new Set(ids || []);
   if (!state || going.size === 0) return state;
@@ -38002,6 +38385,9 @@ const clearLinksTo = (state, ids) => {
         ? { ...p, entryId: null, label: (typeof p.label === "string" && p.label.trim()) ? p.label : (names.get(p.entryId) || "") }
         : p)) }, updatedAt: now };
     }));
+  }
+  if (Array.isArray(state.lists) && state.lists.some(l => listNames(l, going))) {
+    next.lists = state.lists.map(l => (listNames(l, going) ? listWithout(l, going) : l));
   }
   return next;
 };
@@ -56858,31 +57244,53 @@ const recordDeleteLines = (state, ids, going) => {
   if (c.pinsBare > 0) lines.push(c.pinsBare === 1 ? "A map pin without a label loses its link and takes the name it pointed at." : `${c.pinsBare} map pins without labels lose their links and take the names they pointed at.`);
   const held = c.nodes + c.cards;
   if (held > 0) lines.push(`${fabulaJoin([c.nodes ? count(c.nodes, "linked node", "linked nodes") : null, c.cards ? count(c.cards, "card", "cards") : null].filter(Boolean))} in ${count(c.stemmas.size, "stemma", "stemmas")} ${held === 1 ? "stays" : "stay"}, unlinked.`);
+  // v1.7 r046: a saved list that names what goes keeps its conditions, emptied.
+  if (c.lists && c.lists.size > 0) lines.push(c.lists.size === 1 ? `A saved list's conditions lose ${it}; the list stays.` : `${c.lists.size} saved lists' conditions lose ${it}; the lists stay.`);
   if (c.wiki.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wiki.size, "place", "places")} stay as typed and show as broken.`);
   if (c.wikiMoved.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wikiMoved.size, "place", "places")} stay as typed and will lead to ${list.length > 1 ? "other records by the same names" : "another record by the same name"}.`);
   return lines;
 };
 
+// Tab and Shift+Tab go round a modal's own controls while it's open (v1.7
+// r046), so the focus never reaches the page under it, where Enter would
+// press whatever it landed on.
+const modalTabCycle = (e, box) => {
+  if (e.key !== "Tab" || !box) return;
+  const items = [...box.querySelectorAll("button, input, select, textarea, [tabindex]")].filter(el => !el.disabled && el.tabIndex >= 0 && el.offsetParent !== null);
+  e.preventDefault();
+  if (items.length === 0) return;
+  const at = items.indexOf(document.activeElement);
+  const next = e.shiftKey ? (at <= 0 ? items.length - 1 : at - 1) : (at < 0 || at >= items.length - 1 ? 0 : at + 1);
+  items[next].focus();
+};
+
 // The modal, drawn once by App; askRecordDelete opens it. Esc and a click
-// outside cancel, as Cancel does.
+// outside cancel, as Cancel does. Since v1.7 r046 the keys are its own while
+// it's open, as the rename modal's are, so a map's or a board's keys under
+// it hear none, and the focus stays in it.
 function RecordDeleteModal() {
   const [ask, setAsk] = useState(null);
+  const box = useRef(null);
   useEffect(() => {
     RECORD_DELETE.open = setAsk;
     return () => { if (RECORD_DELETE.open === setAsk) RECORD_DELETE.open = null; };
   }, []);
   useEffect(() => {
     if (!ask) return undefined;
-    const onKey = (e) => { if (e.key === "Escape") setAsk(null); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    const onKey = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); setAsk(null); }
+      else modalTabCycle(e, box.current);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [ask]);
   const lines = useMemo(() => (ask ? [...(ask.goes ? [ask.goes] : []), ...recordDeleteLines(ask.state, ask.ids)] : []), [ask]);
   if (!ask) return null;
   const doDelete = () => { setAsk(null); ask.onConfirm(); };
   return (
     <div className="modal-backdrop" onClick={() => setAsk(null)}>
-      <div className="modal record-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      <div className="modal record-delete" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">{ask.title}</div>
         {lines.length > 0 && (
           <div className="modal-body">
@@ -56943,6 +57351,7 @@ const renameLeavesLine = (plan, former) => {
 function RecordRenameModal() {
   const [ask, setAsk] = useState(null);
   const [former, setFormer] = useState(false);
+  const box = useRef(null);
   useEffect(() => {
     const open = (a) => { setFormer(false); setAsk(a); };
     RECORD_RENAME.open = open;
@@ -56958,6 +57367,7 @@ function RecordRenameModal() {
     const onKey = (e) => {
       e.stopPropagation();
       if (e.key === "Escape") { e.preventDefault(); cancel(); }
+      else modalTabCycle(e, box.current);
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -56970,7 +57380,7 @@ function RecordRenameModal() {
   };
   return (
     <div className="modal-backdrop" onClick={cancel}>
-      <div className="modal record-rename" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      <div className="modal record-rename" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">Rename "{p.oldName}" to "{p.newName}"?</div>
         <div className="modal-body">
           <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>
