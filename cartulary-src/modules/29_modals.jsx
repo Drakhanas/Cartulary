@@ -322,31 +322,53 @@ const recordDeleteLines = (state, ids, going) => {
   if (c.pinsBare > 0) lines.push(c.pinsBare === 1 ? "A map pin without a label loses its link and takes the name it pointed at." : `${c.pinsBare} map pins without labels lose their links and take the names they pointed at.`);
   const held = c.nodes + c.cards;
   if (held > 0) lines.push(`${fabulaJoin([c.nodes ? count(c.nodes, "linked node", "linked nodes") : null, c.cards ? count(c.cards, "card", "cards") : null].filter(Boolean))} in ${count(c.stemmas.size, "stemma", "stemmas")} ${held === 1 ? "stays" : "stay"}, unlinked.`);
+  // v1.7 r046: a saved list that names what goes keeps its conditions, emptied.
+  if (c.lists && c.lists.size > 0) lines.push(c.lists.size === 1 ? `A saved list's conditions lose ${it}; the list stays.` : `${c.lists.size} saved lists' conditions lose ${it}; the lists stay.`);
   if (c.wiki.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wiki.size, "place", "places")} stay as typed and show as broken.`);
   if (c.wikiMoved.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wikiMoved.size, "place", "places")} stay as typed and will lead to ${list.length > 1 ? "other records by the same names" : "another record by the same name"}.`);
   return lines;
 };
 
+// Tab and Shift+Tab go round a modal's own controls while it's open (v1.7
+// r046), so the focus never reaches the page under it, where Enter would
+// press whatever it landed on.
+const modalTabCycle = (e, box) => {
+  if (e.key !== "Tab" || !box) return;
+  const items = [...box.querySelectorAll("button, input, select, textarea, [tabindex]")].filter(el => !el.disabled && el.tabIndex >= 0 && el.offsetParent !== null);
+  e.preventDefault();
+  if (items.length === 0) return;
+  const at = items.indexOf(document.activeElement);
+  const next = e.shiftKey ? (at <= 0 ? items.length - 1 : at - 1) : (at < 0 || at >= items.length - 1 ? 0 : at + 1);
+  items[next].focus();
+};
+
 // The modal, drawn once by App; askRecordDelete opens it. Esc and a click
-// outside cancel, as Cancel does.
+// outside cancel, as Cancel does. Since v1.7 r046 the keys are its own while
+// it's open, as the rename modal's are, so a map's or a board's keys under
+// it hear none, and the focus stays in it.
 function RecordDeleteModal() {
   const [ask, setAsk] = useState(null);
+  const box = useRef(null);
   useEffect(() => {
     RECORD_DELETE.open = setAsk;
     return () => { if (RECORD_DELETE.open === setAsk) RECORD_DELETE.open = null; };
   }, []);
   useEffect(() => {
     if (!ask) return undefined;
-    const onKey = (e) => { if (e.key === "Escape") setAsk(null); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    const onKey = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); setAsk(null); }
+      else modalTabCycle(e, box.current);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [ask]);
   const lines = useMemo(() => (ask ? [...(ask.goes ? [ask.goes] : []), ...recordDeleteLines(ask.state, ask.ids)] : []), [ask]);
   if (!ask) return null;
   const doDelete = () => { setAsk(null); ask.onConfirm(); };
   return (
     <div className="modal-backdrop" onClick={() => setAsk(null)}>
-      <div className="modal record-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      <div className="modal record-delete" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">{ask.title}</div>
         {lines.length > 0 && (
           <div className="modal-body">
@@ -407,6 +429,7 @@ const renameLeavesLine = (plan, former) => {
 function RecordRenameModal() {
   const [ask, setAsk] = useState(null);
   const [former, setFormer] = useState(false);
+  const box = useRef(null);
   useEffect(() => {
     const open = (a) => { setFormer(false); setAsk(a); };
     RECORD_RENAME.open = open;
@@ -422,6 +445,7 @@ function RecordRenameModal() {
     const onKey = (e) => {
       e.stopPropagation();
       if (e.key === "Escape") { e.preventDefault(); cancel(); }
+      else modalTabCycle(e, box.current);
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -434,7 +458,7 @@ function RecordRenameModal() {
   };
   return (
     <div className="modal-backdrop" onClick={cancel}>
-      <div className="modal record-rename" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      <div className="modal record-rename" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">Rename "{p.oldName}" to "{p.newName}"?</div>
         <div className="modal-body">
           <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>

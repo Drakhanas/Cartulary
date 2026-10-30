@@ -84,6 +84,12 @@ function App() {
   // v1.7 r045: the entry list's conditions, all or any (EntryList), page
   // state as the search is, and cleared with it when a scope is picked.
   const [entryQuery, setEntryQuery] = useState(QUERY_EMPTY);
+  // v1.7 r046: the saved list open on the entry list, and its name while
+  // the header renames it (listRenameRef holds the list being renamed).
+  const [activeListId, setActiveListId] = useState(null);
+  const [listRenaming, setListRenaming] = useState(false);
+  const [listNameText, setListNameText] = useState("");
+  const listRenameRef = useRef(null);
   const [showSecrets, setShowSecrets] = useState(true);
   const [notice, setNotice] = useState(null);  // { type, text }
   const [resetTplId, setResetTplId] = useState(null);  // Template being considered for reset
@@ -994,16 +1000,20 @@ function App() {
     return entries;
   }, [state, activeTagFilter, activeTemplateId, variantAxisInfo, view]);
   // The fields a condition can name: the scope's templates' (queryFieldsOf),
-  // with Template among them where the scope spans more than one.
-  const queryFields = useMemo(() => {
-    if (!state || view !== "list") return [];
+  // with Template among them where the scope spans more than one; and since
+  // v1.7 r046 every field they hold, secrets included (queryAllFields), so a
+  // saved list's condition on a secret field is told from one whose field
+  // is gone.
+  const queryTemplates = useMemo(() => {
+    if (!state || view !== "list") return null;
     const all = Array.isArray(state.templates) ? state.templates : [];
     const ids = activeTagFilter ? new Set(listScope.map(e => e.templateId)) : activeTemplateId ? new Set([activeTemplateId]) : null;
-    const tpls = ids ? all.filter(t => t && ids.has(t.id)) : all;
-    return queryFieldsOf(tpls, tpls.length > 1, showSecrets);
-  }, [state, view, activeTemplateId, activeTagFilter, listScope, showSecrets]);
+    return ids ? all.filter(t => t && ids.has(t.id)) : all;
+  }, [state, view, activeTemplateId, activeTagFilter, listScope]);
+  const queryFields = useMemo(() => (queryTemplates ? queryFieldsOf(queryTemplates, queryTemplates.length > 1, showSecrets) : []), [queryTemplates, showSecrets]);
+  const queryAllFields = useMemo(() => (!queryTemplates ? [] : showSecrets ? queryFields : queryFieldsOf(queryTemplates, queryTemplates.length > 1, true)), [queryTemplates, queryFields, showSecrets]);
   const filteredEntries = useMemo(() => {
-    let entries = queryApply(state, listScope, entryQuery, queryFields, showSecrets);
+    let entries = queryApply(state, listScope, entryQuery, queryFields, showSecrets, queryAllFields);
     const q = search.trim().toLowerCase();
     if (q) entries = entries.filter(e => queryTextOf(state, e, showSecrets).includes(q));
     const [k, dir] = sortBy.split("-");
@@ -1016,7 +1026,7 @@ function App() {
       return av < bv ? -1 * mult : av > bv ? 1 * mult : 0;
     });
     return entries;
-  }, [state, listScope, entryQuery, queryFields, search, sortBy, showSecrets]);
+  }, [state, listScope, entryQuery, queryFields, queryAllFields, search, sortBy, showSecrets]);
 
   // v1.7 r016: Plot Thread and Theme / Motif live under Fabula, so whatever
   // would land on one's list page (Back with nothing behind it, Delete, a new
@@ -1072,6 +1082,13 @@ function App() {
 
   const isLocked = state.world.locked;
   const activeTemplate = state.templates.find(t => t.id === activeTemplateId);
+  // v1.7 r046: the saved list open on the entry list, while the page's scope
+  // is still the list's.
+  const activeList = (() => {
+    if (view !== "list" || !activeListId) return null;
+    const l = (Array.isArray(state.lists) ? state.lists : []).find(x => x && x.id === activeListId);
+    return l && listScopeMatches(l.scope, activeTemplateId, activeTagFilter) ? l : null;
+  })();
   const activeEntry = state.entries.find(e => e.id === activeEntryId);
   // v1.7 r016: on an entry page, a new entry, or the builder of Plot Thread
   // or Theme / Motif, the sidebar lights Fabula, which holds them.
@@ -1188,20 +1205,103 @@ function App() {
   const selectTemplate = (id) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(id); setActiveTagFilter(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
   };
 
   const selectTag = (tag) => {
     if (!confirmDiscardDraft()) return;
     setActiveTagFilter(tag); setActiveTemplateId(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
   };
 
   // v1.7 r045: the list over every entry in the world, whatever its template.
   const selectAllEntries = () => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView("list");
+  };
+
+  // v1.7 r046: a saved list opens the entry list in its scope with its
+  // conditions, under its own name; picking a scope leaves it as saved.
+  const openList = (id) => {
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (!list || !confirmDiscardDraft()) return;
+    const sc = list.scope || { kind: "all" };
+    setActiveTemplateId(sc.kind === "template" ? sc.templateId : null);
+    setActiveTagFilter(sc.kind === "tag" ? sc.tag : null);
+    setActiveEntryId(null);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(queryFromList(list)); setActiveListId(id); setListRenaming(false); setView("list");
+  };
+
+  // The Filter's Save: a new list keeps the page's scope, all or any, and
+  // the conditions in force; an open list's Save keeps the conditions in
+  // it, its name and scope as they were.
+  const saveListAs = (name) => {
+    const n = (name || "").trim();
+    if (isLocked || !n) return;
+    const id = `list-${genId()}`;
+    const list = { id, name: n, scope: listScopeOf(activeTemplateId, activeTagFilter), mode: entryQuery.mode === "any" ? "any" : "all", conditions: listConditionsOf(entryQuery, queryFields, queryAllFields) };
+    updateState(s => ({ ...s, lists: [...(Array.isArray(s.lists) ? s.lists : []), list] }));
+    setActiveListId(id);
+    flash("List saved");
+  };
+  const updateActiveList = () => {
+    if (isLocked || !activeList) return;
+    const id = activeList.id;
+    const mode = entryQuery.mode === "any" ? "any" : "all";
+    const conditions = listConditionsOf(entryQuery, queryFields, queryAllFields);
+    updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).map(l => (l && l.id === id ? { ...l, mode, conditions } : l)) }));
+    flash("List saved");
+  };
+
+  // Rename and Delete list sit in an open list's header (Drak's call 2 at
+  // the cut): Rename turns the title into a box, Enter or leaving it keeping
+  // the name and Esc putting the old one back; Delete asks in the delete
+  // modal, which says the entries stay.
+  const renameList = (id, name) => {
+    const n = (name || "").trim();
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (isLocked || !n || !list || list.name === n) return;
+    updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).map(l => (l && l.id === id ? { ...l, name: n } : l)) }));
+    flash("Renamed");
+  };
+  const startRenameList = () => {
+    if (!activeList || isLocked) return;
+    listRenameRef.current = activeList.id;
+    setListNameText(activeList.name);
+    setListRenaming(true);
+  };
+  const endRenameList = (keep) => {
+    const id = listRenameRef.current;
+    listRenameRef.current = null;
+    if (id && keep) renameList(id, listNameText);
+    setListRenaming(false);
+  };
+  const deleteList = (id) => {
+    if (isLocked) return;
+    const list = (Array.isArray(state.lists) ? state.lists : []).find(l => l && l.id === id);
+    if (!list) return;
+    askRecordDelete({
+      state, ids: [id], title: `Delete the list "${list.name}"?`, goes: "Its entries stay; only the list goes.",
+      onConfirm: () => {
+        updateState(s => ({ ...s, lists: (Array.isArray(s.lists) ? s.lists : []).filter(l => l && l.id !== id) }));
+        setActiveListId(null); setListRenaming(false); setEntryQuery(QUERY_EMPTY);
+        flash("List deleted");
+      },
+    });
+  };
+
+  // A list's row moves by its handle in the sidebar, as a template's does.
+  const reorderLists = (fromIdx, toIdx) => {
+    if (isLocked) return;
+    updateState(s => {
+      const ls = Array.isArray(s.lists) ? s.lists : [];
+      if (fromIdx < 0 || fromIdx >= ls.length || toIdx < 0 || toIdx > ls.length) return s;
+      const next = [...ls];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return { ...s, lists: next };
+    });
   };
 
   const selectView = (v) => {
@@ -1209,7 +1309,7 @@ function App() {
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
     setActiveRecord(null); setFabulaBack([]);
-    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView(v);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false); setView(v);
   };
 
   const openEntryFromAnywhere = (id) => {
@@ -1227,7 +1327,8 @@ function App() {
       if (view === "entry" && activeEntryId) {
         setEntryNavStack(s => [...s, { view: "entry", entryId: activeEntryId }]);
       } else {
-        setEntryNavStack([{ view, entryId: null }]);
+        // v1.7 r046: a list frame keeps the scope it was left on
+        setEntryNavStack([{ view, entryId: null, scope: view === "list" ? { templateId: activeTemplateId || null, tag: activeTagFilter || null } : null }]);
       }
       setActiveTemplateId(entry.templateId); setActiveTagFilter(null);
       setActiveEntryId(id); clearDraftAndStorage(); setView("entry");
@@ -1326,7 +1427,7 @@ function App() {
     if (view === "entry" && activeEntryId) {
       setEntryNavStack(s => [...s, { view: "entry", entryId: activeEntryId }]);
     } else {
-      setEntryNavStack([{ view, entryId: null }]);
+      setEntryNavStack([{ view, entryId: null, scope: view === "list" ? { templateId: activeTemplateId || null, tag: activeTagFilter || null } : null }]);
     }
     setActiveEntryId(id); setView("entry");
   };
@@ -1455,6 +1556,14 @@ function App() {
     }));
   };
 
+  // v1.7 r046: an entry gone from under the page lands on the list the
+  // chain of entries started from, on its own scope, as Back does.
+  const landOnListScope = () => {
+    const base = entryNavStack[0];
+    if (base && base.view === "list" && base.scope) { setActiveTemplateId(base.scope.templateId); setActiveTagFilter(base.scope.tag); }
+    setView("list");
+  };
+
   // Back button on entry view. Pops the top of the nav stack and restores
   // its view + entryId. Empty stack — or stack-top pointing at a deleted
   // entry — falls back to "list". Setters are called outside the
@@ -1475,9 +1584,12 @@ function App() {
       } else {
         // Entry was deleted while we were navigating away. Fall through
         // to list rather than landing on a dead entry id.
-        setView("list");
+        landOnListScope();
       }
     } else {
+      // v1.7 r046: back on a list's own scope, which an entry followed
+      // from it may have changed
+      if (top.view === "list" && top.scope) { setActiveTemplateId(top.scope.templateId); setActiveTagFilter(top.scope.tag); }
       setView(top.view);
     }
     setEntryNavStack(s => s.slice(0, -1));
@@ -2311,7 +2423,7 @@ function App() {
           const cleared = clearLinksTo(s, new Set([id]));
           return { ...cleared, entries: cleared.entries.filter(e => e.id !== id) };
         });
-        setActiveEntryId(null); clearDraftAndStorage(); setView("list");
+        setActiveEntryId(null); clearDraftAndStorage(); landOnListScope();
         flash("Deleted");
       },
     });
@@ -2399,6 +2511,8 @@ function App() {
       syncRefTargetNames([...state.templates, cleaned], [cleaned]);
       updateState(s => ({ ...s, templates: [...s.templates, cleaned] }));
       setActiveTemplateId(cleaned.id);
+      // v1.7 r046: on its own page, as a pick in the sidebar leaves it
+      setActiveTagFilter(null); setSearch(""); setEntryQuery(QUERY_EMPTY); setActiveListId(null); setListRenaming(false);
     } else {
       // Edit mode: preserve whatever origin the template already has. If the
       // user is editing a built-in, it stays a built-in (still subject to
@@ -2914,10 +3028,15 @@ function App() {
     const tid = activeTemplateId;
     askRecordDelete({
       state, ids: state.entries.filter(e => e.templateId === tid).map(e => e.id), title: msg,
+      // v1.7 r046: a saved list scoped to it stays, showing no entries, and
+      // a Template condition naming it loses it.
+      goes: listTemplateGoes(state, tid) || undefined,
       onConfirm: () => {
         updateState(s => {
           const cleared = clearLinksTo(s, new Set(s.entries.filter(e => e.templateId === tid).map(e => e.id)));
-          return { ...cleared, templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
+          const tset = new Set([tid]);
+          const lists = Array.isArray(cleared.lists) && cleared.lists.some(l => listNames(l, tset)) ? cleared.lists.map(l => (listNames(l, tset) ? listWithout(l, tset) : l)) : cleared.lists;
+          return { ...cleared, ...(lists !== cleared.lists ? { lists } : {}), templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
         });
         setActiveTemplateId(null); clearDraftAndStorage();
         // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section
@@ -4358,7 +4477,8 @@ function App() {
   let headerTitle = "";
   let headerIcon = null;
   if (view === "list") {
-    if (activeTagFilter) headerTitle = `# ${activeTagFilter}`;
+    if (activeList) { headerTitle = activeList.name; headerIcon = { icon: "☰", color: "var(--accent)" }; }
+    else if (activeTagFilter) headerTitle = `# ${activeTagFilter}`;
     else if (activeTemplate) { headerTitle = activeTemplate.name; headerIcon = activeTemplate; }
     else if (!activeTemplateId) headerTitle = "All entries";
   } else if ((view === "entry" || view === "entry-edit") && activeEntry) {
@@ -4450,6 +4570,9 @@ function App() {
         onSelectTemplate={selectTemplate}
         onSelectTag={selectTag}
         onSelectAllEntries={selectAllEntries}
+        activeListId={activeList ? activeList.id : null}
+        onOpenList={openList}
+        onReorderLists={isLocked ? null : reorderLists}
         onSelectView={selectView}
         onOpenSettings={() => { setView("settings"); }}
         onNewTemplate={openNewTemplate}
@@ -4535,7 +4658,15 @@ function App() {
           <header className="hdr">
             <h1 className="page-title">
               {headerIcon && <span className="title-icon" style={{ color: headerIcon.color }}>{headerIcon.icon}</span>}
-              <span className="page-title-text" title={headerTitle}>{headerTitle}</span>
+              {listRenaming && activeList && !isLocked
+                ? <input className="input page-title-input" autoFocus aria-label="List name" value={listNameText}
+                    onFocus={e => e.target.select()} onChange={e => setListNameText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { e.preventDefault(); endRenameList(true); }
+                      else if (e.key === "Escape") { e.preventDefault(); endRenameList(false); }
+                    }}
+                    onBlur={() => endRenameList(true)} style={{ fontSize: "inherit", fontFamily: "inherit", padding: "0 8px", minWidth: 240 }} />
+                : <span className="page-title-text" title={headerTitle}>{headerTitle}</span>}
             </h1>
             <div className="hdr-actions">
               {/* Show secrets toggle (everywhere except settings) */}
@@ -4548,7 +4679,9 @@ function App() {
               )}
 
               {view === "list" && <>
-                {activeTemplate && (
+                {activeList && !isLocked && <button className="btn btn-ghost entry-list-rename" onClick={startRenameList} title="Rename this list">Rename</button>}
+                {activeList && !isLocked && <button className="btn btn-danger entry-list-delete" onClick={() => deleteList(activeList.id)} title="Delete this list; its entries stay">Delete list</button>}
+                {activeTemplate && !activeList && (
                   <div className="export-menu-wrap">
                     <button
                       className="btn btn-ghost"
@@ -4570,7 +4703,7 @@ function App() {
                     </>}
                   </div>
                 )}
-                {activeTemplate && !isLocked && <button className="btn btn-ghost" onClick={openEditTemplate}>Edit Template</button>}
+                {activeTemplate && !activeList && !isLocked && <button className="btn btn-ghost" onClick={openEditTemplate}>Edit Template</button>}
                 {activeTemplate && !isLocked && <button className="btn btn-accent" onClick={() => openNewEntry()}>+ New Entry</button>}
               </>}
               {view === "entry" && <>
@@ -5134,14 +5267,14 @@ function App() {
                 onRename={(name) => renamePack(pack.id, name)}
                 onSetDescription={(desc) => setPackDescription(pack.id, desc)}
                 onDelete={() => deletePack(pack.id)}
-                onSelectTemplate={(tid) => { setActiveTemplateId(tid); setView("list"); }}
+                onSelectTemplate={selectTemplate}
                 onAddTemplate={(tid) => addTemplateToPack(pack.id, tid)}
                 onRemoveTemplate={(tid) => removeTemplateFromPack(pack.id, tid)}
                 onExport={() => exportPack(pack)}
               />
             );
           })()}
-          {view === "project" && <ProjectView state={state} onOpenEntry={openEntryFromAnywhere} dirHandle={dirHandle} onSelectTemplate={(tid) => { setActiveTemplateId(tid); setView("list"); }} onChangeView={setView} onOpenHtmlExportModal={() => setShowHtmlExportModal(true)} />}
+          {view === "project" && <ProjectView state={state} onOpenEntry={openEntryFromAnywhere} dirHandle={dirHandle} onSelectTemplate={selectTemplate} onChangeView={setView} onOpenHtmlExportModal={() => setShowHtmlExportModal(true)} />}
           {view === "list" && (
             <EntryList
               entries={filteredEntries}
@@ -5150,7 +5283,7 @@ function App() {
               onSearch={setSearch}
               sortBy={sortBy}
               onSort={setSortBy}
-              key={activeTagFilter ? `tag:${activeTagFilter}` : activeTemplateId ? `tpl:${activeTemplateId}` : "all"}
+              key={activeList ? `list:${activeList.id}` : activeTagFilter ? `tag:${activeTagFilter}` : activeTemplateId ? `tpl:${activeTemplateId}` : "all"}
               onSelect={openEntry}
               showTemplate={!!activeTagFilter || !activeTemplateId}
               variantAxis={variantAxisInfo}
@@ -5158,6 +5291,12 @@ function App() {
               query={entryQuery}
               onQuery={setEntryQuery}
               queryFields={queryFields}
+              queryAllFields={queryAllFields}
+              list={activeList}
+              listChanged={activeList ? listDiffers(activeList, entryQuery, queryFields, queryAllFields) : false}
+              onSaveList={isLocked ? null : saveListAs}
+              onUpdateList={updateActiveList}
+              scopeNote={activeList && activeList.scope && activeList.scope.kind === "template" && !activeTemplate ? "This list's template is gone (template not found), so it shows no entries." : null}
               total={listScope.length}
               scopeEntries={listScope}
               state={state}
@@ -5917,11 +6056,12 @@ function App() {
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onSelectAllEntries, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
+function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onSelectAllEntries, activeListId, onOpenList, onReorderLists, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
   const importFileRef = useRef(null);
   const packImportFileRef = useRef(null);
   const tplDrag = useDragReorder(onReorderTemplate || (() => {}));
   const viewDrag = useDragReorder(onReorderViews || (() => {}));
+  const listDrag = useDragReorder(onReorderLists || (() => {}));
 
   // Sidebar-resize drag. Listens at window level so the cursor can leave the
   // 6px handle without ending the gesture; clamps width to a sane range.
@@ -6064,7 +6204,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           </button>
           {/* v1.7 r045: the list over every entry, whatever its template */}
           {onSelectAllEntries && (() => {
-            const isActive = activeView === "list" && !activeTemplateId && !activeTagFilter;
+            const isActive = activeView === "list" && !activeTemplateId && !activeTagFilter && !activeListId;
             const n = Array.isArray(state.entries) ? state.entries.length : 0;
             return (
               <button className={`nav-item nav-item-all ${isActive ? "active" : ""}`} onClick={onSelectAllEntries} title="Every entry in the world, whatever its template">
@@ -6077,7 +6217,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           {!templatesCollapsed && displayedTemplates.length === 0 && <div style={{ padding: "5px 14px", fontSize: 12, color: "var(--text-dim)", fontStyle: "italic" }}>No templates yet</div>}
           {!templatesCollapsed && displayedTemplates.map(({ t, originalIdx }) => {
             const idx = originalIdx;
-            const isActive = activeView === "list" && activeTemplateId === t.id;
+            const isActive = activeView === "list" && activeTemplateId === t.id && !activeListId;
             const canDrag = !isLocked && onReorderTemplate;
             const isDragged = tplDrag.draggedIdx === idx;
             const isOver = tplDrag.overIdx === idx;
@@ -6106,6 +6246,35 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           })}
         </div>
 
+        {/* v1.7 r046: the saved lists, after Templates (Drak's call 1 at the cut) */}
+        {Array.isArray(state.lists) && state.lists.length > 0 && (
+          <div className="nav-section nav-lists" style={{ marginTop: 12 }}>
+            <div className="nav-label"><span>Lists</span></div>
+            {state.lists.map((l, idx) => {
+              if (!l) return null;
+              const isActive = activeView === "list" && activeListId === l.id;
+              const canDrag = !isLocked && !!onReorderLists;
+              const isDragged = listDrag.draggedIdx === idx;
+              const isOver = listDrag.overIdx === idx;
+              const before = isOver && listDrag.dropPosition === "before" && !isDragged;
+              const after = isOver && listDrag.dropPosition === "after" && !isDragged;
+              return (
+                <div
+                  key={l.id}
+                  className={`nav-item-wrap ${isActive ? "active" : ""} ${isDragged ? "dragging" : ""} ${before ? "drop-before" : ""} ${after ? "drop-after" : ""}`}
+                  {...(canDrag ? listDrag.rowProps(idx) : {})}
+                >
+                  {canDrag && <span className="nav-drag-handle" title="Drag to reorder" {...listDrag.handleProps(idx)}>⋮⋮</span>}
+                  <button className={`nav-item nav-item-list ${isActive ? "active" : ""}`} onClick={() => onOpenList && onOpenList(l.id)} title={l.name}>
+                    <span className="nav-icon" style={isActive ? { color: "var(--accent)" } : {}}>☰</span>
+                    <span className="nav-name">{l.name}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {Array.isArray(packs) && packs.length > 0 && (
           <div className="nav-section" style={{ marginTop: 12 }}>
             <div className="nav-label"><span>Packs</span></div>
@@ -6126,7 +6295,7 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
                   {memberTpls.map(t => (
                     <button
                       key={t.id}
-                      className={`nav-item ${activeTemplateId === t.id && activeView === "list" ? "active" : ""}`}
+                      className={`nav-item ${activeTemplateId === t.id && activeView === "list" && !activeListId ? "active" : ""}`}
                       onClick={() => onSelectTemplate(t.id)}
                       style={{ paddingLeft: 28 }}
                     >
@@ -6145,8 +6314,8 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
           <div className="nav-section" style={{ marginTop: 12 }}>
             <div className="nav-label"><span>Tags</span></div>
             {allTags.map(tag => (
-              <button key={tag} className={`nav-item ${activeTagFilter === tag ? "active" : ""}`} onClick={() => onSelectTag(tag)}>
-                <span className="nav-icon" style={activeTagFilter === tag ? { color: "var(--accent)" } : {}}>#</span>
+              <button key={tag} className={`nav-item ${activeTagFilter === tag && !activeListId ? "active" : ""}`} onClick={() => onSelectTag(tag)}>
+                <span className="nav-icon" style={activeTagFilter === tag && !activeListId ? { color: "var(--accent)" } : {}}>#</span>
                 <span className="nav-name">{tag}</span>
                 <span className="nav-count">{tagCounts[tag]}</span>
               </button>

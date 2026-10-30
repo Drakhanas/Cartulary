@@ -818,10 +818,11 @@ const linksTo = (state, id) => (typeof id === "string" && id ? (linkIndexOf(stat
 // nodes and cards it leaves orphaned and the stemmas they're in; and the
 // places whose [[links]] to them stay as typed, broken (wiki) or, where
 // another record answers to the name once what goes is gone, leading there
-// (wikiMoved). A link through a secret field counts, since the delete clears
-// it either way.
+// (wikiMoved); and since v1.7 r046 the saved lists whose conditions name
+// them (lists). A link through a secret field counts, since the delete
+// clears it either way.
 const linkDeleteCounts = (state, ids, going) => {
-  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set() };
+  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set(), lists: new Set() };
   const list = Array.isArray(ids) ? ids : [...(ids || [])];
   const outside = going instanceof Set ? going : new Set(list);
   // The names as they'll resolve after the delete, built once, when a
@@ -840,6 +841,8 @@ const linkDeleteCounts = (state, ids, going) => {
     if (!out.refs.has(key)) out.refs.set(key, new Set());
     out.refs.get(key).add(l.src.id);
   }));
+  const named = new Set(list);
+  (state && Array.isArray(state.lists) ? state.lists : []).forEach(l => { if (l && listNames(l, named)) out.lists.add(l.id); });
   return out;
 };
 
@@ -848,11 +851,12 @@ const linkDeleteCounts = (state, ids, going) => {
 // ConLangs' references cleared, a cast record whose character goes kept and
 // marked (scrubFabulaRefs), and a corpus's reading order without them; a map
 // pin unlinked, keeping its label or taking the record's name if it had
-// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them; and
-// [[links]] left as typed. A slice or a record it doesn't change keeps its
-// identity, so what's kept from the last build of the index stays kept. The
-// records themselves are the caller's to remove, after this, so their names
-// are still there to read.
+// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them;
+// since v1.7 r046 a saved list's conditions naming them emptied, kept in
+// their places; and [[links]] left as typed. A slice or a record it doesn't
+// change keeps its identity, so what's kept from the last build of the
+// index stays kept. The records themselves are the caller's to remove,
+// after this, so their names are still there to read.
 const clearLinksTo = (state, ids) => {
   const going = ids instanceof Set ? ids : new Set(ids || []);
   if (!state || going.size === 0) return state;
@@ -905,6 +909,9 @@ const clearLinksTo = (state, ids) => {
         ? { ...p, entryId: null, label: (typeof p.label === "string" && p.label.trim()) ? p.label : (names.get(p.entryId) || "") }
         : p)) }, updatedAt: now };
     }));
+  }
+  if (Array.isArray(state.lists) && state.lists.some(l => listNames(l, going))) {
+    next.lists = state.lists.map(l => (listNames(l, going) ? listWithout(l, going) : l));
   }
   return next;
 };

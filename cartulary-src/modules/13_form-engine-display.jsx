@@ -1,7 +1,7 @@
 
 // ─── Entry list ────────────────────────────────────────────────────────────────
 
-function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSelect, showTemplate, variantAxis, onSetVariant, query, onQuery, queryFields, total, scopeEntries, state, showSecrets }) {
+function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSelect, showTemplate, variantAxis, onSetVariant, query, onQuery, queryFields, queryAllFields, total, scopeEntries, state, showSecrets, list, listChanged, onSaveList, onUpdateList, scopeNote }) {
   // Variant picker renders only when the axis is configured AND there's
   // something to pick (derived values exist, or a stale active needs to be
   // visible so the user can switch back to All). A stale active — a value no
@@ -11,11 +11,13 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
   // v1.7 r045: Filter opens the conditions' rows (EntryQueryRows), and while
   // they're closed the conditions in force show as chips (Drak's call 3), a
   // chip opening the rows at its condition; while anything narrows the list,
-  // the count says how many of the scope's entries it shows.
+  // the count says how many of the scope's entries it shows. Since r046 the
+  // rows' Save keeps the query in a list (onSaveList, or onUpdateList for
+  // the open one), and a condition the scope can't read stays in force.
   const [filterOpen, setFilterOpen] = useState(false);
   const [focusId, setFocusId] = useState(null);
   const q = query || QUERY_EMPTY;
-  const ready = onQuery ? queryReadyConditions(q, queryFields) : [];
+  const ready = onQuery ? queryReadyConditions(q, queryFields, queryAllFields) : [];
   const narrowed = ready.length > 0 || !!(search && search.trim());
   const openRows = (id) => {
     if (q.conditions.length === 0) onQuery({ ...q, conditions: [queryNewCondition((queryFields || [])[0])] });
@@ -56,7 +58,8 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
         </select>
         {onQuery && narrowed && <span className="entry-list-count" style={{ fontSize: 12.5, color: "var(--text-dim)", whiteSpace: "nowrap", flexShrink: 0 }}>{entries.length} of {total}</span>}
       </div>
-      {onQuery && filterOpen && <EntryQueryRows query={q} fields={queryFields || []} state={state} entries={scopeEntries} templates={templates} showSecrets={showSecrets} focusId={focusId} onQuery={onQuery} onDone={closeRows} />}
+      {scopeNote && <div className="entry-list-note" style={{ padding: "10px 20px 0", fontSize: 13, color: "var(--text-dim)", fontStyle: "italic" }}>{scopeNote}</div>}
+      {onQuery && filterOpen && <EntryQueryRows query={q} fields={queryFields || []} allFields={queryAllFields || queryFields || []} state={state} entries={scopeEntries} templates={templates} showSecrets={showSecrets} focusId={focusId} onQuery={onQuery} onDone={closeRows} list={list} listChanged={listChanged} onSaveList={onSaveList} onUpdateList={onUpdateList} />}
       {onQuery && !filterOpen && ready.length > 0 && <EntryQueryChips query={q} ready={ready} state={state} showSecrets={showSecrets} onOpenAt={openRows} onQuery={onQuery} />}
       <div className="entry-list">
         {entries.length === 0
@@ -92,8 +95,8 @@ function EntryList({ entries, templates, search, onSearch, sortBy, onSort, onSel
 
 // ─── Entry queries (v1.7 r045) ─────────────────────────────────────────────────
 // docs/pipes-spec.md, section 6, with Drak's calls at the cut: the entry
-// list's conditions and its search read what an entry's page shows, never a
-// field's label, an id, or a stored key. A condition is a field, an
+// list's search reads what an entry's page shows, and its conditions a
+// field by its label, never an id or a stored key. A condition is a field, an
 // operator, and a value on one line (call 1); a date in one is entered with
 // the entry form's own control, in any of the world's calendars, and
 // compared by absoluteDay, as Chronometric places dates (call 2); and the
@@ -135,34 +138,39 @@ const QUERY_OPS = {
   linked: [["either", "either way"], ["to", "to"], ["from", "from"]],
 };
 
-// A field's key: its label, a subfield's label under a group's, and a date
-// range's end, each as a condition matches it.
-const queryFieldKey = (label, sub, end) => JSON.stringify(["f", queryLower(label), sub ? queryLower(sub) : null, end || null]);
+// A field's key: the labels down to it, from its template's field through
+// the groups that hold it (since v1.7 r046, where a group's subfield had
+// one level), and a date range's end, each as a condition matches it.
+const queryFieldKey = (labels, end) => JSON.stringify(["f", (Array.isArray(labels) ? labels : [labels]).map(queryLower), end || null]);
 
 // A key read back: a pseudo-field's name (Name, Tags, Template, Linked
-// with), or { label, sub, end }; null for anything else.
+// with), or { labels, end }; null for anything else.
 const queryParse = (key) => {
   if (key === "name" || key === "tags" || key === "template" || key === "linked") return { pseudo: key };
   if (typeof key !== "string") return null;
   try {
     const p = JSON.parse(key);
-    return Array.isArray(p) && p[0] === "f" && typeof p[1] === "string" ? { label: p[1], sub: p[2] || null, end: p[3] || null } : null;
+    return Array.isArray(p) && p[0] === "f" && Array.isArray(p[1]) && p[1].length > 0 && p[1].every(x => typeof x === "string") ? { labels: p[1], end: p[2] || null } : null;
   } catch (e) { return null; }
 };
 
 // The fields a condition can name over a scope's templates, in their order:
 // Name first; each label a template gives a field, case aside, with the kind
 // its fields hold (text where two templates give it different kinds) and
-// the options they offer; a group's subfields under the group's label; a
-// date range's start and end as two, as Chronometric draws a range; then
-// Tags, Template where the scope spans templates, and Linked with. A secret
-// field is offered only while secrets show.
+// the options they offer; a group's subfields under the group's label, and
+// since v1.7 r046 a group's inside it under both, at any depth; a date
+// range's start and end as two, as Chronometric draws a range; then Tags,
+// Template where the scope spans templates, and Linked with. A secret field
+// is offered only while secrets show. Each carries its key, its label as a
+// row names it, and its field as a saved list keeps it, the labels as the
+// first template to give them has them.
 const queryFieldsOf = (templates, spans, showSecrets) => {
-  const out = [{ key: "name", label: "Name", kind: "text", options: [] }];
+  const out = [{ key: "name", field: "name", label: "Name", kind: "text", options: [] }];
   const byKey = new Map();
-  const add = (key, label, kind, f) => {
+  const add = (labels, end, label, kind, f) => {
+    const key = queryFieldKey(labels, end);
     let x = byKey.get(key);
-    if (!x) { x = { key, label, kind, options: [] }; byKey.set(key, x); out.push(x); }
+    if (!x) { x = { key, field: end ? { labels, end } : { labels }, label, kind, options: [] }; byKey.set(key, x); out.push(x); }
     else if (x.kind !== kind) x.kind = "text";
     const opt = (o) => {
       const v = typeof o === "string" ? o : (o && typeof o.value === "string" ? o.value : "");
@@ -171,63 +179,57 @@ const queryFieldsOf = (templates, spans, showSecrets) => {
     (Array.isArray(f.options) ? f.options : []).forEach(opt);
     if (f.optionsByParent && typeof f.optionsByParent === "object") Object.values(f.optionsByParent).forEach(list => (Array.isArray(list) ? list : []).forEach(opt));
   };
-  const one = (f, group) => {
+  const walk = (fields, above) => (Array.isArray(fields) ? fields : []).forEach(f => {
     if (!f || typeof f.label !== "string" || !f.label.trim() || (f.secret && !showSecrets)) return;
-    const label = group ? `${group.label} › ${f.label}` : f.label;
-    const key = (end) => (group ? queryFieldKey(group.label, f.label, end) : queryFieldKey(f.label, null, end));
+    const labels = [...above, f.label];
+    if (f.type === "group") { walk(f.subfields, labels); return; }
+    const label = labels.join(" › ");
     if (f.type === "calendar-date-range") {
-      add(key("start"), `${label} · start`, "date", f);
-      add(key("end"), `${label} · end`, "date", f);
+      add(labels, "start", `${label} · start`, "date", f);
+      add(labels, "end", `${label} · end`, "date", f);
       return;
     }
-    if (QUERY_KINDS[f.type]) add(key(null), label, QUERY_KINDS[f.type], f);
-  };
-  (Array.isArray(templates) ? templates : []).forEach(t => (t && Array.isArray(t.fields) ? t.fields : []).forEach(f => {
-    if (f && f.type === "group") {
-      if (typeof f.label === "string" && f.label.trim() && !(f.secret && !showSecrets)) (Array.isArray(f.subfields) ? f.subfields : []).forEach(s => one(s, f));
-    } else one(f, null);
-  }));
-  out.push({ key: "tags", label: "Tags", kind: "multi", options: [] });
-  if (spans) out.push({ key: "template", label: "Template", kind: "template", options: [] });
-  out.push({ key: "linked", label: "Linked with", kind: "linked", options: [] });
+    if (QUERY_KINDS[f.type]) add(labels, null, label, QUERY_KINDS[f.type], f);
+  });
+  (Array.isArray(templates) ? templates : []).forEach(t => walk(t && t.fields, []));
+  out.push({ key: "tags", field: "tags", label: "Tags", kind: "multi", options: [] });
+  if (spans) out.push({ key: "template", field: "template", label: "Template", kind: "template", options: [] });
+  out.push({ key: "linked", field: "linked", label: "Linked with", kind: "linked", options: [] });
   return out;
 };
+
+// Whether a template's fields hold the labels from i down, ending at a field
+// a condition reads: a date range where end is set, never a group.
+const queryHasPath = (fields, labels, i, end) => (Array.isArray(fields) ? fields : []).some(f => {
+  if (!f || queryLower(f.label) !== labels[i]) return false;
+  if (i < labels.length - 1) return f.type === "group" && queryHasPath(f.subfields, labels, i + 1, end);
+  return f.type !== "group" && (end ? f.type === "calendar-date-range" : f.type !== "calendar-date-range");
+});
 
 // An entry's values for a parsed field, each { field, value }: null when the
 // entry's template has no such field, and otherwise the values the page
 // would show, a field hidden by its show-when or as a secret while secrets
-// are hidden left out, a group's rows each in turn, and a date range's end
-// read as a date.
+// are hidden left out, a group's rows each in turn, at every depth since
+// v1.7 r046, and a date range's end read as a date.
 const queryValuesOf = (entry, tpl, p, showSecrets) => {
   const fields = tpl && Array.isArray(tpl.fields) ? tpl.fields : [];
-  const vals = (entry && entry.fields) || {};
+  if (!p || !Array.isArray(p.labels) || !queryHasPath(fields, p.labels, 0, p.end)) return null;
   const seen = (f) => !(f.secret && !showSecrets);
-  const isRange = (f) => f.type === "calendar-date-range";
-  let has = false;
+  const last = p.labels.length - 1;
   const out = [];
-  const take = (f, v) => {
-    if (!p.end) { out.push({ field: f, value: v }); return; }
-    out.push({ field: { ...f, type: "calendar-date" }, value: v && typeof v === "object" ? v[p.end] : null });
-  };
-  fields.forEach(f => {
-    if (!f || queryLower(f.label) !== p.label) return;
-    if (p.sub) {
+  const walk = (list, vals, i) => (Array.isArray(list) ? list : []).forEach(f => {
+    if (!f || queryLower(f.label) !== p.labels[i] || !seen(f) || !isFieldVisible(f, vals)) return;
+    if (i < last) {
       if (f.type !== "group") return;
-      const subs = (Array.isArray(f.subfields) ? f.subfields : []).filter(s => s && queryLower(s.label) === p.sub && (p.end ? isRange(s) : !isRange(s)));
-      if (subs.length === 0) return;
-      has = true;
-      if (!seen(f) || !isFieldVisible(f, vals)) return;
-      (Array.isArray(vals[f.id]) ? vals[f.id] : []).forEach(inst => {
-        if (!inst || typeof inst !== "object") return;
-        subs.forEach(s => { if (seen(s) && isFieldVisible(s, inst)) take(s, inst[s.id]); });
-      });
+      (Array.isArray(vals[f.id]) ? vals[f.id] : []).forEach(inst => { if (inst && typeof inst === "object") walk(f.subfields, inst, i + 1); });
       return;
     }
-    if (f.type === "group" || (p.end ? !isRange(f) : isRange(f))) return;
-    has = true;
-    if (seen(f) && isFieldVisible(f, vals)) take(f, vals[f.id]);
+    if (f.type === "group" || (p.end ? f.type !== "calendar-date-range" : f.type === "calendar-date-range")) return;
+    const v = vals[f.id];
+    out.push(p.end ? { field: { ...f, type: "calendar-date" }, value: v && typeof v === "object" ? v[p.end] : null } : { field: f, value: v });
   });
-  return has ? out : null;
+  walk(fields, (entry && entry.fields) || {}, 0);
+  return out;
 };
 
 // Whether a value is empty as its field's type holds it.
@@ -416,8 +418,10 @@ const queryTest = (c, kind, it, ctx) => {
     return c.op === "is" ? s === want : s.includes(want);
   }
   if (kind === "choice") {
-    const o = queryLower(selectValueOnly(v));
-    return c.op === "anyOf" ? (c.values || []).some(x => queryLower(x) === o) : o === queryLower(c.value);
+    // the option picked, or since v1.7 r046 an Other's text, as the page shows it
+    const o = queryLower(selectValueOnly(v)), d = queryLower(formatSelectDisplay(v));
+    const is = (x) => { const w = queryLower(x); return w !== "" && (w === o || w === d); };
+    return c.op === "anyOf" ? (c.values || []).some(is) : is(c.value);
   }
   if (kind === "multi") {
     const picks = queryPicks(f, v);
@@ -495,19 +499,39 @@ const queryReady = (c, kind) => {
   return queryValueSet(kind, c.value);
 };
 
-// A query's conditions in force, each { c, f } with the field it names in
-// fields.
-const queryReadyConditions = (query, fields) => {
+// Whether a condition whose field isn't found has what its operator would
+// need, whatever the field's kind (v1.7 r046).
+const queryReadyAnyKind = (c) => {
+  if (!c || typeof c.op !== "string") return false;
+  const set = (v) => (typeof v === "string" ? v.trim() !== "" : !!(v && typeof v === "object" && v.year != null));
+  if (c.op === "empty" || c.op === "filled") return true;
+  if (c.op === "anyOf" || c.op === "hasAny" || c.op === "hasAll") return Array.isArray(c.values) && c.values.length > 0;
+  if (c.op === "between") return set(c.value) && set(c.value2);
+  return set(c.value);
+};
+
+// A query's conditions in force, each { c, f, missing, secret }: a condition
+// with what its operator needs on a field of fields; and since v1.7 r046 one
+// on a secret field while secrets are hidden (f from all, the fields with
+// secrets), which reads the field as empty, as the page does, and one on a
+// field no template of the scope has (missing), which holds for no entry.
+const queryReadyConditions = (query, fields, all) => {
   const byKey = new Map((Array.isArray(fields) ? fields : []).map(f => [f.key, f]));
-  return (query && Array.isArray(query.conditions) ? query.conditions : [])
-    .map(c => ({ c, f: c ? byKey.get(c.key) : null }))
-    .filter(x => x.f && queryReady(x.c, x.f.kind));
+  const allByKey = Array.isArray(all) ? new Map(all.map(f => [f.key, f])) : byKey;
+  return (query && Array.isArray(query.conditions) ? query.conditions : []).map(c => {
+    if (!c) return null;
+    const f = byKey.get(c.key);
+    if (f) return queryReady(c, f.kind) ? { c, f, missing: false, secret: false } : null;
+    const h = allByKey.get(c.key);
+    if (h) return queryReady(c, h.kind) ? { c, f: h, missing: false, secret: true } : null;
+    return queryReadyAnyKind(c) ? { c, f: null, missing: true, secret: false } : null;
+  }).filter(Boolean);
 };
 
 // The entries a query keeps, in their order: all of them while no condition
-// is in force.
-const queryApply = (state, entries, query, fields, showSecrets) => {
-  const ready = queryReadyConditions(query, fields);
+// is in force. A condition on a field not found holds for none (r046).
+const queryApply = (state, entries, query, fields, showSecrets, all) => {
+  const ready = queryReadyConditions(query, fields, all);
   if (ready.length === 0) return entries;
   const ctx = queryContextOf(state, showSecrets);
   const any = query.mode === "any";
@@ -515,7 +539,7 @@ const queryApply = (state, entries, query, fields, showSecrets) => {
     if (!e) return false;
     ctx.cal = ctx.calOf(e);
     const tpl = ctx.tplById.get(e.templateId) || null;
-    const hold = (x) => queryHolds(x.c, x.f.kind, e, tpl, ctx);
+    const hold = (x) => !x.missing && queryHolds(x.c, x.f.kind, e, tpl, ctx);
     return any ? ready.some(hold) : ready.every(hold);
   });
 };
@@ -524,7 +548,7 @@ const queryApply = (state, entries, query, fields, showSecrets) => {
 const queryNewCondition = (field, id) => {
   const kind = field ? field.kind : "text";
   const ops = QUERY_OPS[kind] || QUERY_OPS.text;
-  return { id: id || `qc-${genId()}`, key: field ? field.key : "name", op: ops[0][0], value: kind === "date" ? null : "", value2: kind === "date" ? null : "", values: [], calendarId: null };
+  return { id: id || `qc-${genId()}`, key: field ? field.key : "name", field: field ? field.field : "name", label: field ? field.label : "Name", op: ops[0][0], value: kind === "date" ? null : "", value2: kind === "date" ? null : "", values: [], calendarId: null };
 };
 
 // What a choice's or a multi-select's condition offers: its fields' options
@@ -548,7 +572,8 @@ const queryValueOptions = (state, entries, field, showSecrets) => {
       if (p.pseudo) return;
       (queryValuesOf(e, ctx.tplById.get(e.templateId) || null, p, showSecrets) || []).forEach(it => {
         const t = it.field.type, v = it.value;
-        if (t === "select") push(selectValueOnly(v));
+        // since v1.7 r046 an Other's text too, as the page shows it
+        if (t === "select") { push(selectValueOnly(v)); push(formatSelectDisplay(v)); }
         else if (t === "multiselect") (Array.isArray(v) ? v : []).forEach(x => push(x == null ? "" : String(x)));
         else if (t === "tags") (Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : []).forEach(x => push(x == null ? "" : String(x)));
       });
@@ -608,8 +633,19 @@ const queryChipText = (c, f, ctx) => {
 
 // The conditions' rows, opened by the list's Filter (Drak's call 1): All or
 // Any above them, a row each, + Condition under them, and Done, which
-// closes them, a row still without its value going with it.
-function EntryQueryRows({ query, fields, state, entries, templates, showSecrets, focusId, onQuery, onDone }) {
+// closes them, a row still without its value going with it. Since v1.7
+// r046, Save list keeps the query in force as a new list under a name; with
+// a list open, Save keeps it in that list and Save as new makes another.
+function EntryQueryRows({ query, fields, allFields, state, entries, templates, showSecrets, focusId, onQuery, onDone, list, listChanged, onSaveList, onUpdateList }) {
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState("");
+  const saveNew = () => {
+    const n = name.trim();
+    if (!n || !onSaveList) return;
+    onSaveList(n);
+    setNaming(false);
+    setName("");
+  };
   const set = (patch) => onQuery({ ...query, ...patch });
   const setCond = (id, next) => set({ conditions: query.conditions.map(c => (c.id === id ? next : c)) });
   const mode = (m, words) => (
@@ -622,12 +658,28 @@ function EntryQueryRows({ query, fields, state, entries, templates, showSecrets,
           <span>Show entries matching</span>{mode("all", "All")}{mode("any", "Any")}<span>of these conditions</span>
         </div>
         {query.conditions.map(c => (
-          <EntryQueryRow key={c.id} cond={c} fields={fields} state={state} entries={entries} templates={templates} showSecrets={showSecrets} focus={c.id === focusId}
+          <EntryQueryRow key={c.id} cond={c} fields={fields} allFields={allFields} state={state} entries={entries} templates={templates} showSecrets={showSecrets} focus={c.id === focusId}
             onChange={(next) => setCond(c.id, next)} onRemove={() => set({ conditions: query.conditions.filter(x => x.id !== c.id) })} />
         ))}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-ghost btn-small entry-query-add" onClick={() => set({ conditions: [...query.conditions, queryNewCondition(fields[0])] })}>+ Condition</button>
           <span style={{ flex: 1 }} />
+          {onSaveList && (naming ? (
+            <>
+              <input className="input entry-list-name" autoFocus aria-label="List name" placeholder="List name" value={name} onChange={e => setName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") { e.preventDefault(); saveNew(); }
+                  else if (e.key === "Escape") { e.preventDefault(); setNaming(false); setName(""); }
+                }} style={{ width: 200 }} />
+              <button type="button" className="btn btn-accent btn-small entry-list-save-new" disabled={!name.trim()} onClick={saveNew}>Save</button>
+              <button type="button" className="btn btn-ghost btn-small entry-list-name-cancel" onClick={() => { setNaming(false); setName(""); }}>Cancel</button>
+            </>
+          ) : (
+            <>
+              {list && <button type="button" className="btn btn-ghost btn-small entry-list-save" disabled={!listChanged} title="Keep these conditions in the list" onClick={() => onUpdateList && onUpdateList()}>Save</button>}
+              <button type="button" className="btn btn-ghost btn-small entry-list-save-as" onClick={() => setNaming(true)}>{list ? "Save as new…" : "Save list…"}</button>
+            </>
+          ))}
           {query.conditions.length > 0 && <button type="button" className="btn btn-ghost btn-small" onClick={() => set({ conditions: [] })}>Clear</button>}
           <button type="button" className="btn btn-small btn-accent entry-query-done" onClick={onDone}>Done</button>
         </div>
@@ -638,7 +690,7 @@ function EntryQueryRows({ query, fields, state, entries, templates, showSecrets,
 
 // One condition's row: its field, its operator, the value's control by the
 // field's kind, and × to remove it. A new field starts the row over.
-function EntryQueryRow({ cond, fields, state, entries, templates, showSecrets, focus, onChange, onRemove }) {
+function EntryQueryRow({ cond, fields, allFields, state, entries, templates, showSecrets, focus, onChange, onRemove }) {
   const ref = useRef(null);
   useEffect(() => {
     if (!focus || !ref.current) return;
@@ -646,13 +698,23 @@ function EntryQueryRow({ cond, fields, state, entries, templates, showSecrets, f
     if (el) el.focus();
   }, [focus]);
   const field = fields.find(f => f.key === cond.key) || null;
+  // v1.7 r046: a condition on a secret field while secrets are hidden keeps
+  // its place, saying no more than that, and goes only by its ×.
+  if (!field && (allFields || []).some(f => f.key === cond.key)) {
+    return (
+      <div ref={ref} className="entry-query-row entry-query-row-secret" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ flex: "1 1 auto", fontSize: 13, color: "var(--text-dim)", fontStyle: "italic", padding: "6px 0" }}>A condition on a secret field, shown while secrets show</span>
+        <button type="button" className="btn btn-ghost btn-small entry-query-remove" title="Remove this condition" aria-label="Remove this condition" onClick={onRemove} style={{ flexShrink: 0 }}>×</button>
+      </div>
+    );
+  }
   const ops = field ? QUERY_OPS[field.kind] || [] : [];
   // the row's controls wrap among themselves, and its × keeps to the right
   return (
     <div ref={ref} className="entry-query-row" style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
       <div style={{ flex: "1 1 auto", minWidth: 0, display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap" }}>
         <select className="input sort-sel entry-query-field" value={field ? cond.key : ""} onChange={e => { const f = fields.find(x => x.key === e.target.value); if (f) onChange(queryNewCondition(f, cond.id)); }} style={{ maxWidth: 220 }}>
-          {!field && <option value="">(field not found)</option>}
+          {!field && <option value="">{cond.label ? `${cond.label} (field not found)` : "(field not found)"}</option>}
           {fields.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
         </select>
         {field && (
@@ -785,7 +847,7 @@ function EntryQueryChips({ query, ready, state, showSecrets, onOpenAt, onQuery }
         <React.Fragment key={x.c.id}>
           {i > 0 && <span className="entry-query-join" style={{ fontSize: 12, color: "var(--text-dim)" }}>{query.mode === "any" ? "or" : "and"}</span>}
           <span className="entry-query-chip" style={{ display: "inline-flex", alignItems: "center", border: "1px solid var(--border)", borderRadius: 12, background: "var(--surf2)", fontSize: 12.5 }}>
-            <button type="button" className="entry-query-chip-text" title="Change this condition" onClick={() => onOpenAt(x.c.id)} style={{ ...plain, color: "var(--text)", padding: "3px 4px 3px 10px" }}>{queryChipText(x.c, x.f, ctx)}</button>
+            <button type="button" className={`entry-query-chip-text${x.missing ? " entry-query-chip-missing" : ""}`} title="Change this condition" onClick={() => onOpenAt(x.c.id)} style={{ ...plain, color: x.missing ? "var(--danger)" : "var(--text)", padding: "3px 4px 3px 10px" }}>{x.secret ? "A condition on a secret field" : x.missing ? `${x.c.label || "A field"}: field not found` : queryChipText(x.c, x.f, ctx)}</button>
             <button type="button" className="entry-query-chip-remove" title="Remove this condition" aria-label="Remove this condition" onClick={() => remove(x.c.id)} style={{ ...plain, color: "var(--text-dim)", padding: "3px 9px 3px 4px" }}>×</button>
           </span>
         </React.Fragment>
@@ -794,6 +856,97 @@ function EntryQueryChips({ query, ready, state, showSecrets, onOpenAt, onQuery }
     </div>
   );
 }
+
+// ─── Saved lists (v1.7 r046) ───────────────────────────────────────────────────
+// docs/pipes-spec.md, section 6, with Drak's calls at the cut: the Filter's
+// Save names the query in force, and the world keeps it (state.lists,
+// normalized at every load by normalizeEntryLists, 10_migrate): its name,
+// its scope (every entry, a template by id, or a tag), all or any, and its
+// conditions. A condition keeps its field by the labels down to it (with a
+// date range's end), so a field renamed or gone shows as not found until
+// its row picks another, and a record or a template by id, so a rename
+// leaves it and a delete empties it (clearLinksTo, 22_trunk). The sidebar
+// lists them after Templates (call 1); an open list is renamed and deleted
+// from its header, and its row in the sidebar moves by its handle (call 2).
+
+// A pseudo-field's label, as a row and a chip name it.
+const LIST_PSEUDO_LABELS = { name: "Name", tags: "Tags", template: "Template", linked: "Linked with" };
+
+// A kept field's key, as the query's fields carry it, and its label, as a
+// row names it.
+const listFieldKey = (field) => (typeof field === "string" ? field
+  : field && Array.isArray(field.labels) ? queryFieldKey(field.labels, field.end || null) : "");
+const listFieldLabel = (field) => (typeof field === "string" ? (LIST_PSEUDO_LABELS[field] || field)
+  : field && Array.isArray(field.labels) ? `${field.labels.join(" › ")}${field.end ? ` · ${field.end}` : ""}` : "");
+
+// A condition's value as a list keeps it: text as typed, a date as its
+// year, month, and day, and anything else as nothing.
+const listValueOf = (v) => (typeof v === "string" ? v
+  : typeof v === "number" && Number.isFinite(v) ? String(v)
+  : v && typeof v === "object" && v.year != null ? { year: v.year, monthIndex: v.monthIndex || 0, day: v.day || 1 } : "");
+
+// A list's query, as the entry list holds it: each condition with its
+// field's key and its label.
+const queryFromList = (list) => ({
+  mode: list && list.mode === "any" ? "any" : "all",
+  conditions: (list && Array.isArray(list.conditions) ? list.conditions : []).filter(c => c && c.field).map(c => ({
+    id: c.id || `qc-${genId()}`, key: listFieldKey(c.field), field: c.field, label: listFieldLabel(c.field), op: c.op,
+    value: c.value == null ? "" : c.value, value2: c.value2 == null ? "" : c.value2,
+    values: Array.isArray(c.values) ? [...c.values] : [], calendarId: c.calendarId || null,
+  })),
+});
+
+// The conditions a list keeps of a query: those in force, each as kept.
+const listConditionsOf = (query, fields, all) => queryReadyConditions(query, fields, all).map(({ c, f }) => ({
+  id: c.id, field: f ? f.field : c.field, op: c.op, value: listValueOf(c.value), value2: listValueOf(c.value2),
+  values: Array.isArray(c.values) ? c.values.filter(v => typeof v === "string") : [], calendarId: c.calendarId || null,
+}));
+
+// Whether the page's query differs from what a list keeps.
+const listDiffers = (list, query, fields, all) => {
+  if (!list) return false;
+  const now = { mode: query && query.mode === "any" ? "any" : "all", conditions: listConditionsOf(query, fields, all) };
+  const was = { mode: list.mode === "any" ? "any" : "all", conditions: listConditionsOf(queryFromList(list), fields, all) };
+  return JSON.stringify(now) !== JSON.stringify(was);
+};
+
+// The page's scope as a list keeps it, and whether a list's is the page's.
+const listScopeOf = (templateId, tag) => (tag ? { kind: "tag", tag } : templateId ? { kind: "template", templateId } : { kind: "all" });
+const listScopeMatches = (scope, templateId, tag) => {
+  const s = scope || { kind: "all" };
+  if (s.kind === "tag") return tag === s.tag;
+  if (s.kind === "template") return !tag && templateId === s.templateId;
+  return !tag && !templateId;
+};
+
+// Whether a list's conditions name any of ids, and the list with those
+// values emptied, each condition kept in its place.
+const listNames = (list, ids) => !!list && Array.isArray(list.conditions) && list.conditions.some(c => c && (
+  (typeof c.value === "string" && ids.has(c.value)) || (typeof c.value2 === "string" && ids.has(c.value2))
+  || (Array.isArray(c.values) && c.values.some(v => ids.has(v)))));
+const listWithout = (list, ids) => ({
+  ...list,
+  conditions: list.conditions.map(c => (c && listNames({ conditions: [c] }, ids) ? {
+    ...c,
+    value: typeof c.value === "string" && ids.has(c.value) ? "" : c.value,
+    value2: typeof c.value2 === "string" && ids.has(c.value2) ? "" : c.value2,
+    values: Array.isArray(c.values) ? c.values.filter(v => !ids.has(v)) : c.values,
+  } : c)),
+});
+
+// What a template's delete does to the saved lists, a line for its modal,
+// or none: a list scoped to it stays and shows no entries, and a Template
+// condition naming it loses it.
+const listTemplateGoes = (state, tid) => {
+  const ls = state && Array.isArray(state.lists) ? state.lists : [];
+  const ids = new Set([tid]);
+  const scoped = ls.filter(l => l && l.scope && l.scope.kind === "template" && l.scope.templateId === tid).length;
+  const named = ls.filter(l => listNames(l, ids)).length;
+  const lines = [];
+  if (scoped) lines.push(scoped === 1 ? "A saved list scoped to it stays and will show no entries." : `${scoped} saved lists scoped to it stay and will show no entries.`);
+  if (named) lines.push(named === 1 ? "A saved list's conditions lose it; the list stays." : `${named} saved lists' conditions lose it; the lists stay.`);
+  return lines.length ? lines.join(" ") : null;
+};
 
 // ─── Entry view ────────────────────────────────────────────────────────────────
 

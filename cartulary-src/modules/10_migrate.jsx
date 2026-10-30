@@ -186,6 +186,57 @@ const retargetRetired = (f, retired) => {
   }
 };
 
+// v1.7 r046: the saved lists as the entry list reads them (docs/pipes-spec.md,
+// section 6). Each is { id, name, scope, mode, conditions }: a scope is
+// { kind: "all" }, { kind: "template", templateId }, or { kind: "tag", tag };
+// mode is "all" or "any"; a condition is { id, field, op, value, value2,
+// values, calendarId }, its field "name", "tags", "template", "linked", or
+// { labels, end }, the labels from a template's field down through the
+// groups to the one it reads, end "start" or "end" for a date range. A value
+// is text, or a date as { year, monthIndex, day }; values, a list of text.
+// A list without an id, or on one an earlier list has, takes a new one; a
+// condition whose field or operator can't be read goes. Nothing else is
+// dropped.
+const normalizeEntryLists = (raw) => {
+  const PSEUDO = ["name", "tags", "template", "linked"];
+  const date = (d) => (d && typeof d === "object" && Number.isFinite(d.year)
+    ? { year: Math.floor(d.year), monthIndex: Number.isFinite(d.monthIndex) ? Math.max(0, Math.floor(d.monthIndex)) : 0, day: Number.isFinite(d.day) ? Math.max(1, Math.floor(d.day)) : 1 }
+    : null);
+  const value = (v) => (typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : (date(v) || ""));
+  const field = (f) => {
+    if (typeof f === "string") return PSEUDO.includes(f) ? f : null;
+    if (!f || typeof f !== "object" || !Array.isArray(f.labels) || f.labels.length === 0) return null;
+    if (!f.labels.every(x => typeof x === "string" && x.trim())) return null;
+    const labels = f.labels.map(x => x.trim());
+    return f.end === "start" || f.end === "end" ? { labels, end: f.end } : { labels };
+  };
+  const ids = new Set();
+  return (Array.isArray(raw) ? raw : []).filter(l => l && typeof l === "object").map(l => {
+    let id = typeof l.id === "string" && l.id ? l.id : "";
+    if (!id || ids.has(id)) id = `list-${genId()}`;
+    ids.add(id);
+    const s = l.scope && typeof l.scope === "object" ? l.scope : {};
+    const scope = s.kind === "template" && typeof s.templateId === "string" && s.templateId ? { kind: "template", templateId: s.templateId }
+      : s.kind === "tag" && typeof s.tag === "string" && s.tag ? { kind: "tag", tag: s.tag }
+      : { kind: "all" };
+    const cids = new Set();
+    const conditions = (Array.isArray(l.conditions) ? l.conditions : []).map(c => {
+      if (!c || typeof c !== "object" || typeof c.op !== "string" || !c.op) return null;
+      const f = field(c.field);
+      if (!f) return null;
+      let cid = typeof c.id === "string" && c.id ? c.id : "";
+      if (!cid || cids.has(cid)) cid = `qc-${genId()}`;
+      cids.add(cid);
+      return {
+        id: cid, field: f, op: c.op, value: value(c.value), value2: value(c.value2),
+        values: Array.isArray(c.values) ? c.values.filter(v => typeof v === "string") : [],
+        calendarId: typeof c.calendarId === "string" && c.calendarId ? c.calendarId : null,
+      };
+    }).filter(Boolean);
+    return { id, name: typeof l.name === "string" && l.name.trim() ? l.name : "Untitled list", scope, mode: l.mode === "any" ? "any" : "all", conditions };
+  });
+};
+
 const migrate = (state) => {
   // Currently only schemaVersion 1 exists. Future migrations go here.
   if (!state || typeof state !== "object") return null;
@@ -301,6 +352,9 @@ const migrate = (state) => {
       description: typeof p.description === "string" ? p.description : "",
       templateIds: Array.isArray(p.templateIds) ? p.templateIds.filter(id => typeof id === "string") : [],
     }));
+  // Saved lists (v1.7 r046): backfilled for worlds from before them, and
+  // each list's shape made what the entry list reads (normalizeEntryLists).
+  state.lists = normalizeEntryLists(state.lists);
   // currentMoment: world-level "story now" anchor used by auto-age computation
   // on character-template entries. Shape: { year, monthIndex, day } in primary's
   // frame, or null. Stored Y/M/D (not absoluteDay) so it follows the calendar-

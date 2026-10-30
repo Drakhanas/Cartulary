@@ -218,4 +218,7 @@ const makeInitialState = () => migrate({
   // Map stamps imported from stamp packs (v1.6 pillar 3). World-scoped,
   // [{id, name, viewBox, body}]. Empty on fresh worlds; see ensureMapStamps.
   mapStamps: [],
+  // Saved lists (v1.7 r046), an entry list's query with a name; see
+  // normalizeEntryLists in 10_migrate.
+  lists: [],
 });
