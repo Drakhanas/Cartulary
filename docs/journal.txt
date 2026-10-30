@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index) ===
+=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1432,3 +1432,47 @@ says so. And the independent read of the turnover found the one case
 where the order still differs from r041's: an edge that merges a record's
 link with the parent declaration at its other end. I ran it on both
 builds before filing it.
+
+r043 took the first option twice too: in the world's HTML export a [[link]]
+to a map goes to its article and the rest are names titled with their
+kinds, and a [[link]] reaches a language, found and opening nothing, and no
+other Glossopoeia record.
+
+The resolver was the easy part. Every surface had kept its own table, and
+the exports kept the oldest rules, entries only and the last one winning,
+so a name two entries share went to one record on the page and another in
+the file. One function in one order fixed that, and the probe compares
+every surface with r042's on the same world, so what it reports changed is
+what the cut meant to change.
+
+It also found a defect in both builds that had nothing to do with names.
+The [[ lists worked themselves out again on every keyup, the keys their
+keydown had just answered among them, so ArrowDown's highlight snapped back
+to the first line and Esc's close opened the list again. My first fix
+ignored those five keys on the way up, always, and it took another look to
+see that it also stopped an arrow from opening the list when the list was
+closed. The second marks the key the keydown took and skips only that one.
+
+The planted copies found two holes in the probe before they found anything
+in the build. A copy whose page memo forgot the resolver passed I7, which
+renamed a map and then went back to the page, mounting it fresh; I8 renames
+a Tabula board with its note open. And a copy that let former names claim
+before primary names passed every check it ran, because no name in the world
+was both. Xan has Moonfall as a former name now.
+
+r042's probe, rerun on the build, failed ten checks, and reading each one
+was the point of rerunning it. Eight were the change itself, [[links]] to
+maps and stemmas and corpora and languages now counted, drawn, and found.
+Two were a consequence I hadn't thought through: a cast record carries its
+character's name, so once Aria's entry is deleted, [[Aria]] reaches her cast
+record, and the modal says the links will lead to another record by the same
+name. That's the order doing what it says, and I named it with the staging.
+Drak passed it.
+
+The independent read of this turnover found eleven defects, and each one
+held when I checked it. A copy I'd said passed all 44 checks had run the
+eight it was given, before the probe had 44. The changelog said I'd read
+four screens at 900 pixels wide, and only the entry page was. The rest were
+claims about what came before r043, among them the exports' old rules and
+how long a [[link]] has reached a body, a count of rows, and lines in the
+spec and the roadmap that r043 made stale and I hadn't touched.

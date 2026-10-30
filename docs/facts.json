@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 55508,
-  "raw_body_lines": 55508,
-  "canonical_lines": 52845,
-  "decl_count": 812,
+  "total_lines": 55482,
+  "raw_body_lines": 55482,
+  "canonical_lines": 52806,
+  "decl_count": 823,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r042-body.jsx"
+  "active_anchor": "reference-r043-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 55508,
+   "value": 55482,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 812,
+   "value": 823,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 52845,
+   "value": 52806,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 55508,
+   "value": 55482,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 100,
+   "value": 101,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3007560,
+   "value": 3009174,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "sixty-seven",
-    67
+    "sixty-eight",
+    68
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 100,
+   "value": 101,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 100,
+   "value": 101,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "sixty-seven",
-    67
+    "sixty-eight",
+    68
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r042": {
-   "value": "a2da7ded6fb5abca",
-   "pattern": "working[^\\n]{0,40}at r042 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r043": {
+   "value": "238fda66346c7f3c",
+   "pattern": "working[^\\n]{0,40}at r043 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 55508,
+   "value": 55482,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -142,22 +142,22 @@
  "assertions": [
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1311,
+   "line": 1288,
    "contains": "Longform + rich text editor"
   },
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1313,
+   "line": 1290,
    "contains": "function LongformEditor"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 465,
+   "line": 432,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 467,
+   "line": 434,
    "contains": "function LongformDisplay"
   },
   {
@@ -252,7 +252,7 @@
   },
   {
    "file": "17_concordance.jsx",
-   "line": 1030,
+   "line": 1034,
    "contains": "}"
   },
   {
@@ -527,17 +527,17 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 948,
+   "line": 966,
    "contains": "const renderMapHtml"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1532,
+   "line": 1549,
    "contains": "HTML export modal"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1543,
+   "line": 1560,
    "contains": "function HtmlExportModal"
   },
   {
@@ -727,18 +727,23 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 323,
+   "line": 290,
    "contains": "Referenced by (v1.7 r041)"
   },
   {
    "file": "22_trunk.jsx",
-   "line": 412,
+   "line": 526,
    "contains": "Link index (v1.7 r041)"
   },
   {
    "file": "29_modals.jsx",
    "line": 288,
    "contains": "Record delete (v1.7 r042)"
+  },
+  {
+   "file": "22_trunk.jsx",
+   "line": 401,
+   "contains": "The [[link]] resolver (v1.7 r043)"
   }
  ],
  "spans": {
@@ -752,7 +757,7 @@
   "17_concordance.jsx": [
    [
     1,
-    1030,
+    1034,
     "concordance"
    ]
   ],
@@ -1069,10 +1074,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r042-body.jsx",
-   "reference-r042-layout.json",
-   "37b99408bebc2aee",
-   "a2da7ded6fb5abca",
+   "reference-r043-body.jsx",
+   "reference-r043-layout.json",
+   "f94ada8bc6a63aa0",
+   "238fda66346c7f3c",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1080,7 +1085,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r043, Pipes' fifth cut: one resolver for every `[[link]]`",
+   "r044, Pipes' sixth cut: the rename modal",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1112,7 +1117,12 @@
    "clearLinksTo",
    "RecordDeleteModal",
    "Record delete (v1.7 r042)",
-   "whether Concordance draws them again"
+   "v1.7_r043",
+   "wikiResolverOf",
+   "WikiResolverContext",
+   "The [[link]] resolver (v1.7 r043)",
+   "WIKI_LINK_LIST_KEYS",
+   "whether renaming a language"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1176,7 +1186,7 @@
    "b1b07ff195a9e796",
    "a2bb59988f15030f",
    "On v1.7 r003 verification",
-   "08_export-layer:1532",
+   "08_export-layer:1549",
    "reference-r004-body.jsx",
    "16337a1350d7e7e6",
    "0731070bf5555171",
@@ -1322,7 +1332,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r042-layout.json",
+   "reference-r043-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1340,12 +1350,17 @@
    "On v1.7 r041 verification",
    "Link index (v1.7 r041)",
    "Referenced by (v1.7 r041)",
-   "at 465 and 467 since its r042",
+   "at 432 and 434 since its r043",
    "reference-r042-body.jsx",
    "37b99408bebc2aee",
    "a2da7ded6fb5abca",
    "On v1.7 r042 verification",
-   "Record delete (v1.7 r042)"
+   "Record delete (v1.7 r042)",
+   "reference-r043-body.jsx",
+   "f94ada8bc6a63aa0",
+   "238fda66346c7f3c",
+   "On v1.7 r043 verification",
+   "The [[link]] resolver (v1.7 r043)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1574,7 +1589,14 @@
    "a2da7ded6fb5abca",
    "v1.7_r042_deletes_concordance.py",
    "clearLinksTo",
-   "Turnover v1.7_r042"
+   "Turnover v1.7_r042",
+   "v1.7_r043",
+   "24ebe2f",
+   "4698682",
+   "238fda66346c7f3c",
+   "v1.7_r043_one_resolver.py",
+   "wikiResolverOf",
+   "Turnover v1.7_r043"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1673,7 +1695,10 @@
    "r042 is in",
    "Deleting a word leaves the words that name it",
    "What r042 left for r051",
-   "Concordance can order a merged edge's labels"
+   "Concordance can order a merged edge's labels",
+   "v1.7_r043",
+   "r043 is in",
+   "What r043 left for r051"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1748,7 +1773,11 @@
    "A warning that says what the world will look like",
    "A cache keyed by a record's identity",
    "A check's own steps survive the defect it hunts",
-   "A comparison that sorts first"
+   "A comparison that sorts first",
+   "A check that opens the page after a change",
+   "An order of precedence is tested on a world",
+   "A keyup handler that recomputes what its keydown answered",
+   "A fix skips what the handler took"
   ],
   "journal.txt": [
    "r030",
@@ -1813,7 +1842,8 @@
    "session 22",
    "the folder was dropped without a word",
    "the index waiting to be asked",
-   "a diff of the whole stored world"
+   "a diff of the whole stored world",
+   "mounting it fresh"
   ]
  }
 }
