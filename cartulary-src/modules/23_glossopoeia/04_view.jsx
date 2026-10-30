@@ -37,6 +37,21 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
     const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
     return { ...s, glossopoeia: { ...gg, ui: { ...(gg.ui || {}), ...patch } } };
   });
+  // v1.7 r044 (Drak's call 3 at the cut): a language's name is written as
+  // it's typed, so its rename asks when the name field is left, against the
+  // world with the old name in it; Cancel puts the old name back.
+  const renameLanguage = (id, was, now) => {
+    if (isLocked || !(now || "").trim()) return;
+    const before = renameRecordIn(state, id, was, null);
+    renameAsk({
+      state: before, id, oldName: was, newName: now,
+      write: (choice) => {
+        updateState(s => renameSettle(s, id, was, now, choice.update));
+        if (choice.update && flash) flash(renameUpdatedLine(choice.places, "Renamed"));
+      },
+      cancel: () => updateState(s => renameRecordIn(s, id, was, null)),
+    });
+  };
   const writeConlang = (rec) => {
     if (isLocked) return;
     updateState(s => {
@@ -542,6 +557,7 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
                 bodies={state.celestialBodies}
                 registeredNodes={getRegisteredGraphNodes(state)}
                 onChange={writeConlang}
+                onNameDone={(was, now) => renameLanguage(activeLang.id, was, now)}
                 showSecrets={true}
                 imageFolder={state.world.imageFolder}
                 allTags={[]}

@@ -639,12 +639,19 @@ function TabulaSelectionPanel({ count, isLocked, onDuplicate, onDelete, onClose 
 // sub-board opened by a double-click on its card (r030), with the rota's
 // breadcrumb in the bar and Back to its parent. The pool and the templates
 // are the rota's (App builds them).
-function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash, onFocalChange, onBackToIndex, onReplace, onOpenEntry, onExport, onExportMarkdown, viewPref, onViewPref, dirHandle, imageFolder }) {
+function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash, onFocalChange, onBackToIndex, onReplace, onOpenEntry, onExport, onExportMarkdown, viewPref, onViewPref, dirHandle, imageFolder, onRename }) {
   const board = tabulaBoardNode(stemma.root, boardId) || stemma.root;
   const history = useMapHistory(stemma, onReplace);
   const apply = (next, opts) => {
     if (isLocked || !next || next === stemma) return;
     history.commit(next, opts);
+  };
+  // v1.7 r044: a rename from the bar asks App first (onRename); one that
+  // updated [[links]] elsewhere went in there and can't be undone here, so
+  // the history starts over, and one that didn't is a step of its own.
+  const renameDoc = (name) => {
+    if (!onRename) { apply(stemmaRename(stemma, name)); return; }
+    onRename(name, (rewrote) => { if (rewrote) history.clear(); else apply(stemmaRename(stemma, name)); });
   };
   const paneRef = useRef(null);
   const surfaceRef = useRef(null);
@@ -1274,7 +1281,7 @@ function TabulaCanvasView({ stemma, boardId, entries, templates, isLocked, flash
             value={nameDraft}
             autoFocus
             onChange={e => setNameDraft(e.target.value)}
-            onBlur={() => { const trimmed = nameDraft.trim(); if (trimmed && trimmed !== stemma.name) apply(stemmaRename(stemma, trimmed)); setEditingName(false); }}
+            onBlur={() => { const trimmed = nameDraft.trim(); if (trimmed && trimmed !== stemma.name) renameDoc(trimmed); setEditingName(false); }}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } else if (e.key === "Escape") { e.preventDefault(); setNameDraft(stemma.name); setEditingName(false); } }}
             style={{ fontSize: 14, fontWeight: 500, padding: "2px 8px", border: "1px solid var(--accent)", borderRadius: 3, background: "var(--surf2)", color: "var(--text)", outline: "none", minWidth: 200 }}
           />

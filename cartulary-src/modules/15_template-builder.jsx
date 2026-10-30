@@ -81,9 +81,11 @@ function CascadeOptionsInput({ field, parentField, onCommit }) {
 // Storage shape:
 //   refTemplatesId: [tplId, tplId, ...]                       — which target templates are allowed
 //   refFilters: { [tplName]: { fieldId, allowedValues: [...] } } — per-template filter (optional)
-// refFilters is keyed by template NAME (matches built-in convention; survives
-// template rename if TEMPLATE_RENAMES handles it; otherwise filter quietly
-// becomes inert — picker just shows all entries of that template, no crash).
+// refFilters is keyed by template NAME (matches built-in convention). Since
+// v1.7's r044 a template's rename carries its key in every template's and
+// Fabula kind's field that aims at it (renameTemplateTargets), where before
+// it went inert unless TEMPLATE_RENAMES moved it; a key no target answers to
+// is inert, and the picker shows all of that template's entries.
 function MultiTemplateRefConfig({ field, templates, onChange, packs }) {
   // Pack-qualified label: same-named templates from different packs are
   // disambiguated by their pack (the r040 lesson). Returns the first owning

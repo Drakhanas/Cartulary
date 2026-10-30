@@ -64,7 +64,7 @@ function AsBoModeContent({
         body={body}
         state={state}
         bodies={bodies}
-        onSave={() => { onSaveBody(body.id, draft); setDraft(null); }}
+        onSave={() => onSaveBody(body.id, draft, () => setDraft(null))}
         onCancel={() => setDraft(null)}
         onSelectBody={onSelectBody}
         onCreateChildBody={onCreateChildBody}

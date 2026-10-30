@@ -1485,7 +1485,16 @@ function useMapHistory(data, onChange, limit, onRestore) {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [data]);
-  return { commit, undo, redo, canUndo: pastRef.current.length > 0, canRedo: futureRef.current.length > 0 };
+  // v1.7 r044: the history starts over, nothing to undo or redo, after a
+  // change made outside it that it can't take back alone (a stemma's rename
+  // that updated [[links]] elsewhere).
+  const clear = () => {
+    pastRef.current = [];
+    futureRef.current = [];
+    keyRef.current = null;
+    bump(n => n + 1);
+  };
+  return { commit, undo, redo, clear, canUndo: pastRef.current.length > 0, canRedo: futureRef.current.length > 0 };
 }
 
 

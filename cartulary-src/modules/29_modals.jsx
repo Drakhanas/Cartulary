@@ -313,7 +313,7 @@ const recordDeleteLines = (state, ids, going) => {
   const c = linkDeleteCounts(state, list, going);
   const it = list.length > 1 ? "them" : "it";
   const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-  const kinds = [["entry", "entry", "entries"], ...FABULA_KINDS.map(k => [`fabula:${k.kind}`, FABULA_NOUNS[k.kind].one, FABULA_NOUNS[k.kind].many]), ["body", "body", "bodies"], ["conlang", "language", "languages"]];
+  const kinds = [["entry", "entry", "entries"], ...FABULA_KINDS.map(k => [`fabula:${k.kind}`, FABULA_NOUNS[k.kind].one, FABULA_NOUNS[k.kind].many]), ["body", "body", "bodies"], ["conlang", "language", "languages"], ["lexeme", "word", "words"]];
   const lines = [];
   const from = kinds.filter(([key]) => c.refs.has(key)).map(([key, one, many]) => [c.refs.get(key).size, one, many]);
   const holders = from.reduce((n, [k]) => n + k, 0);
@@ -356,6 +356,102 @@ function RecordDeleteModal() {
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={() => setAsk(null)}>Cancel</button>
           <button className="btn btn-danger record-delete-confirm" onClick={doDelete} autoFocus>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Record rename (v1.7 r044) ─────────────────────────────────────────────────
+// docs/pipes-spec.md, section 5, with Drak's calls at the cut: a rename that
+// [[links]] by the old name reach asks here first (renameAsk, 22_trunk), how
+// many places link by it and what Rename only leaves them doing, and offers
+// Rename and update links, or Rename only, alone when the new name already
+// reaches a record ahead of this one. Where the record keeps former names, a
+// box adds the old name there, unticked (call 1). App draws it once.
+
+const RECORD_RENAME = { open: null };
+
+// ask: { plan, onConfirm(choice), onCancel }, plan renamePlan's, choice
+// { update, former, places }. With no modal drawn, the browser's confirm
+// asks about the update.
+const askRename = (ask) => {
+  if (RECORD_RENAME.open) { RECORD_RENAME.open(ask); return; }
+  const p = ask.plan;
+  const update = !p.taken && window.confirm(`Update the [[links]] by "${p.oldName}" to "${p.newName}"?`);
+  ask.onConfirm({ update, former: false, places: p.places });
+};
+
+// A record a line names, by its kind: the entry "Aria", the map "Twinmark".
+const renameRecordNoun = (rec) => {
+  if (!rec) return "another record";
+  const fab = rec.kind === "fabula" ? FABULA_KINDS.find(k => k.id === rec.source) : null;
+  const noun = rec.kind === "entry" ? "entry" : rec.kind === "body" ? "body" : rec.kind === "map" ? "map"
+    : rec.kind === "stemma" ? "stemma" : rec.kind === "conlang" ? "language"
+    : fab && FABULA_NOUNS[fab.kind] ? FABULA_NOUNS[fab.kind].one : "record";
+  return `the ${noun} "${rec.name}"`;
+};
+
+// What Rename only leaves the links doing, with the old name added to the
+// record's former names or without.
+const renameLeavesLine = (plan, former) => {
+  const l = former && plan.leavesFormer ? plan.leavesFormer : plan.leaves;
+  if (l.how === "kept") return `With Rename only, they stay as typed and still lead to it, through its ${plan.formerLabel || "former names"}.`;
+  if (l.how === "moved") return `With Rename only, they stay as typed and lead instead to ${renameRecordNoun(l.to)}.`;
+  return "With Rename only, they stay as typed and show as broken.";
+};
+
+// The modal, drawn once by App; askRename opens it. Esc and a click outside
+// cancel, as Cancel does. While it's open the keys are its own, so none
+// reaches what's under it: a board's arrows, Enter, and Delete, or Undo.
+function RecordRenameModal() {
+  const [ask, setAsk] = useState(null);
+  const [former, setFormer] = useState(false);
+  useEffect(() => {
+    const open = (a) => { setFormer(false); setAsk(a); };
+    RECORD_RENAME.open = open;
+    return () => { if (RECORD_RENAME.open === open) RECORD_RENAME.open = null; };
+  }, []);
+  const cancel = () => {
+    const a = ask;
+    setAsk(null);
+    if (a && a.onCancel) a.onCancel();
+  };
+  useEffect(() => {
+    if (!ask) return undefined;
+    const onKey = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); cancel(); }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [ask]);
+  if (!ask) return null;
+  const p = ask.plan;
+  const done = (update) => {
+    setAsk(null);
+    ask.onConfirm({ update, former: !!(p.former && former), places: p.places });
+  };
+  return (
+    <div className="modal-backdrop" onClick={cancel}>
+      <div className="modal record-rename" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Rename "{p.oldName}" to "{p.newName}"?</div>
+        <div className="modal-body">
+          <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>
+          {p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>[[{p.newName}]] already leads to {renameRecordNoun(p.taken)}, so updating the links would send them there. It can be renamed without updating them.</p>}
+          {p.former && (
+            <label className="record-rename-former" style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0", cursor: "pointer" }}>
+              <input type="checkbox" checked={former} onChange={e => setFormer(e.target.checked)} />
+              <span>Add "{p.oldName}" to its {p.former}</span>
+            </label>
+          )}
+          <p className="record-rename-line" style={{ margin: "8px 0 0" }}>{renameLeavesLine(p, former)}</p>
+          {!p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>Updating them saves a restore point first, Before rename, in Version History.</p>}
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={cancel}>Cancel</button>
+          <button className="btn record-rename-only" onClick={() => done(false)} autoFocus={!!p.taken}>Rename only</button>
+          {!p.taken && <button className="btn btn-accent record-rename-update" onClick={() => done(true)} autoFocus>Rename and update links</button>}
         </div>
       </div>
     </div>

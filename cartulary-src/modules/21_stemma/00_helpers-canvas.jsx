@@ -962,7 +962,7 @@ function LinkedInspectorBody({ node, entry, template, isOrphan, onOpenEntry }) {
 // or freeform fallback). Top bar carries the back-to-index button, click-to-
 // rename stemma name, optional back-to-root jump, ancestor breadcrumb (each
 // segment clickable to re-focal up the tree), and right-aligned export.
-function StemmaCanvasView({ stemma, focalNodeId, entries, templates, isLocked, flash, onFocalChange, onBackToIndex, onReplace, onOpenEntry, onExport, onExportMarkdown }) {
+function StemmaCanvasView({ stemma, focalNodeId, entries, templates, isLocked, flash, onFocalChange, onBackToIndex, onReplace, onOpenEntry, onExport, onExportMarkdown, onRename }) {
   const focal = findStemmaNode(stemma.root, focalNodeId) || stemma.root;
   // Every edit is a transform of the document (Stemma transforms, above),
   // committed through the history and App's onReplace (v1.7 r026): one step
@@ -976,6 +976,13 @@ function StemmaCanvasView({ stemma, focalNodeId, entries, templates, isLocked, f
   const apply = (next, opts) => {
     if (isLocked || !next || next === stemma) return;
     history.commit(next, opts);
+  };
+  // v1.7 r044: a rename from the bar asks App first (onRename); one that
+  // updated [[links]] elsewhere went in there and can't be undone here, so
+  // the history starts over, and one that didn't is a step of its own.
+  const renameDoc = (name) => {
+    if (!onRename) { apply(stemmaRename(stemma, name)); return; }
+    onRename(name, (rewrote) => { if (rewrote) history.clear(); else apply(stemmaRename(stemma, name)); });
   };
   const [editingSlot, setEditingSlot] = useState(null);  // which slot's + is in input mode
   const [inspectorNodeId, setInspectorNodeId] = useState(null);  // which node the inspector is open on
@@ -1207,7 +1214,7 @@ function StemmaCanvasView({ stemma, focalNodeId, entries, templates, isLocked, f
             onChange={e => setNameDraft(e.target.value)}
             onBlur={() => {
               const trimmed = nameDraft.trim();
-              if (trimmed && trimmed !== stemma.name) apply(stemmaRename(stemma, trimmed));
+              if (trimmed && trimmed !== stemma.name) renameDoc(trimmed);
               setEditingName(false);
             }}
             onKeyDown={e => {

@@ -1536,7 +1536,10 @@ function App() {
     initialMapDraftRef.current = JSON.stringify(draft);
   };
 
-  const saveMap = () => {
+  const saveMap = () => saveMapAs(null);
+  // v1.7 r044: a rename asks first when [[links]] by the old name reach the
+  // map (renameAsk), and the save runs again with the answer.
+  const saveMapAs = (choice) => {
     if (!mapDraft) return;
     const name = (mapDraft.name || "").trim();
     if (!name) return;
@@ -1548,15 +1551,26 @@ function App() {
       mapData: ensureMapData(mapDraft.mapData),
       updatedAt: isoNow(),
     };
+    const old = (state.cartographia || []).find(m => m && m.id === rec.id);
+    const renamed = !!old && (old.name || "") !== name;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, cartographia: state.cartographia.map(m => (m && m.id === rec.id ? { ...m, fields: rec.fields } : m)) },
+        before: state, id: rec.id, oldName: old.name || "", newName: name, write: (c) => saveMapAs(c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
     saveNow();
     updateState(s => {
       const arr = Array.isArray(s.cartographia) ? s.cartographia : [];
       const exists = arr.some(m => m.id === rec.id);
-      return { ...s, cartographia: exists ? arr.map(m => m.id === rec.id ? rec : m) : [...arr, rec] };
+      const saved = { ...s, cartographia: exists ? arr.map(m => m.id === rec.id ? rec : m) : [...arr, rec] };
+      return renamed ? renameSettle(saved, rec.id, old.name || "", name, answer.update) : saved;
     });
     setMapDraft(null); initialMapDraftRef.current = null;
     setActiveMapId(rec.id);
-    flash("Saved");
+    flash(answer.update ? renameUpdatedLine(answer.places) : "Saved");
   };
 
   const cancelMapEdit = () => {
@@ -1627,10 +1641,23 @@ function App() {
     initialCorpusDraftRef.current = JSON.stringify(draft);
   };
 
-  const saveCorpus = () => {
+  const saveCorpus = () => saveCorpusAs(null);
+  // v1.7 r044: a rename asks first when [[links]] by the old name reach the
+  // corpus (renameAsk), and the save runs again with the answer.
+  const saveCorpusAs = (choice) => {
     if (!corpusDraft || isLocked) return;
     const name = (corpusDraft.name || "").trim();
     if (!name) return;
+    const was = fabArr(state.fabula || {}, "corpora").find(c => c.id === corpusDraft.id);
+    const renamed = !!was && (was.name || "") !== name;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, fabula: { ...state.fabula, corpora: fabArr(state.fabula || {}, "corpora").map(c => (c.id === corpusDraft.id ? { ...c, fields: corpusDraft.fields || {} } : c)) } },
+        before: state, id: corpusDraft.id, oldName: was.name || "", newName: name, write: (c) => saveCorpusAs(c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
     const now = isoNow();
     saveNow();
     updateFabula(fab => {
@@ -1639,9 +1666,10 @@ function App() {
       const rec = { ...(old || { storyIds: [], createdAt: now }), id: corpusDraft.id, name, fields: corpusDraft.fields || {}, updatedAt: now };
       return { ...fab, corpora: old ? arr.map(c => c.id === rec.id ? rec : c) : [...arr, rec] };
     });
+    if (renamed) updateState(s => renameSettle(s, corpusDraft.id, was.name || "", name, answer.update));
     setCorpusDraft(null); initialCorpusDraftRef.current = null;
     setActiveCorpusId(corpusDraft.id);
-    flash("Saved");
+    flash(answer.update ? renameUpdatedLine(answer.places) : "Saved");
   };
 
   const cancelCorpusEdit = () => {
@@ -1680,10 +1708,21 @@ function App() {
     return id;
   };
 
-  const renameStory = (id, name) => {
+  // v1.7 r044: a rename asks first when [[links]] by the old name reach the
+  // story (renameAsk), and runs again with the answer.
+  const renameStory = (id, name, choice) => {
     const n = (name || "").trim();
     if (isLocked || !n) return;
+    const was = fabArr(state.fabula || {}, "stories").find(st => st.id === id);
+    const renamed = !!was && (was.name || "") !== n;
+    if (renamed && !choice) {
+      renameAsk({ state, id, oldName: was.name || "", newName: n, write: (c) => renameStory(id, n, c) });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
     updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === id ? { ...st, name: n, updatedAt: isoNow() } : st) }));
+    if (renamed) updateState(s => renameSettle(s, id, was.name || "", n, answer.update));
+    if (answer.update) flash(renameUpdatedLine(answer.places, "Renamed"));
   };
 
   // v1.7 r009: a story's own records (cast, arcs, and the rest, each with the
@@ -1860,15 +1899,29 @@ function App() {
     initialStoryDraftRef.current = JSON.stringify(draft);
   };
 
-  const saveStory = () => {
+  const saveStory = () => saveStoryAs(null);
+  // v1.7 r044: a rename asks first when [[links]] by the old name reach the
+  // story (renameAsk), and the save runs again with the answer.
+  const saveStoryAs = (choice) => {
     if (!storyDraft || isLocked) return;
     const name = (storyDraft.name || "").trim();
     if (!name) return;
+    const was = fabArr(state.fabula || {}, "stories").find(st => st.id === storyDraft.id);
+    const renamed = !!was && (was.name || "") !== name;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, fabula: { ...state.fabula, stories: fabArr(state.fabula || {}, "stories").map(st => (st.id === storyDraft.id ? { ...st, fields: storyDraft.fields || {} } : st)) } },
+        before: state, id: storyDraft.id, oldName: was.name || "", newName: name, write: (c) => saveStoryAs(c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
     const now = isoNow();
     saveNow();
     updateFabula(fab => ({ ...fab, stories: fabArr(fab, "stories").map(st => st.id === storyDraft.id ? { ...st, name, fields: storyDraft.fields || {}, updatedAt: now } : st) }));
+    if (renamed) updateState(s => renameSettle(s, storyDraft.id, was.name || "", name, answer.update));
     setStoryDraft(null); initialStoryDraftRef.current = null;
-    flash("Saved");
+    flash(answer.update ? renameUpdatedLine(answer.places) : "Saved");
   };
 
   const cancelStoryEdit = () => {
@@ -1978,7 +2031,10 @@ function App() {
     initialRecordDraftRef.current = JSON.stringify(draft);
   };
 
-  const saveFabulaRecord = () => {
+  const saveFabulaRecord = () => saveFabulaRecordAs(null);
+  // v1.7 r044: a rename asks first when [[links]] by the old name reach the
+  // record (renameAsk), and the save runs again with the answer.
+  const saveFabulaRecordAs = (choice) => {
     if (!recordDraft || !activeRecord || isLocked) return;
     const name = (recordDraft.name || "").trim();
     if (!name) return;
@@ -1986,6 +2042,16 @@ function App() {
     if (requiredErrors.length > 0) { flash(requiredErrors.join(" \u00b7 ")); return; }
     const slice = fabulaSliceOf(activeRecord.kind);
     const kind = activeRecord.kind;
+    const was = fabArr(state.fabula || {}, slice).find(r => r.id === recordDraft.id);
+    const renamed = !!was && (was.name || "") !== name;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, fabula: { ...state.fabula, [slice]: fabArr(state.fabula || {}, slice).map(r => (r.id === recordDraft.id ? { ...r, fields: recordDraft.fields || {} } : r)) } },
+        before: state, id: recordDraft.id, oldName: was.name || "", newName: name, write: (c) => saveFabulaRecordAs(c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
     const now = isoNow();
     saveNow();
     updateFabula(fab => {
@@ -1996,8 +2062,9 @@ function App() {
       if (kind === "cast" && rec.fields.character) delete rec.characterDeleted;
       return { ...fab, [slice]: old ? arr.map(r => r.id === rec.id ? rec : r) : [...arr, rec] };
     });
+    if (renamed) updateState(s => renameSettle(s, recordDraft.id, was.name || "", name, answer.update));
     setRecordDraft(null); initialRecordDraftRef.current = null;
-    flash("Saved");
+    flash(answer.update ? renameUpdatedLine(answer.places) : "Saved");
   };
 
   const cancelFabulaRecordEdit = () => {
@@ -2060,7 +2127,11 @@ function App() {
     setView("entry-edit");
   };
 
-  const saveEntry = () => {
+  const saveEntry = () => saveEntryAs(null);
+  // v1.7 r044: renaming an entry that [[links]] by its old name reach asks
+  // first (renameAsk, Drak's calls at the cut), and the save runs again with
+  // the answer, the old name added to its Name History if that was ticked.
+  const saveEntryAs = (choice) => {
     if (!entryDraft?.name?.trim()) return;
     let newId = activeEntryId;
     // Run the shared normalize pass on the draft fields before persisting.
@@ -2140,6 +2211,18 @@ function App() {
     const lname = draftBase.name.toLowerCase();
     const dupCount = state.entries.filter(e => e.id !== activeEntryId && (e.name || "").toLowerCase() === lname).length;
 
+    const oldName = view === "entry-new" ? null : (activeEntry?.name || "");
+    const renamed = oldName !== null && oldName !== draftBase.name;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, entries: state.entries.map(e => (e.id === activeEntryId ? { ...e, fields: draftBase.fields } : e)) },
+        before: state, id: activeEntryId, oldName, newName: draftBase.name, write: (c) => saveEntryAs(c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
+    if (renamed && answer.former) draftBase.fields = renameNameHistoryAdd(tpl, draftBase.fields, oldName.trim());
+
     saveNow();
     if (view === "entry-new") {
       newId = freshNameId("ent", entryDraft.name, new Set(state.entries.map(e => e.id)));
@@ -2169,17 +2252,22 @@ function App() {
       const reciprocal = computeSpouseReciprocity(
         activeEntryId, activeEntry?.fields || {}, draftBase.fields, tpl, state.entries, state.templates
       );
-      updateState(s => ({
-        ...s,
-        entries: s.entries.map(e => {
-          if (e.id === activeEntryId) return { ...e, ...draftBase, updatedAt: isoNow() };
-          if (reciprocal.has(e.id)) return { ...e, fields: reciprocal.get(e.id), updatedAt: isoNow() };
-          return e;
-        }),
-      }));
+      updateState(s => {
+        const saved = {
+          ...s,
+          entries: s.entries.map(e => {
+            if (e.id === activeEntryId) return { ...e, ...draftBase, updatedAt: isoNow() };
+            if (reciprocal.has(e.id)) return { ...e, fields: reciprocal.get(e.id), updatedAt: isoNow() };
+            return e;
+          }),
+        };
+        return renamed ? renameSettle(saved, activeEntryId, oldName, draftBase.name, answer.update) : saved;
+      });
     }
     setActiveEntryId(newId); clearDraftAndStorage(true); setView("entry");
-    if (dupCount > 0) {
+    if (answer.update) {
+      flash(renameUpdatedLine(answer.places));
+    } else if (dupCount > 0) {
       flash(`Saved. ${dupCount} other entr${dupCount === 1 ? "y" : "ies"} share this name; wiki-links will resolve to the earliest-stored one.`, "warning");
     } else if (didCalendarConvert) {
       const targetCal = getCalendar(state, entryDraft.calendarId || null);
@@ -2297,8 +2385,31 @@ function App() {
       // future canonical migrations). If they're editing their own template,
       // it stays user-origin.
       ensureIds(cleaned.fields);
+      // v1.7 r044: a rename carries the template's targets along, in its own
+      // fields first, then in every other template's and Fabula kind's
+      // (renameTemplateTargets), so their filters and target names keep it.
+      const was = (state.templates.find(t => t.id === activeTemplateId) || {}).name || "";
+      const twins = new Set(state.templates.filter(t => t && t.id !== activeTemplateId && t.name === was).map(t => t.id));
+      const carry = (fields) => renameTemplateTargets(fields, activeTemplateId, was, cleaned.name, twins);
+      cleaned.fields = carry(cleaned.fields);
       syncRefTargetNames(state.templates.map(t => t.id === activeTemplateId ? cleaned : t), [cleaned]);
-      updateState(s => ({ ...s, templates: s.templates.map(t => t.id === activeTemplateId ? cleaned : t) }));
+      updateState(s => {
+        const templates = s.templates.map(t => {
+          if (t.id === activeTemplateId) return cleaned;
+          const fields = carry(t.fields);
+          return fields === t.fields ? t : { ...t, fields };
+        });
+        const schemas = s.fabula && s.fabula.schemas ? s.fabula.schemas : null;
+        let moved = null;
+        if (schemas) Object.keys(schemas).forEach(k => {
+          const sc = schemas[k];
+          const fields = sc && Array.isArray(sc.fields) ? carry(sc.fields) : null;
+          if (!fields || fields === sc.fields) return;
+          if (!moved) moved = { ...schemas };
+          moved[k] = { ...sc, fields };
+        });
+        return { ...s, templates, fabula: moved ? { ...s.fabula, schemas: moved } : s.fabula };
+      });
     }
     clearDraftAndStorage(true); setView("list");
     flash("Template saved");
@@ -3439,6 +3550,30 @@ function App() {
   const replaceStemma = (stemmaId, next) => {
     if (isLocked || !next) return;
     updateState(s => ({ ...s, stemmas: (s.stemmas || []).map(st => (st.id === stemmaId ? next : st)) }));
+  };
+
+  // v1.7 r044: a stemma renamed in its bar asks first when [[links]] by the
+  // old name reach it (renameAsk). done(true) when it went in with its links
+  // updated, written here, so the board's history starts over (Drak's call
+  // 2); done(false) when the board's own step is to rename it, an undoable
+  // one, the names copied from it brought along here.
+  const renameStemma = (stemmaId, name, done) => {
+    const stem = (state.stemmas || []).find(st => st && st.id === stemmaId);
+    if (isLocked || !stem) return;
+    const was = stem.name || "";
+    renameAsk({
+      state, id: stemmaId, oldName: was, newName: name,
+      write: (choice) => {
+        if (choice.update) {
+          updateState(s => renameSettle({ ...s, stemmas: (s.stemmas || []).map(st => (st.id === stemmaId ? stemmaRename(st, name) : st)) }, stemmaId, was, name, true));
+          done(true);
+          flash(renameUpdatedLine(choice.places, "Renamed"));
+          return;
+        }
+        done(false);
+        updateState(s => renameSettle(s, stemmaId, was, name, false));
+      },
+    });
   };
 
   // Delete a stemma entirely. Used by the index-page row's delete action.
@@ -4658,6 +4793,7 @@ function App() {
                   onFocalChange={setFocalNodeId}
                   onBackToIndex={closeStemmaToIndex}
                   onReplace={(next) => replaceStemma(stem.id, next)}
+                  onRename={(name, done) => renameStemma(stem.id, name, done)}
                   onOpenEntry={openEntryFromAnywhere}
                   onExport={() => exportStemmaJson(stem)}
                   onExportMarkdown={() => exportStemmaMarkdown(stem)}
@@ -4680,6 +4816,7 @@ function App() {
                 onFocalChange={setFocalNodeId}
                 onBackToIndex={closeStemmaToIndex}
                 onReplace={(next) => replaceStemma(stem.id, next)}
+                onRename={(name, done) => renameStemma(stem.id, name, done)}
                 onOpenEntry={openEntryFromAnywhere}
                 onExport={() => exportStemmaJson(stem)}
                 onExportMarkdown={() => exportStemmaMarkdown(stem)}
@@ -4778,7 +4915,7 @@ function App() {
             );
           })()}
           {view === "ephemeris" && (
-            <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} showSecrets={showSecrets} />
+            <EphemerisView state={state} updateState={updateState} isLocked={isLocked} onOpenEntry={openEntryFromAnywhere} onPromoteEvent={promoteComputedEventToEntry} showSecrets={showSecrets} flash={flash} />
           )}
           {view === "fabula" && !schemaDraft && !activeCorpusId && !corpusDraft && !activeStoryId && (
             <FabulaIndexView
@@ -5192,6 +5329,7 @@ function App() {
       })()}
 
       <RecordDeleteModal />
+      <RecordRenameModal />
 
       {destructiveOp && (
         <DestructiveOpModal

@@ -144,8 +144,23 @@ function ImageFieldEditor({ value, onChange, imageFolder, dirHandle, flash }) {
 
 // ─── Entry form ────────────────────────────────────────────────────────────────
 
-function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate, footSlot }) {
+function EntryForm({ draft, template, entries, templates, bodies, registeredNodes, onChange, showSecrets, imageFolder, allTags, dirHandle, calendar, primaryCalendar, selfEntryId, flash, previewMode, additionalCalendars, ipaSymbols, canvasSlot, hideTags, panels, foldedPanels, onTogglePanel, onRestoreTemplate, footSlot, onNameDone }) {
   const updateField = (fid, val) => onChange({ ...draft, fields: { ...draft.fields, [fid]: val } });
+  // v1.7 r044: a form whose name is written as it's typed (a language's on
+  // Glossopoeia's overview) hears when the name field is left, with the name
+  // it held when it was entered, so a rename can ask then; Enter leaves it.
+  // Until the field is first entered, the name is the one the form opened
+  // with, since the field takes the focus as it's drawn.
+  const nameAtFocusRef = useRef(draft.name);
+  const nameDoneProps = onNameDone ? {
+    onFocus: () => { nameAtFocusRef.current = draft.name; },
+    onBlur: () => {
+      const was = nameAtFocusRef.current;
+      nameAtFocusRef.current = null;
+      if (was !== null && was !== draft.name) onNameDone(was, draft.name);
+    },
+    onKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } },
+  } : {};
   const cals = additionalCalendars || [];
   const hasAdditional = cals.length > 0;
   const selectedCal = draft.calendarId ? cals.find(c => c.id === draft.calendarId) : null;
@@ -155,7 +170,7 @@ function EntryForm({ draft, template, entries, templates, bodies, registeredNode
       {!previewMode && (
         template.ipaName
           ? <IpaTextInput value={draft.name} onChange={(nm) => onChange({ ...draft, name: nm })} placeholder={`${template.name} name...`} ipaSymbols={ipaSymbols} className="form-title-input" autoFocus />
-          : <input className="form-title-input" placeholder={`${template.name} name...`} title={template.nameHelp || undefined} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} autoFocus />
+          : <input className="form-title-input" placeholder={`${template.name} name...`} title={template.nameHelp || undefined} value={draft.name} onChange={e => onChange({ ...draft, name: e.target.value })} {...nameDoneProps} autoFocus />
       )}
 
       {!previewMode && !hideTags && (

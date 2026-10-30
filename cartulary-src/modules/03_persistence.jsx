@@ -240,9 +240,10 @@ const SNAPSHOT_THROTTLE_MS = 5 * 60 * 1000;       // 5-minute auto-snapshot gate
 const SNAPSHOT_AUTO_CAP = 10;                      // Keep N most-recent auto-snapshots; pinned exempt
 // v1.7 r039: the snapshots the app pins before a restore, an import, or a
 // reset each keep their newest SNAPSHOT_KIND_CAP, older ones evicted, since
-// an import or a reset no longer clears the pinned snapshots.
+// an import or a reset no longer clears the pinned snapshots. Since r044 so
+// does the one a rename that updates [[links]] keeps first, Before rename.
 const SNAPSHOT_KIND_CAP = 3;
-const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset"];
+const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset", "pre-rename"];
 
 // Generic prefix-range helpers. Used by snapshots, but written generically in
 // case other prefix-keyed data shows up later (e.g. drafts-history).
@@ -291,7 +292,7 @@ const dbDeleteByPrefix = async (prefix) => {
 
 // Snapshot value shape:
 //   { timestamp, trigger: 'auto'|'manual', pinned: bool, label: string|null,
-//     kind: null|'pre-restore'|'pre-import'|'pre-reset', sizeBytes: number,
+//     kind: null|'pre-restore'|'pre-import'|'pre-reset'|'pre-rename', sizeBytes: number,
 //     worldJson: <world state> }
 // kind marks the app's own pinned snapshots; a restore point the user makes
 // has none, nor do the Before import and Before reset ones from before r039.
@@ -334,10 +335,11 @@ const snapshotCreate = async ({ state, trigger, label = null, pinned = false, ki
     if (trigger === "auto" && !pinned) {
       await snapshotEvictAuto();
     }
-    // The snapshots pinned before a restore, an import, or a reset are capped
-    // per kind (SNAPSHOT_KIND_CAP), so repeated restores and imports can't
-    // fill the storage the world needs; since v1.7's r039 an import or a
-    // reset clears only the automatic snapshots, so these accumulate too.
+    // The snapshots pinned before a restore, an import, a reset, or since
+    // r044 a rename that updates [[links]] are capped per kind
+    // (SNAPSHOT_KIND_CAP), so repeated restores and imports can't fill the
+    // storage the world needs; since v1.7's r039 an import or a reset clears
+    // only the automatic snapshots, so these accumulate too.
     if (SNAPSHOT_CAPPED_KINDS.includes(kind)) {
       await snapshotEvictKind(kind);
     }
@@ -408,11 +410,11 @@ const snapshotEvictAuto = async () => {
 };
 
 // FIFO eviction for one kind of the app's pinned snapshots: Before restore,
-// Before import, or Before reset. They're pinned (so snapshotEvictAuto skips
-// them) but accumulate if the user restores or imports often, so each kind
-// keeps its newest SNAPSHOT_KIND_CAP and older ones drop quietly. Before
-// restore had the cap alone until v1.7's r039, when an import and a reset
-// stopped clearing the pinned snapshots.
+// Before import, Before reset, or since v1.7's r044 Before rename. They're
+// pinned (so snapshotEvictAuto skips them) but accumulate if the user
+// restores or imports often, so each kind keeps its newest SNAPSHOT_KIND_CAP
+// and older ones drop quietly. Before restore had the cap alone until v1.7's
+// r039, when an import and a reset stopped clearing the pinned snapshots.
 const snapshotEvictKind = async (kind) => {
   const all = await snapshotList();
   const ofKind = all.filter(s => s.value.kind === kind);

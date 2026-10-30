@@ -115,6 +115,9 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       if (!idSet.has(src.id)) continue;
       if (l.secret && !showSecrets) continue;
       if (src.kind === "conlang" && (l.field === "varietyOf" || l.field === "descendedFrom")) continue;
+      // A word's links, which the index reads since r044 for a delete's
+      // count, stay out: a word's etymology is the registry's edges.
+      if (src.kind === "lexeme") continue;
       const own = l.text || l.leaf;
       if (l.rel === "parent") { addLink(target, src.id, own, "directed"); continue; }
       if (l.rel === "spouse") { addLink(src.id, target, own, "spouse"); continue; }

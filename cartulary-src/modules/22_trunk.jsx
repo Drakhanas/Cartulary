@@ -542,7 +542,9 @@ const wikiRecordKind = (rec) => {
 // and a scene's belonging to its story isn't a link. Since r042 a link also
 // carries a parent or spouse declaration's relation, its field's own label,
 // and its own words, for Concordance, which draws from the index too, and a
-// delete counts and clears through it (linkDeleteCounts, clearLinksTo).
+// delete counts and clears through it (linkDeleteCounts, clearLinksTo). Since
+// r044 a word's reference fields are read too, for its delete's count and
+// clearing, and Concordance leaves them out.
 
 // The world description as a source: its row in Referenced by opens the
 // Project page, where the description is drawn (Drak's call 2).
@@ -628,17 +630,30 @@ const linkRecordLinks = (rec, deps, read) => {
   return x;
 };
 
+// A schema's reference fields alone, a group kept with its reference
+// subfields, so a word's text isn't read for [[links]] (v1.7 r044).
+const linkRefFieldsOnly = (fields) => (Array.isArray(fields) ? fields : []).map(f => {
+  if (!f) return null;
+  if (f.type === "entry-ref") return f;
+  if (f.type !== "group") return null;
+  const subfields = linkRefFieldsOnly(f.subfields);
+  return subfields.length > 0 ? { ...f, subfields } : null;
+}).filter(Boolean);
+
 // The fields a Fabula kind's records are read through, the kind's stored
-// schema or the seed's while the world has none, and for "conlang" the
-// ConLang schema's reference fields; built ones are kept while the
-// templates they're built from are the same.
+// schema or the seed's while the world has none; for "conlang" the ConLang
+// schema's reference fields, and since r044 for "lexeme" the word schema's
+// (linkRefFieldsOnly); built ones are kept while the templates they're built
+// from are the same.
 const linkKindFields = (state, kind) => {
-  const stored = kind !== "conlang" && state.fabula && state.fabula.schemas ? state.fabula.schemas[kind] : null;
+  const glosso = kind === "conlang" || kind === "lexeme";
+  const stored = !glosso && state.fabula && state.fabula.schemas ? state.fabula.schemas[kind] : null;
   if (stored && Array.isArray(stored.fields)) return stored.fields;
   const kept = LINK_INDEX_MEMO.schemas.get(kind);
   if (kept && kept.templates === state.templates) return kept.fields;
   const fields = kind === "conlang"
     ? glossopoeiaConlangSchema(state).fields.filter(f => f && f.type === "entry-ref")
+    : kind === "lexeme" ? linkRefFieldsOnly(glossopoeiaLexemeSchema(state).fields)
     : fabulaKindFields(state, kind);
   LINK_INDEX_MEMO.schemas.set(kind, { templates: state.templates, fields });
   return fields;
@@ -646,7 +661,7 @@ const linkKindFields = (state, kind) => {
 
 // The index, { byTarget, links, targets }: each target's links as linkPush
 // makes them, src the source as { id, kind, group, name, storyId }, its kind
-// entry, fabula, map, stemma, body, conlang, or world, and its group its
+// entry, fabula, map, stemma, body, conlang, lexeme, or world, and its group its
 // template, its Fabula kind, or its kind again; and since r043 every link in
 // the order its record was read (links), beside its target (targets), which
 // Concordance draws in. Put together again only when a slice it reads has
@@ -656,7 +671,7 @@ const linkIndexOf = (state) => {
   const fab = st.fabula || {};
   const glo = st.glossopoeia || {};
   const desc = st.world && typeof st.world.description === "string" ? st.world.description : "";
-  const keys = [st.entries, st.templates, st.fabula, st.cartographia, st.stemmas, st.celestialBodies, glo.conlangs, desc];
+  const keys = [st.entries, st.templates, st.fabula, st.cartographia, st.stemmas, st.celestialBodies, glo.conlangs, glo.lexemes, desc];
   const memo = LINK_INDEX_MEMO;
   if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
   const wiki = wikiResolverOf(st);
@@ -767,6 +782,19 @@ const linkIndexOf = (state) => {
       }));
     });
   }
+  // Words, through the word schema's reference fields (v1.7 r044), so a
+  // word's delete counts and clears the words that name it.
+  const lexemes = Array.isArray(glo.lexemes) ? glo.lexemes : [];
+  if (lexemes.length > 0) {
+    const fields = linkKindFields(st, "lexeme");
+    lexemes.forEach(w => {
+      if (!w || !w.id) return;
+      add(linkRecordLinks(w, fields, (x) => {
+        x.src = { id: w.id, kind: "lexeme", group: "lexeme", name: w.name || "", storyId: null };
+        linkFieldWalk(fields, w.fields, x, null);
+      }));
+    });
+  }
   // The world description.
   if (desc) {
     const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, links: [] };
@@ -851,19 +879,24 @@ const clearLinksTo = (state, ids) => {
       return out;
     }));
   }
+  // ConLangs' reference fields, and since r044 words', so a word's delete
+  // takes its id out of the words that name it.
   const glo = state.glossopoeia;
-  if (glo && Array.isArray(glo.conlangs) && glo.conlangs.length > 0) {
-    const tpl = { id: SYNTH_TPL_CONLANG, fields: linkKindFields(state, "conlang") };
-    const tagged = glo.conlangs.map(c => (c && typeof c === "object" ? { ...c, templateId: tpl.id } : { templateId: null }));
+  const scrubGloss = (slice, tplId, kind) => {
+    const list = glo && Array.isArray(glo[slice]) ? glo[slice] : null;
+    if (!list || list.length === 0) return;
+    const tpl = { id: tplId, fields: linkKindFields(state, kind) };
+    const tagged = list.map(c => (c && typeof c === "object" ? { ...c, templateId: tpl.id } : { templateId: null }));
     const scrubbed = scrubEntryRefs(tagged, [tpl], going);
-    if (scrubbed.some((c, i) => c !== tagged[i])) {
-      next.glossopoeia = { ...glo, conlangs: scrubbed.map((c, i) => {
-        if (c === tagged[i]) return glo.conlangs[i];
-        const { templateId, ...rest } = c;
-        return rest;
-      }) };
-    }
-  }
+    if (!scrubbed.some((c, i) => c !== tagged[i])) return;
+    next.glossopoeia = { ...(next.glossopoeia || glo), [slice]: scrubbed.map((c, i) => {
+      if (c === tagged[i]) return list[i];
+      const { templateId, ...rest } = c;
+      return rest;
+    }) };
+  };
+  scrubGloss("conlangs", SYNTH_TPL_CONLANG, "conlang");
+  scrubGloss("lexemes", SYNTH_TPL_LEXEME, "lexeme");
   if (Array.isArray(state.cartographia)) {
     next.cartographia = keep(state.cartographia, state.cartographia.map(m => {
       const pins = m && m.mapData && Array.isArray(m.mapData.pins) ? m.mapData.pins : null;
@@ -874,4 +907,386 @@ const clearLinksTo = (state, ids) => {
     }));
   }
   return next;
+};
+
+
+// ─── Renames (v1.7 r044) ───────────────────────────────────────────────────────
+// docs/pipes-spec.md, section 5, with Drak's calls at the cut: renaming a
+// record that [[links]] by its old name reach asks first, in one modal
+// (askRename, 29_modals), with the count: Rename and update links, or Rename
+// only. An update rewrites each such link in every text the link index reads
+// and keeps a restore point first (call 2); where the record keeps former
+// names, an entry's Name History or a body's Other Names, the modal offers to
+// add the old name there, unticked (call 1); and a language asks when its
+// name field is left (call 3). Every rename, asked about or not, brings along
+// the names copied from the record: a rota node's and a tabula card's, and a
+// cast record's while it still carries its character's old name.
+
+// The answer a rename that asks nothing gets.
+const RENAME_NONE = { update: false, former: false, places: 0 };
+
+// A name as a [[link]] is read by it: trimmed and lowercased.
+const renameKey = (name) => (typeof name === "string" ? name.trim().toLowerCase() : "");
+
+// The six narrative fields of a body the link index reads for [[links]].
+const RENAME_BODY_TEXTS = ["physicalProperties", "climateConditions", "mythologicalSignificance", "description", "history", "notes"];
+
+// A text with every [[link]] by key rewritten to name, a [[target|shown]]
+// keeping what it shows; the same string when none is.
+const renameText = (text, key, name) => {
+  if (typeof text !== "string" || text.indexOf("[[") < 0) return text;
+  let hit = false;
+  const out = text.replace(/\[\[([^\]\n]+)\]\]/g, (whole, inner) => {
+    const pipe = inner.indexOf("|");
+    if ((pipe >= 0 ? inner.substring(0, pipe) : inner).trim().toLowerCase() !== key) return whole;
+    hit = true;
+    return `[[${name}${pipe >= 0 ? inner.substring(pipe) : ""}]]`;
+  });
+  return hit ? out : text;
+};
+
+// Values read through fields as linkFieldWalk reads them, a Short Text's
+// and a Long Text's [[links]] by key rewritten, down through groups; the
+// same object when nothing changes.
+const renameFieldValues = (fields, values, key, name) => {
+  if (!values || typeof values !== "object") return values;
+  let out = values;
+  (Array.isArray(fields) ? fields : []).forEach(f => {
+    if (!f || !f.id) return;
+    const v = values[f.id];
+    if (v == null || v === "") return;
+    let next = v;
+    if (f.type === "text" || f.type === "textarea") next = renameText(v, key, name);
+    else if (f.type === "group" && Array.isArray(v)) {
+      const insts = v.map(inst => renameFieldValues(f.subfields, inst, key, name));
+      if (insts.some((x, i) => x !== v[i])) next = insts;
+    }
+    if (next === v) return;
+    if (out === values) out = { ...values };
+    out[f.id] = next;
+  });
+  return out;
+};
+
+// A tabula board with fn applied to every item at any depth, as tabulaWalk
+// visits them; the same board when nothing changes.
+const tabulaMapItems = (node, fn) => {
+  if (!node || !Array.isArray(node.items)) return node;
+  let changed = false;
+  const items = node.items.map(it => {
+    if (!it) return it;
+    let x = fn(it);
+    if (tabulaHolds(x)) {
+      const inner = tabulaMapItems(x, fn);
+      if (inner !== x) x = inner;
+    }
+    if (x !== it) changed = true;
+    return x;
+  });
+  return changed ? { ...node, items } : node;
+};
+
+// The world with every [[link]] by key rewritten to name in every text the
+// link index reads: entries' and Fabula records' Short Text and Long Text at
+// any depth, a map's three fields, a tabula's notes, a body's six narrative
+// fields, and the world description, a record's link to itself included. A
+// slice or a record it doesn't change keeps its identity. places counts the
+// records it changes, the world description as one.
+const renameRewrite = (state, key, name) => {
+  const st = state || {};
+  let places = 0;
+  if (!key || !name) return { state: st, places };
+  const now = isoNow();
+  const next = { ...st };
+  const each = (list, fn) => {
+    if (!Array.isArray(list)) return list;
+    let changed = false;
+    const out = list.map(r => {
+      const x = r && r.id ? fn(r) : r;
+      if (x !== r) { changed = true; places += 1; }
+      return x;
+    });
+    return changed ? out : list;
+  };
+  const tplById = new Map((Array.isArray(st.templates) ? st.templates : []).filter(t => t && t.id).map(t => [t.id, t]));
+  next.entries = each(st.entries, e => {
+    const tpl = tplById.get(e.templateId);
+    const fields = tpl ? renameFieldValues(tpl.fields, e.fields, key, name) : e.fields;
+    return fields === e.fields ? e : { ...e, fields, updatedAt: now };
+  });
+  const fab = st.fabula;
+  if (fab) {
+    let nf = fab;
+    FABULA_KINDS.forEach(k => {
+      const recs = fab[k.slice];
+      if (!Array.isArray(recs) || recs.length === 0) return;
+      const fields = linkKindFields(st, k.kind);
+      const out = each(recs, r => {
+        const fv = renameFieldValues(fields, r.fields, key, name);
+        return fv === r.fields ? r : { ...r, fields: fv, updatedAt: now };
+      });
+      if (out === recs) return;
+      if (nf === fab) nf = { ...fab };
+      nf[k.slice] = out;
+    });
+    next.fabula = nf;
+  }
+  if (!LINK_INDEX_MEMO.mapFields) LINK_INDEX_MEMO.mapFields = cartographiaMapSchema().fields;
+  next.cartographia = each(st.cartographia, m => {
+    const fv = renameFieldValues(LINK_INDEX_MEMO.mapFields, m.fields, key, name);
+    return fv === m.fields ? m : { ...m, fields: fv, updatedAt: now };
+  });
+  next.stemmas = each(st.stemmas, s => {
+    if (s.layout !== "tabula" || !s.root) return s;
+    const root = tabulaMapItems(s.root, it => {
+      if (it.type !== "note") return it;
+      const body = renameText(it.body, key, name);
+      return body === it.body ? it : { ...it, body };
+    });
+    return root === s.root ? s : { ...s, root, updatedAt: now };
+  });
+  next.celestialBodies = each(st.celestialBodies, b => {
+    let out = b;
+    RENAME_BODY_TEXTS.forEach(k => {
+      const t = renameText(b[k], key, name);
+      if (t === b[k]) return;
+      if (out === b) out = { ...b };
+      out[k] = t;
+    });
+    return out;
+  });
+  const desc = st.world && typeof st.world.description === "string" ? st.world.description : null;
+  if (desc) {
+    const t = renameText(desc, key, name);
+    if (t !== desc) { next.world = { ...st.world, description: t }; places += 1; }
+  }
+  return { state: places > 0 ? next : st, places };
+};
+
+// An entry's fields with name added to its template's first Name History
+// field, the one a [[link]] reads (getEntryNameHistory); the same fields
+// when the template has none or the field holds the name already.
+const renameNameHistoryAdd = (tpl, fields, name) => {
+  const hf = tpl && Array.isArray(tpl.fields) ? tpl.fields.find(f => f && f.type === "name-history") : null;
+  if (!hf || !name) return fields;
+  const was = fields && Array.isArray(fields[hf.id]) ? fields[hf.id] : [];
+  if (was.some(h => h && renameKey(h.name) === renameKey(name))) return fields;
+  return { ...(fields || {}), [hf.id]: [...was, { name, from: null, to: null }] };
+};
+
+// A body's Other Names with name added, comma-separated as the field keeps
+// them; the same when they hold it already.
+const renameOtherNamesAdd = (otherNames, name) => {
+  const was = typeof otherNames === "string" ? otherNames.trim() : "";
+  if (was.split(",").some(n => renameKey(n) === renameKey(name))) return otherNames;
+  return was ? `${was}, ${name}` : name;
+};
+
+// Where a record keeps the former names a [[link]] reaches it by: the label
+// of an entry's template's first Name History field, or a body's Other
+// Names; null for anything else.
+const renameFormerLabel = (state, id, kind) => {
+  if (kind === "body") return "Other Names";
+  if (kind !== "entry") return null;
+  const e = (Array.isArray(state.entries) ? state.entries : []).find(x => x && x.id === id);
+  const tpl = e ? (Array.isArray(state.templates) ? state.templates : []).find(t => t && t.id === e.templateId) : null;
+  const hf = tpl && Array.isArray(tpl.fields) ? tpl.fields.find(f => f && f.type === "name-history") : null;
+  return hf ? (hf.label || "Name History") : null;
+};
+
+// The world with record id named name, and with also, if given, among its
+// former names; for working out what names will reach once a rename is
+// saved, which is its caller's to do.
+const renameRecordIn = (state, id, name, also) => {
+  const st = state || {};
+  const swap = (list, fn) => (Array.isArray(list) && list.some(r => r && r.id === id) ? list.map(r => (r && r.id === id ? fn(r) : r)) : null);
+  let out = swap(st.entries, e => {
+    const tpl = also ? (Array.isArray(st.templates) ? st.templates : []).find(t => t && t.id === e.templateId) : null;
+    return { ...e, name, fields: also ? renameNameHistoryAdd(tpl, e.fields, also) : e.fields };
+  });
+  if (out) return { ...st, entries: out };
+  out = swap(st.celestialBodies, b => (also ? { ...b, name, otherNames: renameOtherNamesAdd(b.otherNames, also) } : { ...b, name }));
+  if (out) return { ...st, celestialBodies: out };
+  out = swap(st.cartographia, m => ({ ...m, name }));
+  if (out) return { ...st, cartographia: out };
+  out = swap(st.stemmas, s => ({ ...s, name }));
+  if (out) return { ...st, stemmas: out };
+  const fab = st.fabula || {};
+  for (let i = 0; i < FABULA_KINDS.length; i++) {
+    const slice = FABULA_KINDS[i].slice;
+    out = swap(fab[slice], r => ({ ...r, name }));
+    if (out) return { ...st, fabula: { ...fab, [slice]: out } };
+  }
+  const glo = st.glossopoeia || {};
+  out = swap(glo.conlangs, c => ({ ...c, name }));
+  if (out) return { ...st, glossopoeia: { ...glo, conlangs: out } };
+  return st;
+};
+
+// The world with the names copied from record id brought to name: a rota's
+// linked nodes' and a tabula's linked cards', and a cast record's while it
+// still carries its character's old name, the rule a cast record's name
+// follows a change of character by (fabulaCastNameFill). Identity kept where
+// nothing changes.
+const renameCopiedNames = (state, id, oldName, name) => {
+  const st = state || {};
+  if (!name) return st;
+  let next = st;
+  if (Array.isArray(st.stemmas)) {
+    const link = (n) => (n && n.type === "linked" && n.entryId === id && n._cachedName !== name ? { ...n, _cachedName: name } : n);
+    const rota = (node) => {
+      if (!node) return node;
+      let n = link(node);
+      if (Array.isArray(n.children)) {
+        const kids = n.children.map(rota);
+        if (kids.some((c, i) => c !== n.children[i])) n = { ...n, children: kids };
+      }
+      return n;
+    };
+    let changed = false;
+    const out = st.stemmas.map(s => {
+      if (!s || !s.root) return s;
+      const root = s.layout === "tabula" ? tabulaMapItems(s.root, link) : rota(s.root);
+      if (root === s.root) return s;
+      changed = true;
+      return { ...s, root };
+    });
+    if (changed) next = { ...next, stemmas: out };
+  }
+  const was = typeof oldName === "string" ? oldName.trim() : "";
+  const cast = st.fabula && Array.isArray(st.fabula.cast) ? st.fabula.cast : null;
+  if (cast && was) {
+    let changed = false;
+    const now = isoNow();
+    const out = cast.map(c => {
+      if (!c || !c.fields || c.fields.character !== id || (c.name || "").trim() !== was) return c;
+      changed = true;
+      return { ...c, name, updatedAt: now };
+    });
+    if (changed) next = { ...next, fabula: { ...st.fabula, cast: out } };
+  }
+  return next;
+};
+
+// What a rename of record id from oldName to newName would do, for the
+// modal, or null when there's nothing to ask: the name is the same but for
+// case, the old name doesn't reach the record, or no text links by it. state
+// is the world as the save will leave it but for the name (a draft's texts
+// in, the old name kept). { id, kind, oldName, newName, places, formerLabel
+// (where the record keeps former names, or null), former (that label, where
+// the modal offers to add the old name there, or null when the old name is
+// among them already), leaves and leavesFormer (what Rename only leaves the
+// links doing, without the old name added and with it: { how: "broken" |
+// "kept" | "moved", to }), taken (the record [[newName]] would reach instead
+// of this one, or null) }.
+const renamePlan = (state, id, oldName, newName) => {
+  const st = state || {};
+  const was = typeof oldName === "string" ? oldName.trim() : "";
+  const now = typeof newName === "string" ? newName.trim() : "";
+  const key = renameKey(was);
+  if (!key || !now || key === renameKey(now)) return null;
+  const rec = wikiResolverBuild(st, null).find(key);
+  if (!rec || rec.id !== id) return null;
+  const places = renameRewrite(st, key, now).places;
+  if (places === 0) return null;
+  const formerLabel = renameFormerLabel(st, id, rec.kind);
+  const after = (also) => wikiResolverBuild(renameCopiedNames(renameRecordIn(st, id, now, also), id, was, now), null);
+  const reach = (w) => {
+    const r = w.find(key);
+    return !r ? { how: "broken", to: null } : r.id === id ? { how: "kept", to: null } : { how: "moved", to: r };
+  };
+  const plain = after(null);
+  const leaves = reach(plain);
+  const former = formerLabel && leaves.how !== "kept" ? formerLabel : null;
+  const other = plain.find(renameKey(now));
+  return {
+    id, kind: rec.kind, oldName: was, newName: now, places, formerLabel, former,
+    leaves, leavesFormer: former ? reach(after(was)) : null,
+    taken: other && other.id !== id ? other : null,
+  };
+};
+
+// A rename, asked about first when renamePlan finds something to ask, then
+// written by write(choice), choice { update, former, places }: update says
+// the [[links]] are to be rewritten, which keeps a restore point of before
+// first, and former that the old name goes among the record's former names.
+// With nothing to ask, write runs at once with neither (RENAME_NONE); cancel,
+// if given, runs when the modal is cancelled. state is as renamePlan takes
+// it; before, the world as it is, is state unless given.
+const renameAsk = ({ state, before, id, oldName, newName, write, cancel }) => {
+  const plan = renamePlan(state, id, oldName, newName);
+  if (!plan) { write(RENAME_NONE); return; }
+  askRename({
+    plan,
+    onCancel: cancel || null,
+    onConfirm: (choice) => {
+      if (choice.update) renameRestorePoint(before || state);
+      write(choice);
+    },
+  });
+};
+
+// The world once a rename is saved in it: the names copied from the record
+// brought to the new one, and for an update every [[link]] by the old name
+// rewritten to it.
+const renameSettle = (state, id, oldName, newName, update) => {
+  const now = typeof newName === "string" ? newName.trim() : "";
+  if (!now) return state;
+  const s = renameCopiedNames(state, id, oldName, now);
+  return update ? renameRewrite(s, renameKey(oldName), now).state : s;
+};
+
+// The restore point an update keeps first (call 2): Before rename, a kind
+// of its own, whose newest three are kept (SNAPSHOT_CAPPED_KINDS).
+const renameRestorePoint = (state) => {
+  snapshotCreate({ state, trigger: "manual", pinned: true, kind: "pre-rename", label: "Before rename" })
+    .catch(e => console.error("Before rename snapshot failed:", e));
+};
+
+// What a rename that updated [[links]] says, after a Save ("Saved") or
+// where the name is written as it's typed (lead "Renamed").
+const renameUpdatedLine = (places, lead) => `${lead || "Saved"}. [[Links]] in ${places} ${places === 1 ? "place" : "places"} now use the new name.`;
+
+// A template's reference fields, or a Fabula kind's, at any depth, with a
+// renamed template's old name brought to its new one wherever a field aims
+// at it by id: its place among the field's target names, a single target's
+// name, and a filter keyed by its name, so another template's filter keeps
+// working (docs/pipes-spec.md, section 5). Where the field aims as well at
+// another template still called the old name (twins, their ids), the old
+// name stays beside the new one and the filter is copied, not moved. The
+// same list when nothing changes.
+const renameTemplateTargets = (fields, id, was, now, twins) => {
+  if (!Array.isArray(fields) || !was || !now || was === now) return fields;
+  let changed = false;
+  const out = fields.map(f => {
+    if (!f || typeof f !== "object") return f;
+    let x = f;
+    if (f.type === "group" && Array.isArray(f.subfields)) {
+      const subs = renameTemplateTargets(f.subfields, id, was, now, twins);
+      if (subs !== f.subfields) x = { ...x, subfields: subs };
+    }
+    const ids = Array.isArray(f.refTemplatesId) ? f.refTemplatesId : [];
+    const aims = f.type === "entry-ref" && (ids.includes(id) || f.refTemplateId === id);
+    if (aims) {
+      const shared = !!twins && ids.some(t => twins.has(t));
+      const names = f.refTemplates;
+      if (Array.isArray(names) && names.includes(was)) {
+        if (!names.includes(now)) x = { ...x, refTemplates: shared ? [...names, now] : names.map(n => (n === was ? now : n)) };
+        else if (!shared) x = { ...x, refTemplates: names.filter(n => n !== was) };
+      }
+      if (f.refTemplate === was) x = { ...x, refTemplate: now };
+      const rf = f.refFilters;
+      if (rf && typeof rf === "object" && !Array.isArray(rf) && Object.prototype.hasOwnProperty.call(rf, was) && !Object.prototype.hasOwnProperty.call(rf, now)) {
+        const moved = {};
+        Object.keys(rf).forEach(k => {
+          if (k !== was || shared) moved[k] = rf[k];
+          if (k === was) moved[now] = rf[k];
+        });
+        x = { ...x, refFilters: moved };
+      }
+    }
+    if (x !== f) changed = true;
+    return x;
+  });
+  return changed ? out : fields;
 };

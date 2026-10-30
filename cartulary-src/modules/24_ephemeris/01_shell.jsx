@@ -33,7 +33,7 @@ const EPHEMERIS_MODES = [
 // renders an empty pane and the AsBo workspace shows an illustration-plus-
 // intro panel. Create flow stubbed until r004.
 
-function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEvent, showSecrets }) {
+function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEvent, showSecrets, flash }) {
   const eph = state.ephemeris || makeDefaultEphemerisState();
   const bodies = Array.isArray(state.celestialBodies) ? state.celestialBodies : [];
   const currentMode = eph.currentMode || "asbo";
@@ -314,22 +314,42 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
 
   // v1.5 r007: in-place body update. Replaces the targeted body's fields
   // with the merged version. Doesn't clear selection. Used by the AsBo
-  // edit-mode Save button.
-  const updateBody = (bodyId, patch) => {
+  // edit-mode Save button. Since v1.7's r044 a rename asks first when
+  // [[links]] by the old name reach the body (renameAsk), the old name going
+  // into its Other Names if that's ticked, and done runs once the save is
+  // written, so a cancelled rename leaves the edit open.
+  const updateBody = (bodyId, patch, done, choice) => {
     if (isLocked) return;
-    updateState(s => ({
-      ...s,
-      celestialBodies: (s.celestialBodies || []).map(b =>
-        b && b.id === bodyId ? { ...b, ...patch } : b
-      ),
-      ephemeris: {
-        ...(s.ephemeris || makeDefaultEphemerisState()),
-        asbo: {
-          ...((s.ephemeris && s.ephemeris.asbo) || {}),
-          editingNewBody: false,
+    const body = (state.celestialBodies || []).find(b => b && b.id === bodyId);
+    const was = body && typeof body.name === "string" ? body.name : "";
+    const renamed = !!body && !!patch && typeof patch.name === "string" && patch.name !== was;
+    if (renamed && !choice) {
+      renameAsk({
+        state: { ...state, celestialBodies: state.celestialBodies.map(b => (b && b.id === bodyId ? { ...b, ...patch, name: was } : b)) },
+        before: state, id: bodyId, oldName: was, newName: patch.name, write: (c) => updateBody(bodyId, patch, done, c),
+      });
+      return;
+    }
+    const answer = choice || RENAME_NONE;
+    const next = renamed && answer.former ? { ...patch, otherNames: renameOtherNamesAdd(patch.otherNames !== undefined ? patch.otherNames : body.otherNames, was.trim()) } : patch;
+    updateState(s => {
+      const saved = {
+        ...s,
+        celestialBodies: (s.celestialBodies || []).map(b =>
+          b && b.id === bodyId ? { ...b, ...next } : b
+        ),
+        ephemeris: {
+          ...(s.ephemeris || makeDefaultEphemerisState()),
+          asbo: {
+            ...((s.ephemeris && s.ephemeris.asbo) || {}),
+            editingNewBody: false,
+          },
         },
-      },
-    }));
+      };
+      return renamed ? renameSettle(saved, bodyId, was, patch.name, answer.update) : saved;
+    });
+    if (done) done();
+    if (answer.update && flash) flash(renameUpdatedLine(answer.places));
   };
 
   // v1.5 r021: per-body color override writer. Lives at EphemerisView
