@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries) ===
+=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1563,3 +1563,48 @@ minded most was my own diagnosis: I'd written a doctrine entry blaming the
 world for the copy that passed, and the world had Crew all along. It also
 found two gaps in the build, a group inside a group out of the conditions'
 reach and a dropdown's Other text read as Other, and Drak had them filed.
+
+r046 took Drak's two calls, a and A: Lists right after Templates, and
+Rename and Delete list in an open list's header, a list's row moving by
+its handle.
+
+The lists came easily, because r045 had already put a field's label and a
+record's id in every condition. The hard part was a default of my own: a
+condition whose field the scope can't read now stays in force, holding for
+no entry with its chip in red, where r045 let it drop out quietly. That's
+right for a saved list whose field was renamed. It's wrong anywhere a query
+reaches a scope it wasn't made in, and reading the diff for the ways onto
+the entry list found three: Back after a link followed from an entry, a
+pick on a pack's page or the Project page, and a template saved new. r045
+had hidden all three.
+I fixed them in the cut, since r046 is what made them show, and said so
+with the staging.
+
+The screenshots found two more of mine. The rows' Save, off until the page
+differs from the list, looked like the button beside it, because the shell
+had no disabled rule for ghost buttons; one rule fixed that everywhere. And
+the rename box was three pixels taller than the title, so the page jumped
+when it opened.
+
+The probe's first failures were its own. A click meant to leave the rename
+box opened a card, and Playwright's drag started no drag at all on a handle
+that only shows on hover. A mouse pressed on the handle and moved in steps
+did it, as a hand would.
+
+Two planted copies weren't caught at their own checks on the first run.
+A5 opened a list from a page whose pick had already emptied the search,
+and the copy that offered no Other text stopped G4's scenario before G4
+could fail; both are caught now. A third, a new world without its empty
+list of lists, couldn't be caught at all, since the load gives it one
+anyway.
+
+Drak passed it, and the independent read of this turnover found twelve
+defects. One wasn't in the documents: a fourth way onto the entry list,
+an entry deleted after a link followed from it, which landed on that
+entry's template with the old conditions in red. I'd written that reading
+the diff found every way. It found three. Drak had it fixed before the
+freeze, and passed the amended cut a second time. Amending it, I fell into
+the trap the handoff warns about: the checkout that puts back the files a
+cut starts from also stages them, and my first amend committed r045's text
+for six of them, five modules and the shell. git's own stat showed it
+before anything left the sandbox.

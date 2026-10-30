@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 57000,
-  "raw_body_lines": 57000,
-  "canonical_lines": 54262,
-  "decl_count": 880,
+  "total_lines": 57410,
+  "raw_body_lines": 57410,
+  "canonical_lines": 54652,
+  "decl_count": 896,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r045-body.jsx"
+  "active_anchor": "reference-r046-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 57000,
+   "value": 57410,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 880,
+   "value": 896,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 54262,
+   "value": 54652,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 57000,
+   "value": 57410,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 104,
+   "value": 105,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3091202,
+   "value": 3118230,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy",
-    70
+    "seventy-one",
+    71
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 104,
+   "value": 105,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 104,
+   "value": 105,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy",
-    70
+    "seventy-one",
+    71
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r045": {
-   "value": "2bad73ff257297bf",
-   "pattern": "working[^\\n]{0,40}at r045 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r046": {
+   "value": "09438508998e5d75",
+   "pattern": "working[^\\n]{0,40}at r046 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 57000,
+   "value": 57410,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -152,12 +152,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1165,
+   "line": 1318,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1167,
+   "line": 1320,
    "contains": "function LongformDisplay"
   },
   {
@@ -522,7 +522,7 @@
   },
   {
    "file": "10_migrate.jsx",
-   "line": 6227,
+   "line": 6281,
    "contains": "marked.use({"
   },
   {
@@ -727,7 +727,7 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1023,
+   "line": 1176,
    "contains": "Referenced by (v1.7 r041)"
   },
   {
@@ -747,33 +747,43 @@
   },
   {
    "file": "22_trunk.jsx",
-   "line": 913,
+   "line": 920,
    "contains": "Renames (v1.7 r044)"
   },
   {
    "file": "22_trunk.jsx",
-   "line": 926,
+   "line": 933,
    "contains": "const RENAME_NONE"
   },
   {
    "file": "29_modals.jsx",
-   "line": 365,
+   "line": 387,
    "contains": "Record rename (v1.7 r044)"
   },
   {
    "file": "29_modals.jsx",
-   "line": 373,
+   "line": 395,
    "contains": "const RECORD_RENAME"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 93,
+   "line": 96,
    "contains": "Entry queries (v1.7 r045)"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 109,
+   "line": 112,
    "contains": "const QUERY_EMPTY"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 860,
+   "contains": "Saved lists (v1.7 r046)"
+  },
+  {
+   "file": "13_form-engine-display.jsx",
+   "line": 873,
+   "contains": "const LIST_PSEUDO_LABELS"
   }
  ],
  "spans": {
@@ -1104,10 +1114,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r045-body.jsx",
-   "reference-r045-layout.json",
-   "a1cc22fac483969e",
-   "2bad73ff257297bf",
+   "reference-r046-body.jsx",
+   "reference-r046-layout.json",
+   "6880ff7193d721ee",
+   "09438508998e5d75",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1115,7 +1125,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r046, Pipes' eighth cut: saved lists",
+   "r047, Pipes' ninth cut: Export entries",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1163,7 +1173,12 @@
    "Entry queries (v1.7 r045)",
    "queryFieldsOf",
    "fieldNumberValue",
-   "Entry queries and the entry list's scope"
+   "Entry queries and the entry list's scope",
+   "v1.7_r046",
+   "Saved lists (v1.7 r046)",
+   "normalizeEntryLists",
+   "modalTabCycle",
+   "A probe drags with the mouse, in steps"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1232,7 +1247,7 @@
    "16337a1350d7e7e6",
    "0731070bf5555171",
    "On v1.7 r004 verification",
-   "10_migrate:6227",
+   "10_migrate:6281",
    "reference-r005-body.jsx",
    "e70e86fef21544cd",
    "cd6875aa3a5295db",
@@ -1373,7 +1388,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r045-layout.json",
+   "reference-r046-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1391,7 +1406,7 @@
    "On v1.7 r041 verification",
    "Link index (v1.7 r041)",
    "Referenced by (v1.7 r041)",
-   "at 1165 and 1167 since its r045",
+   "at 1318 and 1320 since its r046",
    "reference-r042-body.jsx",
    "37b99408bebc2aee",
    "a2da7ded6fb5abca",
@@ -1412,7 +1427,12 @@
    "a1cc22fac483969e",
    "2bad73ff257297bf",
    "On v1.7 r045 verification",
-   "Entry queries (v1.7 r045)"
+   "Entry queries (v1.7 r045)",
+   "reference-r046-body.jsx",
+   "6880ff7193d721ee",
+   "09438508998e5d75",
+   "On v1.7 r046 verification",
+   "Saved lists (v1.7 r046)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1662,7 +1682,14 @@
    "2bad73ff257297bf",
    "v1.7_r045_filter_builder.py",
    "queryShown",
-   "Turnover v1.7_r045"
+   "Turnover v1.7_r045",
+   "v1.7_r046",
+   "32e01bd",
+   "1d0f919",
+   "09438508998e5d75",
+   "v1.7_r046_saved_lists.py",
+   "normalizeEntryLists",
+   "Turnover v1.7_r046"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1770,14 +1797,14 @@
    "What r044 left for r051",
    "A rename to a name another record answers to",
    "A map record has no createdAt",
-   "The rename modal doesn't hold the focus",
    "v1.7_r045",
    "r045 is in",
    "What r045 left for r051",
    "A real-world Date field shows the day before its date",
    "The search reads a Long Text's markdown as typed",
-   "A condition can't name a subfield of a group inside a group",
-   "A dropdown's Other text reads as Other to a condition"
+   "v1.7_r046",
+   "r046 is in",
+   "What r046 left for r051"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1862,7 +1889,11 @@
    "A world built for a probe goes through the app's load first",
    "A check whose expected answer is read off the page",
    "A check for a fallback reads a case",
-   "A check that a mark shows counts the mark"
+   "A check that a mark shows counts the mark",
+   "A rule that stops forgiving bad input",
+   "A check that something is cleared starts where it isn't",
+   "A planted copy that passes may be the build in effect",
+   "A new control is looked at while it's disabled"
   ],
   "journal.txt": [
    "r030",
@@ -1931,7 +1962,8 @@
    "mounting it fresh",
    "Naming them, for the record saved and nothing else",
    "nineteen searches meant for hidden secrets passed anyway",
-   "the world had Crew all along"
+   "the world had Crew all along",
+   "r046 took Drak's two calls"
   ]
  }
 }
