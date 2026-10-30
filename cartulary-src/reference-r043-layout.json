@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "37b99408bebc2aeec528f13111b8205def0b87baeb34658ce845aa55d8e8d964",
+  "anchor_sha256": "f94ada8bc6a63aa0b085f5d754369ec5caffd46df35bce8f69acc8287c8a33fc",
   "shell_sha256": "67b97d88777f7d8cef92ab9c25edc852de54157e8eb9e16557fad31cabcf0af6",
   "files": [
     [
@@ -32,11 +32,11 @@
     ],
     [
       "07_temporal.jsx",
-      254
+      266
     ],
     [
       "08_export-layer.jsx",
-      1611
+      1628
     ],
     [
       "09_trunk.jsx",
@@ -52,15 +52,15 @@
     ],
     [
       "12_trunk.jsx",
-      6152
+      6158
     ],
     [
       "13_form-engine-display.jsx",
-      885
+      820
     ],
     [
       "14_form-engine-edit.jsx",
-      1865
+      1790
     ],
     [
       "15_template-builder.jsx",
@@ -72,7 +72,7 @@
     ],
     [
       "17_concordance.jsx",
-      1030
+      1034
     ],
     [
       "18_cartographia/00_model.jsx",
@@ -132,7 +132,7 @@
     ],
     [
       "22_trunk.jsx",
-      801
+      877
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -240,7 +240,7 @@
     ],
     [
       "28_fabula/11_export.jsx",
-      580
+      579
     ],
     [
       "29_modals.jsx",
