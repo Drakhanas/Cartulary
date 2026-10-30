@@ -284,3 +284,80 @@ function RestoreBuiltinsModal({ deletedNames, onCancel, onConfirm }) {
     </div>
   );
 }
+
+// ─── Record delete (v1.7 r042) ─────────────────────────────────────────────────
+// docs/pipes-spec.md, section 4, with Drak's calls at the cut: one modal for
+// every record a link can point at, an entry, a template with its entries, a
+// body, a map, a stemma, a story, a corpus, a Fabula record, or a Glossopoeia
+// record, where a confirm or an inline prompt asked before. It says what goes
+// with the record, if anything, and what the delete does to what links to
+// it, counted from the link index (linkDeleteCounts): the stored links it
+// clears, by the kind of record they're in, the map pins it unlinks, the
+// stemma nodes and cards it leaves orphaned, and the [[links]] that stay as
+// typed. Anything can ask (askRecordDelete); App draws it once.
+
+const RECORD_DELETE = { open: null };
+
+// ask: { state, ids, title, goes, onConfirm }, ids what goes, goes a line for
+// what goes with the record, or null.
+const askRecordDelete = (ask) => {
+  if (RECORD_DELETE.open) { RECORD_DELETE.open(ask); return; }
+  if (window.confirm(ask.title)) ask.onConfirm();
+};
+
+// What a delete of the records in ids does to what links to them, one
+// sentence a line, "it" or "them" by how many go; going as linkDeleteCounts
+// takes it.
+const recordDeleteLines = (state, ids, going) => {
+  const list = Array.isArray(ids) ? ids : [...(ids || [])];
+  const c = linkDeleteCounts(state, list, going);
+  const it = list.length > 1 ? "them" : "it";
+  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const kinds = [["entry", "entry", "entries"], ...FABULA_KINDS.map(k => [`fabula:${k.kind}`, FABULA_NOUNS[k.kind].one, FABULA_NOUNS[k.kind].many]), ["body", "body", "bodies"], ["conlang", "language", "languages"]];
+  const lines = [];
+  const from = kinds.filter(([key]) => c.refs.has(key)).map(([key, one, many]) => [c.refs.get(key).size, one, many]);
+  const holders = from.reduce((n, [k]) => n + k, 0);
+  if (from.length > 0) lines.push(`Removes ${it} from ${fabulaJoin(from.map(([n, one, many]) => count(n, one, many)))}, which ${holders === 1 ? "stays" : "stay"}.`);
+  if (c.pins > 0) lines.push(c.pins === 1 ? "A map pin loses its link and keeps its label." : `${c.pins} map pins lose their links and keep their labels.`);
+  if (c.pinsBare > 0) lines.push(c.pinsBare === 1 ? "A map pin without a label loses its link and takes the name it pointed at." : `${c.pinsBare} map pins without labels lose their links and take the names they pointed at.`);
+  const held = c.nodes + c.cards;
+  if (held > 0) lines.push(`${fabulaJoin([c.nodes ? count(c.nodes, "linked node", "linked nodes") : null, c.cards ? count(c.cards, "card", "cards") : null].filter(Boolean))} in ${count(c.stemmas.size, "stemma", "stemmas")} ${held === 1 ? "stays" : "stay"}, unlinked.`);
+  if (c.wiki.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wiki.size, "place", "places")} stay as typed and show as broken.`);
+  if (c.wikiMoved.size > 0) lines.push(`[[Links]] to ${it} in ${count(c.wikiMoved.size, "place", "places")} stay as typed and will lead to ${list.length > 1 ? "other records by the same names" : "another record by the same name"}.`);
+  return lines;
+};
+
+// The modal, drawn once by App; askRecordDelete opens it. Esc and a click
+// outside cancel, as Cancel does.
+function RecordDeleteModal() {
+  const [ask, setAsk] = useState(null);
+  useEffect(() => {
+    RECORD_DELETE.open = setAsk;
+    return () => { if (RECORD_DELETE.open === setAsk) RECORD_DELETE.open = null; };
+  }, []);
+  useEffect(() => {
+    if (!ask) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setAsk(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [ask]);
+  const lines = useMemo(() => (ask ? [...(ask.goes ? [ask.goes] : []), ...recordDeleteLines(ask.state, ask.ids)] : []), [ask]);
+  if (!ask) return null;
+  const doDelete = () => { setAsk(null); ask.onConfirm(); };
+  return (
+    <div className="modal-backdrop" onClick={() => setAsk(null)}>
+      <div className="modal record-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">{ask.title}</div>
+        {lines.length > 0 && (
+          <div className="modal-body">
+            {lines.map((line, i) => <p key={i} className="record-delete-line" style={{ margin: i === 0 ? 0 : "8px 0 0" }}>{line}</p>)}
+          </div>
+        )}
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setAsk(null)}>Cancel</button>
+          <button className="btn btn-danger record-delete-confirm" onClick={doDelete} autoFocus>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}

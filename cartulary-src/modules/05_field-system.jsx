@@ -461,44 +461,6 @@ const scrubEntryRefs = (entries, templates, deletedIds) => {
   });
 };
 
-// v1.5 r080: count entries holding at least one entry-ref (incl. grid cells
-// and group subfields) pointing at targetId. Lightweight — no clone, short-
-// circuits per entry — so it's cheap to call in render for delete-impact
-// warnings. Mirrors scrubEntryRefs's traversal so the count matches exactly
-// what a scrub would remove.
-const countInboundEntryRefs = (entries, templates, targetId) => {
-  if (!targetId) return 0;
-  const tplById = Object.fromEntries((templates || []).map(t => [t.id, t]));
-  const refsTarget = (fields, valueMap) => {
-    if (!fields || !valueMap) return false;
-    return fields.some(f => {
-      if (f.type === "entry-ref") {
-        const v = valueMap[f.id];
-        if (v == null || v === "") return false;
-        if (Array.isArray(v)) return v.some(item => (typeof item === "string" ? item : item?.id) === targetId);
-        if (typeof v === "object") return v.id === targetId;
-        if (typeof v === "string") return v === targetId;
-        return false;
-      }
-      if (f.type === "group" && Array.isArray(valueMap[f.id])) {
-        return valueMap[f.id].some(inst => refsTarget(f.subfields || [], inst));
-      }
-      if (f.type === "grid") {
-        let found = false;
-        forEachGridRefCell(valueMap[f.id], (rid, cid, cell) => { if (cell.value === targetId) found = true; });
-        return found;
-      }
-      return false;
-    });
-  };
-  let count = 0;
-  (entries || []).forEach(e => {
-    const tpl = tplById[e.templateId];
-    if (tpl && e.fields && refsTarget(tpl.fields, e.fields)) count++;
-  });
-  return count;
-};
-
 // Strip self-references from all entry-ref fields. Self-refs are never
 // legitimate (a person can't be their own parent, a faction can't be its own
 // ally) and the editor now blocks them at input time. This pass cleans up

@@ -115,9 +115,7 @@ function StemmaIndexView({ state, isLocked, onOpen, onCreate, onImport, onExport
                       style={{ padding: "3px 8px", fontSize: 12, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }}
                       onClick={ev => {
                         ev.stopPropagation();
-                        if (confirm(stemmaDeleteMessage(s, state))) {
-                          onDelete(s.id);
-                        }
+                        askRecordDelete({ state, ids: [s.id], title: `Delete stemma "${s.name}"?`, onConfirm: () => onDelete(s.id) });
                       }}
                       title="Delete this stemma"
                     >Delete</button>

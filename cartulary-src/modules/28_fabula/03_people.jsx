@@ -51,10 +51,13 @@ const fabulaKindFields = (state, kind) => {
 // scrubEntryRefs gives entries (groups and grids included). names maps a
 // deleted entry's id to its name, for a cast record whose character it was:
 // that record stays, its Character cleared and marked characterDeleted.
+// Since v1.7's r042, which runs it on every delete, a record it doesn't
+// change keeps its identity, as scrubEntryRefs keeps an entry's, and so does
+// a kind's list, and Fabula itself, when nothing in them changes.
 const scrubFabulaRefs = (state, deletedIds, names) => {
   const fab = state && state.fabula;
   if (!fab || !deletedIds || deletedIds.size === 0) return fab;
-  const next = { ...fab };
+  let next = fab;
   FABULA_KINDS.forEach(k => {
     const arr = Array.isArray(fab[k.slice]) ? fab[k.slice] : null;
     if (!arr || arr.length === 0) return;
@@ -63,41 +66,37 @@ const scrubFabulaRefs = (state, deletedIds, names) => {
       const c = r && r.fields && r.fields.character;
       return typeof c === "string" && deletedIds.has(c) ? { ...r, characterDeleted: { name: (names && names.get(c)) || "" } } : r;
     });
-    next[k.slice] = scrubEntryRefs(marked.map(r => ({ ...r, templateId: k.id })), [tpl], deletedIds).map(({ templateId, ...r }) => r);
+    const tagged = marked.map(r => ({ ...r, templateId: k.id }));
+    const scrubbed = scrubEntryRefs(tagged, [tpl], deletedIds);
+    if (marked.every((r, i) => r === arr[i]) && scrubbed.every((r, i) => r === tagged[i])) return;
+    if (next === fab) next = { ...fab };
+    next[k.slice] = scrubbed.map((r, i) => {
+      if (r === tagged[i]) return marked[i];
+      const { templateId, ...rest } = r;
+      return rest;
+    });
   });
   return next;
 };
 
-// How many of each kind's records point at id: [[kind, n]], for a delete's
-// confirmation.
-const fabulaInboundCounts = (state, id) => {
+// The ids of a story's own records, which its delete takes with it (v1.7
+// r042), for the delete modal's count and clearLinksTo.
+const fabulaStoryRecordIds = (state, storyId) => {
   const fab = (state && state.fabula) || {};
-  return FABULA_KINDS.map(k => {
-    const arr = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.id !== id);
-    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
-    return [k.kind, countInboundEntryRefs(arr.map(r => ({ ...r, templateId: k.id })), [tpl], id)];
-  }).filter(([, n]) => n > 0);
+  return FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
+    .flatMap(k => (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.storyId === storyId).map(r => r.id));
 };
 
-const fabulaRecordDeleteMessage = (state, kind, rec) => {
-  const head = `Delete the ${FABULA_NOUNS[kind].one} "${rec.name || "untitled"}"?`;
-  const counts = fabulaInboundCounts(state, rec.id);
-  if (counts.length === 0) return head;
-  const total = counts.reduce((a, [, n]) => a + n, 0);
-  const said = fabulaJoin(counts.map(([kk, n]) => kk === "story" ? "the story" : fabulaCount(kk, n)));
-  return `${head} ${said.charAt(0).toUpperCase()}${said.slice(1)} ${total === 1 ? "points" : "point"} at it; ${total === 1 ? "it stays" : "they stay"}, without it.`;
-};
-
-// What deleting a story takes with it: its own records, by kind.
-const fabulaStoryDeleteMessage = (state, story) => {
+// What deleting a story takes with it, its own records by kind, as the
+// delete modal's line, or null when it holds none.
+const fabulaStoryGoes = (state, story) => {
   const fab = (state && state.fabula) || {};
   const counts = FABULA_KINDS.filter(k => k.kind !== "corpus" && k.kind !== "story")
     .map(k => [k.kind, (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && r.storyId === story.id).length])
     .filter(([, n]) => n > 0);
-  const head = `Delete the story "${story.name || "untitled story"}"?`;
-  if (counts.length === 0) return head;
+  if (counts.length === 0) return null;
   const one = counts.length === 1 && counts[0][1] === 1;
-  return `${head} Its ${fabulaJoin(counts.map(([kk, n]) => fabulaCount(kk, n)))} ${one ? "goes" : "go"} with it.`;
+  return `Its ${fabulaJoin(counts.map(([kk, n]) => fabulaCount(kk, n)))} ${one ? "goes" : "go"} with it.`;
 };
 
 // Fabula's slices below the story level without one story's records.

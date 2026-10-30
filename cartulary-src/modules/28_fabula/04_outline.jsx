@@ -249,17 +249,6 @@ const fabulaOutlineHolding = (state, kind, rec) => {
   return at ? down(at.list[at.index]) : [];
 };
 
-// How many of each kind's records, outside what goes, point at any of the
-// ids given: [[kind, n]], for what Delete everything would clear.
-const fabulaInboundCountsAll = (state, ids, going) => {
-  const fab = (state && state.fabula) || {};
-  return FABULA_KINDS.map(k => {
-    const tpl = { id: k.id, fields: fabulaKindFields(state, k.kind) };
-    const arr = (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).filter(r => r && !going.has(r.id));
-    return [k.kind, arr.filter(r => ids.some(id => countInboundEntryRefs([{ ...r, templateId: k.id }], [tpl], id) > 0)).length];
-  }).filter(([, n]) => n > 0);
-};
-
 // Fabula's records below the story level, without the ids given.
 const fabulaDropRecords = (fab, ids) => ({
   ...fab,
@@ -733,19 +722,20 @@ function FabulaHoldsDeleteModal({ state, kind, record, onMoveUp, onDeleteAll, on
   const story = (Array.isArray(fab.stories) ? fab.stories : []).find(st => st && st.id === record.storyId);
   const at = story ? fabulaOutlineFind(fabulaOutlineTree(state, story), record.id) : null;
   const where = at && at.parent ? `in its ${FABULA_NOUNS[at.parent.kind].one}` : "at the story's own level";
-  // What points at what it holds stays when everything goes, without the
-  // reference, and says so, as Delete does for the record itself.
-  const pointing = fabulaInboundCountsAll(state, held.map(n => n.id), new Set([record.id, ...held.map(n => n.id)]));
-  const total = pointing.reduce((a, [, n]) => a + n, 0);
-  const said = fabulaJoin(pointing.map(([kk, n]) => (kk === "story" ? "the story" : fabulaCount(kk, n))));
-  const warn = total ? ` ${said.charAt(0).toUpperCase()}${said.slice(1)} ${total === 1 ? "points" : "point"} at what it holds; if everything goes, ${total === 1 ? "it stays, without the reference" : "they stay, without the references"}.` : "";
+  // v1.7 r042: what the delete does to what links to the record, and to what
+  // it holds if everything goes, counted from the link index, as the delete
+  // modal counts.
+  const own = recordDeleteLines(state, [record.id]);
+  const heldIds = held.map(n => n.id);
+  const ifAll = recordDeleteLines(state, heldIds, new Set([record.id, ...heldIds]));
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal fabula-holds-delete" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-        <div className="modal-hdr">Delete the {FABULA_NOUNS[kind].one}</div>
+        <div className="modal-hdr">Delete the {FABULA_NOUNS[kind].one} "{record.name || "untitled"}"?</div>
         <div className="modal-body">
-          <p style={{ margin: "0 0 10px" }}>{fabulaRecordDeleteMessage(state, kind, record)}</p>
-          <p style={{ margin: 0 }}>It holds {holds}. Move up puts what it holds in its place, {where}; Delete everything deletes it all.{warn}</p>
+          {own.map((line, i) => <p key={i} style={{ margin: "0 0 10px" }}>{line}</p>)}
+          <p style={{ margin: 0 }}>It holds {holds}. Move up puts what it holds in its place, {where}; Delete everything deletes it all.</p>
+          {ifAll.length > 0 && <p style={{ margin: "10px 0 0" }}>If everything goes: {ifAll.join(" ")}</p>}
         </div>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>

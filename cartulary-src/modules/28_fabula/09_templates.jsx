@@ -10,20 +10,6 @@
 // field is the user's whole. Save marks a schema edited; Reset to Default
 // puts the seed back and clears the values the seed has no field for.
 
-// The ids a kind's seed uses at its top level, which a field of the user's
-// own never takes. They don't depend on the world's templates.
-const fabulaSeedIds = (() => {
-  let cache = null;
-  return (kind) => {
-    if (!cache) {
-      const all = fabulaSeedSchemas([]);
-      cache = {};
-      Object.keys(all).forEach(kk => { cache[kk] = new Set(all[kk].fields.map(f => f.id)); });
-    }
-    return cache[kind] || new Set();
-  };
-})();
-
 // An edited schema's core fields brought up to the seed (spec, section 3).
 // Each takes the seed's field with the user's label, help line, Secret, and
 // panel, and the user's options and Other unless the seed locks them

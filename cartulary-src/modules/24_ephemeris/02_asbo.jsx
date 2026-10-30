@@ -8,14 +8,12 @@ function AsBoModeContent({
 }) {
   const body = bodies.find(b => b && b.id === selectedBodyId);
   const [draft, setDraft] = useState(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  // Reset edit + confirm state when the selection changes. Switching bodies
+  // Reset edit state when the selection changes. Switching bodies
   // mid-edit discards the draft — same pattern as entry editing elsewhere
   // in Cartulary. No unsaved-changes warning in r007; that's r008 polish.
   useEffect(() => {
     setDraft(null);
-    setConfirmingDelete(false);
   }, [selectedBodyId]);
 
   // Auto-enter edit mode when a freshly-created body lands here. The
@@ -170,32 +168,18 @@ function AsBoModeContent({
         {!isLocked && (
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             <button onClick={() => setDraft({ ...body })} style={{ padding: "6px 14px", background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 3, fontSize: 12, cursor: "pointer" }}>Edit</button>
+            {/* v1.7 r042: the delete modal asks, counting what links to the
+                body, where a second click and a line here asked before. */}
             <button
-              onClick={() => { if (confirmingDelete) { onDeleteBody(body.id); } else { setConfirmingDelete(true); } }}
-              style={{ padding: "6px 14px", background: confirmingDelete ? "#a04848" : "transparent", color: confirmingDelete ? "#fff" : "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}
-              title={confirmingDelete ? "Click again to confirm delete" : "Delete this body"}
+              onClick={() => askRecordDelete({ state, ids: [body.id], title: `Delete "${body.name || "this body"}"?`, onConfirm: () => onDeleteBody(body.id) })}
+              style={{ padding: "6px 14px", background: "transparent", color: "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}
+              title="Delete this body"
             >
-              {confirmingDelete ? "Confirm delete" : "Delete"}
+              Delete
             </button>
-            {confirmingDelete && (
-              <button onClick={() => setConfirmingDelete(false)} style={{ padding: "6px 10px", background: "transparent", color: "var(--text-dim)", border: "1px solid var(--border)", borderRadius: 3, fontSize: 12, cursor: "pointer" }}>Cancel</button>
-            )}
           </div>
         )}
       </div>
-      {confirmingDelete && (() => {
-        // v1.5 r080: show the blast radius before a body delete commits. The
-        // delete silently scrubs inbound entry refs (deleteBody → scrubEntryRefs);
-        // this surfaces how many links will go first, mirroring the calendar
-        // destructive-op warning. The entries themselves are untouched.
-        const refCount = countInboundEntryRefs(state.entries, state.templates, body.id);
-        if (refCount === 0) return null;
-        return (
-          <div style={{ fontSize: 12, color: "#d08a8a", marginBottom: 12, padding: "6px 10px", border: "1px solid #a04848", borderRadius: 3, background: "rgba(160,72,72,0.08)" }}>
-            Referenced by {refCount} {refCount === 1 ? "entry" : "entries"}. Deleting this body removes {refCount === 1 ? "that reference" : "those references"}; the {refCount === 1 ? "entry stays" : "entries stay"} intact.
-          </div>
-        );
-      })()}
       {parent ? (
         <div style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 20 }}>
           {isComputable && isComputableKind(parent.kind) ? "Orbits " : "Under "}

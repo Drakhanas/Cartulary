@@ -1571,16 +1571,14 @@ function App() {
   const deleteMap = (id) => {
     if (isLocked) return;
     // v1.7 r003: maps are reference targets, so the delete clears references
-    // to this one from every entry's fields, groups and grids included, as a
-    // body's delete does; both confirmations count them first
-    // (mapDeleteMessage). Any lingering concordance position keyed by this id
-    // is dropped on next load by migrate's position validation; live, it
-    // simply stops rendering.
-    updateState(s => ({
-      ...s,
-      cartographia: (s.cartographia || []).filter(m => m.id !== id),
-      entries: scrubEntryRefs(s.entries, s.templates, new Set([id])),
-    }));
+    // to this one, and since r042 every link the index reads (clearLinksTo),
+    // which the delete modal counts first. Any lingering concordance position
+    // keyed by this id is dropped on next load by migrate's position
+    // validation; live, it simply stops rendering.
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id]));
+      return { ...cleared, cartographia: (cleared.cartographia || []).filter(m => m.id !== id) };
+    });
     if (activeMapId === id) {
       setActiveMapId(null);
       setMapDraft(null); initialMapDraftRef.current = null;
@@ -1656,7 +1654,12 @@ function App() {
   // Deleting a corpus leaves its stories in Fabula, in no corpus.
   const deleteCorpus = (id) => {
     if (isLocked) return;
-    updateFabula(fab => ({ ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) }));
+    // v1.7 r042: what links to it, a stemma's card, is left orphaned
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id]));
+      const fab = cleared.fabula || {};
+      return { ...cleared, fabula: { ...fab, corpora: fabArr(fab, "corpora").filter(c => c.id !== id) } };
+    });
     if (activeCorpusId === id) {
       setActiveCorpusId(null);
       setCorpusDraft(null); initialCorpusDraftRef.current = null;
@@ -1687,12 +1690,13 @@ function App() {
   // story's storyId) go with it; the confirmation says how many.
   const deleteStory = (id) => {
     if (isLocked) return;
-    updateFabula(fab => ({
-      ...fab,
-      ...fabulaDropStoryRecords(fab, id),
-      stories: fabArr(fab, "stories").filter(st => st.id !== id),
-      corpora: fabArr(fab, "corpora").map(c => (c.storyIds || []).includes(id) ? { ...c, storyIds: c.storyIds.filter(x => x !== id) } : c),
-    }));
+    // v1.7 r042: the links into it and its records go first, everywhere the
+    // index reads, its corpus's reading order among them (clearLinksTo)
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([id, ...fabulaStoryRecordIds(s, id)]));
+      const fab = cleared.fabula || {};
+      return { ...cleared, fabula: { ...fab, ...fabulaDropStoryRecords(fab, id), stories: fabArr(fab, "stories").filter(st => st.id !== id) } };
+    });
   };
 
   // The Corpus dropdown: into a corpus, at the end of its reading order, or
@@ -1876,10 +1880,15 @@ function App() {
   const deleteOpenStory = () => {
     const rec = fabArr(state.fabula || {}, "stories").find(st => st.id === activeStoryId);
     if (!rec || isLocked) return;
-    if (!confirm(fabulaStoryDeleteMessage(state, rec))) return;
-    deleteStory(rec.id);
-    setStoryDraft(null); initialStoryDraftRef.current = null;
-    setActiveStoryId(null);
+    askRecordDelete({
+      state, ids: [rec.id, ...fabulaStoryRecordIds(state, rec.id)],
+      title: `Delete the story "${rec.name || "untitled story"}"?`, goes: fabulaStoryGoes(state, rec),
+      onConfirm: () => {
+        deleteStory(rec.id);
+        setStoryDraft(null); initialStoryDraftRef.current = null;
+        setActiveStoryId(null);
+      },
+    });
   };
 
   // The Story tab's folds belong to the browser, one set for every story
@@ -2009,15 +2018,21 @@ function App() {
     const rec = fabulaRecordOf(activeRecord.kind, activeRecord.id);
     if (!rec) return;
     if (fabulaOutlineHolding(state, activeRecord.kind, rec).length > 0) { setFabulaHoldsAsk({ kind: activeRecord.kind, id: rec.id }); return; }
-    if (!confirm(fabulaRecordDeleteMessage(state, activeRecord.kind, rec))) return;
-    finishFabulaDelete(activeRecord.kind, rec, false);
+    const kind = activeRecord.kind;
+    askRecordDelete({
+      state, ids: [rec.id], title: `Delete the ${FABULA_NOUNS[kind].one} "${rec.name || "untitled"}"?`,
+      onConfirm: () => finishFabulaDelete(kind, rec, false),
+    });
   };
 
+  // v1.7 r042: what went is cleared everywhere the index reads; Fabula's
+  // records are gone by then, which costs nothing, since a pin's name comes
+  // from an entry or a body.
   const finishFabulaDelete = (kind, rec, lift) => {
     if (isLocked) return;
     updateState(s => {
       const { fab, gone } = fabulaOutlineDelete(s.fabula || {}, kind, rec, lift);
-      return { ...s, fabula: scrubFabulaRefs({ ...s, fabula: fab }, gone) };
+      return clearLinksTo({ ...s, fabula: fab }, gone);
     });
     setFabulaHoldsAsk(null);
     setRecordDraft(null); initialRecordDraftRef.current = null;
@@ -2174,19 +2189,24 @@ function App() {
     }
   };
 
+  // v1.7 r042: the delete modal asks, counting what links to the entry, in
+  // place of the bare prompt, and the delete clears those links everywhere
+  // the index reads (clearLinksTo); a cast record whose character it was
+  // stays, marked (v1.7 r009).
   const deleteEntry = () => {
     if (!activeEntryId) return;
-    if (!confirm(`Delete "${activeEntry?.name}"?`)) return;
-    updateState(s => {
-      const deletedIds = new Set([activeEntryId]);
-      const remaining = s.entries.filter(e => e.id !== activeEntryId);
-      // v1.7 r009: Fabula's references to it go too, and a cast record whose
-      // character it was stays, marked (spec, section 9).
-      const names = new Map([[activeEntryId, activeEntry ? activeEntry.name : ""]]);
-      return { ...s, entries: scrubEntryRefs(remaining, s.templates, deletedIds), fabula: scrubFabulaRefs(s, deletedIds, names) };
+    const id = activeEntryId;
+    askRecordDelete({
+      state, ids: [id], title: `Delete "${activeEntry?.name}"?`,
+      onConfirm: () => {
+        updateState(s => {
+          const cleared = clearLinksTo(s, new Set([id]));
+          return { ...cleared, entries: cleared.entries.filter(e => e.id !== id) };
+        });
+        setActiveEntryId(null); clearDraftAndStorage(); setView("list");
+        flash("Deleted");
+      },
     });
-    setActiveEntryId(null); clearDraftAndStorage(); setView("list");
-    flash("Deleted");
   };
 
   // In-place edit of a calendar-date or calendar-date-range field on an entry.
@@ -2758,27 +2778,23 @@ function App() {
     const msg = count > 0
       ? `Delete template "${activeTemplate.name}" and its ${count} ${count === 1 ? "entry" : "entries"}?`
       : `Delete template "${activeTemplate.name}"?`;
-    if (!confirm(msg)) return;
-    updateState(s => {
-      const deletedEntryIds = new Set(
-        s.entries.filter(e => e.templateId === activeTemplateId).map(e => e.id)
-      );
-      const remainingTemplates = s.templates.filter(t => t.id !== activeTemplateId);
-      const remainingEntries = s.entries.filter(e => e.templateId !== activeTemplateId);
-      // v1.7 r009: Fabula's references to its entries go too (spec, section 9).
-      const names = new Map(s.entries.filter(e => deletedEntryIds.has(e.id)).map(e => [e.id, e.name]));
-      return {
-        ...s,
-        templates: remainingTemplates,
-        entries: scrubEntryRefs(remainingEntries, remainingTemplates, deletedEntryIds),
-        fabula: scrubFabulaRefs(s, deletedEntryIds, names),
-      };
+    // v1.7 r042: the delete modal asks, counting what links to its entries,
+    // and the delete clears those links everywhere the index reads.
+    const tid = activeTemplateId;
+    askRecordDelete({
+      state, ids: state.entries.filter(e => e.templateId === tid).map(e => e.id), title: msg,
+      onConfirm: () => {
+        updateState(s => {
+          const cleared = clearLinksTo(s, new Set(s.entries.filter(e => e.templateId === tid).map(e => e.id)));
+          return { ...cleared, templates: cleared.templates.filter(t => t.id !== tid), entries: cleared.entries.filter(e => e.templateId !== tid) };
+        });
+        setActiveTemplateId(null); clearDraftAndStorage();
+        // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section
+        // of Fabula's index, which then offers Restore.
+        if (fabRole) landOnFabulaSection(fabRole); else setView("home");
+        flash("Template deleted");
+      },
     });
-    setActiveTemplateId(null); clearDraftAndStorage();
-    // v1.7 r016: Plot Thread or Theme / Motif deleted lands on its section of
-    // Fabula's index, which then offers Restore.
-    if (fabRole) landOnFabulaSection(fabRole); else setView("home");
-    flash("Template deleted");
   };
 
   // ── Pack handlers (v1.5) ─────────────────────────────────────────────────────
@@ -3429,15 +3445,13 @@ function App() {
   const deleteStemma = (stemmaId) => {
     if (isLocked) return;
     // v1.7 r027: a stemma is a reference target, so its delete clears the
-    // references to it from every entry's fields and from Fabula's records,
-    // as a map's and a body's do; the index's confirmation counts them first
-    // (stemmaDeleteMessage). Linked nodes in other stemmas orphan.
-    updateState(s => ({
-      ...s,
-      stemmas: (s.stemmas || []).filter(st => st.id !== stemmaId),
-      entries: scrubEntryRefs(s.entries, s.templates, new Set([stemmaId])),
-      fabula: scrubFabulaRefs(s, new Set([stemmaId])),
-    }));
+    // references to it, and since r042 every stored link the index reads
+    // (clearLinksTo), which the delete modal counts first. Linked nodes in
+    // other stemmas orphan.
+    updateState(s => {
+      const cleared = clearLinksTo(s, new Set([stemmaId]));
+      return { ...cleared, stemmas: (cleared.stemmas || []).filter(st => st.id !== stemmaId) };
+    });
     // v1.7 r029: a tabula's remembered views go with it
     const gone = (state.stemmas || []).find(st => st.id === stemmaId);
     if (gone && gone.layout === "tabula") {
@@ -4417,7 +4431,7 @@ function App() {
               {view === "cartographia" && activeMapId && !mapDraft && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = (state.cartographia || []).find(m => m.id === activeMapId);
-                  if (rec && confirm(mapDeleteMessage(rec, state))) deleteMap(activeMapId);
+                  if (rec) askRecordDelete({ state, ids: [rec.id], title: `Delete map "${rec.name}"?`, onConfirm: () => deleteMap(rec.id) });
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editMap}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeMapToIndex}>← Back</button>
@@ -4452,7 +4466,12 @@ function App() {
               {view === "fabula" && activeCorpusId && !corpusDraft && !activeStoryId && <>
                 {!isLocked && <button className="btn btn-danger" onClick={() => {
                   const rec = ((state.fabula && state.fabula.corpora) || []).find(c => c.id === activeCorpusId);
-                  if (rec && confirm(fabulaCorpusDeleteMessage(rec))) deleteCorpus(activeCorpusId);
+                  const n = rec && Array.isArray(rec.storyIds) ? rec.storyIds.length : 0;
+                  if (rec) askRecordDelete({
+                    state, ids: [rec.id], title: `Delete the corpus "${rec.name || "this corpus"}"?`,
+                    goes: n === 0 ? null : `Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`,
+                    onConfirm: () => deleteCorpus(rec.id),
+                  });
                 }}>Delete</button>}
                 {!isLocked && <button className="btn btn-ghost" onClick={editCorpus}>Edit</button>}
                 <button className="btn btn-ghost" onClick={closeCorpusToIndex}>← Back</button>
@@ -5166,6 +5185,8 @@ function App() {
           />
         );
       })()}
+
+      <RecordDeleteModal />
 
       {destructiveOp && (
         <DestructiveOpModal

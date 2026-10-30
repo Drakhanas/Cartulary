@@ -292,31 +292,15 @@ const NODE_SOURCE_REGISTRY = [
         .filter(m => m && m.id)
         .map(m => ({ id: m.id, name: (m.name || "Untitled Map"), kind: "map" })),
     getColor: () => "#7ec8c8",
-    // Outbound pin edges: for each pin with a target entry, map -> entry, with
-    // the same 📍-prefixed label rule the kind:"map" entry walk used in v1.5.
-    // A field that references a map adds its own edge into the map, from the
-    // field walk in Concordance.
-    getEdges: (state) => {
-      const maps = Array.isArray(state.cartographia) ? state.cartographia : [];
-      const edges = [];
-      maps.forEach(m => {
-        const pins = (m && m.mapData && Array.isArray(m.mapData.pins)) ? m.mapData.pins : [];
-        pins.forEach(pin => {
-          if (pin && pin.entryId) {
-            const label = (pin.label && pin.label.trim()) ? `\ud83d\udccd ${pin.label}` : "\ud83d\udccd pin";
-            edges.push({ source: m.id, target: pin.entryId, label, kind: "directed" });
-          }
-        });
-      });
-      return edges;
-    },
+    // Its pins are links the link index reads (v1.7 r041), and Concordance
+    // draws them from there since r042, as it does a field's link to a map.
   },
   // v1.7 r027: stemmas, both layouts (docs/stemma-v2-spec.md, section 5).
   // Eligible on purpose, as maps are: a field can point at a stemma, a linked
   // node in another stemma can, and Fabula's Brainstorm field will (r028).
-  // The kind is the document's layout. The edges run from the document to
-  // every record its linked nodes point at, one per target: Concordance
-  // draws them, and Pipes' backlinks will read them as the stemma's mentions.
+  // The kind is the document's layout. Its linked nodes, cards, and notes are
+  // links the link index reads (v1.7 r041), and Concordance draws them from
+  // there since r042.
   {
     id: SYNTH_TPL_STEMMA,
     name: STEMMA_REF_LABEL,
@@ -328,22 +312,13 @@ const NODE_SOURCE_REGISTRY = [
         .filter(s => s && s.id)
         .map(s => ({ id: s.id, name: (s.name || "Untitled Stemma"), kind: s.layout === "tabula" ? "tabula" : "rota" })),
     getColor: () => "#c8a96e",
-    getEdges: (state) => {
-      const edges = [];
-      (Array.isArray(state.stemmas) ? state.stemmas : []).forEach(s => {
-        if (!s || !s.id) return;
-        stemmaLinkedTargets(s).forEach(target => {
-          if (target !== s.id) edges.push({ source: s.id, target, label: "links", kind: "directed" });
-        });
-      });
-      return edges;
-    },
   },
   // v1.7 r007: Fabula's record kinds (FABULA_KINDS), one source each. Not
   // eligible: no template's field can point at one, and the template builder
   // offers eligible sources only. group puts all eleven behind one toggle in
-  // Concordance's filter, named by groupName. Their records and edges are read
-  // beside Fabula's view (fabulaRegistryInstances, fabulaRegistryEdges).
+  // Concordance's filter, named by groupName. Their records are read beside
+  // Fabula's view (fabulaRegistryInstances), and their links by the link
+  // index, which Concordance draws from since v1.7's r042.
   ...FABULA_KINDS.map(k => ({
     id: k.id,
     name: k.name,
@@ -355,7 +330,6 @@ const NODE_SOURCE_REGISTRY = [
     groupName: "Fabula",
     getInstances: (state) => fabulaRegistryInstances(state, k),
     getColor: () => k.color,
-    getEdges: (state) => fabulaRegistryEdges(state, k),
   })),
 ];
 
@@ -451,7 +425,10 @@ const getRegisteredNameToId = (state) => {
 // record, or the schema it's read through, changes (Drak's call 3), and the
 // index is put together again from what's kept when anything changes, when a
 // page first asks for it (linksTo). A record's link to itself doesn't count,
-// and a scene's belonging to its story isn't a link.
+// and a scene's belonging to its story isn't a link. Since r042 a link also
+// carries a parent or spouse declaration's relation, its field's own label,
+// and its own words, for Concordance, which draws from the index too, and a
+// delete counts and clears through it (linkDeleteCounts, clearLinksTo).
 
 // The world description as a source: its row in Referenced by opens the
 // Project page, where the description is drawn (Drak's call 2).
@@ -499,10 +476,22 @@ const wikiNameResolver = (entries, templates, bodies) => {
   return resolve;
 };
 
+// A link as the index keeps it, made once when its record is read (r042): the
+// record it's in (src); what it points at (to), a stored link's id or a
+// [[link]]'s name, trimmed and lowercased, for the name resolver; its kind,
+// "ref" or "wiki"; the field it runs through, by the top-level field's id,
+// which a page's own list is matched by (field), and by label, a group's
+// subfield under its group (label) and alone (leaf); whether that field is
+// secret; a parent or spouse declaration's relation (rel); and the link's own
+// words (text): a declaration's label, a [[link|shown]]'s shown part, or a
+// pin's label. The index hands these out as they are.
+const linkPush = (x, to, kind, field, label, leaf, secret, rel, text) => {
+  x.links.push({ src: x.src, to, kind, field, label, leaf, secret, rel: rel || null, text: text || null });
+};
+
 // The [[links]] in a text, each by its target's name, trimmed and lowercased,
-// pushed onto x.wiki as [name, field, label, secret]; [[target|shown]] by its
-// target, as the entry view reads it.
-const linkWikiNames = (text, fid, label, secret, x) => {
+// [[target|shown]] by its target, as the entry view reads it.
+const linkWikiNames = (text, fid, label, leaf, secret, x) => {
   if (typeof text !== "string" || text.indexOf("[[") < 0) return;
   const re = /\[\[([^\]\n]+)\]\]/g;
   let m;
@@ -510,15 +499,14 @@ const linkWikiNames = (text, fid, label, secret, x) => {
     const inner = m[1].trim();
     const pipe = inner.indexOf("|");
     const name = (pipe >= 0 ? inner.substring(0, pipe) : inner).trim().toLowerCase();
-    if (name) x.wiki.push(name, fid, label, secret);
+    if (name) linkPush(x, name, "wiki", fid, label, leaf, secret, null, pipe >= 0 ? inner.substring(pipe + 1).trim() : null);
   }
 };
 
-// A record's links through a template's fields: a reference's ids onto
-// x.stored and the [[links]] in Short Text and Long Text onto x.wiki, each as
-// [what, field, label, secret], down through groups (a subfield labeled under
-// its group, and secret when either is) and a grid's reference cells. field
-// is the top-level field's id, which a page's own list is matched by.
+// A record's links through a template's fields: a reference's ids and the
+// [[links]] in Short Text and Long Text, down through groups (a subfield
+// labeled under its group, and secret when either is) and a grid's reference
+// cells. A parent or spouse declaration keeps its relation and its label.
 const linkFieldWalk = (fields, values, x, up) => {
   if (!values || typeof values !== "object") return;
   (Array.isArray(fields) ? fields : []).forEach(f => {
@@ -526,32 +514,36 @@ const linkFieldWalk = (fields, values, x, up) => {
     const v = values[f.id];
     if (v == null || v === "") return;
     const fid = up ? up.fid : f.id;
-    const label = up ? `${up.label} › ${f.label || ""}` : (f.label || "");
+    const leaf = f.label || "";
+    const label = up ? `${up.label} › ${leaf}` : leaf;
     const secret = (up ? up.secret : false) || !!f.secret;
     if (f.type === "entry-ref") {
+      const rel = f.relationKind === "parent" || f.relationKind === "spouse" ? f.relationKind : null;
       (Array.isArray(v) ? v : [v]).forEach(it => {
         const id = typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null);
-        if (typeof id === "string" && id) x.stored.push(id, fid, label, secret);
+        if (typeof id !== "string" || !id) return;
+        const said = rel && it && typeof it === "object" && typeof it.label === "string" ? it.label.trim() : null;
+        linkPush(x, id, "ref", fid, label, leaf, secret, rel, said);
       });
     } else if (f.type === "text" || f.type === "textarea") {
-      linkWikiNames(v, fid, label, secret, x);
+      linkWikiNames(v, fid, label, leaf, secret, x);
     } else if (f.type === "group" && Array.isArray(v)) {
       v.forEach(inst => linkFieldWalk(f.subfields, inst, x, { fid, label, secret }));
     } else if (f.type === "grid") {
       forEachGridRefCell(coerceGridValue(v), (rid, cid, cell) => {
-        if (typeof cell.value === "string" && cell.value) x.stored.push(cell.value, fid, label, secret);
+        if (typeof cell.value === "string" && cell.value) linkPush(x, cell.value, "ref", fid, label, leaf, secret, null, null);
       });
     }
   });
 };
 
-// One record's links, read by read(x) into x.src, x.stored, and x.wiki, or
-// kept from an earlier build when the record and what it was read through
-// (deps) are the same objects.
+// One record's links, read by read(x) into x.src and x.links, or kept from
+// an earlier build when the record and what it was read through (deps) are
+// the same objects.
 const linkRecordLinks = (rec, deps, read) => {
   const hit = LINK_INDEX_MEMO.records.get(rec);
   if (hit && hit.deps === deps) return hit;
-  const x = { deps, src: null, stored: [], wiki: [] };
+  const x = { deps, src: null, links: [] };
   read(x);
   LINK_INDEX_MEMO.records.set(rec, x);
   return x;
@@ -573,11 +565,11 @@ const linkKindFields = (state, kind) => {
   return fields;
 };
 
-// The index, { byTarget }: each target's links as { src, field, label,
-// secret, kind }, kind "ref" or "wiki", and src the source as { id, kind,
-// group, name, storyId }, its kind entry, fabula, map, stemma, body, conlang,
-// or world, and its group its template, its Fabula kind, or its kind again.
-// Put together again only when a slice it reads has changed.
+// The index, { byTarget }: each target's links as linkPush makes them, src
+// the source as { id, kind, group, name, storyId }, its kind entry, fabula,
+// map, stemma, body, conlang, or world, and its group its template, its
+// Fabula kind, or its kind again. Put together again only when a slice it
+// reads has changed.
 const linkIndexOf = (state) => {
   const st = state || {};
   const fab = st.fabula || {};
@@ -588,16 +580,18 @@ const linkIndexOf = (state) => {
   if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
   const resolve = wikiNameResolver(st.entries, st.templates, st.celestialBodies);
   const byTarget = new Map();
-  const put = (target, src, field, label, secret, kind) => {
-    if (typeof target !== "string" || !target || target === src.id) return;
-    let links = byTarget.get(target);
-    if (!links) { links = []; byTarget.set(target, links); }
-    links.push({ src, field, label, secret, kind });
-  };
+  // A kept link goes into its target's list as it is; a [[link]]'s target is
+  // found by name at every build, since names change without the link.
   const add = (x) => {
-    const s = x.stored, w = x.wiki;
-    for (let i = 0; i < s.length; i += 4) put(s[i], x.src, s[i + 1], s[i + 2], s[i + 3], "ref");
-    for (let i = 0; i < w.length; i += 4) put(resolve(w[i]), x.src, w[i + 1], w[i + 2], w[i + 3], "wiki");
+    const ls = x.links;
+    for (let i = 0; i < ls.length; i++) {
+      const l = ls[i];
+      const target = l.kind === "wiki" ? resolve(l.to) : l.to;
+      if (typeof target !== "string" || !target || target === l.src.id) continue;
+      let list = byTarget.get(target);
+      if (!list) { list = []; byTarget.set(target, list); }
+      list.push(l);
+    }
   };
   // Entries, through their templates.
   const tplById = new Map((Array.isArray(st.templates) ? st.templates : []).filter(t => t && t.id).map(t => [t.id, t]));
@@ -620,24 +614,25 @@ const linkIndexOf = (state) => {
         x.src = { id: r.id, kind: "fabula", group: k.kind, name: r.name || "", storyId: k.kind === "corpus" || k.kind === "story" ? null : (r.storyId || null) };
         linkFieldWalk(fields, r.fields, x, null);
         if (k.kind === "corpus" && Array.isArray(r.storyIds)) {
-          r.storyIds.forEach(id => { if (typeof id === "string" && id) x.stored.push(id, "storyIds", "Reading order", false); });
+          r.storyIds.forEach(id => { if (typeof id === "string" && id) linkPush(x, id, "ref", "storyIds", "Reading order", "Reading order", false, null, null); });
         }
       }));
     });
   });
-  // Maps: their three fields and their pins.
+  // Maps: their pins, then their three fields, so in Concordance a pin's
+  // label leads its edge's, as when the registry drew the pins alone (r042).
   if (!memo.mapFields) memo.mapFields = cartographiaMapSchema().fields;
   (Array.isArray(st.cartographia) ? st.cartographia : []).forEach(m => {
     if (!m || !m.id) return;
     add(linkRecordLinks(m, memo.mapFields, (x) => {
       x.src = { id: m.id, kind: "map", group: "map", name: m.name || "", storyId: null };
-      linkFieldWalk(memo.mapFields, m.fields, x, null);
       const pins = m.mapData && Array.isArray(m.mapData.pins) ? m.mapData.pins : [];
       pins.forEach(pin => {
         if (!pin || typeof pin.entryId !== "string" || !pin.entryId) return;
         const named = typeof pin.label === "string" ? pin.label.trim() : "";
-        x.stored.push(pin.entryId, "pins", named ? `Pin: ${named}` : "Pin", false);
+        linkPush(x, pin.entryId, "ref", "pins", named ? `Pin: ${named}` : "Pin", "Pin", false, null, named);
       });
+      linkFieldWalk(memo.mapFields, m.fields, x, null);
     }));
   });
   // Stemmas: a rota's linked nodes, a tabula's linked cards and notes.
@@ -647,13 +642,13 @@ const linkIndexOf = (state) => {
       x.src = { id: s.id, kind: "stemma", group: "stemma", name: s.name || "", storyId: null };
       if (s.layout === "tabula") {
         tabulaWalk(s.root, (it) => {
-          if (it.type === "linked" && typeof it.entryId === "string" && it.entryId) x.stored.push(it.entryId, "card", "card", false);
-          else if (it.type === "note") linkWikiNames(it.body, "note", "note", false, x);
+          if (it.type === "linked" && typeof it.entryId === "string" && it.entryId) linkPush(x, it.entryId, "ref", "card", "card", "card", false, null, null);
+          else if (it.type === "note") linkWikiNames(it.body, "note", "note", "note", false, x);
         });
       } else {
         const walk = (node) => {
           if (!node) return;
-          if (node.type === "linked" && typeof node.entryId === "string" && node.entryId) x.stored.push(node.entryId, "node", "linked node", false);
+          if (node.type === "linked" && typeof node.entryId === "string" && node.entryId) linkPush(x, node.entryId, "ref", "node", "linked node", "linked node", false, null, null);
           (node.children || []).forEach(walk);
         };
         walk(s.root);
@@ -669,11 +664,11 @@ const linkIndexOf = (state) => {
       [["visibleFrom", "Visible From"], ["notableLocations", "Notable Locations"], ["inhabitedBy", "Inhabited By"], ["sacredTo", "Sacred to"]].forEach(([k, label]) => {
         (Array.isArray(b[k]) ? b[k] : []).forEach(it => {
           const id = typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null);
-          if (typeof id === "string" && id) x.stored.push(id, k, label, false);
+          if (typeof id === "string" && id) linkPush(x, id, "ref", k, label, label, false, null, null);
         });
       });
       [["physicalProperties", "Physical Properties"], ["climateConditions", "Climate / Conditions"], ["mythologicalSignificance", "Mythological Significance"], ["description", "Description"], ["history", "History"], ["notes", "Notes"]]
-        .forEach(([k, label]) => linkWikiNames(b[k], k, label, false, x));
+        .forEach(([k, label]) => linkWikiNames(b[k], k, label, label, false, x));
     }));
   });
   // ConLangs, through the ConLang schema's reference fields.
@@ -690,8 +685,8 @@ const linkIndexOf = (state) => {
   }
   // The world description.
   if (desc) {
-    const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, stored: [], wiki: [] };
-    linkWikiNames(desc, "description", "", false, x);
+    const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, links: [] };
+    linkWikiNames(desc, "description", "", "", false, x);
     add(x);
   }
   memo.keys = keys;
@@ -701,3 +696,106 @@ const linkIndexOf = (state) => {
 
 // What links to one record: its links in the index, or none.
 const linksTo = (state, id) => (typeof id === "string" && id ? (linkIndexOf(state).byTarget.get(id) || []) : []);
+
+// What a delete of the records in ids reaches, from the index (r042, Drak's
+// call 1 at the cut), counting only links from records outside going (ids,
+// unless a delete counts part of what goes, as the holding modal does): the
+// records whose stored links to them it clears, by kind (refs: entry,
+// fabula:<kind>, body, or conlang, each a set of source ids); the map pins it
+// unlinks, those with a label (pins) and those without (pinsBare); the stemma
+// nodes and cards it leaves orphaned and the stemmas they're in; and the
+// places whose [[links]] to them stay as typed, broken (wiki) or, where
+// another record answers to the name once what goes is gone, leading there
+// (wikiMoved). A link through a secret field counts, since the delete clears
+// it either way.
+const linkDeleteCounts = (state, ids, going) => {
+  const out = { refs: new Map(), pins: 0, pinsBare: 0, nodes: 0, cards: 0, stemmas: new Set(), wiki: new Set(), wikiMoved: new Set() };
+  const list = Array.isArray(ids) ? ids : [...(ids || [])];
+  const outside = going instanceof Set ? going : new Set(list);
+  // The names as they'll resolve after the delete, put together once, when
+  // a [[link]] asks, and without taking the index's own resolver's place.
+  let after = null;
+  const resolvesAfter = (name) => {
+    if (!after) {
+      const st = state || {};
+      const kept = LINK_INDEX_MEMO.names;
+      after = wikiNameResolver(
+        (Array.isArray(st.entries) ? st.entries : []).filter(e => !(e && outside.has(e.id))),
+        st.templates,
+        (Array.isArray(st.celestialBodies) ? st.celestialBodies : []).filter(b => !(b && outside.has(b.id))));
+      LINK_INDEX_MEMO.names = kept;
+    }
+    return after(name);
+  };
+  list.forEach(id => linksTo(state, id).forEach(l => {
+    if (outside.has(l.src.id)) return;
+    if (l.kind === "wiki") { (resolvesAfter(l.to) ? out.wikiMoved : out.wiki).add(l.src.id); return; }
+    if (l.src.kind === "stemma") { out.stemmas.add(l.src.id); if (l.field === "card") out.cards += 1; else out.nodes += 1; return; }
+    if (l.src.kind === "map") { if (l.text) out.pins += 1; else out.pinsBare += 1; return; }
+    const key = l.src.kind === "fabula" ? `fabula:${l.src.group}` : l.src.kind;
+    if (!out.refs.has(key)) out.refs.set(key, new Set());
+    out.refs.get(key).add(l.src.id);
+  }));
+  return out;
+};
+
+// The world without the stored links into ids, as every delete leaves it
+// (r042, Drak's call 1 at the cut): entries', Fabula records', bodies', and
+// ConLangs' references cleared, a cast record whose character goes kept and
+// marked (scrubFabulaRefs), and a corpus's reading order without them; a map
+// pin unlinked, keeping its label or taking the record's name if it had
+// none; a stemma's nodes and cards left orphaned, as Stemma v2 has them; and
+// [[links]] left as typed. A slice or a record it doesn't change keeps its
+// identity, so what's kept from the last build of the index stays kept. The
+// records themselves are the caller's to remove, after this, so their names
+// are still there to read.
+const clearLinksTo = (state, ids) => {
+  const going = ids instanceof Set ? ids : new Set(ids || []);
+  if (!state || going.size === 0) return state;
+  const keep = (was, now) => (now.length === was.length && now.every((x, i) => x === was[i]) ? was : now);
+  const names = new Map();
+  (Array.isArray(state.entries) ? state.entries : []).forEach(e => { if (e && going.has(e.id)) names.set(e.id, e.name || ""); });
+  if (names.size < going.size) getRegisteredGraphNodes(state).forEach(n => { if (going.has(n.id) && !names.has(n.id)) names.set(n.id, n.name || ""); });
+  const now = isoNow();
+  const ents = Array.isArray(state.entries) ? state.entries : [];
+  const next = { ...state, entries: keep(ents, scrubEntryRefs(ents, Array.isArray(state.templates) ? state.templates : [], going)) };
+  let fab = scrubFabulaRefs(state, going, names);
+  if (fab && Array.isArray(fab.corpora) && fab.corpora.some(c => c && Array.isArray(c.storyIds) && c.storyIds.some(id => going.has(id)))) {
+    fab = { ...fab, corpora: fab.corpora.map(c => (c && Array.isArray(c.storyIds) && c.storyIds.some(id => going.has(id)) ? { ...c, storyIds: c.storyIds.filter(id => !going.has(id)), updatedAt: now } : c)) };
+  }
+  next.fabula = fab;
+  const refId = (it) => (typeof it === "string" ? it : (it && typeof it === "object" ? it.id : null));
+  if (Array.isArray(state.celestialBodies)) {
+    next.celestialBodies = keep(state.celestialBodies, state.celestialBodies.map(b => {
+      if (!b) return b;
+      let out = b;
+      ["visibleFrom", "notableLocations", "inhabitedBy", "sacredTo"].forEach(k => {
+        if (Array.isArray(b[k]) && b[k].some(it => going.has(refId(it)))) out = { ...out, [k]: b[k].filter(it => !going.has(refId(it))) };
+      });
+      return out;
+    }));
+  }
+  const glo = state.glossopoeia;
+  if (glo && Array.isArray(glo.conlangs) && glo.conlangs.length > 0) {
+    const tpl = { id: SYNTH_TPL_CONLANG, fields: linkKindFields(state, "conlang") };
+    const tagged = glo.conlangs.map(c => (c && typeof c === "object" ? { ...c, templateId: tpl.id } : { templateId: null }));
+    const scrubbed = scrubEntryRefs(tagged, [tpl], going);
+    if (scrubbed.some((c, i) => c !== tagged[i])) {
+      next.glossopoeia = { ...glo, conlangs: scrubbed.map((c, i) => {
+        if (c === tagged[i]) return glo.conlangs[i];
+        const { templateId, ...rest } = c;
+        return rest;
+      }) };
+    }
+  }
+  if (Array.isArray(state.cartographia)) {
+    next.cartographia = keep(state.cartographia, state.cartographia.map(m => {
+      const pins = m && m.mapData && Array.isArray(m.mapData.pins) ? m.mapData.pins : null;
+      if (!pins || !pins.some(p => p && going.has(p.entryId))) return m;
+      return { ...m, mapData: { ...m.mapData, pins: pins.map(p => (p && going.has(p.entryId)
+        ? { ...p, entryId: null, label: (typeof p.label === "string" && p.label.trim()) ? p.label : (names.get(p.entryId) || "") }
+        : p)) }, updatedAt: now };
+    }));
+  }
+  return next;
+};

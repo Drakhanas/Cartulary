@@ -76,7 +76,7 @@ function GlossEntityList({ records, schema, state, isLocked, onWrite, onCreate, 
             {!isLocked && (
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 8 }}>
                 <button className="btn btn-ghost btn-small" onClick={duplicate}>Duplicate</button>
-                <button className="btn btn-danger btn-small" onClick={() => { if (confirm(`Delete "${sel.name || ("this " + n)}"?`)) { onDelete(sel.id); setSelId(null); } }}>Delete</button>
+                <button className="btn btn-danger btn-small" onClick={() => { const rec = sel; askRecordDelete({ state, ids: [rec.id], title: `Delete "${rec.name || ("this " + n)}"?`, onConfirm: () => { onDelete(rec.id); setSelId(null); } }); }}>Delete</button>
               </div>
             )}
             <EntryForm draft={sel} template={schema} entries={state.entries} templates={state.templates} bodies={state.celestialBodies} registeredNodes={getRegisteredGraphNodes(state)} onChange={onWrite} showSecrets={true} imageFolder={state.world.imageFolder} allTags={[]} dirHandle={null} calendar={state.world.calendar} primaryCalendar={state.world.calendar} additionalCalendars={[]} selfEntryId={sel.id} flash={null} previewMode={false} ipaSymbols={ipaSymbols} />

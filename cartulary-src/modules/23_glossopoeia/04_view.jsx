@@ -57,9 +57,12 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
       return { ...s, glossopoeia: { ...gg, conlangs: [...list, rec], ui: { ...(gg.ui || {}), activeLangId: id, workspace: "overview" } } };
     });
   };
+  // v1.7 r042: each delete clears what links to what goes, everywhere the
+  // link index reads, before the records go (clearLinksTo).
   const deleteConlang = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, glossLangRecordIds(s0, id));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.conlangs) ? gg.conlangs : []).filter(c => c && c.id !== id);
       const next = { ...gg, conlangs: list };
@@ -128,7 +131,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
   };
   const deleteLexeme = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, new Set([id]));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.lexemes) ? gg.lexemes : []).filter(x => x && x.id !== id);
       return { ...s, glossopoeia: { ...gg, lexemes: list } };
@@ -184,7 +188,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
   };
   const deletePhoneme = (id) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      const s = clearLinksTo(s0, new Set([id]));
       const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
       const list = (Array.isArray(gg.phonemes) ? gg.phonemes : []).filter(p => p && p.id !== id);
       return { ...s, glossopoeia: { ...gg, phonemes: list, ...glossScrubPhonemeRefs(gg, new Set([id])) } };
@@ -221,7 +226,8 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
     },
     del: (id) => {
       if (isLocked) return;
-      updateState(s => {
+      updateState(s0 => {
+        const s = clearLinksTo(s0, new Set([id]));
         const gg = s.glossopoeia || makeDefaultGlossopoeiaState();
         const list = (Array.isArray(gg[arrayKey]) ? gg[arrayKey] : []).filter(x => x && x.id !== id);
         return { ...s, glossopoeia: { ...gg, [arrayKey]: list } };
@@ -366,7 +372,15 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
         {!isLocked && activeLang && (
           <button
             className="btn btn-danger btn-small"
-            onClick={() => { if (confirm(`Delete "${activeLang.name || "this language"}"? This removes the language and its Glossopoeia data.`)) deleteConlang(activeLang.id); }}
+            onClick={() => {
+              const lang = activeLang;
+              const words = ((state.glossopoeia && state.glossopoeia.lexemes) || []).filter(x => x && x.langId === lang.id).length;
+              askRecordDelete({
+                state, ids: [...glossLangRecordIds(state, lang.id)], title: `Delete "${lang.name || "this language"}"?`,
+                goes: words > 0 ? `Its ${words === 1 ? "word" : `${words} words`} and the rest of its Glossopoeia data go with it.` : "Its Glossopoeia data goes with it.",
+                onConfirm: () => deleteConlang(lang.id),
+              });
+            }}
           >Delete</button>
         )}
         {activeLang && (
@@ -595,7 +609,7 @@ function GlossopoeiaView({ state, updateState, isLocked, onOpenEntry, flash }) {
                           ) : <span />}
                           <div style={{ display: "flex", gap: 6 }}>
                             <button className="btn btn-ghost btn-small" onClick={dupLexeme}>Duplicate</button>
-                            <button className="btn btn-danger btn-small" onClick={() => { if (confirm(`Delete "${selectedLexeme.name || "this word"}"?`)) deleteLexeme(selectedLexeme.id); }}>Delete word</button>
+                            <button className="btn btn-danger btn-small" onClick={() => { const lx = selectedLexeme; askRecordDelete({ state, ids: [lx.id], title: `Delete "${lx.name || "this word"}"?`, onConfirm: () => deleteLexeme(lx.id) }); }}>Delete word</button>
                           </div>
                         </div>
                       )}

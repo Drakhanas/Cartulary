@@ -6,53 +6,13 @@
 // where its reading order changes by drag or by the arrows. A story is a row
 // until its page comes, in r008. App holds the state and the handlers, as it
 // does for maps, and passes them down. What the node-source registry reads
-// for Fabula's kinds lives here too: a kind's records as nodes, and each
-// corpus's stories as its edges, so Concordance draws a corpus to its
-// stories. Links inside a record's fields aren't edges yet.
+// for Fabula's kinds lives here too, a kind's records as nodes; their links,
+// a corpus's stories among them, Concordance draws from the link index since
+// v1.7's r042.
 const fabulaRegistryInstances = (state, k) =>
   ((state && state.fabula && Array.isArray(state.fabula[k.slice])) ? state.fabula[k.slice] : [])
     .filter(r => r && r.id)
     .map(r => ({ id: r.id, name: r.name || "(untitled)", kind: k.kind }));
-
-const fabulaRegistryEdges = (state, k) => {
-  const fab = (state && state.fabula) || {};
-  const edges = [];
-  if (k.kind === "corpus") {
-    const storyIds = new Set((Array.isArray(fab.stories) ? fab.stories : []).map(st => st && st.id).filter(Boolean));
-    (Array.isArray(fab.corpora) ? fab.corpora : []).forEach(c => {
-      if (!c || !c.id || !Array.isArray(c.storyIds)) return;
-      c.storyIds.forEach(id => { if (storyIds.has(id)) edges.push({ source: c.id, target: id, label: "includes", kind: "directed" }); });
-    });
-  }
-  // v1.7 r009: the links that exist so far (spec, section 9), each labeled as
-  // its field is: a story to its threads and themes, a cast record to its
-  // character, an arc to its cast, a relationship to its two, since r011
-  // a scene to its POV, participants, setting, and threads, and since r015
-  // its motifs, since r013 a plot point to its scene and threads and a
-  // promise to its setup and payoff scenes and its threads, and since r014 a
-  // research note to the entries it applies to and the scenes it's used in.
-  // Concordance drops an edge whose other end isn't drawn.
-  const seeded = { story: ["threads", "themes"], cast: ["character"], arc: ["cast"], relationship: ["castA", "castB"], scene: ["pov", "participants", "setting", "threads", "motifs"], plotPoint: ["deliveredIn", "threads"], promise: ["setupIn", "payoffIn", "threads"], research: ["appliesTo", "usedIn"] }[k.kind] || [];
-  // Since v1.7's r017 a link field of the user's own draws its edges too,
-  // labeled as the field is (spec, section 9): any reference whose id no
-  // seed uses, a corpus's included. A seeded link the user has deleted, or
-  // made something other than a reference, draws none: its values stay in
-  // the records unseen, as a template's deleted field's do.
-  const fields = fabulaKindFields(state, k.kind);
-  const seedIds = fabulaSeedIds(k.kind);
-  const refIds = new Set(fields.filter(f => f && f.id && f.type === "entry-ref").map(f => f.id));
-  const links = [...seeded.filter(id => refIds.has(id)), ...[...refIds].filter(id => !seedIds.has(id))];
-  if (links.length === 0) return edges;
-  (Array.isArray(fab[k.slice]) ? fab[k.slice] : []).forEach(r => {
-    if (!r || !r.id) return;
-    links.forEach(fid => {
-      const f = fields.find(x => x.id === fid);
-      const v = (r.fields || {})[fid];
-      (Array.isArray(v) ? v : [v]).forEach(t => { if (typeof t === "string" && t) edges.push({ source: r.id, target: t, label: f ? f.label : fid, kind: "directed" }); });
-    });
-  });
-  return edges;
-};
 
 // A kind's schema as the template EntryForm and EntryView take: the world's
 // stored schema, or the seed when the world has none, its reference fields
@@ -98,14 +58,6 @@ const fabulaStoryCounts = (state, storyId) => {
   const fab = state.fabula || {};
   const count = (slice) => (Array.isArray(fab[slice]) ? fab[slice] : []).filter(r => r && r.storyId === storyId).length;
   return { cast: count("cast"), scenes: count("scenes") };
-};
-
-const fabulaCorpusDeleteMessage = (corpus) => {
-  const n = Array.isArray(corpus.storyIds) ? corpus.storyIds.length : 0;
-  const name = corpus.name || "this corpus";
-  return n === 0
-    ? `Delete the corpus "${name}"?`
-    : `Delete the corpus "${name}"? Its ${n === 1 ? "story stays" : `${n} stories stay`} in Fabula, in no corpus.`;
 };
 
 function FabulaStoryLine({ state, story, onOpen }) {
@@ -211,7 +163,11 @@ function FabulaIndexView({ state, isLocked, onOpenCorpus, onCreateCorpus, onCrea
       }
       trailing={
         <button className="btn" style={{ ...smallBtn, color: "var(--danger)", borderColor: "rgba(184,92,76,.35)" }} onClick={() => {
-          if (confirm(fabulaStoryDeleteMessage(state, st))) onDeleteStory(st.id);
+          askRecordDelete({
+            state, ids: [st.id, ...fabulaStoryRecordIds(state, st.id)],
+            title: `Delete the story "${st.name || "untitled story"}"?`, goes: fabulaStoryGoes(state, st),
+            onConfirm: () => onDeleteStory(st.id),
+          });
         }} title="Delete this story">Delete</button>
       }
     />

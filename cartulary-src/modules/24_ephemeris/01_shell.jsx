@@ -221,7 +221,11 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
   // event-keyed (not body-keyed), so it's untouched.
   const deleteBody = (bodyId) => {
     if (isLocked) return;
-    updateState(s => {
+    updateState(s0 => {
+      // v1.7 r042: every link the index reads into the body goes first,
+      // entries' and Fabula's references among them, as v1.5's r080 and
+      // v1.7's r009 cleared them here (clearLinksTo).
+      const s = clearLinksTo(s0, new Set([bodyId]));
       const cur = s.ephemeris || makeDefaultEphemerisState();
       const remaining = (s.celestialBodies || [])
         .filter(b => b && b.id !== bodyId)
@@ -294,14 +298,6 @@ function EphemerisView({ state, updateState, isLocked, onOpenEntry, onPromoteEve
 
       return {
         ...s,
-        // v1.5 r080: silently scrub inbound entry refs to the deleted body.
-        // Body ids are stored as ref values; scrubEntryRefs is id-agnostic, so
-        // it strips them from entry-ref / grid / group fields the same way it
-        // does for a deleted entry. Intentional deletion is not data loss, so
-        // no dead label — the reference just clears.
-        entries: scrubEntryRefs(s.entries, s.templates, new Set([bodyId])),
-        // v1.7 r009: and Fabula's references to it, the same way.
-        fabula: scrubFabulaRefs(s, new Set([bodyId])),
         celestialBodies: remaining,
         world: nextWorld,
         calendars: nextCalendars,

@@ -352,13 +352,18 @@ const REFERENCED_BY_LISTED = {
 // color, rows }], each row { src, labels, place, story }.
 const referencedByGroups = (state, targetId, showSecrets, exclude) => {
   const rows = new Map();
-  linksTo(state, targetId).forEach(l => {
-    if (l.secret && !showSecrets) return;
-    if (exclude && l.src.kind === "fabula" && exclude.some(([kind, field]) => kind === l.src.group && field === l.field)) return;
-    let r = rows.get(l.src.id);
-    if (!r) { r = { src: l.src, labels: [] }; rows.set(l.src.id, r); }
+  const shown = linksTo(state, targetId).filter(l => !(l.secret && !showSecrets)
+    && !(exclude && l.src.kind === "fabula" && exclude.some(([kind, field]) => kind === l.src.group && field === l.field)));
+  shown.forEach(l => { if (!rows.has(l.src.id)) rows.set(l.src.id, { src: l.src, labels: [] }); });
+  // A row names the fields of its stored links first, then those of its
+  // [[links]], each in its record's order, as at r041; since r042 the index
+  // keeps a record's links in one list in its record's order, for
+  // Concordance's labels.
+  [false, true].forEach(wiki => shown.forEach(l => {
+    if ((l.kind === "wiki") !== wiki) return;
+    const r = rows.get(l.src.id);
     if (l.label && !r.labels.includes(l.label)) r.labels.push(l.label);
-  });
+  }));
   if (rows.size === 0) return [];
   const fab = (state && state.fabula) || {};
   const storyNames = new Map((Array.isArray(fab.stories) ? fab.stories : []).filter(st => st && st.id).map(st => [st.id, st.name || "(untitled story)"]));

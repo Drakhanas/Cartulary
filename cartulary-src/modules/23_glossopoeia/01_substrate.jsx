@@ -626,6 +626,15 @@ function glossGlossSentence(sentence, g, langId) {
 const GLOSS_LANG_ARRAYS = ["lexemes","phonemes","syllableStructures","stressPatterns","phonotacticConstraints","phonologicalRules","grammaticalValues","affixes","wordBuildingProcesses","inflectionClasses","pronounSets","phraseOrders","sentenceMarkings","constructions","relativizations","clauseLinkings","writingSystems","graphemes","spellingRules","corpusEntries"];
 const GLOSS_IMPORT_PREFIX = { conlangs:"lng", lexemes:"lex", phonemes:"phon", syllableStructures:"syl", stressPatterns:"str", phonotacticConstraints:"pcon", phonologicalRules:"prul", grammaticalValues:"gval", affixes:"afx", wordBuildingProcesses:"wbp", inflectionClasses:"infl", pronounSets:"pron", phraseOrders:"phro", sentenceMarkings:"snm", constructions:"con", relativizations:"rel", clauseLinkings:"cln", writingSystems:"wsy", graphemes:"grf", spellingRules:"spr", corpusEntries:"cor" };
 
+// A language's id and the ids of every record it holds (v1.7 r042), what
+// its delete takes with it, for the delete modal's count and clearLinksTo.
+const glossLangRecordIds = (state, langId) => {
+  const g = (state && state.glossopoeia) || {};
+  const ids = new Set([langId]);
+  GLOSS_LANG_ARRAYS.forEach(key => (Array.isArray(g[key]) ? g[key] : []).forEach(r => { if (r && r.langId === langId && r.id) ids.add(r.id); }));
+  return ids;
+};
+
 function exportConlangFile(state, langId, flash) {
   const g = state.glossopoeia || {};
   const conlang = (g.conlangs || []).find(c => c && c.id === langId);

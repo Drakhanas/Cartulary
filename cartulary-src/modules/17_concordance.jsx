@@ -63,12 +63,6 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     // entry->body / body->body edges.
     const idSet = new Set([...ents.map(e => e.id), ...regNodes.map(n => n.id)]);
 
-    // Name → id lookup for resolving wiki-links (lowercase, exact-match).
-    // Entries first, then registered nodes (first writer wins on collision).
-    const nameToId = {};
-    ents.forEach(e => { nameToId[e.name.trim().toLowerCase()] = e.id; });
-    regNodes.forEach(n => { const k = (n.name || "").trim().toLowerCase(); if (k && !(k in nameToId)) nameToId[k] = n.id; });
-
     const nodes = [
       ...ents.map(e => ({
         id: e.id,
@@ -97,60 +91,42 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
       links.push({ source: sourceId, target: targetId, label, kind });
     };
 
-    const wikiRe = /\[\[([^\]\n]+)\]\]/g;
-
-    ents.forEach(e => {
-      const tpl = tplById[e.templateId];
-      if (!tpl) return;
-
-      const walk = (fields, fieldValues) => {
-        fields.forEach(f => {
-          if (f.secret && !showSecrets) return;
-          const val = fieldValues[f.id];
-
-          if (f.type === "entry-ref") {
-            if (f.relationKind === "parent") {
-              // Field is on child, refs are parents. Reverse so arrow points parent → child (matches family tree).
-              const items = getRelationValues(val, f.multi);
-              items.forEach(({ id: rid, label }) => addLink(rid, e.id, (label && label.trim()) || f.label, "directed"));
-            } else if (f.relationKind === "spouse") {
-              const items = getRelationValues(val, f.multi);
-              items.forEach(({ id: rid, label }) => addLink(e.id, rid, (label && label.trim()) || f.label, "spouse"));
-            } else {
-              const refIds = f.multi ? (Array.isArray(val) ? val : []) : (val ? [val] : []);
-              refIds.forEach(rid => addLink(e.id, rid, f.label, "directed"));
-            }
-          } else if ((f.type === "textarea" || f.type === "text") && typeof val === "string" && val.length) {
-            // Scan for wiki-links, supporting [[target]] and [[target|custom label]]
-            let m;
-            wikiRe.lastIndex = 0;
-            while ((m = wikiRe.exec(val)) !== null) {
-              const inner = m[1].trim();
-              const pipe = inner.indexOf("|");
-              const targetName = pipe >= 0 ? inner.substring(0, pipe).trim() : inner;
-              const customLabel = pipe >= 0 ? inner.substring(pipe + 1).trim() : null;
-              const targetId = nameToId[targetName.toLowerCase()];
-              if (targetId) addLink(e.id, targetId, customLabel || f.label);
-            }
-          } else if (f.type === "group" && Array.isArray(val)) {
-            val.forEach(inst => walk(f.subfields || [], inst));
-          } else if (f.type === "grid") {
-            // Grid cells that are entry-refs produce directed edges, labeled
-            // by the grid field. (Family roles live on relationKind fields, not
-            // cells, so grid cells never feed Linea — only this general graph.)
-            forEachGridRefCell(coerceGridValue(val), (rid, cid, cell) => {
-              if (typeof cell.value === "string" && cell.value) addLink(e.id, cell.value, f.label, "directed");
-            });
-          }
-        });
-      };
-      walk(tpl.fields, e.fields || {});
+    // v1.7 r042: every link from the index (docs/pipes-spec.md, section 4,
+    // with Drak's calls at the cut). Entries' links as the scan here drew
+    // them, a parent declaration parent to child and a spouse's both ways,
+    // each by its field's own label or its own words, and the links the scan
+    // never read: Fabula's fields at any depth, bodies' and ConLangs'
+    // reference fields, and the [[links]] outside entries. [[links]] resolve
+    // by the entry view's rules, as the index reads them (Drak's call 2), so
+    // until r043 one to a map, a stemma, or a Fabula or Glossopoeia record
+    // draws no edge, and a name two entries share goes to the first. The
+    // labels stay Concordance's own: a pin's 📍, a stemma's "links", and a
+    // corpus's "includes". A ConLang's Variety Of and Descended From stay the
+    // registry's edges, parent to child.
+    linkIndexOf(state).byTarget.forEach((list, target) => {
+      if (!idSet.has(target)) return;
+      list.forEach(l => {
+        const src = l.src;
+        if (!idSet.has(src.id)) return;
+        if (l.secret && !showSecrets) return;
+        if (src.kind === "conlang" && (l.field === "varietyOf" || l.field === "descendedFrom")) return;
+        const own = l.text || l.leaf;
+        if (l.rel === "parent") { addLink(target, src.id, own, "directed"); return; }
+        if (l.rel === "spouse") { addLink(src.id, target, own, "spouse"); return; }
+        let label = own;
+        if (src.kind === "stemma") label = "links";
+        else if (src.kind === "map" && l.field === "pins") label = l.text ? `📍 ${l.text}` : "📍 pin";
+        else if (src.kind === "fabula" && l.field === "storyIds") label = "includes";
+        addLink(src.id, target, label, "directed");
+      });
     });
 
-    // v1.5 r076: registered intra-source edges (e.g. body orbital hierarchy,
-    // star -> planet -> moon). Fed through addLink so they dedup and respect
-    // the now body-inclusive idSet — orbits edges only draw when the body
-    // source is toggled on, since toggled-off bodies aren't in idSet.
+    // v1.5 r076: registered intra-source edges, the relations that aren't
+    // links the index reads: a body's orbit (star -> planet -> moon), a
+    // language's dialects and descent, and Glossopoeia's words, sounds, and
+    // grammar. Fed through addLink so they dedup and respect the
+    // body-inclusive idSet: orbits edges only draw when the body source is
+    // toggled on, since toggled-off bodies aren't in idSet.
     getRegisteredGraphEdges(state).forEach(ed => addLink(ed.source, ed.target, ed.label, ed.kind || "directed"));
 
     // Post-process: merge same-direction same-kind edges between the same
@@ -241,7 +217,7 @@ function GraphView({ state, onOpenEntry, showSecrets, onSavePositions, zoomTrans
     }
 
     return { nodes, links, perTemplateCount };
-  }, [state.entries, state.templates, state.celestialBodies, enabledTemplates, showSecrets, focusEntryId, focusDepth]);
+  }, [state.entries, state.templates, state.celestialBodies, state.fabula, state.cartographia, state.stemmas, state.glossopoeia, enabledTemplates, showSecrets, focusEntryId, focusDepth]);
 
   // Set up d3 force simulation
   useEffect(() => {
