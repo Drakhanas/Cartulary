@@ -81,6 +81,9 @@ function App() {
   const [tplDraft, setTplDraft] = useState(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("name-asc");
+  // v1.7 r045: the entry list's conditions, all or any (EntryList), page
+  // state as the search is, and cleared with it when a scope is picked.
+  const [entryQuery, setEntryQuery] = useState(QUERY_EMPTY);
   const [showSecrets, setShowSecrets] = useState(true);
   const [notice, setNotice] = useState(null);  // { type, text }
   const [resetTplId, setResetTplId] = useState(null);  // Template being considered for reset
@@ -959,8 +962,11 @@ function App() {
     return { active: va.active || "", values, byTemplate };
   }, [state]);
 
-  const filteredEntries = useMemo(() => {
-    if (!state) return [];
+  // v1.7 r045: the list's scope, a template, a tag, or All entries, after
+  // the variant filter (listScope); the conditions and the search narrow it,
+  // both reading what an entry's page shows, and the sort comes last.
+  const listScope = useMemo(() => {
+    if (!state || view !== "list") return [];
     let entries = state.entries;
     // Variant filter runs first: with an active variant picked, an entry is
     // hidden only when its template HAS the axis field, the entry has a
@@ -985,14 +991,21 @@ function App() {
     }
     if (activeTagFilter) entries = entries.filter(e => (e.tags || []).includes(activeTagFilter));
     else if (activeTemplateId) entries = entries.filter(e => e.templateId === activeTemplateId);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      entries = entries.filter(e =>
-        e.name.toLowerCase().includes(q)
-        || (e.tags || []).some(t => t.toLowerCase().includes(q))
-        || JSON.stringify(e.fields || {}).toLowerCase().includes(q)
-      );
-    }
+    return entries;
+  }, [state, activeTagFilter, activeTemplateId, variantAxisInfo, view]);
+  // The fields a condition can name: the scope's templates' (queryFieldsOf),
+  // with Template among them where the scope spans more than one.
+  const queryFields = useMemo(() => {
+    if (!state || view !== "list") return [];
+    const all = Array.isArray(state.templates) ? state.templates : [];
+    const ids = activeTagFilter ? new Set(listScope.map(e => e.templateId)) : activeTemplateId ? new Set([activeTemplateId]) : null;
+    const tpls = ids ? all.filter(t => t && ids.has(t.id)) : all;
+    return queryFieldsOf(tpls, tpls.length > 1, showSecrets);
+  }, [state, view, activeTemplateId, activeTagFilter, listScope, showSecrets]);
+  const filteredEntries = useMemo(() => {
+    let entries = queryApply(state, listScope, entryQuery, queryFields, showSecrets);
+    const q = search.trim().toLowerCase();
+    if (q) entries = entries.filter(e => queryTextOf(state, e, showSecrets).includes(q));
     const [k, dir] = sortBy.split("-");
     const mult = dir === "desc" ? -1 : 1;
     entries = [...entries].sort((a, b) => {
@@ -1003,7 +1016,7 @@ function App() {
       return av < bv ? -1 * mult : av > bv ? 1 * mult : 0;
     });
     return entries;
-  }, [state, activeTagFilter, activeTemplateId, search, sortBy, variantAxisInfo]);
+  }, [state, listScope, entryQuery, queryFields, search, sortBy, showSecrets]);
 
   // v1.7 r016: Plot Thread and Theme / Motif live under Fabula, so whatever
   // would land on one's list page (Back with nothing behind it, Delete, a new
@@ -1175,13 +1188,20 @@ function App() {
   const selectTemplate = (id) => {
     if (!confirmDiscardDraft()) return;
     setActiveTemplateId(id); setActiveTagFilter(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
   };
 
   const selectTag = (tag) => {
     if (!confirmDiscardDraft()) return;
     setActiveTagFilter(tag); setActiveTemplateId(null); setActiveEntryId(null);
-    clearDraftAndStorage(); setSearch(""); setView("list");
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
+  };
+
+  // v1.7 r045: the list over every entry in the world, whatever its template.
+  const selectAllEntries = () => {
+    if (!confirmDiscardDraft()) return;
+    setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView("list");
   };
 
   const selectView = (v) => {
@@ -1189,7 +1209,7 @@ function App() {
     setActiveTemplateId(null); setActiveTagFilter(null); setActiveEntryId(null);
     setActiveStemmaId(null); setFocalNodeId(null); setActiveMapId(null); setActiveCorpusId(null); setActiveStoryId(null);
     setActiveRecord(null); setFabulaBack([]);
-    clearDraftAndStorage(); setSearch(""); setView(v);
+    clearDraftAndStorage(); setSearch(""); setEntryQuery(QUERY_EMPTY); setView(v);
   };
 
   const openEntryFromAnywhere = (id) => {
@@ -4340,6 +4360,7 @@ function App() {
   if (view === "list") {
     if (activeTagFilter) headerTitle = `# ${activeTagFilter}`;
     else if (activeTemplate) { headerTitle = activeTemplate.name; headerIcon = activeTemplate; }
+    else if (!activeTemplateId) headerTitle = "All entries";
   } else if ((view === "entry" || view === "entry-edit") && activeEntry) {
     headerTitle = activeEntry.name;
     const tmpl = state.templates.find(t => t.id === activeEntry.templateId);
@@ -4428,6 +4449,7 @@ function App() {
         allTags={allTags}
         onSelectTemplate={selectTemplate}
         onSelectTag={selectTag}
+        onSelectAllEntries={selectAllEntries}
         onSelectView={selectView}
         onOpenSettings={() => { setView("settings"); }}
         onNewTemplate={openNewTemplate}
@@ -5128,10 +5150,18 @@ function App() {
               onSearch={setSearch}
               sortBy={sortBy}
               onSort={setSortBy}
+              key={activeTagFilter ? `tag:${activeTagFilter}` : activeTemplateId ? `tpl:${activeTemplateId}` : "all"}
               onSelect={openEntry}
-              showTemplate={!!activeTagFilter}
+              showTemplate={!!activeTagFilter || !activeTemplateId}
               variantAxis={variantAxisInfo}
               onSetVariant={(v) => updateWorldMeta({ variantAxis: { ...state.world.variantAxis, active: v } })}
+              query={entryQuery}
+              onQuery={setEntryQuery}
+              queryFields={queryFields}
+              total={listScope.length}
+              scopeEntries={listScope}
+              state={state}
+              showSecrets={showSecrets}
             />
           )}
           {view === "entry" && activeEntry && (
@@ -5887,7 +5917,7 @@ function App() {
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
+function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templateCounts, tagCounts, allTags, onSelectTemplate, onSelectTag, onSelectAllEntries, onClickWorldName, onNewTemplate, onImportTemplate, packs, activePackId, onSelectPack, onNewPack, onImportPack, onSelectView, onReorderTemplate, viewOrder, onReorderViews, isLocked, deletedBuiltinNames, onOpenRestoreModal, templatesCollapsed, onToggleTemplatesCollapsed, sidebarWidth, onResize }) {
   const importFileRef = useRef(null);
   const packImportFileRef = useRef(null);
   const tplDrag = useDragReorder(onReorderTemplate || (() => {}));
@@ -6032,6 +6062,18 @@ function Sidebar({ state, activeTemplateId, activeTagFilter, activeView, templat
             <span>Templates {displayedTemplates.length > 0 && <span className="nav-label-count">({displayedTemplates.length})</span>}</span>
             <span className="nav-label-chevron">{templatesCollapsed ? "▸" : "▾"}</span>
           </button>
+          {/* v1.7 r045: the list over every entry, whatever its template */}
+          {onSelectAllEntries && (() => {
+            const isActive = activeView === "list" && !activeTemplateId && !activeTagFilter;
+            const n = Array.isArray(state.entries) ? state.entries.length : 0;
+            return (
+              <button className={`nav-item nav-item-all ${isActive ? "active" : ""}`} onClick={onSelectAllEntries} title="Every entry in the world, whatever its template">
+                <span className="nav-icon" style={isActive ? { color: "var(--accent)" } : {}}>≡</span>
+                <span className="nav-name">All entries</span>
+                {n ? <span className="nav-count">{n}</span> : null}
+              </button>
+            );
+          })()}
           {!templatesCollapsed && displayedTemplates.length === 0 && <div style={{ padding: "5px 14px", fontSize: 12, color: "var(--text-dim)", fontStyle: "italic" }}>No templates yet</div>}
           {!templatesCollapsed && displayedTemplates.map(({ t, originalIdx }) => {
             const idx = originalIdx;

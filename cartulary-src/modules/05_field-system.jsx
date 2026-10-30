@@ -656,6 +656,19 @@ const isFieldVisibleDisplay = (field, fieldValues, showSecrets) => {
   return true;
 };
 
+// A Number field's value as a number (v1.7 r045): the form stores the
+// input's text, so text that reads as a number is one, and anything else,
+// blank included, is none. The required check and the entry list's
+// conditions read it.
+const fieldNumberValue = (v) => {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+};
+
 // Validate required-field constraints on an entry's field values. Returns array of
 // human-readable error strings (empty if valid). Caller flashes these and aborts save.
 // Per spec: "non-empty value" rules vary by field type. Cascade-child fields that are
@@ -706,7 +719,7 @@ const validateRequiredFields = (template, fields) => {
         if (!v) missing = true;
       }
     } else if (f.type === "number") {
-      if (typeof v !== "number" || Number.isNaN(v)) missing = true;
+      if (fieldNumberValue(v) == null) missing = true;
     } else if (f.type === "calendar-date") {
       if (!v || v.year == null) missing = true;
     } else if (f.type === "calendar-date-range") {
