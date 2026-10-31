@@ -29,9 +29,22 @@ const TABULA_TOOLS = [
   { id: "freehand", label: "Freehand", glyph: "∿", hint: "Drag to draw a line freehand. Esc while dragging discards it." },
 ];
 // The point on a card's box a stuck end is drawn at: on the border, where
-// the line from the box's center toward the next point leaves it.
+// the line from the box's center toward the next point leaves it. A box
+// with a rotation, in degrees about its center as the map's renderer turns
+// a stamp (v1.7 r050; no card has one), is worked out unturned, toward the
+// next point turned back by its angle, and the point found is turned
+// forward.
 const tabulaAttachPoint = (box, from) => {
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+  if (box.rotation) {
+    const th = box.rotation * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+    const fx = from[0] - cx, fy = from[1] - cy;
+    const ux = fx * c + fy * s, uy = fy * c - fx * s;
+    if (!ux && !uy) return [cx, cy];
+    const k = Math.min(ux ? box.w / 2 / Math.abs(ux) : Infinity, uy ? box.h / 2 / Math.abs(uy) : Infinity);
+    const q = (v) => Math.round(v * 100) / 100;
+    return [q(cx + (ux * c - uy * s) * k), q(cy + (ux * s + uy * c) * k)];
+  }
   const dx = from[0] - cx, dy = from[1] - cy;
   if (!dx && !dy) return [cx, cy];
   const t = Math.min(dx ? box.w / 2 / Math.abs(dx) : Infinity, dy ? box.h / 2 / Math.abs(dy) : Infinity);

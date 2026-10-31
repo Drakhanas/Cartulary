@@ -131,6 +131,12 @@ function ensureMapShape(s) {
   if (type === "stroke") {
     // the heads (v1.7 r032): none, one at the end, or one at each end
     out.arrow = pick(s.arrow, ["none", "end", "both"], "none");
+    // the ends (v1.7 r050): what each sticks to, a pin's id or a stamp's
+    // shape id, null where it's free; a line with both ends free carries
+    // none, so one saved before r050 round-trips unchanged
+    const a = s.anchors && typeof s.anchors === "object" ? s.anchors : {};
+    const idOf = (v) => (typeof v === "string" && v ? v : null);
+    if (idOf(a.start) || idOf(a.end)) out.anchors = { start: idOf(a.start), end: idOf(a.end) };
   }
   if (type === "text") {
     out.text = typeof s.text === "string" ? s.text : "";
@@ -185,18 +191,118 @@ function ensureDrawingShape(drawing) {
 }
 
 // mapData as every consumer may assume it: image (string or null, as the r001
-// migration kept it), pins (array, untouched here), drawing (normalized).
+// migration kept it), pins (array), drawing (normalized). A pin passes
+// through as it is, except that since v1.7 r050 one whose id an earlier pin
+// has, or that has none, gets a new one, the random part of genId() as a
+// shape's, so two pins placed within a second of each other before r050
+// come apart; and a line's anchors are kept only where they name a pin or a
+// stamp of this map (mapCheckAnchors).
 function ensureMapData(md) {
   const src = (md && typeof md === "object") ? md : {};
+  const given = Array.isArray(src.pins) ? src.pins : [];
+  const seen = new Set();
+  let renamed = false;
+  const pins = given.map(p => {
+    if (!p || typeof p !== "object") return p;
+    if (typeof p.id === "string" && p.id && !seen.has(p.id)) { seen.add(p.id); return p; }
+    let id = `pin-${genId().slice(-6)}`;
+    while (seen.has(id)) id = `pin-${genId().slice(-6)}`;
+    seen.add(id);
+    renamed = true;
+    return { ...p, id };
+  });
   return {
     image: typeof src.image === "string" ? src.image : null,
-    pins: Array.isArray(src.pins) ? src.pins : [],
-    drawing: ensureDrawingShape(src.drawing),
+    pins: renamed ? pins : given,
+    drawing: mapCheckAnchors(ensureDrawingShape(src.drawing), seen),
   };
 }
 
 function makeDefaultMapData() {
   return ensureMapData(null);
+}
+
+// Sticky line ends (v1.7 r050). A line's first and last points may stick to a
+// pin or a stamp (`anchors`, in ensureMapShape) and are drawn from it from
+// then on, through Tabula's tabulaDrawnPoints, so they follow it however it
+// moves; the points kept are where the ends were put down, for the day it
+// goes. Nothing is written when a pin or a stamp moves.
+
+// A line with its anchors set to `a`, or with none where both ends are free.
+function mapWithAnchors(s, a) {
+  const out = { ...s };
+  delete out.anchors;
+  if (a && (a.start || a.end)) out.anchors = { start: a.start || null, end: a.end || null };
+  return out;
+}
+
+// A drawing's anchors checked against the map's pins (their ids, `pinIds`)
+// and the drawing's stamps, on any layer: an anchor naming neither clears,
+// its end keeping the point it was put down at. A drawing nothing changed in
+// comes back as it was.
+function mapCheckAnchors(drawing, pinIds) {
+  const ids = new Set(pinIds);
+  drawing.layers.forEach(l => l.shapes.forEach(s => { if (s.type === "stamp") ids.add(s.id); }));
+  let changed = false;
+  const layers = drawing.layers.map(l => {
+    let touched = false;
+    const shapes = l.shapes.map(s => {
+      if (!s.anchors) return s;
+      const a = { start: ids.has(s.anchors.start) ? s.anchors.start : null, end: ids.has(s.anchors.end) ? s.anchors.end : null };
+      if (a.start === s.anchors.start && a.end === s.anchors.end) return s;
+      touched = true;
+      return mapWithAnchors(s, a);
+    });
+    if (!touched) return l;
+    changed = true;
+    return { ...l, shapes };
+  });
+  return changed ? { ...drawing, layers } : drawing;
+}
+
+// What a line's ends stick to, by id, in canvas units, as tabulaDrawnPoints
+// takes them: a pin a box of no size at its point on the canvas being drawn
+// (`width` by `height`, which its fractions are of), a stamp its box and its
+// rotation, on any layer. A pin time mode hides or a download leaves out,
+// and a stamp on a hidden layer or with its symbol missing, are here all the
+// same (Drak's calls 1 and 2 at r050), so a line is drawn alike in every
+// view and file.
+function mapAnchorBoxes(drawing, pins, width, height) {
+  const boxes = Object.create(null);
+  (Array.isArray(pins) ? pins : []).forEach(p => {
+    if (p && typeof p.id === "string" && !(p.id in boxes) && Number.isFinite(p.x) && Number.isFinite(p.y)) boxes[p.id] = { x: p.x * width, y: p.y * height, w: 0, h: 0 };
+  });
+  ((drawing && drawing.layers) || []).forEach(l => (l.shapes || []).forEach(s => {
+    if (s && s.type === "stamp" && !(s.id in boxes)) boxes[s.id] = { x: s.x, y: s.y, w: s.w, h: s.h, rotation: s.rotation || 0 };
+  }));
+  return boxes;
+}
+
+// A line's points as drawn, its stuck ends worked out from `boxes`; any
+// other shape's, or a line with no anchors, as stored.
+function mapDrawnPoints(s, boxes) {
+  if (!s || s.type !== "stroke" || !s.anchors || !Array.isArray(s.points) || s.points.length < 2) return s ? s.points : null;
+  return tabulaDrawnPoints(s, boxes, null);
+}
+
+// The ends stuck to `ids` freed where they're drawn now, for a delete that
+// takes those pins or stamps away, in the same step: each such end keeps its
+// drawn point, rounded as a point is stored, and loses its anchor. The
+// layers come back as they were where nothing is stuck to any of them.
+function mapFreeEnds(layers, ids, boxes) {
+  const gone = new Set(ids);
+  const r = (v) => Math.round(v * 100) / 100;
+  const held = (s) => !!s.anchors && (gone.has(s.anchors.start) || gone.has(s.anchors.end));
+  if (!layers.some(l => (l.shapes || []).some(held))) return layers;
+  return layers.map(l => (!(l.shapes || []).some(held) ? l : { ...l, shapes: l.shapes.map(s => {
+    if (!held(s)) return s;
+    const drawn = mapDrawnPoints(s, boxes);
+    const points = s.points.slice();
+    const a = { start: s.anchors.start, end: s.anchors.end };
+    if (gone.has(a.start)) { points[0] = [r(drawn[0][0]), r(drawn[0][1])]; a.start = null; }
+    if (gone.has(a.end)) { const k = points.length - 1; points[k] = [r(drawn[k][0]), r(drawn[k][1])]; a.end = null; }
+    return mapWithAnchors({ ...s, points }, a);
+  }) }));
 }
 
 // state.mapStamps: stamps imported from stamp packs, world-scoped, each

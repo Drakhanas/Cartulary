@@ -962,7 +962,9 @@ const renderFieldForHtml = (field, val, ctx) => {
 // serialized; the image inlined inside it when there is one) with the
 // absolute-positioned pin overlay + numbered legend below. Pins filter through
 // isPinVisibleAtAbsDay when ctx.currentMomentDay is set; null currentMomentDay
-// shows all pins (per the warning-and-proceed flow in the export modal).
+// shows all pins (per the warning-and-proceed flow in the export modal). The
+// drawing takes every pin, shown or not, so a line's end stuck to a pin the
+// moment hides is drawn at its point all the same (r050, Drak's call 1).
 const renderMapHtml = (entry, tpl, state, ctx) => {
   const mapData = ensureMapData(entry.mapData);
   const allPins = Array.isArray(mapData.pins) ? mapData.pins : [];
@@ -1005,13 +1007,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageHeight: imageSize ? imageSize.height : null,
       stamps: state.mapStamps,
       layerImages,
+      pins: allPins,
     })) + layerNotes;
   } else if (mapData.image) {
     imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>` + layerNotes;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages })) + layerNotes;
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages, pins: allPins })) + layerNotes;
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /

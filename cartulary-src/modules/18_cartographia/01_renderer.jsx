@@ -293,11 +293,14 @@ function mapShapeNode(s, ctx) {
 }
 
 // opts: { id, className, label, imageHref, imageWidth, imageHeight, stamps,
-// placeholder, layerImages }. stamps is the world's imported stamps
+// placeholder, layerImages, pins }. stamps is the world's imported stamps
 // (state.mapStamps), which the built-ins come before; placeholder is the
 // editor's, see mapShapeNode; layerImages maps a raster layer's filename to
 // the url that draws it (a data URL draws as it is), and a raster layer with
-// no url is left out (r043).
+// no url is left out (r043); pins are the map's, every one whether it's
+// shown or not, and a line's stuck ends are drawn from them and from the
+// stamps (v1.7 r050, mapAnchorBoxes); without them an end stuck to a pin is
+// drawn where it was put down.
 // With an image the canvas is the image's natural size and the background is not
 // drawn; without one the background rect (and its grain) comes first. Then one
 // <g> per visible layer, in order. <defs> carries the grain filter, the path
@@ -326,6 +329,7 @@ function buildMapDrawingTree(drawing, opts) {
     }
   }
   const ctx = { idBase, defs, stampsUsed: new Map(), tints: new Map(), stamps: Array.isArray(o.stamps) ? o.stamps : [], placeholder: !!o.placeholder };
+  const boxes = mapAnchorBoxes(d, o.pins, width, height); // what a line's stuck ends are drawn from (r050)
   const layerHref = (layer) => {
     if (!layer.image) return null;
     if (layer.image.startsWith("data:")) return layer.image;
@@ -341,7 +345,7 @@ function buildMapDrawingTree(drawing, opts) {
       if (href) children.push({ tag: "image", attrs: { "data-layer": layer.id, "data-kind": "raster", href, x: "0", y: "0", width: f(layer.width), height: f(layer.height), preserveAspectRatio: "none" } });
       return;
     }
-    children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s, ctx)).filter(Boolean) });
+    children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s.anchors ? { ...s, points: mapDrawnPoints(s, boxes) } : s, ctx)).filter(Boolean) });
   });
   ctx.stampsUsed.forEach(def => {
     const id = `${idBase}-stamp-${String(def.id).replace(/[^A-Za-z0-9_-]/g, "")}`;

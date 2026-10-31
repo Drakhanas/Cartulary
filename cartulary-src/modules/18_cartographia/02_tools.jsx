@@ -17,11 +17,11 @@
 // field focused, picks it.
 const MAP_TOOLS = [
   { id: "pin",     label: "Pin",     key: "n", hint: "Click on map to add pin · Click pin to edit · Drag pin to move" },
-  { id: "select",  label: "Select",  key: "v", hint: "Click a shape to select it · Drag to move · Corners and points reshape it, the knob turns it · Arrows nudge it · Delete removes it · Right-click returns to Pin" },
+  { id: "select",  label: "Select",  key: "v", hint: "Click a shape to select it · Drag to move · Corners and points reshape it, the knob turns it · A line's end dropped on a pin or a stamp sticks to it, off one it comes free · Arrows nudge it · Delete removes it · Right-click returns to Pin" },
   { id: "rect",    label: "Rect",    key: "r", hint: "Drag on the map to draw a rectangle · Right-click when done" },
   { id: "ellipse", label: "Ellipse", key: "e", hint: "Drag on the map to draw an ellipse · Right-click when done" },
   { id: "polygon", label: "Polygon", key: "p", hint: "Click to place the corners of a closed, filled area · Done in the strip, the first corner, a double-click, Enter, or right-click closes it · Esc discards" },
-  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards · Arrowheads in the strip" },
+  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · An end put down on a pin or a stamp sticks to it and follows it · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards · Arrowheads in the strip" },
   { id: "freehand", label: "Freehand", key: "f", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Arrowheads in the strip · Right-click when done" },
   { id: "fill",    label: "Fill",    key: "g", hint: "Click inside an area to fill it with the Fill color · The fill goes under the lines around it, and small gaps in them close · Right-click when done" },
   { id: "text",    label: "Text",    key: "t", hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
@@ -95,10 +95,14 @@ const MAP_CANVAS_PRESETS = [
 // (4 units at 1600 wide), Douglas-Peucker on release at `tolerance` of the
 // width (4 units at 1600, about two screen pixels at the default width, which
 // is where hand jitter lives), the tolerance raised by half until the stroke is
-// under `maxPoints`; a polygon or line with more than `handleCap` points has
-// no per-point handles in Select. All in canvas units, so the result does not
-// depend on zoom.
+// under `maxPoints`; a polygon with more than `handleCap` points has no
+// point handles in the map's Select, and a line past it has handles at its
+// two ends only (v1.7 r050, Drak's call 3), so its ends can still be stuck
+// and freed. All in canvas units, so the result does not depend on zoom.
 const MAP_FREEHAND = { spacing: 1 / 400, tolerance: 1 / 400, maxPoints: 400, handleCap: 40 };
+// A line's end put down within this many screen pixels of a pin's marker or
+// a stamp's box sticks to it (v1.7 r050), the reach Tabula gives a card.
+const MAP_STICK = 6;
 
 // Paint (r044): the Brush and the Eraser lay dabs of a tip along the
 // pointer's path on the active raster layer. Sizes are in canvas units (the
@@ -387,6 +391,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const [selectedShapeId, setSelectedShapeId] = useState(null);
   const [draft, setDraft] = useState(null);     // rect/ellipse: {type, x0, y0, x1, y1}; polygon/stroke: {type, points}
   const [cursor, setCursor] = useState(null);   // [x, y] while a polygon or line is in progress
+  const [stick, setStick] = useState(null);     // the pin or stamp a line's pending point is over (r050), or null
   const [moving, setMoving] = useState(null);   // {id, startX, startY, origin} while Select drags a whole shape
   const [vertexDrag, setVertexDrag] = useState(null); // {id, index} while Select drags one point of a polygon or line
   const [selBox, setSelBox] = useState(null);   // selection box in viewBox units, measured from the DOM
@@ -444,6 +449,41 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     return rect && rect.width ? getV().w / rect.width : 1;
   };
 
+  // Sticky line ends (v1.7 r050). What the ends stick to, from the map's pins
+  // and stamps on the canvas the tree drew; a line's points as drawn; and what
+  // an end put down at the pointer sticks to: the topmost pin whose marker,
+  // grown by MAP_STICK screen pixels, holds it, else the topmost stamp on a
+  // shown layer, locked or not, whose turned box, grown the same, holds it,
+  // else nothing. A stamp on a hidden layer can't be seen, so nothing new
+  // sticks to it; an end stuck to it before still follows it.
+  const boxes = mapAnchorBoxes(drawing, data.pins, width, height);
+  const drawn = (s) => mapDrawnPoints(s, boxes);
+  const stickAt = (e) => {
+    const g = MAP_STICK;
+    let pin = null;
+    const root = canvasRef.current;
+    if (root) root.querySelectorAll("[data-pin]").forEach(node => {
+      const r = (node.querySelector(".map-pin-marker") || node).getBoundingClientRect();
+      if (e.clientX >= r.left - g && e.clientX <= r.right + g && e.clientY >= r.top - g && e.clientY <= r.bottom + g) pin = node.getAttribute("data-pin");
+    });
+    if (pin) return pin;
+    const p = toPoint(e);
+    if (!p) return null;
+    const k = g * unitsPerPx();
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const l = layers[i];
+      if (!l.visible || l.kind === "raster") continue;
+      for (let j = l.shapes.length - 1; j >= 0; j--) {
+        const s = l.shapes[j];
+        if (s.type !== "stamp") continue;
+        const th = (s.rotation || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+        const fx = p[0] - (s.x + s.w / 2), fy = p[1] - (s.y + s.h / 2);
+        if (Math.abs(fx * c + fy * sn) <= s.w / 2 + k && Math.abs(fy * c - fx * sn) <= s.h / 2 + k) return s.id;
+      }
+    }
+    return null;
+  };
+
   // Every write: one new mapData through the history. opts.coalesce names a
   // gesture so its many commits are one undo step.
   const setLayers = (next, opts) => onChange({ ...data, drawing: { ...drawing, layers: next } }, opts);
@@ -457,8 +497,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const updateShape = (id, patch, opts) => {
     setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === id ? (ensureMapShape({ ...s, ...patch }) || s) : s) })), opts);
   };
+  // a stamp deleted frees the ends stuck to it where they're drawn, in the same step (r050)
   const deleteShape = (id) => {
-    setLayers(layers.map(l => ({ ...l, shapes: l.shapes.filter(s => s.id !== id) })));
+    setLayers(mapFreeEnds(layers, [id], boxes).map(l => ({ ...l, shapes: l.shapes.filter(s => s.id !== id) })));
     if (selectedShapeId === id) setSelectedShapeId(null);
   };
 
@@ -498,7 +539,8 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!l) return;
     if (l.kind === "raster" && l.image && !confirm(`Delete the raster layer "${l.name}" and its image? Undo brings it back.`)) return;
     if (l.shapes.length > 0 && !confirm(`Delete layer "${l.name}" and its ${l.shapes.length} ${l.shapes.length === 1 ? "shape" : "shapes"}? Undo brings it back.`)) return;
-    setLayers(layers.filter(x => x.id !== id));
+    // its stamps' stuck ends freed where they're drawn, in the same step (r050)
+    setLayers(mapFreeEnds(layers, l.shapes.filter(s => s.type === "stamp").map(s => s.id), boxes).filter(x => x.id !== id));
     if (selectedShape && l.shapes.some(s => s.id === selectedShape.id)) setSelectedShapeId(null);
   };
   const moveShapeToLayer = (shapeId, layerId) => {
@@ -561,7 +603,8 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (draft.type === "polygon" || draft.type === "stroke") {
       const pts = pointsOverride || draft.points;
       if (pts.length >= (draft.type === "polygon" ? 3 : 2)) {
-        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth, arrow: draft.type === "stroke" ? style.arrow : undefined });
+        // a line's ends stick to what its first and last points were put down on (r050)
+        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth, arrow: draft.type === "stroke" ? style.arrow : undefined, anchors: draft.type === "stroke" ? { start: draft.start || null, end: draft.over || null } : undefined });
       }
     }
     setDraft(null);
@@ -683,7 +726,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     try {
       const fc = await fillContext();
       const tree = buildMapDrawingTree({ ...drawing, background: { ...drawing.background, grain: 0 } }, {
-        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps, layerImages: fc.layerImages,
+        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps, layerImages: fc.layerImages, pins: data.pins,
       });
       // The trace svg is loaded as an image: it needs its size on the root (an
       // svg with only a viewBox draws nothing to a canvas in Firefox, and a
@@ -779,12 +822,16 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!targetLayer) return;
     const p = toPoint(e);
     if (!p) return;
-    if (!draft) { setDraft({ type: tool, points: [p] }); setCursor(p); return; }
+    // a line's point put down on a pin or a stamp: the first sticks its
+    // start, the latest its end (r050)
+    const over = tool === "stroke" ? stickAt(e) : null;
+    setStick(over);
+    if (!draft) { setDraft({ type: tool, points: [p], start: over, over }); setCursor(p); return; }
     if (tool === "polygon" && draft.points.length >= 3) {
       const first = draft.points[0];
       if (Math.hypot(p[0] - first[0], p[1] - first[1]) <= 10 * unitsPerPx()) { finishDraft(); return; }
     }
-    setDraft({ ...draft, points: [...draft.points, p] });
+    setDraft({ ...draft, points: [...draft.points, p], over });
   };
   const onSvgDoubleClick = (e) => {
     if (!draft || (draft.type !== "polygon" && draft.type !== "stroke")) return;
@@ -808,6 +855,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!draft || (draft.type !== "polygon" && draft.type !== "stroke")) return;
     const p = toPoint(e);
     if (p) setCursor(p);
+    if (draft.type === "stroke") setStick(stickAt(e));
   };
   const onSvgPointerLeave = () => {
     if (paintTool && !strokeRef.current) setCursor(null);
@@ -1282,14 +1330,27 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   }, [moving, layers]);
 
   // Vertex drag: one point of the selected polygon or line follows the cursor.
+  // A line's end sticks to the pin or the stamp it's over and comes free off
+  // one (r050), its anchor set at every move, so the end is drawn there
+  // while the pointer is and the drop keeps the last.
   useEffect(() => {
     if (!vertexDrag) return;
     const move = (e) => {
       const p = toPoint(e);
       if (!p) return;
-      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => (s.id === vertexDrag.id && Array.isArray(s.points))
-        ? { ...s, points: s.points.map((q, i) => (i === vertexDrag.index ? p : q)) }
-        : s) })), { coalesce: `vertex-${vertexDrag.id}-${vertexDrag.index}-${vertexDrag.seq}` });
+      const shape = allShapes.find(s => s.id === vertexDrag.id);
+      const n = shape && Array.isArray(shape.points) ? shape.points.length : 0;
+      const end = !!shape && shape.type === "stroke" && (vertexDrag.index === 0 || vertexDrag.index === n - 1);
+      const over = end ? stickAt(e) : null;
+      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => {
+        if (s.id !== vertexDrag.id || !Array.isArray(s.points)) return s;
+        const moved = { ...s, points: s.points.map((q, i) => (i === vertexDrag.index ? p : q)) };
+        if (!end) return moved;
+        const a = { start: s.anchors ? s.anchors.start : null, end: s.anchors ? s.anchors.end : null };
+        if (vertexDrag.index === 0) a.start = over;
+        if (vertexDrag.index === n - 1) a.end = over;
+        return mapWithAnchors(moved, a);
+      }) })), { coalesce: `vertex-${vertexDrag.id}-${vertexDrag.index}-${vertexDrag.seq}` });
     };
     const up = () => setVertexDrag(null);
     window.addEventListener("pointermove", move);
@@ -1386,6 +1447,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     stampId, setStampId,
     selectedShape, deleteSelected: () => { if (selectedShape) deleteShape(selectedShape.id); },
     draft, cursor, selBox, style, selectable, finishDraft, cancelDraft,
+    drawn, boxes, stick, freeEnds: (ids) => mapFreeEnds(layers, ids, boxes),
     layers, activeLayerId: activeLayer ? activeLayer.id : null, setActiveLayerId,
     focusTextId, consumeFocusText: () => setFocusTextId(null),
     addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer, setLayerImage, clearLayerImage,
@@ -2030,7 +2092,7 @@ function MapLayerPanel({ drawing, onLoadImage, missing }) {
 // screen pixels wide, and nobody should have to hit that), plus draggable
 // point handles for the selected polygon or line.
 function MapEditorOverlay({ width, height, drawing, view }) {
-  const { tool, draft, cursor, selBox, style, selectable, selectedShape, onSvgPointerDown, onSvgContextMenu, paintSettings } = drawing;
+  const { tool, draft, cursor, selBox, style, selectable, selectedShape, onSvgPointerDown, onSvgContextMenu, paintSettings, drawn, boxes, stick } = drawing;
   const f = mapNum;
   const items = [];
   // the visible rect (r045); handle sizes follow it so they keep their screen size at any zoom
@@ -2049,7 +2111,7 @@ function MapEditorOverlay({ width, height, drawing, view }) {
         items.push(mapTreeToReact({ tag: "rect", attrs }, `hit-${s.id}`));
         return;
       }
-      const node = mapShapeNode(s, hitCtx);
+      const node = mapShapeNode(s.anchors ? { ...s, points: drawn(s) } : s, hitCtx); // a line where it's drawn (r050)
       if (!node) return;
       const attrs = { ...node.attrs, fill: s.type === "stroke" || !s.fill ? "none" : "transparent", stroke: "transparent", "stroke-width": "14", "vector-effect": "non-scaling-stroke", "data-hit": "shape" };
       delete attrs.filter;
@@ -2079,7 +2141,10 @@ function MapEditorOverlay({ width, height, drawing, view }) {
     else items.push(<polyline key="draft" points={draft.points.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
   } else if (draft) {
     const pts = draft.points;
-    const trail = cursor ? [...pts, cursor] : pts;
+    const typed = cursor ? [...pts, cursor] : pts;
+    // a line's rubber band as it will be drawn (r050): its start from what
+    // its first point stuck to, its pending end from what the pointer is over
+    const trail = draft.type === "stroke" && typed.length >= 2 ? mapDrawnPoints({ type: "stroke", points: typed, anchors: { start: draft.start || null, end: (cursor ? stick : draft.over) || null } }, boxes) : typed;
     const arrowed = draft.type === "stroke" && (style.arrow === "end" || style.arrow === "both");
     if (arrowed) items.push(<path key="draft" d={`M${trail.map(p => `${f(p[0])} ${f(p[1])}`).join(" L")}${mapArrowHeads(trail, style.strokeWidth, style.arrow)}`} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
     else items.push(<polyline key="draft" points={trail.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
@@ -2123,12 +2188,18 @@ function MapEditorOverlay({ width, height, drawing, view }) {
   } else if (selBox) {
     items.push(<rect key="sel" x={f(selBox.x)} y={f(selBox.y)} width={f(selBox.w)} height={f(selBox.h)} fill="none" stroke="#c8a96e" strokeWidth={1} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" pointerEvents="none" />);
   }
-  if (selectMode && selectedShape && Array.isArray(selectedShape.points) && selectedShape.points.length <= MAP_FREEHAND.handleCap) {
+  const longLine = !!selectedShape && selectedShape.type === "stroke" && Array.isArray(selectedShape.points) && selectedShape.points.length > MAP_FREEHAND.handleCap;
+  if (selectMode && selectedShape && Array.isArray(selectedShape.points) && (selectedShape.points.length <= MAP_FREEHAND.handleCap || longLine)) {
     // A visible dot, then its hit target on top: a transparent disk (the
     // stroke ring alone leaves the centre of a small circle unhittable in
     // Chromium) plus a transparent 16-pixel non-scaling stroke around it.
+    // A line's handles sit at its drawn points, a stuck end's where the end
+    // is drawn, and a line past the cap has handles at its two ends only
+    // (r050, Drak's call 3).
     const hr = Math.max(0.5, v.w / 130);
-    selectedShape.points.forEach((p, i) => {
+    const handlePts = drawn(selectedShape);
+    handlePts.forEach((p, i) => {
+      if (longLine && i !== 0 && i !== handlePts.length - 1) return;
       items.push(<circle key={`h${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="#f4efe4" stroke="#2b2420" strokeWidth={1} vectorEffect="non-scaling-stroke" pointerEvents="none" />);
       items.push(<circle key={`hh${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="transparent" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" data-vertex={i} />);
     });

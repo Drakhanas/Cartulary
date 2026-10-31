@@ -111,7 +111,8 @@ function mapFontFaceCss() {
 // folder image is read through the folder handle, a filename with no folder
 // cannot be read and the file is written without it, which the caller says),
 // the world's stamps resolved, hidden layers omitted, no pins (pins are app
-// data with their own renderer), the map font embedded from the page's own
+// data with their own renderer; a line's end stuck to one is drawn at its
+// point all the same, r050), the map font embedded from the page's own
 // stylesheet, href doubled as xlink:href on image, use, and textPath so older
 // viewers open it, and width and height on the root so a viewer, and Firefox
 // drawing it to a canvas, know its size. Raster layers are read the same way
@@ -161,6 +162,7 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
     imageHeight: size ? size.height : null,
     stamps: state ? state.mapStamps : [],
     layerImages,
+    pins: mapData.pins,
   });
   const double = (node) => {
     if (!node || typeof node !== "object") return;
@@ -441,6 +443,7 @@ function MapPin({ pin, entries, templates, asOfYear, timeMode, isSelected, onCli
   return (
     <div
       className={`map-pin ${editable ? "editable" : ""} ${isSelected ? "selected" : ""}`}
+      data-pin={pin.id}
       style={{ left: `${left * 100}%`, top: `${top * 100}%` }}
       onClick={onClick}
       onPointerDown={onPointerDown}
@@ -477,6 +480,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
     imageHeight: imageSize ? imageSize.height : null,
     stamps: state ? state.mapStamps : [],
     layerImages: layerImages.urls,
+    pins: mapData.pins,
   }), [mapData, entry.id, entry.name, imageUrl, imageSize, state ? state.mapStamps : null, layerImages]);
   // Download the saved map as a file: an svg, or a png at twice the canvas
   // size, capped at sixteen million pixels (Safari's canvas limit) so a huge
@@ -794,6 +798,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     stamps,
     placeholder: true,
     layerImages: mergedUrls,
+    pins: data.pins,
   }), [data, imageUrl, imageSize, stamps, mergedUrls]);
   // A folder file written in order, one write at a time per editor; a data
   // URL or a blob.
@@ -975,15 +980,16 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
   // Canvas size presets for image-less maps. With shapes or pins on the map
   // the switch warns first, because nothing is transformed: shapes keep their
   // coordinates (anything beyond the new edges is cut off) and pins keep their
-  // 0-1 positions, so they shift against the drawing. An image map's canvas is
-  // the image's size and has no picker.
+  // 0-1 positions, so they shift against the drawing, a line's end stuck to a
+  // pin with it (r050). An image map's canvas is the image's size and has no
+  // picker.
   const showPresets = !data.image;
   const [customSizeOpen, setCustomSizeOpen] = useState(false); // Custom picked while the size still matches a preset
   const presetValue = customSizeOpen ? "custom" : (MAP_CANVAS_PRESETS.find(p => p.width === data.drawing.width && p.height === data.drawing.height) || { id: "custom" }).id;
   const applyCanvasSize = (width, height, label) => {
     if (width === data.drawing.width && height === data.drawing.height) return;
     const hasWork = pins.length > 0 || mapDrawingHasContent(data.drawing);
-    if (hasWork && !confirm(`Change the canvas to ${label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing. Undo restores it.`)) return;
+    if (hasWork && !confirm(`Change the canvas to ${label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing, and a line's end stuck to a pin goes with it. Undo restores it.`)) return;
     commit({ ...data, drawing: { ...data.drawing, width, height } });
   };
   const applyPreset = (id) => {
@@ -1090,7 +1096,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     if (x < 0 || x > 1 || y < 0 || y > 1) return;
 
     const newPin = {
-      id: `pin-${genId().slice(0, 6)}`,
+      id: `pin-${genId().slice(-6)}`, // the random part, as a shape's (r050); the time's repeated within a second
       x, y, label: "", entryId: null, color: null, notes: "",
     };
     commit({ ...data, pins: [...pins, newPin] });
@@ -1148,8 +1154,10 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     const field = Object.keys(patch)[0] || "field";
     commit({ ...data, pins: pins.map(p => p.id === pinId ? { ...p, ...patch } : p) }, { coalesce: `pin-${pinId}-${field}` });
   };
+  // a line's end stuck to the pin is freed where it's drawn, in the same step (r050)
   const deletePin = (pinId) => {
-    commit({ ...data, pins: pins.filter(p => p.id !== pinId) });
+    const layers = drawing.freeEnds([pinId]);
+    commit({ ...data, pins: pins.filter(p => p.id !== pinId), drawing: layers === data.drawing.layers ? data.drawing : { ...data.drawing, layers } });
     setSelectedPinId(null);
   };
 
