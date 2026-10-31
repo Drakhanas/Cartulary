@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists) ===
+=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1608,3 +1608,39 @@ the trap the handoff warns about: the checkout that puts back the files a
 cut starts from also stages them, and my first amend committed r045's text
 for six of them, five modules and the shell. git's own stat showed it
 before anything left the sandbox.
+
+r047 took Drak's two calls, a and a: the JSON keeps each value in the
+world file's own shape, a reference turned into its record's name and
+template beside its id, and the CSV is shaped for a spreadsheet.
+
+Building it, I found two templates the plan's words missed. Plot Thread
+and Theme / Motif have no list page, so an item on a template's page never
+reaches them; their Export ↓ is on Fabula's index. The spec says each
+template, so the item went there too, a third file in the cut, and the
+staging said so.
+
+The probe passed everything on its first run, which says nothing about a
+probe. The planted copies said more. One got past it, and only because I'd
+run it against the dialog's scenario, which never exports; the check it
+answers to lives in the JSON's. Five more were caught, but not at their own
+checks: each stopped its scenario at a click on something the copy had
+taken away, or on a menu under a dialog that Esc or a click outside
+hadn't closed. That last is r042's lesson, nearly word for word, in a
+doctrine entry I didn't reread before writing M7. Now M7 closes what a
+way out leaves open, Z3a and Z4a look for their controls before the
+click, and all sixty-seven copies are caught where they should be.
+
+Two more of my mistakes were old ones. The Write tool turned the CSV
+writer's "\uFEFF" into the byte-order mark itself, invisible in the source,
+which the handoff has warned of since r013; the file came out the same,
+and the planted copies, whose anchors spelled the escape, are what showed
+it. And a `pkill -f` I sent to clear a finished wait killed the shell that
+sent it, as r045's did, and the planted copies' run queued behind it.
+
+Drak passed it, and the independent read of this turnover found seven
+defects, none in the build. The one that mattered most was a habit I'd
+dropped: most of the cuts since r039 filed the help and site lines they
+left stale for r051, and for r047 I'd filed none, though the site still
+says a template's Export has two formats and Fabula's index exports only
+the template. I'd also written that five steps got checks of their own.
+Two did; the rest were mended.
