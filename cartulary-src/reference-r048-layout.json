@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "54dcedf665c9077446749d46e3436e55b000b7e6d88e5d3536011790c0b104b9",
+  "anchor_sha256": "302870b917da91576b374e3960e558ca0454e2cb41fc88148a64170c55429a47",
   "shell_sha256": "00b312a346ba38f65cec0dbe483159c4064956d0a0b7ed63738900a454b90df0",
   "files": [
     [
@@ -16,7 +16,7 @@
     ],
     [
       "03_persistence.jsx",
-      687
+      688
     ],
     [
       "04_trunk.jsx",
@@ -36,7 +36,7 @@
     ],
     [
       "08_export-layer.jsx",
-      1982
+      2583
     ],
     [
       "09_trunk.jsx",
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      6535
+      6598
     ],
     [
       "13_form-engine-display.jsx",
@@ -228,7 +228,7 @@
     ],
     [
       "28_fabula/08_threads.jsx",
-      256
+      258
     ],
     [
       "28_fabula/09_templates.jsx",
@@ -244,7 +244,7 @@
     ],
     [
       "29_modals.jsx",
-      483
+      645
     ],
     [
       "30_trunk.jsx",
