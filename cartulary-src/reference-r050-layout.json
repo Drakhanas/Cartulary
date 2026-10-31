@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "e11d0f935960072234d7d3c05bfe13a8515ead8d64f583abcff62e3b672ef4c6",
+  "anchor_sha256": "ab2cd3cd0b680d44888eaa9bf5830759320fa4ef4596af8268f25e461ee1ce37",
   "shell_sha256": "00b312a346ba38f65cec0dbe483159c4064956d0a0b7ed63738900a454b90df0",
   "files": [
     [
@@ -36,7 +36,7 @@
     ],
     [
       "08_export-layer.jsx",
-      2874
+      2877
     ],
     [
       "09_trunk.jsx",
@@ -76,19 +76,19 @@
     ],
     [
       "18_cartographia/00_model.jsx",
-      1100
+      1206
     ],
     [
       "18_cartographia/01_renderer.jsx",
-      417
+      421
     ],
     [
       "18_cartographia/02_tools.jsx",
-      2147
+      2218
     ],
     [
       "18_cartographia/03_view.jsx",
-      1286
+      1294
     ],
     [
       "18_cartographia/04_index.jsx",
@@ -124,7 +124,7 @@
     ],
     [
       "21_stemma/05_tabula-drawing.jsx",
-      489
+      502
     ],
     [
       "21_stemma/06_tabula-canvas.jsx",

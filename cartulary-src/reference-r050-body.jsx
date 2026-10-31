@@ -5243,7 +5243,9 @@ const renderFieldForHtml = (field, val, ctx) => {
 // serialized; the image inlined inside it when there is one) with the
 // absolute-positioned pin overlay + numbered legend below. Pins filter through
 // isPinVisibleAtAbsDay when ctx.currentMomentDay is set; null currentMomentDay
-// shows all pins (per the warning-and-proceed flow in the export modal).
+// shows all pins (per the warning-and-proceed flow in the export modal). The
+// drawing takes every pin, shown or not, so a line's end stuck to a pin the
+// moment hides is drawn at its point all the same (r050, Drak's call 1).
 const renderMapHtml = (entry, tpl, state, ctx) => {
   const mapData = ensureMapData(entry.mapData);
   const allPins = Array.isArray(mapData.pins) ? mapData.pins : [];
@@ -5286,13 +5288,14 @@ const renderMapHtml = (entry, tpl, state, ctx) => {
       imageHeight: imageSize ? imageSize.height : null,
       stamps: state.mapStamps,
       layerImages,
+      pins: allPins,
     })) + layerNotes;
   } else if (mapData.image) {
     imgHtml = `<div class="map-image-placeholder">(map image not embedded: ${htmlEscape(mapData.image)})</div>` + layerNotes;
   } else if (visiblePins.length === 0 && !mapDrawingHasContent(mapData.drawing)) {
     return `<div class="map-empty">(empty map: no image, no drawing, no pins)</div>`;
   } else {
-    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages })) + layerNotes;
+    imgHtml = mapTreeToString(buildMapDrawingTree(mapData.drawing, { id: entry.id, className: "map-image", label: entry.name, stamps: state.mapStamps, layerImages, pins: allPins })) + layerNotes;
   }
 
   // Numbered pin overlay. Each pin is an anchor (linked) or span (unlinked /
@@ -26658,6 +26661,12 @@ function ensureMapShape(s) {
   if (type === "stroke") {
     // the heads (v1.7 r032): none, one at the end, or one at each end
     out.arrow = pick(s.arrow, ["none", "end", "both"], "none");
+    // the ends (v1.7 r050): what each sticks to, a pin's id or a stamp's
+    // shape id, null where it's free; a line with both ends free carries
+    // none, so one saved before r050 round-trips unchanged
+    const a = s.anchors && typeof s.anchors === "object" ? s.anchors : {};
+    const idOf = (v) => (typeof v === "string" && v ? v : null);
+    if (idOf(a.start) || idOf(a.end)) out.anchors = { start: idOf(a.start), end: idOf(a.end) };
   }
   if (type === "text") {
     out.text = typeof s.text === "string" ? s.text : "";
@@ -26712,18 +26721,118 @@ function ensureDrawingShape(drawing) {
 }
 
 // mapData as every consumer may assume it: image (string or null, as the r001
-// migration kept it), pins (array, untouched here), drawing (normalized).
+// migration kept it), pins (array), drawing (normalized). A pin passes
+// through as it is, except that since v1.7 r050 one whose id an earlier pin
+// has, or that has none, gets a new one, the random part of genId() as a
+// shape's, so two pins placed within a second of each other before r050
+// come apart; and a line's anchors are kept only where they name a pin or a
+// stamp of this map (mapCheckAnchors).
 function ensureMapData(md) {
   const src = (md && typeof md === "object") ? md : {};
+  const given = Array.isArray(src.pins) ? src.pins : [];
+  const seen = new Set();
+  let renamed = false;
+  const pins = given.map(p => {
+    if (!p || typeof p !== "object") return p;
+    if (typeof p.id === "string" && p.id && !seen.has(p.id)) { seen.add(p.id); return p; }
+    let id = `pin-${genId().slice(-6)}`;
+    while (seen.has(id)) id = `pin-${genId().slice(-6)}`;
+    seen.add(id);
+    renamed = true;
+    return { ...p, id };
+  });
   return {
     image: typeof src.image === "string" ? src.image : null,
-    pins: Array.isArray(src.pins) ? src.pins : [],
-    drawing: ensureDrawingShape(src.drawing),
+    pins: renamed ? pins : given,
+    drawing: mapCheckAnchors(ensureDrawingShape(src.drawing), seen),
   };
 }
 
 function makeDefaultMapData() {
   return ensureMapData(null);
+}
+
+// Sticky line ends (v1.7 r050). A line's first and last points may stick to a
+// pin or a stamp (`anchors`, in ensureMapShape) and are drawn from it from
+// then on, through Tabula's tabulaDrawnPoints, so they follow it however it
+// moves; the points kept are where the ends were put down, for the day it
+// goes. Nothing is written when a pin or a stamp moves.
+
+// A line with its anchors set to `a`, or with none where both ends are free.
+function mapWithAnchors(s, a) {
+  const out = { ...s };
+  delete out.anchors;
+  if (a && (a.start || a.end)) out.anchors = { start: a.start || null, end: a.end || null };
+  return out;
+}
+
+// A drawing's anchors checked against the map's pins (their ids, `pinIds`)
+// and the drawing's stamps, on any layer: an anchor naming neither clears,
+// its end keeping the point it was put down at. A drawing nothing changed in
+// comes back as it was.
+function mapCheckAnchors(drawing, pinIds) {
+  const ids = new Set(pinIds);
+  drawing.layers.forEach(l => l.shapes.forEach(s => { if (s.type === "stamp") ids.add(s.id); }));
+  let changed = false;
+  const layers = drawing.layers.map(l => {
+    let touched = false;
+    const shapes = l.shapes.map(s => {
+      if (!s.anchors) return s;
+      const a = { start: ids.has(s.anchors.start) ? s.anchors.start : null, end: ids.has(s.anchors.end) ? s.anchors.end : null };
+      if (a.start === s.anchors.start && a.end === s.anchors.end) return s;
+      touched = true;
+      return mapWithAnchors(s, a);
+    });
+    if (!touched) return l;
+    changed = true;
+    return { ...l, shapes };
+  });
+  return changed ? { ...drawing, layers } : drawing;
+}
+
+// What a line's ends stick to, by id, in canvas units, as tabulaDrawnPoints
+// takes them: a pin a box of no size at its point on the canvas being drawn
+// (`width` by `height`, which its fractions are of), a stamp its box and its
+// rotation, on any layer. A pin time mode hides or a download leaves out,
+// and a stamp on a hidden layer or with its symbol missing, are here all the
+// same (Drak's calls 1 and 2 at r050), so a line is drawn alike in every
+// view and file.
+function mapAnchorBoxes(drawing, pins, width, height) {
+  const boxes = Object.create(null);
+  (Array.isArray(pins) ? pins : []).forEach(p => {
+    if (p && typeof p.id === "string" && !(p.id in boxes) && Number.isFinite(p.x) && Number.isFinite(p.y)) boxes[p.id] = { x: p.x * width, y: p.y * height, w: 0, h: 0 };
+  });
+  ((drawing && drawing.layers) || []).forEach(l => (l.shapes || []).forEach(s => {
+    if (s && s.type === "stamp" && !(s.id in boxes)) boxes[s.id] = { x: s.x, y: s.y, w: s.w, h: s.h, rotation: s.rotation || 0 };
+  }));
+  return boxes;
+}
+
+// A line's points as drawn, its stuck ends worked out from `boxes`; any
+// other shape's, or a line with no anchors, as stored.
+function mapDrawnPoints(s, boxes) {
+  if (!s || s.type !== "stroke" || !s.anchors || !Array.isArray(s.points) || s.points.length < 2) return s ? s.points : null;
+  return tabulaDrawnPoints(s, boxes, null);
+}
+
+// The ends stuck to `ids` freed where they're drawn now, for a delete that
+// takes those pins or stamps away, in the same step: each such end keeps its
+// drawn point, rounded as a point is stored, and loses its anchor. The
+// layers come back as they were where nothing is stuck to any of them.
+function mapFreeEnds(layers, ids, boxes) {
+  const gone = new Set(ids);
+  const r = (v) => Math.round(v * 100) / 100;
+  const held = (s) => !!s.anchors && (gone.has(s.anchors.start) || gone.has(s.anchors.end));
+  if (!layers.some(l => (l.shapes || []).some(held))) return layers;
+  return layers.map(l => (!(l.shapes || []).some(held) ? l : { ...l, shapes: l.shapes.map(s => {
+    if (!held(s)) return s;
+    const drawn = mapDrawnPoints(s, boxes);
+    const points = s.points.slice();
+    const a = { start: s.anchors.start, end: s.anchors.end };
+    if (gone.has(a.start)) { points[0] = [r(drawn[0][0]), r(drawn[0][1])]; a.start = null; }
+    if (gone.has(a.end)) { const k = points.length - 1; points[k] = [r(drawn[k][0]), r(drawn[k][1])]; a.end = null; }
+    return mapWithAnchors({ ...s, points }, a);
+  }) }));
 }
 
 // state.mapStamps: stamps imported from stamp packs, world-scoped, each
@@ -27920,11 +28029,14 @@ function mapShapeNode(s, ctx) {
 }
 
 // opts: { id, className, label, imageHref, imageWidth, imageHeight, stamps,
-// placeholder, layerImages }. stamps is the world's imported stamps
+// placeholder, layerImages, pins }. stamps is the world's imported stamps
 // (state.mapStamps), which the built-ins come before; placeholder is the
 // editor's, see mapShapeNode; layerImages maps a raster layer's filename to
 // the url that draws it (a data URL draws as it is), and a raster layer with
-// no url is left out (r043).
+// no url is left out (r043); pins are the map's, every one whether it's
+// shown or not, and a line's stuck ends are drawn from them and from the
+// stamps (v1.7 r050, mapAnchorBoxes); without them an end stuck to a pin is
+// drawn where it was put down.
 // With an image the canvas is the image's natural size and the background is not
 // drawn; without one the background rect (and its grain) comes first. Then one
 // <g> per visible layer, in order. <defs> carries the grain filter, the path
@@ -27953,6 +28065,7 @@ function buildMapDrawingTree(drawing, opts) {
     }
   }
   const ctx = { idBase, defs, stampsUsed: new Map(), tints: new Map(), stamps: Array.isArray(o.stamps) ? o.stamps : [], placeholder: !!o.placeholder };
+  const boxes = mapAnchorBoxes(d, o.pins, width, height); // what a line's stuck ends are drawn from (r050)
   const layerHref = (layer) => {
     if (!layer.image) return null;
     if (layer.image.startsWith("data:")) return layer.image;
@@ -27968,7 +28081,7 @@ function buildMapDrawingTree(drawing, opts) {
       if (href) children.push({ tag: "image", attrs: { "data-layer": layer.id, "data-kind": "raster", href, x: "0", y: "0", width: f(layer.width), height: f(layer.height), preserveAspectRatio: "none" } });
       return;
     }
-    children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s, ctx)).filter(Boolean) });
+    children.push({ tag: "g", attrs: { "data-layer": layer.id }, children: layer.shapes.map(s => mapShapeNode(s.anchors ? { ...s, points: mapDrawnPoints(s, boxes) } : s, ctx)).filter(Boolean) });
   });
   ctx.stampsUsed.forEach(def => {
     const id = `${idBase}-stamp-${String(def.id).replace(/[^A-Za-z0-9_-]/g, "")}`;
@@ -28061,11 +28174,11 @@ function useImageNaturalSize(url, onError) {
 // field focused, picks it.
 const MAP_TOOLS = [
   { id: "pin",     label: "Pin",     key: "n", hint: "Click on map to add pin · Click pin to edit · Drag pin to move" },
-  { id: "select",  label: "Select",  key: "v", hint: "Click a shape to select it · Drag to move · Corners and points reshape it, the knob turns it · Arrows nudge it · Delete removes it · Right-click returns to Pin" },
+  { id: "select",  label: "Select",  key: "v", hint: "Click a shape to select it · Drag to move · Corners and points reshape it, the knob turns it · A line's end dropped on a pin or a stamp sticks to it, off one it comes free · Arrows nudge it · Delete removes it · Right-click returns to Pin" },
   { id: "rect",    label: "Rect",    key: "r", hint: "Drag on the map to draw a rectangle · Right-click when done" },
   { id: "ellipse", label: "Ellipse", key: "e", hint: "Drag on the map to draw an ellipse · Right-click when done" },
   { id: "polygon", label: "Polygon", key: "p", hint: "Click to place the corners of a closed, filled area · Done in the strip, the first corner, a double-click, Enter, or right-click closes it · Esc discards" },
-  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards · Arrowheads in the strip" },
+  { id: "stroke",  label: "Line",    key: "l", hint: "Click to place the points of an open line · An end put down on a pin or a stamp sticks to it and follows it · Done in the strip, a double-click, Enter, or right-click finishes it · Esc discards · Arrowheads in the strip" },
   { id: "freehand", label: "Freehand", key: "f", hint: "Drag on the map to draw a line freehand · Esc while dragging discards it · Arrowheads in the strip · Right-click when done" },
   { id: "fill",    label: "Fill",    key: "g", hint: "Click inside an area to fill it with the Fill color · The fill goes under the lines around it, and small gaps in them close · Right-click when done" },
   { id: "text",    label: "Text",    key: "t", hint: "Click on the map to place a label · Edit it, its size, its angle, and its arc in the strip · Right-click when done" },
@@ -28139,10 +28252,14 @@ const MAP_CANVAS_PRESETS = [
 // (4 units at 1600 wide), Douglas-Peucker on release at `tolerance` of the
 // width (4 units at 1600, about two screen pixels at the default width, which
 // is where hand jitter lives), the tolerance raised by half until the stroke is
-// under `maxPoints`; a polygon or line with more than `handleCap` points has
-// no per-point handles in Select. All in canvas units, so the result does not
-// depend on zoom.
+// under `maxPoints`; a polygon with more than `handleCap` points has no
+// point handles in the map's Select, and a line past it has handles at its
+// two ends only (v1.7 r050, Drak's call 3), so its ends can still be stuck
+// and freed. All in canvas units, so the result does not depend on zoom.
 const MAP_FREEHAND = { spacing: 1 / 400, tolerance: 1 / 400, maxPoints: 400, handleCap: 40 };
+// A line's end put down within this many screen pixels of a pin's marker or
+// a stamp's box sticks to it (v1.7 r050), the reach Tabula gives a card.
+const MAP_STICK = 6;
 
 // Paint (r044): the Brush and the Eraser lay dabs of a tip along the
 // pointer's path on the active raster layer. Sizes are in canvas units (the
@@ -28431,6 +28548,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const [selectedShapeId, setSelectedShapeId] = useState(null);
   const [draft, setDraft] = useState(null);     // rect/ellipse: {type, x0, y0, x1, y1}; polygon/stroke: {type, points}
   const [cursor, setCursor] = useState(null);   // [x, y] while a polygon or line is in progress
+  const [stick, setStick] = useState(null);     // the pin or stamp a line's pending point is over (r050), or null
   const [moving, setMoving] = useState(null);   // {id, startX, startY, origin} while Select drags a whole shape
   const [vertexDrag, setVertexDrag] = useState(null); // {id, index} while Select drags one point of a polygon or line
   const [selBox, setSelBox] = useState(null);   // selection box in viewBox units, measured from the DOM
@@ -28488,6 +28606,41 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     return rect && rect.width ? getV().w / rect.width : 1;
   };
 
+  // Sticky line ends (v1.7 r050). What the ends stick to, from the map's pins
+  // and stamps on the canvas the tree drew; a line's points as drawn; and what
+  // an end put down at the pointer sticks to: the topmost pin whose marker,
+  // grown by MAP_STICK screen pixels, holds it, else the topmost stamp on a
+  // shown layer, locked or not, whose turned box, grown the same, holds it,
+  // else nothing. A stamp on a hidden layer can't be seen, so nothing new
+  // sticks to it; an end stuck to it before still follows it.
+  const boxes = mapAnchorBoxes(drawing, data.pins, width, height);
+  const drawn = (s) => mapDrawnPoints(s, boxes);
+  const stickAt = (e) => {
+    const g = MAP_STICK;
+    let pin = null;
+    const root = canvasRef.current;
+    if (root) root.querySelectorAll("[data-pin]").forEach(node => {
+      const r = (node.querySelector(".map-pin-marker") || node).getBoundingClientRect();
+      if (e.clientX >= r.left - g && e.clientX <= r.right + g && e.clientY >= r.top - g && e.clientY <= r.bottom + g) pin = node.getAttribute("data-pin");
+    });
+    if (pin) return pin;
+    const p = toPoint(e);
+    if (!p) return null;
+    const k = g * unitsPerPx();
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const l = layers[i];
+      if (!l.visible || l.kind === "raster") continue;
+      for (let j = l.shapes.length - 1; j >= 0; j--) {
+        const s = l.shapes[j];
+        if (s.type !== "stamp") continue;
+        const th = (s.rotation || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+        const fx = p[0] - (s.x + s.w / 2), fy = p[1] - (s.y + s.h / 2);
+        if (Math.abs(fx * c + fy * sn) <= s.w / 2 + k && Math.abs(fy * c - fx * sn) <= s.h / 2 + k) return s.id;
+      }
+    }
+    return null;
+  };
+
   // Every write: one new mapData through the history. opts.coalesce names a
   // gesture so its many commits are one undo step.
   const setLayers = (next, opts) => onChange({ ...data, drawing: { ...drawing, layers: next } }, opts);
@@ -28501,8 +28654,9 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   const updateShape = (id, patch, opts) => {
     setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => s.id === id ? (ensureMapShape({ ...s, ...patch }) || s) : s) })), opts);
   };
+  // a stamp deleted frees the ends stuck to it where they're drawn, in the same step (r050)
   const deleteShape = (id) => {
-    setLayers(layers.map(l => ({ ...l, shapes: l.shapes.filter(s => s.id !== id) })));
+    setLayers(mapFreeEnds(layers, [id], boxes).map(l => ({ ...l, shapes: l.shapes.filter(s => s.id !== id) })));
     if (selectedShapeId === id) setSelectedShapeId(null);
   };
 
@@ -28542,7 +28696,8 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!l) return;
     if (l.kind === "raster" && l.image && !confirm(`Delete the raster layer "${l.name}" and its image? Undo brings it back.`)) return;
     if (l.shapes.length > 0 && !confirm(`Delete layer "${l.name}" and its ${l.shapes.length} ${l.shapes.length === 1 ? "shape" : "shapes"}? Undo brings it back.`)) return;
-    setLayers(layers.filter(x => x.id !== id));
+    // its stamps' stuck ends freed where they're drawn, in the same step (r050)
+    setLayers(mapFreeEnds(layers, l.shapes.filter(s => s.type === "stamp").map(s => s.id), boxes).filter(x => x.id !== id));
     if (selectedShape && l.shapes.some(s => s.id === selectedShape.id)) setSelectedShapeId(null);
   };
   const moveShapeToLayer = (shapeId, layerId) => {
@@ -28605,7 +28760,8 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (draft.type === "polygon" || draft.type === "stroke") {
       const pts = pointsOverride || draft.points;
       if (pts.length >= (draft.type === "polygon" ? 3 : 2)) {
-        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth, arrow: draft.type === "stroke" ? style.arrow : undefined });
+        // a line's ends stick to what its first and last points were put down on (r050)
+        id = addShape({ type: draft.type, points: pts, fill: draft.type === "stroke" ? null : style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, smooth: style.smooth, arrow: draft.type === "stroke" ? style.arrow : undefined, anchors: draft.type === "stroke" ? { start: draft.start || null, end: draft.over || null } : undefined });
       }
     }
     setDraft(null);
@@ -28727,7 +28883,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     try {
       const fc = await fillContext();
       const tree = buildMapDrawingTree({ ...drawing, background: { ...drawing.background, grain: 0 } }, {
-        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps, layerImages: fc.layerImages,
+        id: "fill", imageHref: fc.imageHref, imageWidth: fc.imageWidth, imageHeight: fc.imageHeight, stamps: fc.stamps, layerImages: fc.layerImages, pins: data.pins,
       });
       // The trace svg is loaded as an image: it needs its size on the root (an
       // svg with only a viewBox draws nothing to a canvas in Firefox, and a
@@ -28823,12 +28979,16 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!targetLayer) return;
     const p = toPoint(e);
     if (!p) return;
-    if (!draft) { setDraft({ type: tool, points: [p] }); setCursor(p); return; }
+    // a line's point put down on a pin or a stamp: the first sticks its
+    // start, the latest its end (r050)
+    const over = tool === "stroke" ? stickAt(e) : null;
+    setStick(over);
+    if (!draft) { setDraft({ type: tool, points: [p], start: over, over }); setCursor(p); return; }
     if (tool === "polygon" && draft.points.length >= 3) {
       const first = draft.points[0];
       if (Math.hypot(p[0] - first[0], p[1] - first[1]) <= 10 * unitsPerPx()) { finishDraft(); return; }
     }
-    setDraft({ ...draft, points: [...draft.points, p] });
+    setDraft({ ...draft, points: [...draft.points, p], over });
   };
   const onSvgDoubleClick = (e) => {
     if (!draft || (draft.type !== "polygon" && draft.type !== "stroke")) return;
@@ -28852,6 +29012,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     if (!draft || (draft.type !== "polygon" && draft.type !== "stroke")) return;
     const p = toPoint(e);
     if (p) setCursor(p);
+    if (draft.type === "stroke") setStick(stickAt(e));
   };
   const onSvgPointerLeave = () => {
     if (paintTool && !strokeRef.current) setCursor(null);
@@ -29326,14 +29487,27 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
   }, [moving, layers]);
 
   // Vertex drag: one point of the selected polygon or line follows the cursor.
+  // A line's end sticks to the pin or the stamp it's over and comes free off
+  // one (r050), its anchor set at every move, so the end is drawn there
+  // while the pointer is and the drop keeps the last.
   useEffect(() => {
     if (!vertexDrag) return;
     const move = (e) => {
       const p = toPoint(e);
       if (!p) return;
-      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => (s.id === vertexDrag.id && Array.isArray(s.points))
-        ? { ...s, points: s.points.map((q, i) => (i === vertexDrag.index ? p : q)) }
-        : s) })), { coalesce: `vertex-${vertexDrag.id}-${vertexDrag.index}-${vertexDrag.seq}` });
+      const shape = allShapes.find(s => s.id === vertexDrag.id);
+      const n = shape && Array.isArray(shape.points) ? shape.points.length : 0;
+      const end = !!shape && shape.type === "stroke" && (vertexDrag.index === 0 || vertexDrag.index === n - 1);
+      const over = end ? stickAt(e) : null;
+      setLayers(layers.map(l => ({ ...l, shapes: l.shapes.map(s => {
+        if (s.id !== vertexDrag.id || !Array.isArray(s.points)) return s;
+        const moved = { ...s, points: s.points.map((q, i) => (i === vertexDrag.index ? p : q)) };
+        if (!end) return moved;
+        const a = { start: s.anchors ? s.anchors.start : null, end: s.anchors ? s.anchors.end : null };
+        if (vertexDrag.index === 0) a.start = over;
+        if (vertexDrag.index === n - 1) a.end = over;
+        return mapWithAnchors(moved, a);
+      }) })), { coalesce: `vertex-${vertexDrag.id}-${vertexDrag.index}-${vertexDrag.seq}` });
     };
     const up = () => setVertexDrag(null);
     window.addEventListener("pointermove", move);
@@ -29430,6 +29604,7 @@ function useMapDrawing({ data, onChange, svgRef, canvasRef, width, height, fillC
     stampId, setStampId,
     selectedShape, deleteSelected: () => { if (selectedShape) deleteShape(selectedShape.id); },
     draft, cursor, selBox, style, selectable, finishDraft, cancelDraft,
+    drawn, boxes, stick, freeEnds: (ids) => mapFreeEnds(layers, ids, boxes),
     layers, activeLayerId: activeLayer ? activeLayer.id : null, setActiveLayerId,
     focusTextId, consumeFocusText: () => setFocusTextId(null),
     addLayer, renameLayer, toggleLayerVisible, toggleLayerLocked, moveLayer, deleteLayer, moveShapeToLayer, setLayerImage, clearLayerImage,
@@ -30074,7 +30249,7 @@ function MapLayerPanel({ drawing, onLoadImage, missing }) {
 // screen pixels wide, and nobody should have to hit that), plus draggable
 // point handles for the selected polygon or line.
 function MapEditorOverlay({ width, height, drawing, view }) {
-  const { tool, draft, cursor, selBox, style, selectable, selectedShape, onSvgPointerDown, onSvgContextMenu, paintSettings } = drawing;
+  const { tool, draft, cursor, selBox, style, selectable, selectedShape, onSvgPointerDown, onSvgContextMenu, paintSettings, drawn, boxes, stick } = drawing;
   const f = mapNum;
   const items = [];
   // the visible rect (r045); handle sizes follow it so they keep their screen size at any zoom
@@ -30093,7 +30268,7 @@ function MapEditorOverlay({ width, height, drawing, view }) {
         items.push(mapTreeToReact({ tag: "rect", attrs }, `hit-${s.id}`));
         return;
       }
-      const node = mapShapeNode(s, hitCtx);
+      const node = mapShapeNode(s.anchors ? { ...s, points: drawn(s) } : s, hitCtx); // a line where it's drawn (r050)
       if (!node) return;
       const attrs = { ...node.attrs, fill: s.type === "stroke" || !s.fill ? "none" : "transparent", stroke: "transparent", "stroke-width": "14", "vector-effect": "non-scaling-stroke", "data-hit": "shape" };
       delete attrs.filter;
@@ -30123,7 +30298,10 @@ function MapEditorOverlay({ width, height, drawing, view }) {
     else items.push(<polyline key="draft" points={draft.points.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
   } else if (draft) {
     const pts = draft.points;
-    const trail = cursor ? [...pts, cursor] : pts;
+    const typed = cursor ? [...pts, cursor] : pts;
+    // a line's rubber band as it will be drawn (r050): its start from what
+    // its first point stuck to, its pending end from what the pointer is over
+    const trail = draft.type === "stroke" && typed.length >= 2 ? mapDrawnPoints({ type: "stroke", points: typed, anchors: { start: draft.start || null, end: (cursor ? stick : draft.over) || null } }, boxes) : typed;
     const arrowed = draft.type === "stroke" && (style.arrow === "end" || style.arrow === "both");
     if (arrowed) items.push(<path key="draft" d={`M${trail.map(p => `${f(p[0])} ${f(p[1])}`).join(" L")}${mapArrowHeads(trail, style.strokeWidth, style.arrow)}`} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
     else items.push(<polyline key="draft" points={trail.map(p => `${f(p[0])},${f(p[1])}`).join(" ")} fill="none" stroke={style.stroke || MAP_PALETTE[0].hex} strokeWidth={style.strokeWidth} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />);
@@ -30167,12 +30345,18 @@ function MapEditorOverlay({ width, height, drawing, view }) {
   } else if (selBox) {
     items.push(<rect key="sel" x={f(selBox.x)} y={f(selBox.y)} width={f(selBox.w)} height={f(selBox.h)} fill="none" stroke="#c8a96e" strokeWidth={1} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" pointerEvents="none" />);
   }
-  if (selectMode && selectedShape && Array.isArray(selectedShape.points) && selectedShape.points.length <= MAP_FREEHAND.handleCap) {
+  const longLine = !!selectedShape && selectedShape.type === "stroke" && Array.isArray(selectedShape.points) && selectedShape.points.length > MAP_FREEHAND.handleCap;
+  if (selectMode && selectedShape && Array.isArray(selectedShape.points) && (selectedShape.points.length <= MAP_FREEHAND.handleCap || longLine)) {
     // A visible dot, then its hit target on top: a transparent disk (the
     // stroke ring alone leaves the centre of a small circle unhittable in
     // Chromium) plus a transparent 16-pixel non-scaling stroke around it.
+    // A line's handles sit at its drawn points, a stuck end's where the end
+    // is drawn, and a line past the cap has handles at its two ends only
+    // (r050, Drak's call 3).
     const hr = Math.max(0.5, v.w / 130);
-    selectedShape.points.forEach((p, i) => {
+    const handlePts = drawn(selectedShape);
+    handlePts.forEach((p, i) => {
+      if (longLine && i !== 0 && i !== handlePts.length - 1) return;
       items.push(<circle key={`h${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="#f4efe4" stroke="#2b2420" strokeWidth={1} vectorEffect="non-scaling-stroke" pointerEvents="none" />);
       items.push(<circle key={`hh${i}`} cx={f(p[0])} cy={f(p[1])} r={f(hr)} fill="transparent" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" data-vertex={i} />);
     });
@@ -30302,7 +30486,8 @@ function mapFontFaceCss() {
 // folder image is read through the folder handle, a filename with no folder
 // cannot be read and the file is written without it, which the caller says),
 // the world's stamps resolved, hidden layers omitted, no pins (pins are app
-// data with their own renderer), the map font embedded from the page's own
+// data with their own renderer; a line's end stuck to one is drawn at its
+// point all the same, r050), the map font embedded from the page's own
 // stylesheet, href doubled as xlink:href on image, use, and textPath so older
 // viewers open it, and width and height on the root so a viewer, and Firefox
 // drawing it to a canvas, know its size. Raster layers are read the same way
@@ -30352,6 +30537,7 @@ async function buildMapDownloadSvg(rec, state, dirHandle) {
     imageHeight: size ? size.height : null,
     stamps: state ? state.mapStamps : [],
     layerImages,
+    pins: mapData.pins,
   });
   const double = (node) => {
     if (!node || typeof node !== "object") return;
@@ -30632,6 +30818,7 @@ function MapPin({ pin, entries, templates, asOfYear, timeMode, isSelected, onCli
   return (
     <div
       className={`map-pin ${editable ? "editable" : ""} ${isSelected ? "selected" : ""}`}
+      data-pin={pin.id}
       style={{ left: `${left * 100}%`, top: `${top * 100}%` }}
       onClick={onClick}
       onPointerDown={onPointerDown}
@@ -30668,6 +30855,7 @@ function MapView({ entry, dirHandle, imageFolder, entries, templates, calendar, 
     imageHeight: imageSize ? imageSize.height : null,
     stamps: state ? state.mapStamps : [],
     layerImages: layerImages.urls,
+    pins: mapData.pins,
   }), [mapData, entry.id, entry.name, imageUrl, imageSize, state ? state.mapStamps : null, layerImages]);
   // Download the saved map as a file: an svg, or a png at twice the canvas
   // size, capped at sixteen million pixels (Safari's canvas limit) so a huge
@@ -30985,6 +31173,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     stamps,
     placeholder: true,
     layerImages: mergedUrls,
+    pins: data.pins,
   }), [data, imageUrl, imageSize, stamps, mergedUrls]);
   // A folder file written in order, one write at a time per editor; a data
   // URL or a blob.
@@ -31166,15 +31355,16 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
   // Canvas size presets for image-less maps. With shapes or pins on the map
   // the switch warns first, because nothing is transformed: shapes keep their
   // coordinates (anything beyond the new edges is cut off) and pins keep their
-  // 0-1 positions, so they shift against the drawing. An image map's canvas is
-  // the image's size and has no picker.
+  // 0-1 positions, so they shift against the drawing, a line's end stuck to a
+  // pin with it (r050). An image map's canvas is the image's size and has no
+  // picker.
   const showPresets = !data.image;
   const [customSizeOpen, setCustomSizeOpen] = useState(false); // Custom picked while the size still matches a preset
   const presetValue = customSizeOpen ? "custom" : (MAP_CANVAS_PRESETS.find(p => p.width === data.drawing.width && p.height === data.drawing.height) || { id: "custom" }).id;
   const applyCanvasSize = (width, height, label) => {
     if (width === data.drawing.width && height === data.drawing.height) return;
     const hasWork = pins.length > 0 || mapDrawingHasContent(data.drawing);
-    if (hasWork && !confirm(`Change the canvas to ${label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing. Undo restores it.`)) return;
+    if (hasWork && !confirm(`Change the canvas to ${label}? Shapes keep their coordinates and anything beyond the new edges is cut off; pins keep their relative positions and will shift against the drawing, and a line's end stuck to a pin goes with it. Undo restores it.`)) return;
     commit({ ...data, drawing: { ...data.drawing, width, height } });
   };
   const applyPreset = (id) => {
@@ -31281,7 +31471,7 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     if (x < 0 || x > 1 || y < 0 || y > 1) return;
 
     const newPin = {
-      id: `pin-${genId().slice(0, 6)}`,
+      id: `pin-${genId().slice(-6)}`, // the random part, as a shape's (r050); the time's repeated within a second
       x, y, label: "", entryId: null, color: null, notes: "",
     };
     commit({ ...data, pins: [...pins, newPin] });
@@ -31339,8 +31529,10 @@ function MapEditor({ mapData, onChange, dirHandle, imageFolder, entries, bodies,
     const field = Object.keys(patch)[0] || "field";
     commit({ ...data, pins: pins.map(p => p.id === pinId ? { ...p, ...patch } : p) }, { coalesce: `pin-${pinId}-${field}` });
   };
+  // a line's end stuck to the pin is freed where it's drawn, in the same step (r050)
   const deletePin = (pinId) => {
-    commit({ ...data, pins: pins.filter(p => p.id !== pinId) });
+    const layers = drawing.freeEnds([pinId]);
+    commit({ ...data, pins: pins.filter(p => p.id !== pinId), drawing: layers === data.drawing.layers ? data.drawing : { ...data.drawing, layers } });
     setSelectedPinId(null);
   };
 
@@ -36946,9 +37138,22 @@ const TABULA_TOOLS = [
   { id: "freehand", label: "Freehand", glyph: "∿", hint: "Drag to draw a line freehand. Esc while dragging discards it." },
 ];
 // The point on a card's box a stuck end is drawn at: on the border, where
-// the line from the box's center toward the next point leaves it.
+// the line from the box's center toward the next point leaves it. A box
+// with a rotation, in degrees about its center as the map's renderer turns
+// a stamp (v1.7 r050; no card has one), is worked out unturned, toward the
+// next point turned back by its angle, and the point found is turned
+// forward.
 const tabulaAttachPoint = (box, from) => {
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+  if (box.rotation) {
+    const th = box.rotation * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+    const fx = from[0] - cx, fy = from[1] - cy;
+    const ux = fx * c + fy * s, uy = fy * c - fx * s;
+    if (!ux && !uy) return [cx, cy];
+    const k = Math.min(ux ? box.w / 2 / Math.abs(ux) : Infinity, uy ? box.h / 2 / Math.abs(uy) : Infinity);
+    const q = (v) => Math.round(v * 100) / 100;
+    return [q(cx + (ux * c - uy * s) * k), q(cy + (ux * s + uy * c) * k)];
+  }
   const dx = from[0] - cx, dy = from[1] - cy;
   if (!dx && !dy) return [cx, cy];
   const t = Math.min(dx ? box.w / 2 / Math.abs(dx) : Infinity, dy ? box.h / 2 / Math.abs(dy) : Infinity);
