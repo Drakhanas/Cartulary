@@ -149,12 +149,13 @@ function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpen
         {!isLocked && tpl && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "baseline" }}>
             <div className="export-menu-wrap">
-              <button className="btn btn-ghost" style={small} onClick={() => setMenu(o => !o)} title="Export this template as a portable file">Export ↓</button>
+              <button className="btn btn-ghost" style={small} onClick={() => setMenu(o => !o)} title="Export this template, or its entries, as a file">Export ↓</button>
               {menu && <>
                 <div className="menu-backdrop" onClick={() => setMenu(false)} />
                 <div className="export-menu">
                   <button onClick={() => { onExportTemplate(tpl, "json"); setMenu(false); }}>Export as .template.json</button>
                   <button onClick={() => { onExportTemplate(tpl, "md"); setMenu(false); }}>Export as .template.md</button>
+                  <button className="export-entries" onClick={() => { onExportTemplate(tpl, "entries"); setMenu(false); }}>Export entries…</button>
                 </div>
               </>}
             </div>

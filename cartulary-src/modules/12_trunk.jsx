@@ -123,6 +123,7 @@ function App() {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);  // Template export dropdown
   const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);  // World-level HTML export modal
   const [fabulaExport, setFabulaExport] = useState(null);  // v1.7 r023: Fabula's export modal, { kind: "story" | "corpus", id }
+  const [entriesExport, setEntriesExport] = useState(null);  // v1.7 r047: the entries export dialog's template, by id
   // ChronometricsView's per-template enable filter. Lifted to App so toggling
   // off a lane and then navigating away and back doesn't reset the filter to
   // all-enabled. State is the SET OF DISABLED template ids; absent means enabled.
@@ -3348,6 +3349,13 @@ function App() {
         flash("That's a stamp pack. Import it from the Stamps panel at the top of Cartographia, not as a world.", "error");
         return;
       }
+      // v1.7 r047: an entries file holds an "entries" list, so the shape
+      // check below would take it for a world's; it goes to a template's
+      // Import entries, whatever its version.
+      if (parsed && parsed.cartulary_entries_export != null) {
+        flash("That's an entries file. Import it from a template's Import entries, not as a world.", "error");
+        return;
+      }
       // Shape pre-check: a Cartulary world has at least one of these top-level
       // keys. Migrate fills in missing structure with defaults, so without this
       // check, ANY valid JSON would silently load as an empty world.
@@ -4686,7 +4694,7 @@ function App() {
                     <button
                       className="btn btn-ghost"
                       onClick={() => setExportMenuOpen(o => !o)}
-                      title="Export this template as a portable file"
+                      title="Export this template, or its entries, as a file"
                     >
                       Export ↓
                     </button>
@@ -4698,6 +4706,9 @@ function App() {
                         </button>
                         <button onClick={() => { exportTemplateMarkdown(activeTemplate); setExportMenuOpen(false); }}>
                           Export as .template.md
+                        </button>
+                        <button className="export-entries" onClick={() => { setEntriesExport(activeTemplate.id); setExportMenuOpen(false); }}>
+                          Export entries…
                         </button>
                       </div>
                     </>}
@@ -5089,7 +5100,7 @@ function App() {
                 onOpenEntry: openEntryFromAnywhere,
                 onNewEntry: newFabulaEntry,
                 onEditTemplate: editFabulaTemplate,
-                onExportTemplate: (tpl, fmt) => (fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
+                onExportTemplate: (tpl, fmt) => (fmt === "entries" ? setEntriesExport(tpl.id) : fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
                 onRestoreTemplate: (name) => restoreBuiltinTemplates([name]),
                 onEditKind: openFabulaSchema,
               }}
@@ -5427,6 +5438,23 @@ function App() {
           }}
         />
       )}
+
+      {entriesExport && (() => {
+        const tpl = state.templates.find(t => t && t.id === entriesExport);
+        if (!tpl) return null;
+        return (
+          <EntriesExportModal
+            state={state}
+            template={tpl}
+            onCancel={() => setEntriesExport(null)}
+            onConfirm={(options) => {
+              setEntriesExport(null);
+              const n = downloadEntriesExport(state, tpl, options);
+              flash(`Exported ${n === 1 ? "1 entry" : `${n} entries`} of "${tpl.name}" as ${options.format === "csv" ? "CSV" : "JSON"}${options.includeSecrets ? ", secret fields included" : ""}.`);
+            }}
+          />
+        );
+      })()}
 
       {fabulaExport && (
         <FabulaExportModal
