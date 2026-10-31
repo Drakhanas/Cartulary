@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 58622,
-  "raw_body_lines": 58622,
-  "canonical_lines": 55816,
-  "decl_count": 938,
+  "total_lines": 58934,
+  "raw_body_lines": 58934,
+  "canonical_lines": 56121,
+  "decl_count": 944,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r048-body.jsx"
+  "active_anchor": "reference-r049-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 58622,
+   "value": 58934,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 938,
+   "value": 944,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 55816,
+   "value": 56121,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 58622,
+   "value": 58934,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 108,
+   "value": 109,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3188134,
+   "value": 3208343,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-three",
-    73
+    "seventy-four",
+    74
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 108,
+   "value": 109,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 108,
+   "value": 109,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-three",
-    73
+    "seventy-four",
+    74
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r048": {
-   "value": "e2e882d6d43ccd4b",
-   "pattern": "working[^\\n]{0,40}at r048 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r049": {
+   "value": "01c18b3052925582",
+   "pattern": "working[^\\n]{0,40}at r049 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 58622,
+   "value": 58934,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -812,8 +812,18 @@
   },
   {
    "file": "29_modals.jsx",
-   "line": 497,
+   "line": 500,
    "contains": "function EntriesImportModal"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 2648,
+   "contains": "Entries import from CSV (v1.7 r049)"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 2670,
+   "contains": "const entriesImportReadCsv"
   }
  ],
  "spans": {
@@ -1144,10 +1154,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r048-body.jsx",
-   "reference-r048-layout.json",
-   "302870b917da9157",
-   "e2e882d6d43ccd4b",
+   "reference-r049-body.jsx",
+   "reference-r049-layout.json",
+   "e11d0f9359600722",
+   "01c18b3052925582",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1155,7 +1165,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r049, Pipes' eleventh cut: Import entries from CSV",
+   "r050, Pipes' twelfth cut: sticky line ends on maps",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1217,7 +1227,10 @@
    "Entries import (v1.7 r048)",
    "EntriesImportModal",
    "pre-entries-import",
-   "since r044 `pre-rename`, and since r048 `pre-entries-import`"
+   "since r044 `pre-rename`, and since r048 `pre-entries-import`",
+   "v1.7_r049",
+   "Entries import from CSV (v1.7 r049)",
+   "entriesImportReadCsv"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1427,7 +1440,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r048-layout.json",
+   "reference-r049-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1481,7 +1494,12 @@
    "302870b917da9157",
    "e2e882d6d43ccd4b",
    "On v1.7 r048 verification",
-   "Entries import (v1.7 r048)"
+   "Entries import (v1.7 r048)",
+   "reference-r049-body.jsx",
+   "e11d0f9359600722",
+   "01c18b3052925582",
+   "On v1.7 r049 verification",
+   "Entries import from CSV (v1.7 r049)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1751,7 +1769,14 @@
    "e2e882d6d43ccd4b",
    "v1.7_r048_entries_import.py",
    "Turnover v1.7_r048",
-   "L2 fails because r047's Fabula hides Export ↓ in Lock mode"
+   "L2 fails because r047's Fabula hides Export ↓ in Lock mode",
+   "v1.7_r049",
+   "027a2e0",
+   "b702d08",
+   "01c18b3052925582",
+   "v1.7_r049_csv_import.py",
+   "Turnover v1.7_r049",
+   "the round trip stops at C2"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1875,7 +1900,12 @@
    "r048 is in",
    "What r048 left for r051",
    "A dependent dropdown's Other is cleared by the save and every load",
-   "The entries import doesn't check a group's dependent dropdowns"
+   "r049 is in",
+   "v1.7_r049",
+   "What r049 left for r051",
+   "The entries import can't take a Multi-select's own values",
+   "An entries file saved as UTF-16 no longer reads",
+   "Importing From Other Tools"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1969,7 +1999,9 @@
    "A planted copy that passes is first checked for where it ran",
    "A call's reason is carried to every place its case can occur",
    "Where the editor and the load disagree on a value",
-   "A screen is first looked at with the case it was built for"
+   "A screen is first looked at with the case it was built for",
+   "A planted copy no check can catch marks dead code or a blind probe",
+   "Where the preview counts two values as the same, the write leaves the stored one"
   ],
   "journal.txt": [
    "r030",
@@ -2041,7 +2073,8 @@
    "the world had Crew all along",
    "r046 took Drak's two calls",
    "r047 took Drak's two calls",
-   "r048 took Drak's two calls"
+   "r048 took Drak's two calls",
+   "r049 took Drak's three calls"
   ]
  }
 }

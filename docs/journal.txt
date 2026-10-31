@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen) ===
+=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1684,3 +1684,44 @@ the spec didn't hold, item 9 still in the present tense, the control's L2
 left out, the handoff's list of pinned kinds short since r044, and five
 claims stated wider than the code or the records bear, among them the
 probe's first run.
+
+r049 took Drak's three calls, b, a, and a: a date reads back as its
+calendar writes it, or as year-month-day numbers; on a dropdown that keeps
+an Other text, a word that's none of its options reads as Other with that
+text, listed; and a matched row whose Calendar cell names its entry's
+calendar reads its dates there, since the column writes two calendars that
+share a name alike.
+
+The first screenshot, on the CSV the app's own export writes, showed a
+box in the middle of a column's sample: a Longform's page break, which the
+cell keeps and the screen can't show. The sample sits on one line now.
+Writing the round trip's expected values by hand, I found that in the
+cut's first draft an updated row wrote a Tag List over the entry's in its
+own spacing, where the preview had counted the two the same. A Tag List the plan counts as the
+same isn't written now.
+
+The probe passed its 46 checks on its first run. Planning the planted
+copies found three rules no check could catch. One was code nothing could
+reach: the reader's own check for a byte-order mark, which the decoder and
+trim() had already dropped. It moved to the file's bytes, where it does
+something, and with it and the scenarios the planning asked for, the probe
+grew to 56 checks. The other two were blind spots in the probe's files and
+world: no file had a column with neither a header nor a value, and no
+entry shared a name with a map, so a field that takes maps found the map
+whether or not it looked among its targets first. A trailing comma and a
+Character named Kingdom Map closed them, in checks the probe already had.
+All eighty planted copies were caught at their own checks on the first
+run.
+
+Drak passed it, and the independent read of this turnover found eleven
+defects in the documents and three in the build. The documents had the
+probe reaching 56 checks after the Kingdom Map, where it got there first;
+counted two blind rules where planning had found three; kept every repeat
+in a cell once, where only a name's or an option's is; and missed the
+help's line that the only import format is Cartulary's own JSON, which
+r049 made false. The build can't take a Multi-select's own values from a
+file, refuses a UTF-16 file that r048 read, and splits a value that holds
+a semicolon. Two of those reach r048's JSON import as well: the decoding
+I changed for every entries file and checked only for a CSV, and the
+Multi-select's rule, which r048 wrote and r049 copied. They're filed for
+the next cut on the import.
