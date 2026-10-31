@@ -492,7 +492,10 @@ function RecordRenameModal() {
 // writes it. A row's flag shows until its picker is changed, and a name two
 // calendars here share is told apart in their picker by the first month.
 // Esc and a click outside cancel; while it's open the keys are its own and
-// the focus stays in it, as the record modals'.
+// the focus stays in it, as the record modals'. Since r049 it opens on a CSV
+// too (entriesImportReadCsv): a row per column, with its header and its
+// first value, a range's halves picked apart, and the cells read as Other
+// listed.
 
 function EntriesImportModal({ state, template, fileName, file, onCancel, onConfirm }) {
   const [choices, setChoices] = useState(() => entriesImportDefaults(state, template, file));
@@ -509,11 +512,11 @@ function EntriesImportModal({ state, template, fileName, file, onCancel, onConfi
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
   }, []);
-  const fieldFlags = useMemo(() => entriesImportFieldPicks(template.fields, file.template.fields), [template, file]);
+  const fieldFlags = useMemo(() => (file.csv ? entriesImportCsvPicks : entriesImportFieldPicks)(template.fields, file.template.fields), [template, file]);
   const calFlags = useMemo(() => entriesImportCalendarPicks(state, file.calendars), [state, file]);
   const plan = useMemo(() => entriesImportPlan(state, template, file, choices), [state, template, file, choices]);
   const calRows = useMemo(() => file.calendars.map((_, i) => file.entries.filter(r => entriesImportCalendarOf(file, r) === i).length), [file]);
-  const here = (template.fields || []).filter(f => f && f.id);
+  const here = (template.fields || []).filter(f => f && f.id && !(file.csv && (f.type === "group" || f.type === "grid")));
   const calsHere = entriesImportCalendarsHere(state);
   const typeName = (t) => (FIELD_TYPES.find(x => x.value === t) || {}).label || t || "";
   // A calendar here as its picker names it: a name two calendars here share
@@ -538,14 +541,14 @@ function EntriesImportModal({ state, template, fileName, file, onCancel, onConfi
   const n = file.entries.length;
   const canImport = plan.doubled.length === 0 && c.new + c.update > 0;
   const skipped = plan.rows.filter(r => r.action === "skip");
-  const notes = !canImport || skipped.length + plan.unresolved.length + plan.unread.length + plan.kept.length + plan.taken.length > 0;
+  const notes = !canImport || skipped.length + plan.unresolved.length + plan.unread.length + plan.others.length + plan.kept.length + plan.taken.length > 0;
   const dim ={ color: "var(--text-dim)", fontSize: "calc(13px * var(--font-scale))" };
   const warn = { ...dim, color: "var(--warn)" };
   const row = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border2)" };
   const flagText = {
     "twice-here": "Two fields here have this label; pick one.",
-    "twice-file": "The file has this label twice; pick its field.",
-    taken: "The field here with this label is matched to another of the file's fields by its id.",
+    "twice-file": file.csv ? "Another of the file's columns has this header; pick this one's field." : "The file has this label twice; pick its field.",
+    taken: file.csv ? "The field here with this label is picked for another of the file's columns." : "The field here with this label is matched to another of the file's fields by its id.",
     none: "No field here has this label.",
   };
   const calFlagText = {
@@ -557,43 +560,52 @@ function EntriesImportModal({ state, template, fileName, file, onCancel, onConfi
       <span style={{ fontWeight: 600 }}>{title}</span> {items.slice(0, 5).join("; ")}{items.length > 5 ? `; and ${items.length - 5} more` : ""}.
     </div>
   ) : null);
-  const skipWhy = (r) => (r.why === "no name" ? `row ${r.i + 1} has no name` : r.why === "shared" ? `"${r.name}", whose name ${r.n} entries here share` : `"${r.name}", whose entry another row matched first`);
+  const rowNo = (r) => (file.csv && file.entries[r.i] && file.entries[r.i].row) || r.i + 1;
+  const skipWhy = (r) => (r.why === "no name" ? `row ${rowNo(r)} has no name` : r.why === "shared" ? `"${r.name}", whose name ${r.n} entries here share` : `"${r.name}", whose entry another row matched first`);
   const refWhy = { none: "", self: " (the entry itself)", barred: " (not one this field can point at)" };
   const fromTpl = file.template && typeof file.template.name === "string" && file.template.name ? ` from "${file.template.name}"` : "";
+  const about = file.csv
+    ? `, ${file.columns === 1 ? "1 column" : `${file.columns} columns`}.`
+    : `${fromTpl}. ${file.secrets === true ? "It holds secret fields." : "It holds no secret fields."}`;
+  const sample = (s) => (s ? `"${s.length > 40 ? `${s.slice(0, 40)}…` : s}"` : "empty");
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal modal-wide entries-import" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">Import entries into "{template.name || "Untitled"}"</div>
         <div className="modal-body">
           <p className="entries-import-file" style={{ margin: "0 0 14px", overflowWrap: "anywhere" }}>
-            {fileName}: {n === 1 ? "1 entry" : `${n} entries`}{fromTpl}. {file.secrets === true ? "It holds secret fields." : "It holds no secret fields."}
+            {fileName}: {n === 1 ? "1 entry" : `${n} entries`}{about}
           </p>
           <div className="modal-section-hdr">Fields</div>
           <div className="entries-import-fields" style={{ marginBottom: 14 }}>
-            <div className="entries-import-name" style={row}><div>Entry name</div><div style={dim}>Always used: it names new entries and, with matching on, finds existing ones.</div></div>
+            <div className="entries-import-name" style={row}><div>Entry name</div><div style={dim}>{file.csv ? "Always used: the Name column names new entries and, with matching on, finds existing ones." : "Always used: it names new entries and, with matching on, finds existing ones."}</div></div>
             {file.template.fields.map((ff, i) => {
               const pick = choices.fields[i] || null;
-              const target = here.find(f => f.id === pick);
+              const target = file.csv ? null : here.find(f => f.id === pick);
               const flag = fieldFlags[i] && fieldFlags[i].flag;
               const note = pick
-                ? (doubled.has(pick) ? { t: "Picked for another of the file's fields too.", w: true }
+                ? (doubled.has(pick) ? { t: file.csv ? "Picked for another of the file's columns too." : "Picked for another of the file's fields too.", w: true }
                   : target && target.type !== ff.type ? { t: `${typeName(ff.type)} into ${typeName(target.type)}: values read as this field's type.`, w: false } : null)
                 : flag && !touched[`f${i}`] ? { t: flagText[flag], w: flag !== "none" } : null;
               return (
                 <div key={i} className="entries-import-field" style={row}>
-                  <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{ff.label} <span style={dim}>{typeName(ff.type)}{ff.secret ? ", secret" : ""}</span></div>
-                  <select className="input" value={pick || ""} aria-label={`The field for ${ff.label}`} onChange={e => setField(i, e.target.value)}>
+                  <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{file.csv
+                    ? <>{ff.label || "(no header)"} <span style={dim}>{sample(ff.sample)}</span></>
+                    : <>{ff.label} <span style={dim}>{typeName(ff.type)}{ff.secret ? ", secret" : ""}</span></>}</div>
+                  <select className="input" value={pick || ""} aria-label={`The field for ${ff.label || "this column"}`} onChange={e => setField(i, e.target.value)}>
                     <option value="">Leave out</option>
-                    {here.map(f => <option key={f.id} value={f.id}>{f.label} ({typeName(f.type)})</option>)}
+                    {here.map(f => (file.csv && f.type === "calendar-date-range"
+                      ? ["start", "end"].map(sd => <option key={`${sd}:${f.id}`} value={`${sd}:${f.id}`}>{f.label} · {sd} ({typeName(f.type)})</option>)
+                      : <option key={f.id} value={f.id}>{f.label} ({typeName(f.type)})</option>))}
                   </select>
                   {note && <div className="entries-import-field-note" style={{ gridColumn: "1 / -1", ...(note.w ? warn : dim) }}>{note.t}</div>}
                 </div>
               );
             })}
-            <label style={{ ...row, display: "flex", gap: 8, cursor: "pointer" }}>
+            {(!file.csv || file.tagsColumn) && <label style={{ ...row, display: "flex", gap: 8, cursor: "pointer" }}>
               <input type="checkbox" className="entries-import-tags" checked={choices.tags} onChange={e => setChoices(x => ({ ...x, tags: e.target.checked }))} />
               <span>Bring the file's tags (where a row has some, they replace a matched entry's)</span>
-            </label>
+            </label>}
           </div>
           {file.calendars.length > 0 && <>
             <div className="modal-section-hdr">Calendars</div>
@@ -603,8 +615,8 @@ function EntriesImportModal({ state, template, fileName, file, onCancel, onConfi
                 const flag = calFlags[i] && calFlags[i].flag;
                 return (
                   <div key={i} className="entries-import-calendar" style={row}>
-                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{typeof fc.key === "string" ? fc.key : typeof fc.name === "string" && fc.name ? fc.name : "(no name)"} <span style={dim}>{fc.id == null ? "the file's primary, " : ""}{calRows[i] === 1 ? "1 entry" : `${calRows[i]} entries`}</span></div>
-                    <select className="input" value={pick} aria-label={`The calendar for ${typeof fc.name === "string" && fc.name ? fc.name : "this calendar"}`} onChange={e => setCal(i, e.target.value)}>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{fc.blank ? (file.calendarColumn ? "Blank" : "Every row") : typeof fc.key === "string" ? fc.key : typeof fc.name === "string" && fc.name ? fc.name : "(no name)"} <span style={dim}>{fc.blank && !file.calendarColumn ? "no Calendar column, " : fc.id == null ? "the file's primary, " : ""}{calRows[i] === 1 ? "1 entry" : `${calRows[i]} entries`}</span></div>
+                    <select className="input" value={pick} aria-label={fc.blank ? "The calendar for rows that name none" : `The calendar for ${typeof fc.name === "string" && fc.name ? fc.name : "this calendar"}`} onChange={e => setCal(i, e.target.value)}>
                       {calsHere.map(h => <option key={h.id || ""} value={h.id || ""}>{calLabel(h)}</option>)}
                     </select>
                     {flag && !touched[`c${i}`] && <div className="entries-import-calendar-note" style={{ gridColumn: "1 / -1", ...warn }}>{calFlagText[flag]}</div>}
@@ -628,9 +640,10 @@ function EntriesImportModal({ state, template, fileName, file, onCancel, onConfi
             {few("entries-import-skipped", "Skipped:", skipped.map(skipWhy))}
             {few("entries-import-unresolved", "References that found no record:", plan.unresolved.map(u => `${u.row}'s ${u.field}, "${u.name}"${refWhy[u.why] || ""}`))}
             {few("entries-import-unread", "Values that didn't read:", plan.unread.map(u => `${u.row}'s ${u.field}: ${u.why}`))}
+            {few("entries-import-other", "Read as Other, with their text:", plan.others.map(o => `${o.row}'s ${o.field}, "${o.text}"`))}
             {few("entries-import-kept", "Matched, keeping their names:", plan.kept.map(k => `"${k.name}", which the file calls "${k.fileName}"`))}
             {few("entries-import-taken", "New entries taking a name an entry here has:", plan.taken.map(t => `"${t}"`))}
-            {plan.doubled.length > 0 && <div className="entries-import-doubled" style={{ ...warn, marginTop: 6 }}>A field here is picked for two of the file's fields; pick one for each before importing.</div>}
+            {plan.doubled.length > 0 && <div className="entries-import-doubled" style={{ ...warn, marginTop: 6 }}>A field here is picked for two of the file's {file.csv ? "columns" : "fields"}; pick one for each before importing.</div>}
             {plan.doubled.length === 0 && !canImport && <div className="entries-import-nothing" style={{ ...dim, marginTop: 6 }}>Nothing to import: no row makes or changes an entry.</div>}
           </div>
         </div>

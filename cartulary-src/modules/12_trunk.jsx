@@ -3317,7 +3317,10 @@ function App() {
   // with a word on what it is, or the mapping screen opens on it; its plan
   // is written after a pinned restore point, Before importing entries, a
   // kind of its own whose newest three are kept, taken as rename's is,
-  // without waiting on it. Not in Lock mode.
+  // without waiting on it. Not in Lock mode. Since r049 a .csv is read as a
+  // CSV (entriesImportReadCsv), and a file's bytes, past a UTF-8 byte-order
+  // mark, as UTF-8, or as Windows-1252 where they aren't UTF-8, as a
+  // spreadsheet may save them.
   const pickEntriesFile = (tplId) => {
     if (isLocked || !tplId) return;
     entriesImportFor.current = tplId;
@@ -3328,12 +3331,17 @@ function App() {
     if (!f || !tplId || isLocked) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const got = entriesImportRead(String(reader.result));
+      const all = new Uint8Array(reader.result);
+      const bytes = all[0] === 0xEF && all[1] === 0xBB && all[2] === 0xBF ? all.subarray(3) : all;
+      let text;
+      try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch (e) { text = new TextDecoder("windows-1252").decode(bytes); }
+      const csv = /\.csv$/i.test(f.name || "") || /^text\/csv$/i.test(f.type || "");
+      const got = csv ? entriesImportReadCsv(text) : entriesImportRead(text);
       if (got.error) { flash(got.error, "error"); return; }
       setEntriesImport({ templateId: tplId, fileName: f.name, file: got.file });
     };
     reader.onerror = () => flash("Couldn't read that file.", "error");
-    reader.readAsText(f);
+    reader.readAsArrayBuffer(f);
   };
   const finishEntriesImport = (tpl, plan) => {
     setEntriesImport(null);
@@ -5496,7 +5504,7 @@ function App() {
       <input
         ref={entriesImportFileRef}
         type="file"
-        accept=".json,application/json"
+        accept=".json,.csv,application/json,text/csv"
         className="hidden-file-input entries-import-file-input"
         onChange={(e) => {
           const f = e.target.files?.[0];
