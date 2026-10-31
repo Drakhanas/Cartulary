@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first) ===
+=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1767,3 +1767,20 @@ they ran during the read, eighteen bitten. The help's and the site's
 Limitations still say there's no snapping beyond the rotation knob's
 Shift snap; how that reads beside an end that jumps onto a pin is
 r051's to word.
+
+Before the help, Drak asked what in v1.7 was still open. The roadmap had
+nearly all of it: eleven bugs filed for the next cut to touch their
+files, the oldest from r011. Cuts since had opened the files behind
+seven of them and kept to their own scope. One of them loses what a
+person types, a dependent dropdown that offers Other and then clears it
+at the next save. Filing a defect for the next cut to touch its file
+works only if that cut takes it; at the end of a line it's how a
+release ships with known bugs nobody chose. He asked to clear it out. Three calls set the shape: a grid's starting shape
+becomes a cut of its own; Fabula's five tabled features wait in the
+backlog for a reason to build them; and the spine manifest freezes now,
+so the seven cuts ahead don't each add a row and a note to a 212 KB file
+that repeats the changelog. Six cuts go ahead of the help, which moves to
+r057. The independent read of these documents found twelve things wrong
+before they went in, the worst a NEXT banner still offering a question
+Drak had just decided; I'd also written that the bugs sat in code no cut
+had touched, and they didn't.

@@ -79,9 +79,17 @@ the gate and are never edited; the live files start over as current state.
 defect that produced it in parentheses. A doctrine entry with no incident behind it is an
 opinion.
 
-**`cartulary-spine-manifest.md`** is the modularization oracle: module map, source layout,
-carve status, gate design, anchor history. Sections become records rather than plans as work
-lands; when a section closes, rewrite it as history and say what it cost.
+**`cartulary-spine-manifest.md`** is the modularization oracle, and it carries current state
+only: the module map, the source layout, build, and gate design, the r-counter policy, the
+current tree with its line counts, the rotation procedure, the active anchor with its bytes,
+hash, and rotation count, and the header rule, its two checks, and the header count. A turnover
+updates those in place when a cut changes them. It adds no carve-status row, verification note,
+or anchor-history entry per cut: the changelog already carries each cut's gate figures and
+hashes. The finished record through v1.7's r050 is frozen verbatim in
+`cartulary-spine-manifest-v1.7-r050.md`, outside the gate and never edited. *(Amended
+2026-10-31: the manifest had grown to 212 KB, most of it a row, a verification note, and an
+anchor-history entry per cut that the changelog already carried; Drak froze it in the documents
+commit before r051, the way the handoff was frozen at v1.6.)*
 
 **`journal.txt`** keeps every entry, oldest first: one per session that changes the record,
 each opened by a `=== date (session N, ...) ===` line. The checker reads only the newest entry.
