@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 30 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV) ===
+=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1644,3 +1644,43 @@ left stale for r051, and for r047 I'd filed none, though the site still
 says a template's Export has two formats and Fabula's index exports only
 the template. I'd also written that five steps got checks of their own.
 Two did; the rest were mended.
+
+r048 took Drak's two calls, a and a: a calendar in the file lands on one
+here by its id, then by a name only one calendar here has, the rest on the
+primary, flagged, with a picker on every row; and an empty value leaves a
+field as it is, so an import never empties one.
+
+The second call came with its reason, the image the export writes empty,
+and I applied it to the top-level fields and moved on. Writing the probe's
+round trip, I followed one entry through by hand and found the same image
+a level down, in a group's row, where a group replaced whole would have
+dropped it. My guard for a group looked only for subfields the file
+doesn't have. The call's reason held there too; I hadn't carried it down.
+
+The first screenshot showed the case the first call exists for: two
+calendars named Elder Count, and every picker on the screen offering
+"Elder Count" twice, with nothing to tell them apart. The plan never said
+the picker had to, but a picker for that case is no use if it can't.
+
+Reading the load's cleanup, so the import's top-level fields would get
+nothing the next load clears, I found that the save itself clears a
+dependent dropdown's Other, the one its editor offers. That bug is older
+than Pipes. I filed it rather than fix it inside an import cut.
+
+The probe passed its checks on its first run, and again after I made its
+file from another world harder, and this time the planted copies agreed:
+all sixty-eight were caught at their own checks on the first run, which
+r047's weren't.
+
+Drak passed it, and the independent read of this turnover found eleven
+defects. One is in the build. The import checks a dependent dropdown's
+choice against its parent's in a template's own fields, but not in a
+group's rows, where it writes a choice the next load clears without a
+word. The first doctrine entry I wrote for this cut says to carry a call's
+reason to every place its case can occur, and the same cut didn't carry
+its own rule one level down. It's filed for the next cut on the file. The
+other ten were the documents': a second help paragraph missed, open details
+the spec didn't hold, item 9 still in the present tense, the control's L2
+left out, the handoff's list of pinned kinds short since r044, and five
+claims stated wider than the code or the records bear, among them the
+probe's first run.

@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 57793,
-  "raw_body_lines": 57793,
-  "canonical_lines": 55016,
-  "decl_count": 913,
+  "total_lines": 58622,
+  "raw_body_lines": 58622,
+  "canonical_lines": 55816,
+  "decl_count": 938,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r047-body.jsx"
+  "active_anchor": "reference-r048-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 57793,
+   "value": 58622,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,19 +26,19 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 913,
+   "value": 938,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 55016,
+   "value": 55816,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 57793,
+   "value": 58622,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
-   "value": 106,
+   "value": 108,
    "pattern": "(\\d+) column-0 section headers"
   },
   "shears_resolved": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3138348,
+   "value": 3188134,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-two",
-    72
+    "seventy-three",
+    73
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -108,11 +108,11 @@
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
-   "value": 106,
+   "value": 108,
    "pattern": "header pairs at (\\d+)"
   },
   "header_pairs_verify": {
-   "value": 106,
+   "value": 108,
    "pattern": "header pairs\\s+: PASS \\((\\d+) headers\\)"
   },
   "module_files_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-two",
-    72
+    "seventy-three",
+    73
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r047": {
-   "value": "de350bb8eb3c3baa",
-   "pattern": "working[^\\n]{0,40}at r047 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r048": {
+   "value": "e2e882d6d43ccd4b",
+   "pattern": "working[^\\n]{0,40}at r048 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 57793,
+   "value": 58622,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -492,7 +492,7 @@
   },
   {
    "file": "03_persistence.jsx",
-   "line": 455,
+   "line": 456,
    "contains": "Version History panel"
   },
   {
@@ -794,6 +794,26 @@
    "file": "08_export-layer.jsx",
    "line": 1643,
    "contains": "const entriesExportKeys"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 1984,
+   "contains": "Entries import (v1.7 r048)"
+  },
+  {
+   "file": "08_export-layer.jsx",
+   "line": 1996,
+   "contains": "const entriesImportRead"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 485,
+   "contains": "Entries import (v1.7 r048)"
+  },
+  {
+   "file": "29_modals.jsx",
+   "line": 497,
+   "contains": "function EntriesImportModal"
   }
  ],
  "spans": {
@@ -1124,10 +1144,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r047-body.jsx",
-   "reference-r047-layout.json",
-   "54dcedf665c90774",
-   "de350bb8eb3c3baa",
+   "reference-r048-body.jsx",
+   "reference-r048-layout.json",
+   "302870b917da9157",
+   "e2e882d6d43ccd4b",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1135,7 +1155,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r048, Pipes' tenth cut: Import entries",
+   "r049, Pipes' eleventh cut: Import entries from CSV",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1192,7 +1212,12 @@
    "v1.7_r047",
    "Entries export (v1.7 r047)",
    "cartulary_entries_export",
-   "EntriesExportModal"
+   "EntriesExportModal",
+   "v1.7_r048",
+   "Entries import (v1.7 r048)",
+   "EntriesImportModal",
+   "pre-entries-import",
+   "since r044 `pre-rename`, and since r048 `pre-entries-import`"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1402,13 +1427,13 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r047-layout.json",
+   "reference-r048-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
    "Id repair (v1.7 r039)",
    "Five exist",
-   "03_persistence:455",
+   "03_persistence:456",
    "reference-r040-body.jsx",
    "bc7d488a7b04885a",
    "5e4562772266fe4f",
@@ -1451,7 +1476,12 @@
    "54dcedf665c90774",
    "de350bb8eb3c3baa",
    "On v1.7 r047 verification",
-   "Entries export (v1.7 r047)"
+   "Entries export (v1.7 r047)",
+   "reference-r048-body.jsx",
+   "302870b917da9157",
+   "e2e882d6d43ccd4b",
+   "On v1.7 r048 verification",
+   "Entries import (v1.7 r048)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1714,7 +1744,14 @@
    "88f14be",
    "de350bb8eb3c3baa",
    "v1.7_r047_entries_export.py",
-   "Turnover v1.7_r047"
+   "Turnover v1.7_r047",
+   "v1.7_r048",
+   "7ab8dd0",
+   "6867074",
+   "e2e882d6d43ccd4b",
+   "v1.7_r048_entries_import.py",
+   "Turnover v1.7_r048",
+   "L2 fails because r047's Fabula hides Export ↓ in Lock mode"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1833,7 +1870,12 @@
    "v1.7_r047",
    "r047 is in",
    "Fabula's index hides Export ↓ in Lock mode",
-   "What r047 left for r051"
+   "What r047 left for r051",
+   "v1.7_r048",
+   "r048 is in",
+   "What r048 left for r051",
+   "A dependent dropdown's Other is cleared by the save and every load",
+   "The entries import doesn't check a group's dependent dropdowns"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1924,7 +1966,10 @@
    "A planted copy that passes may be the build in effect",
    "A new control is looked at while it's disabled",
    "A control a planted copy can take away is looked for before the probe clicks it",
-   "A planted copy that passes is first checked for where it ran"
+   "A planted copy that passes is first checked for where it ran",
+   "A call's reason is carried to every place its case can occur",
+   "Where the editor and the load disagree on a value",
+   "A screen is first looked at with the case it was built for"
   ],
   "journal.txt": [
    "r030",
@@ -1995,7 +2040,8 @@
    "nineteen searches meant for hidden secrets passed anyway",
    "the world had Crew all along",
    "r046 took Drak's two calls",
-   "r047 took Drak's two calls"
+   "r047 took Drak's two calls",
+   "r048 took Drak's two calls"
   ]
  }
 }
