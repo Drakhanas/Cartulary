@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "6880ff7193d721eed3467e4313c1864219191fdcf91ef8f8e22e55f111156c68",
+  "anchor_sha256": "54dcedf665c9077446749d46e3436e55b000b7e6d88e5d3536011790c0b104b9",
   "shell_sha256": "00b312a346ba38f65cec0dbe483159c4064956d0a0b7ed63738900a454b90df0",
   "files": [
     [
@@ -36,7 +36,7 @@
     ],
     [
       "08_export-layer.jsx",
-      1628
+      1982
     ],
     [
       "09_trunk.jsx",
@@ -52,7 +52,7 @@
     ],
     [
       "12_trunk.jsx",
-      6507
+      6535
     ],
     [
       "13_form-engine-display.jsx",
@@ -228,7 +228,7 @@
     ],
     [
       "28_fabula/08_threads.jsx",
-      255
+      256
     ],
     [
       "28_fabula/09_templates.jsx",

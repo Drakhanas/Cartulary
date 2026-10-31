@@ -5907,6 +5907,360 @@ function HtmlExportModal({ state, onCancel, onConfirm }) {
   );
 }
 
+// ─── Entries export (v1.7 r047) ────────────────────────────────────────────────
+// docs/pipes-spec.md, section 7, with Drak's calls at the cut: Export entries
+// on a template writes every entry it has, whatever its list shows, as one
+// file at a click, JSON or CSV. The JSON, `cartulary_entries_export: 1`,
+// keeps each value in the shape the world file does (call 1), a reference
+// written as its record's name and template, or kind, beside its id; the CSV
+// writes what a spreadsheet reads, a row per entry and a column per field
+// (call 2). Secret fields stay out unless asked for, at every depth, and an
+// image goes as its file name. A world import refuses the file (12_trunk).
+
+// The keys a list of fields is written under: each one's label, and a label
+// used already as "Label (2)", "Label (3)", with the first number no label
+// in the list holds, so no two keys are one.
+const entriesExportKeys = (fields) => {
+  const label = (f) => (f && typeof f.label === "string" ? f.label : "");
+  const used = new Set(fields.map(label));
+  const seen = new Set();
+  return fields.map(f => {
+    const l = label(f);
+    if (!seen.has(l)) { seen.add(l); return l; }
+    let n = 2;
+    while (used.has(`${l} (${n})`)) n++;
+    used.add(`${l} (${n})`);
+    return `${l} (${n})`;
+  });
+};
+
+// The fields the file writes, at any depth: every one, or with secrets left
+// out, those not marked secret.
+const entriesExportFields = (fields, includeSecrets) =>
+  (Array.isArray(fields) ? fields : []).filter(f => f && (includeSecrets || !f.secret));
+
+// Whether a template has a field marked secret, at any depth.
+const entriesExportHasSecret = (fields) =>
+  (Array.isArray(fields) ? fields : []).some(f => f && (f.secret || (f.type === "group" && entriesExportHasSecret(f.subfields))));
+
+// The template's fields as the JSON lists them: each one's label, id, and
+// type, the key its values are written under where that isn't its label, a
+// secret one marked so, and a group's subfields the same way.
+const entriesExportFieldList = (fields, includeSecrets) => {
+  const kept = entriesExportFields(fields, includeSecrets);
+  const keys = entriesExportKeys(kept);
+  return kept.map((f, i) => {
+    const d = { label: f.label, id: f.id, type: f.type };
+    if (keys[i] !== f.label) d.key = keys[i];
+    if (f.secret) d.secret = true;
+    if (f.type === "group") d.subfields = entriesExportFieldList(f.subfields, includeSecrets);
+    return d;
+  });
+};
+
+// A template's entries, every one, in the order the world keeps them.
+const entriesExportEntries = (state, template) =>
+  (state && Array.isArray(state.entries) ? state.entries : []).filter(e => e && template && e.templateId === template.id);
+
+// What naming a reference's record takes: every entry by id, each
+// template's name, and the other records a field can point at.
+const entriesExportContext = (state, includeSecrets) => {
+  const entryById = {};
+  (state.entries || []).forEach(e => { if (e && e.id) entryById[e.id] = e; });
+  const tplName = {};
+  (state.templates || []).forEach(t => { if (t && t.id) tplName[t.id] = t.name || ""; });
+  return { entryById, tplName, nodeById: registeredNodeIndex(state), includeSecrets: !!includeSecrets };
+};
+
+// A reference as the file writes it: its record's name, and the entry's
+// template or the other record's kind, beside its id; null for an id no
+// record in the world has.
+const entriesExportRef = (id, ctx) => {
+  if (typeof id !== "string" || !id) return null;
+  const e = ctx.entryById[id];
+  if (e) return { name: e.name || "", template: ctx.tplName[e.templateId] || "", id };
+  const n = ctx.nodeById[id];
+  if (!n) return null;
+  const src = getRegisteredSourceById(n.templateId);
+  return { name: n.name || "", kind: src ? src.name : "", id };
+};
+
+// The calendars the entries are written in, as the JSON lists them, the
+// primary first: each one's name and id, the primary's id null, and the key
+// a name used already is written under, as a label's is. An entry's
+// calendar is read as its dates are: an id no calendar has reads as the
+// primary (getCalendar).
+const entriesExportCalendars = (state, entries) => {
+  const extra = (Array.isArray(state.calendars) ? state.calendars : []).filter(c => c && c.id);
+  const byId = Object.fromEntries(extra.map(c => [c.id, c]));
+  const idOf = (e) => (e && e.calendarId && byId[e.calendarId] ? e.calendarId : null);
+  const used = new Set(entries.map(idOf));
+  const list = [];
+  if (used.has(null)) list.push({ name: (state.world && state.world.calendar && state.world.calendar.name) || "", id: null });
+  const named = extra.filter(c => used.has(c.id));
+  const keys = entriesExportKeys(named.map(c => ({ label: c.name || "" })));
+  const keyById = {};
+  named.forEach((c, i) => {
+    keyById[c.id] = keys[i];
+    list.push(keys[i] !== (c.name || "") ? { name: c.name || "", id: c.id, key: keys[i] } : { name: c.name || "", id: c.id });
+  });
+  return {
+    list,
+    keyOf: (e) => { const id = idOf(e); return id ? keyById[id] : null; },
+    nameOf: (e) => { const id = idOf(e); return id ? (byId[id].name || "") : ""; },
+    calOf: (e) => getCalendar(state, idOf(e)),
+  };
+};
+
+// A value as the JSON writes it: the shape the world file keeps, copied, a
+// reference turned into entriesExportRef's and one to nothing left out, at
+// any depth; a group's rows keyed by their subfields' keys; a Number as a
+// number where its text is that number's own (12, -3.5), and as typed where
+// it isn't (007, 1.50); an image kept inside the world, with no file name,
+// as empty; and anything empty as null.
+const entriesExportJsonValue = (field, v, ctx) => {
+  if (queryIsBlank(field, v)) return null;
+  const copy = (x) => JSON.parse(JSON.stringify(x));
+  switch (field.type) {
+    case "entry-ref": {
+      const items = field.relationKind
+        ? getRelationValues(v, field.multi).map(it => {
+            const r = entriesExportRef(it.id, ctx);
+            if (!r) return null;
+            const { id, ...rest } = it;
+            return { ...r, ...copy(rest) };
+          })
+        : getEntryRefIds(field, v).map(id => entriesExportRef(id, ctx));
+      const kept = items.filter(Boolean);
+      return field.multi ? (kept.length ? kept : null) : (kept[0] || null);
+    }
+    case "group": {
+      if (!Array.isArray(v)) return null;
+      const subs = entriesExportFields(field.subfields, ctx.includeSecrets);
+      const keys = entriesExportKeys(subs);
+      return v.map(row => {
+        const out = {};
+        subs.forEach((sf, i) => { out[keys[i]] = entriesExportJsonValue(sf, row && typeof row === "object" ? row[sf.id] : null, ctx); });
+        return out;
+      });
+    }
+    case "grid": {
+      const g = copy(v);
+      const cells = g && g.cells && typeof g.cells === "object" ? g.cells : {};
+      Object.keys(cells).forEach(rid => {
+        const row = cells[rid];
+        if (!row || typeof row !== "object") return;
+        Object.keys(row).forEach(cid => {
+          const cell = row[cid];
+          if (!cell || cell.type !== "entry-ref" || typeof cell.value !== "string" || !cell.value) return;
+          const r = entriesExportRef(cell.value, ctx);
+          if (r) cell.value = r; else delete row[cid];
+        });
+      });
+      return g;
+    }
+    case "number": {
+      const n = fieldNumberValue(v);
+      return n != null && String(n) === String(v).trim() ? n : copy(v);
+    }
+    case "image":
+      return typeof v === "string" && v.startsWith("data:") ? null : copy(v);
+    default:
+      return copy(v);
+  }
+};
+
+// The JSON file: the template's name and fields, the calendars its entries
+// use, and each entry with its id, name, tags, calendar (null for the
+// primary), and fields by key, in the template's order.
+const buildEntriesExportJson = (state, template, options) => {
+  const includeSecrets = !!(options && options.includeSecrets);
+  const ctx = entriesExportContext(state, includeSecrets);
+  const fields = entriesExportFields(template.fields, includeSecrets);
+  const keys = entriesExportKeys(fields);
+  const entries = entriesExportEntries(state, template);
+  const cals = entriesExportCalendars(state, entries);
+  return {
+    cartulary_entries_export: 1,
+    exported_at: new Date().toISOString(),
+    secrets: includeSecrets && entriesExportHasSecret(template.fields),
+    template: { name: template.name || "", fields: entriesExportFieldList(template.fields, includeSecrets) },
+    calendars: cals.list,
+    entries: entries.map(e => {
+      const values = e.fields || {};
+      const out = {};
+      fields.forEach((f, i) => { out[keys[i]] = entriesExportJsonValue(f, values[f.id], ctx); });
+      return { id: e.id, name: e.name || "", tags: Array.isArray(e.tags) ? [...e.tags] : [], calendar: cals.keyOf(e), fields: out };
+    }),
+  };
+};
+
+// A CSV cell: quoted, its quotes doubled, only where it holds a comma, a
+// quote, or a line break.
+const entriesCsvCell = (s) => {
+  const t = s == null ? "" : String(s);
+  return /[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+};
+
+// The CSV's columns after id, Name, Tags, and Calendar: one for each field
+// the file writes at the top level, in the template's order, a date range
+// two, its start and its end; groups and grids are left out, and a label
+// used twice heads two columns.
+const entriesCsvColumns = (template, includeSecrets) => {
+  const cols = [];
+  entriesExportFields(template.fields, includeSecrets).forEach(f => {
+    if (f.type === "group" || f.type === "grid") return;
+    if (f.type === "calendar-date-range") {
+      cols.push({ field: f, side: "start", head: `${f.label} · start` });
+      cols.push({ field: f, side: "end", head: `${f.label} · end` });
+    } else cols.push({ field: f, head: f.label });
+  });
+  return cols;
+};
+
+// A value as the CSV writes it: text and a Number as typed, line breaks
+// kept; a date in the entry's calendar as the page writes it, "~" before an
+// approximate one, and a real-world date as stored; a dropdown's choice, an
+// Other as its text; several values (a Multi-select's, a Tag List's, a
+// reference's names, a Name History's names) joined by "; "; an image's
+// file name, and one kept inside the world as empty.
+const entriesCsvValue = (col, v, cal, ctx) => {
+  const f = col.field;
+  if (queryIsBlank(f, v)) return "";
+  const day = (d) => (d && typeof d === "object" && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, cal)}` : "");
+  const words = (list) => list.map(x => String(x == null ? "" : x).trim()).filter(Boolean).join("; ");
+  switch (f.type) {
+    case "calendar-date": return day(v);
+    case "calendar-date-range": return v && typeof v === "object" ? day(v[col.side]) : "";
+    case "select": return formatSelectDisplay(v);
+    case "multiselect": return Array.isArray(v) ? words(v) : "";
+    case "tags": return words(Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : []);
+    case "name-history": return Array.isArray(v) ? words(v.filter(it => it && typeof it.name === "string").map(it => it.name)) : "";
+    case "entry-ref": return words(getEntryRefIds(f, v).map(id => entriesExportRef(id, ctx)).filter(Boolean).map(r => r.name));
+    case "image": return typeof v === "string" && !v.startsWith("data:") ? v : "";
+    default: return typeof v === "string" || typeof v === "number" ? String(v) : "";
+  }
+};
+
+// The CSV file: UTF-8 with a byte-order mark, a header row, and a row for
+// each entry, its lines ended CRLF, as a spreadsheet opens it.
+const buildEntriesExportCsv = (state, template, options) => {
+  const includeSecrets = !!(options && options.includeSecrets);
+  const ctx = entriesExportContext(state, includeSecrets);
+  const cols = entriesCsvColumns(template, includeSecrets);
+  const entries = entriesExportEntries(state, template);
+  const cals = entriesExportCalendars(state, entries);
+  const rows = [["id", "Name", "Tags", "Calendar", ...cols.map(c => c.head)]];
+  entries.forEach(e => {
+    const values = e.fields || {};
+    const cal = cals.calOf(e);
+    rows.push([e.id, e.name || "", Array.isArray(e.tags) ? e.tags.join("; ") : "", cals.nameOf(e),
+      ...cols.map(c => entriesCsvValue(c, values[c.field.id], cal, ctx))]);
+  });
+  return "\uFEFF" + rows.map(r => r.map(entriesCsvCell).join(",")).join("\r\n") + "\r\n";
+};
+
+// How many images the file writes as empty, kept inside the world with no
+// file name: in the fields the JSON writes, or in the CSV's columns.
+const entriesExportInlineImages = (state, template, options) => {
+  const includeSecrets = !!(options && options.includeSecrets);
+  const csv = !!(options && options.format === "csv");
+  const count = (fields, values) => entriesExportFields(fields, includeSecrets).reduce((n, f) => {
+    const v = values && typeof values === "object" ? values[f.id] : null;
+    if (f.type === "image") return n + (typeof v === "string" && v.startsWith("data:") ? 1 : 0);
+    if (f.type === "group" && !csv && Array.isArray(v)) return v.reduce((m, row) => m + count(f.subfields, row), n);
+    return n;
+  }, 0);
+  return entriesExportEntries(state, template).reduce((n, e) => n + count(template.fields, e.fields), 0);
+};
+
+// Writes the file, named for the template, .entries.json or .entries.csv,
+// and says how many entries it holds.
+const downloadEntriesExport = (state, template, options) => {
+  const csv = !!(options && options.format === "csv");
+  const text = csv ? buildEntriesExportCsv(state, template, options) : JSON.stringify(buildEntriesExportJson(state, template, options), null, 2);
+  const blob = new Blob([text], { type: csv ? "text/csv;charset=utf-8" : "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${slugify(template.name) || "template"}.entries.${csv ? "csv" : "json"}`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return entriesExportEntries(state, template).length;
+};
+
+// The dialog Export entries opens: how many entries, JSON or CSV, the
+// secret fields where the template has any, a word on the images the file
+// can't name, and Export, which writes the one file. Esc and a click
+// outside cancel; while it's open the keys are its own and the focus stays
+// in it, as the record modals' do.
+function EntriesExportModal({ state, template, onCancel, onConfirm }) {
+  const [format, setFormat] = useState("json");
+  const [includeSecrets, setIncludeSecrets] = useState(false);
+  const box = useRef(null);
+  const cancel = useRef(onCancel);
+  cancel.current = onCancel;
+  useEffect(() => {
+    const onKey = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); cancel.current(); }
+      else modalTabCycle(e, box.current);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  const count = useMemo(() => entriesExportEntries(state, template).length, [state, template]);
+  const secret = useMemo(() => entriesExportHasSecret(template.fields), [template]);
+  const withSecrets = secret && includeSecrets;
+  const inline = useMemo(() => entriesExportInlineImages(state, template, { format, includeSecrets: withSecrets }), [state, template, format, withSecrets]);
+  const dim = { color: "var(--text-dim)", fontSize: "calc(13px * var(--font-scale))" };
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal entries-export" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Export the entries of "{template.name || "Untitled"}"</div>
+        <div className="modal-body">
+          <p className="entries-export-count" style={{ margin: "0 0 14px" }}>
+            {count === 0 ? "This template has no entries yet, so the file holds its fields alone."
+              : count === 1 ? "1 entry, this template's only one."
+              : `${count} entries, every one this template has, whatever its list shows.`}
+          </p>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", marginBottom: 6, ...dim }}>Format</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" className={`btn btn-small ${format === "json" ? "btn-accent" : "btn-ghost"} entries-export-format`} data-format="json" aria-pressed={format === "json"} onClick={() => setFormat("json")}>JSON</button>
+              <button type="button" className={`btn btn-small ${format === "csv" ? "btn-accent" : "btn-ghost"} entries-export-format`} data-format="csv" aria-pressed={format === "csv"} onClick={() => setFormat("csv")}>CSV</button>
+            </div>
+            <div className="entries-export-about" style={{ marginTop: 8, ...dim }}>
+              {format === "csv"
+                ? "A row for each entry and a column for each field, for a spreadsheet. Groups and grids are left out, a reference is written as its record's name, and several values in one cell are joined by semicolons."
+                : "Every field as the world keeps it, a reference written as its record's name and template beside its id."}
+            </div>
+          </div>
+          {secret && (
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <input type="checkbox" className="entries-export-secrets" checked={includeSecrets} onChange={e => setIncludeSecrets(e.target.checked)} />
+                Include secret-marked fields
+              </label>
+            </div>
+          )}
+          {inline > 0 && (
+            <div className="modal-notice modal-notice-info entries-export-inline" style={{ marginBottom: 0 }}>
+              {inline === 1
+                ? "1 image here is kept inside the world, with no file in its images folder, so the file writes it as empty."
+                : `${inline} images here are kept inside the world, with no file in its images folder, so the file writes them as empty.`}
+            </div>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn btn-accent entries-export-go" autoFocus onClick={() => onConfirm({ format, includeSecrets: withSecrets })}>Export</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Fresh worlds are run through migrate() before being returned. The fresh
 // state's templates are already canonical (straight from seedBuiltinTemplates
 // → BUILTIN_TEMPLATES), so every migration is a no-op for content — but the
@@ -12699,6 +13053,7 @@ function App() {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);  // Template export dropdown
   const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);  // World-level HTML export modal
   const [fabulaExport, setFabulaExport] = useState(null);  // v1.7 r023: Fabula's export modal, { kind: "story" | "corpus", id }
+  const [entriesExport, setEntriesExport] = useState(null);  // v1.7 r047: the entries export dialog's template, by id
   // ChronometricsView's per-template enable filter. Lifted to App so toggling
   // off a lane and then navigating away and back doesn't reset the filter to
   // all-enabled. State is the SET OF DISABLED template ids; absent means enabled.
@@ -15924,6 +16279,13 @@ function App() {
         flash("That's a stamp pack. Import it from the Stamps panel at the top of Cartographia, not as a world.", "error");
         return;
       }
+      // v1.7 r047: an entries file holds an "entries" list, so the shape
+      // check below would take it for a world's; it goes to a template's
+      // Import entries, whatever its version.
+      if (parsed && parsed.cartulary_entries_export != null) {
+        flash("That's an entries file. Import it from a template's Import entries, not as a world.", "error");
+        return;
+      }
       // Shape pre-check: a Cartulary world has at least one of these top-level
       // keys. Migrate fills in missing structure with defaults, so without this
       // check, ANY valid JSON would silently load as an empty world.
@@ -17262,7 +17624,7 @@ function App() {
                     <button
                       className="btn btn-ghost"
                       onClick={() => setExportMenuOpen(o => !o)}
-                      title="Export this template as a portable file"
+                      title="Export this template, or its entries, as a file"
                     >
                       Export ↓
                     </button>
@@ -17274,6 +17636,9 @@ function App() {
                         </button>
                         <button onClick={() => { exportTemplateMarkdown(activeTemplate); setExportMenuOpen(false); }}>
                           Export as .template.md
+                        </button>
+                        <button className="export-entries" onClick={() => { setEntriesExport(activeTemplate.id); setExportMenuOpen(false); }}>
+                          Export entries…
                         </button>
                       </div>
                     </>}
@@ -17665,7 +18030,7 @@ function App() {
                 onOpenEntry: openEntryFromAnywhere,
                 onNewEntry: newFabulaEntry,
                 onEditTemplate: editFabulaTemplate,
-                onExportTemplate: (tpl, fmt) => (fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
+                onExportTemplate: (tpl, fmt) => (fmt === "entries" ? setEntriesExport(tpl.id) : fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
                 onRestoreTemplate: (name) => restoreBuiltinTemplates([name]),
                 onEditKind: openFabulaSchema,
               }}
@@ -18003,6 +18368,23 @@ function App() {
           }}
         />
       )}
+
+      {entriesExport && (() => {
+        const tpl = state.templates.find(t => t && t.id === entriesExport);
+        if (!tpl) return null;
+        return (
+          <EntriesExportModal
+            state={state}
+            template={tpl}
+            onCancel={() => setEntriesExport(null)}
+            onConfirm={(options) => {
+              setEntriesExport(null);
+              const n = downloadEntriesExport(state, tpl, options);
+              flash(`Exported ${n === 1 ? "1 entry" : `${n} entries`} of "${tpl.name}" as ${options.format === "csv" ? "CSV" : "JSON"}${options.includeSecrets ? ", secret fields included" : ""}.`);
+            }}
+          />
+        );
+      })()}
 
       {fabulaExport && (
         <FabulaExportModal
@@ -55195,12 +55577,13 @@ function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpen
         {!isLocked && tpl && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "baseline" }}>
             <div className="export-menu-wrap">
-              <button className="btn btn-ghost" style={small} onClick={() => setMenu(o => !o)} title="Export this template as a portable file">Export ↓</button>
+              <button className="btn btn-ghost" style={small} onClick={() => setMenu(o => !o)} title="Export this template, or its entries, as a file">Export ↓</button>
               {menu && <>
                 <div className="menu-backdrop" onClick={() => setMenu(false)} />
                 <div className="export-menu">
                   <button onClick={() => { onExportTemplate(tpl, "json"); setMenu(false); }}>Export as .template.json</button>
                   <button onClick={() => { onExportTemplate(tpl, "md"); setMenu(false); }}>Export as .template.md</button>
+                  <button className="export-entries" onClick={() => { onExportTemplate(tpl, "entries"); setMenu(false); }}>Export entries…</button>
                 </div>
               </>}
             </div>
