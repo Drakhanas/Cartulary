@@ -122,8 +122,9 @@ function FabulaTemplateSections({ state, isLocked, sections }) {
 // One section: its template's entries by name, each row naming the stories
 // that use it, or saying none does; a click anywhere on a row opens the
 // entry. A world without the template says so and offers Restore, and in Lock
-// Mode no button shows.
-function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpenEntry, onNewEntry, onEditTemplate, onExportTemplate, onRestoreTemplate }) {
+// Mode only Export ↓ shows, as on a template's page (since v1.7's r048, which
+// added Import entries…).
+function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpenEntry, onNewEntry, onEditTemplate, onExportTemplate, onImportEntries, onRestoreTemplate }) {
   const ref = useRef(null);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
@@ -146,7 +147,7 @@ function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpen
     <div ref={ref} className="fabula-template-section" data-section={role} style={{ marginTop: 28 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
         <div className="field-label"><span>{title}</span></div>
-        {!isLocked && tpl && (
+        {tpl && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "baseline" }}>
             <div className="export-menu-wrap">
               <button className="btn btn-ghost" style={small} onClick={() => setMenu(o => !o)} title="Export this template, or its entries, as a file">Export ↓</button>
@@ -159,8 +160,9 @@ function FabulaTemplateSection({ state, role, isLocked, focus, onFocused, onOpen
                 </div>
               </>}
             </div>
-            <button className="btn btn-ghost" style={small} onClick={() => onEditTemplate(tpl)}>Edit Template</button>
-            <button className="btn" style={small} onClick={() => onNewEntry(tpl)}>+ New Entry</button>
+            {!isLocked && onImportEntries && <button className="btn btn-ghost entries-import-btn" style={small} onClick={() => onImportEntries(tpl)} title="Add or update this template's entries from an entries file">Import entries…</button>}
+            {!isLocked && <button className="btn btn-ghost" style={small} onClick={() => onEditTemplate(tpl)}>Edit Template</button>}
+            {!isLocked && <button className="btn" style={small} onClick={() => onNewEntry(tpl)}>+ New Entry</button>}
           </div>
         )}
       </div>

@@ -241,9 +241,10 @@ const SNAPSHOT_AUTO_CAP = 10;                      // Keep N most-recent auto-sn
 // v1.7 r039: the snapshots the app pins before a restore, an import, or a
 // reset each keep their newest SNAPSHOT_KIND_CAP, older ones evicted, since
 // an import or a reset no longer clears the pinned snapshots. Since r044 so
-// does the one a rename that updates [[links]] keeps first, Before rename.
+// does the one a rename that updates [[links]] keeps first, Before rename,
+// and since r048 the one an entries import keeps, Before importing entries.
 const SNAPSHOT_KIND_CAP = 3;
-const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset", "pre-rename"];
+const SNAPSHOT_CAPPED_KINDS = ["pre-restore", "pre-import", "pre-reset", "pre-rename", "pre-entries-import"];
 
 // Generic prefix-range helpers. Used by snapshots, but written generically in
 // case other prefix-keyed data shows up later (e.g. drafts-history).
@@ -292,7 +293,7 @@ const dbDeleteByPrefix = async (prefix) => {
 
 // Snapshot value shape:
 //   { timestamp, trigger: 'auto'|'manual', pinned: bool, label: string|null,
-//     kind: null|'pre-restore'|'pre-import'|'pre-reset'|'pre-rename', sizeBytes: number,
+//     kind: null|'pre-restore'|'pre-import'|'pre-reset'|'pre-rename'|'pre-entries-import', sizeBytes: number,
 //     worldJson: <world state> }
 // kind marks the app's own pinned snapshots; a restore point the user makes
 // has none, nor do the Before import and Before reset ones from before r039.

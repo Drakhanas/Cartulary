@@ -124,6 +124,9 @@ function App() {
   const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);  // World-level HTML export modal
   const [fabulaExport, setFabulaExport] = useState(null);  // v1.7 r023: Fabula's export modal, { kind: "story" | "corpus", id }
   const [entriesExport, setEntriesExport] = useState(null);  // v1.7 r047: the entries export dialog's template, by id
+  const [entriesImport, setEntriesImport] = useState(null);  // v1.7 r048: the mapping screen, { templateId, fileName, file }
+  const entriesImportFileRef = useRef(null);  // v1.7 r048: Import entries…'s file picker
+  const entriesImportFor = useRef(null);  // v1.7 r048: the template the picker was opened for, by id
   // ChronometricsView's per-template enable filter. Lifted to App so toggling
   // off a lane and then navigating away and back doesn't reset the filter to
   // all-enabled. State is the SET OF DISABLED template ids; absent means enabled.
@@ -3309,6 +3312,38 @@ function App() {
     }
   };
 
+  // v1.7 r048: Import entries (docs/pipes-spec.md, section 7). The picker
+  // opens for a template, the file is read (entriesImportRead) and refused
+  // with a word on what it is, or the mapping screen opens on it; its plan
+  // is written after a pinned restore point, Before importing entries, a
+  // kind of its own whose newest three are kept, taken as rename's is,
+  // without waiting on it. Not in Lock mode.
+  const pickEntriesFile = (tplId) => {
+    if (isLocked || !tplId) return;
+    entriesImportFor.current = tplId;
+    if (entriesImportFileRef.current) entriesImportFileRef.current.click();
+  };
+  const readEntriesFile = (f) => {
+    const tplId = entriesImportFor.current;
+    if (!f || !tplId || isLocked) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const got = entriesImportRead(String(reader.result));
+      if (got.error) { flash(got.error, "error"); return; }
+      setEntriesImport({ templateId: tplId, fileName: f.name, file: got.file });
+    };
+    reader.onerror = () => flash("Couldn't read that file.", "error");
+    reader.readAsText(f);
+  };
+  const finishEntriesImport = (tpl, plan) => {
+    setEntriesImport(null);
+    if (isLocked || !tpl || !plan) return;
+    snapshotCreate({ state, trigger: "manual", pinned: true, kind: "pre-entries-import", label: "Before importing entries" })
+      .catch(e => console.error("Before importing entries snapshot failed:", e));
+    updateState(s => entriesImportApply(s, tpl, plan));
+    flash(`Imported into "${tpl.name || "Untitled"}": ${plan.counts.new} new, ${plan.counts.update} updated.`);
+  };
+
   // Import (Bug 9 + 10: distinguish version-too-new from shape-invalid; validate)
   const importWorld = (file) => {
     // A brush or image file is for the Stamps panel (r042), as a pack file
@@ -4714,6 +4749,7 @@ function App() {
                     </>}
                   </div>
                 )}
+                {activeTemplate && !activeList && !isLocked && <button className="btn btn-ghost entries-import-btn" onClick={() => pickEntriesFile(activeTemplate.id)} title="Add or update this template's entries from an entries file">Import entries…</button>}
                 {activeTemplate && !activeList && !isLocked && <button className="btn btn-ghost" onClick={openEditTemplate}>Edit Template</button>}
                 {activeTemplate && !isLocked && <button className="btn btn-accent" onClick={() => openNewEntry()}>+ New Entry</button>}
               </>}
@@ -5101,6 +5137,7 @@ function App() {
                 onNewEntry: newFabulaEntry,
                 onEditTemplate: editFabulaTemplate,
                 onExportTemplate: (tpl, fmt) => (fmt === "entries" ? setEntriesExport(tpl.id) : fmt === "md" ? exportTemplateMarkdown(tpl) : exportTemplateJson(tpl)),
+                onImportEntries: (tpl) => pickEntriesFile(tpl.id),
                 onRestoreTemplate: (name) => restoreBuiltinTemplates([name]),
                 onEditKind: openFabulaSchema,
               }}
@@ -5452,6 +5489,32 @@ function App() {
               const n = downloadEntriesExport(state, tpl, options);
               flash(`Exported ${n === 1 ? "1 entry" : `${n} entries`} of "${tpl.name}" as ${options.format === "csv" ? "CSV" : "JSON"}${options.includeSecrets ? ", secret fields included" : ""}.`);
             }}
+          />
+        );
+      })()}
+
+      <input
+        ref={entriesImportFileRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden-file-input entries-import-file-input"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) readEntriesFile(f);
+          e.target.value = "";
+        }}
+      />
+      {entriesImport && !isLocked && (() => {
+        const tpl = state.templates.find(t => t && t.id === entriesImport.templateId);
+        if (!tpl) return null;
+        return (
+          <EntriesImportModal
+            state={state}
+            template={tpl}
+            fileName={entriesImport.fileName}
+            file={entriesImport.file}
+            onCancel={() => setEntriesImport(null)}
+            onConfirm={(plan) => finishEntriesImport(tpl, plan)}
           />
         );
       })()}

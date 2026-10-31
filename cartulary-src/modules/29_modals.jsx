@@ -481,3 +481,165 @@ function RecordRenameModal() {
     </div>
   );
 }
+
+// ─── Entries import (v1.7 r048) ────────────────────────────────────────────────
+// docs/pipes-spec.md, section 7, with Drak's calls at the cut: the mapping
+// screen Import entries opens on a file entriesImportRead has read. Each of
+// the file's fields picks a field here, each of its calendars a calendar
+// here (call 1), Tags and the matching switch start on, and the preview
+// says what entriesImportPlan makes of the choices, its counts beside the
+// buttons, where they stay in sight; Import hands the plan to App, which
+// writes it. A row's flag shows until its picker is changed, and a name two
+// calendars here share is told apart in their picker by the first month.
+// Esc and a click outside cancel; while it's open the keys are its own and
+// the focus stays in it, as the record modals'.
+
+function EntriesImportModal({ state, template, fileName, file, onCancel, onConfirm }) {
+  const [choices, setChoices] = useState(() => entriesImportDefaults(state, template, file));
+  const [touched, setTouched] = useState({});
+  const box = useRef(null);
+  const cancel = useRef(onCancel);
+  cancel.current = onCancel;
+  useEffect(() => {
+    const onKey = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); cancel.current(); }
+      else modalTabCycle(e, box.current);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  const fieldFlags = useMemo(() => entriesImportFieldPicks(template.fields, file.template.fields), [template, file]);
+  const calFlags = useMemo(() => entriesImportCalendarPicks(state, file.calendars), [state, file]);
+  const plan = useMemo(() => entriesImportPlan(state, template, file, choices), [state, template, file, choices]);
+  const calRows = useMemo(() => file.calendars.map((_, i) => file.entries.filter(r => entriesImportCalendarOf(file, r) === i).length), [file]);
+  const here = (template.fields || []).filter(f => f && f.id);
+  const calsHere = entriesImportCalendarsHere(state);
+  const typeName = (t) => (FIELD_TYPES.find(x => x.value === t) || {}).label || t || "";
+  // A calendar here as its picker names it: a name two calendars here share
+  // told apart by its first month.
+  const calLabel = (h) => {
+    const same = calsHere.filter(x => entriesImportNorm(x.name) === entriesImportNorm(h.name));
+    const cal = same.length > 1 ? getCalendar(state, h.id) : null;
+    const first = cal && Array.isArray(cal.months) && cal.months[0] && cal.months[0].name;
+    const apart = same.length < 2 ? "" : first ? `, first month ${first}` : `, ${same.indexOf(h) + 1} of ${same.length}`;
+    return `${h.name || "(no name)"}${h.id == null ? " (primary)" : ""}${apart}`;
+  };
+  const setField = (i, id) => {
+    setTouched(t => ({ ...t, [`f${i}`]: true }));
+    setChoices(c => ({ ...c, fields: c.fields.map((x, j) => (j === i ? (id || null) : x)) }));
+  };
+  const setCal = (i, id) => {
+    setTouched(t => ({ ...t, [`c${i}`]: true }));
+    setChoices(c => ({ ...c, calendars: c.calendars.map((x, j) => (j === i ? (id || null) : x)) }));
+  };
+  const doubled = new Set(plan.doubled);
+  const c = plan.counts;
+  const n = file.entries.length;
+  const canImport = plan.doubled.length === 0 && c.new + c.update > 0;
+  const skipped = plan.rows.filter(r => r.action === "skip");
+  const notes = !canImport || skipped.length + plan.unresolved.length + plan.unread.length + plan.kept.length + plan.taken.length > 0;
+  const dim ={ color: "var(--text-dim)", fontSize: "calc(13px * var(--font-scale))" };
+  const warn = { ...dim, color: "var(--warn)" };
+  const row = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border2)" };
+  const flagText = {
+    "twice-here": "Two fields here have this label; pick one.",
+    "twice-file": "The file has this label twice; pick its field.",
+    taken: "The field here with this label is matched to another of the file's fields by its id.",
+    none: "No field here has this label.",
+  };
+  const calFlagText = {
+    shared: "Several calendars here have this name. Until you pick one, the primary reads its dates and takes its new entries.",
+    none: "No calendar here has this name. Until you pick one, the primary reads its dates and takes its new entries.",
+  };
+  const few = (cls, title, items) => (items.length ? (
+    <div className={`entries-import-note ${cls}`} style={{ marginTop: 6 }}>
+      <span style={{ fontWeight: 600 }}>{title}</span> {items.slice(0, 5).join("; ")}{items.length > 5 ? `; and ${items.length - 5} more` : ""}.
+    </div>
+  ) : null);
+  const skipWhy = (r) => (r.why === "no name" ? `row ${r.i + 1} has no name` : r.why === "shared" ? `"${r.name}", whose name ${r.n} entries here share` : `"${r.name}", whose entry another row matched first`);
+  const refWhy = { none: "", self: " (the entry itself)", barred: " (not one this field can point at)" };
+  const fromTpl = file.template && typeof file.template.name === "string" && file.template.name ? ` from "${file.template.name}"` : "";
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal modal-wide entries-import" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-hdr">Import entries into "{template.name || "Untitled"}"</div>
+        <div className="modal-body">
+          <p className="entries-import-file" style={{ margin: "0 0 14px", overflowWrap: "anywhere" }}>
+            {fileName}: {n === 1 ? "1 entry" : `${n} entries`}{fromTpl}. {file.secrets === true ? "It holds secret fields." : "It holds no secret fields."}
+          </p>
+          <div className="modal-section-hdr">Fields</div>
+          <div className="entries-import-fields" style={{ marginBottom: 14 }}>
+            <div className="entries-import-name" style={row}><div>Entry name</div><div style={dim}>Always used: it names new entries and, with matching on, finds existing ones.</div></div>
+            {file.template.fields.map((ff, i) => {
+              const pick = choices.fields[i] || null;
+              const target = here.find(f => f.id === pick);
+              const flag = fieldFlags[i] && fieldFlags[i].flag;
+              const note = pick
+                ? (doubled.has(pick) ? { t: "Picked for another of the file's fields too.", w: true }
+                  : target && target.type !== ff.type ? { t: `${typeName(ff.type)} into ${typeName(target.type)}: values read as this field's type.`, w: false } : null)
+                : flag && !touched[`f${i}`] ? { t: flagText[flag], w: flag !== "none" } : null;
+              return (
+                <div key={i} className="entries-import-field" style={row}>
+                  <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{ff.label} <span style={dim}>{typeName(ff.type)}{ff.secret ? ", secret" : ""}</span></div>
+                  <select className="input" value={pick || ""} aria-label={`The field for ${ff.label}`} onChange={e => setField(i, e.target.value)}>
+                    <option value="">Leave out</option>
+                    {here.map(f => <option key={f.id} value={f.id}>{f.label} ({typeName(f.type)})</option>)}
+                  </select>
+                  {note && <div className="entries-import-field-note" style={{ gridColumn: "1 / -1", ...(note.w ? warn : dim) }}>{note.t}</div>}
+                </div>
+              );
+            })}
+            <label style={{ ...row, display: "flex", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" className="entries-import-tags" checked={choices.tags} onChange={e => setChoices(x => ({ ...x, tags: e.target.checked }))} />
+              <span>Bring the file's tags (where a row has some, they replace a matched entry's)</span>
+            </label>
+          </div>
+          {file.calendars.length > 0 && <>
+            <div className="modal-section-hdr">Calendars</div>
+            <div className="entries-import-calendars" style={{ marginBottom: 14 }}>
+              {file.calendars.map((fc, i) => {
+                const pick = choices.calendars[i] == null ? "" : choices.calendars[i];
+                const flag = calFlags[i] && calFlags[i].flag;
+                return (
+                  <div key={i} className="entries-import-calendar" style={row}>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>{typeof fc.key === "string" ? fc.key : typeof fc.name === "string" && fc.name ? fc.name : "(no name)"} <span style={dim}>{fc.id == null ? "the file's primary, " : ""}{calRows[i] === 1 ? "1 entry" : `${calRows[i]} entries`}</span></div>
+                    <select className="input" value={pick} aria-label={`The calendar for ${typeof fc.name === "string" && fc.name ? fc.name : "this calendar"}`} onChange={e => setCal(i, e.target.value)}>
+                      {calsHere.map(h => <option key={h.id || ""} value={h.id || ""}>{calLabel(h)}</option>)}
+                    </select>
+                    {flag && !touched[`c${i}`] && <div className="entries-import-calendar-note" style={{ gridColumn: "1 / -1", ...warn }}>{calFlagText[flag]}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </>}
+          <div className="modal-section-hdr">Rows</div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" className="entries-import-match" checked={choices.match} onChange={e => setChoices(x => ({ ...x, match: e.target.checked }))} />
+              <span>Match existing entries, by id, then by name</span>
+            </label>
+            <div className="entries-import-match-about" style={{ ...dim, marginTop: 4 }}>
+              {choices.match ? "A row updates this template's entry with its id, else the one with its name, case aside." : "Every row makes a new entry."}
+            </div>
+          </div>
+          {notes && <div className="modal-section-hdr">Preview</div>}
+          <div className="entries-import-preview">
+            {few("entries-import-skipped", "Skipped:", skipped.map(skipWhy))}
+            {few("entries-import-unresolved", "References that found no record:", plan.unresolved.map(u => `${u.row}'s ${u.field}, "${u.name}"${refWhy[u.why] || ""}`))}
+            {few("entries-import-unread", "Values that didn't read:", plan.unread.map(u => `${u.row}'s ${u.field}: ${u.why}`))}
+            {few("entries-import-kept", "Matched, keeping their names:", plan.kept.map(k => `"${k.name}", which the file calls "${k.fileName}"`))}
+            {few("entries-import-taken", "New entries taking a name an entry here has:", plan.taken.map(t => `"${t}"`))}
+            {plan.doubled.length > 0 && <div className="entries-import-doubled" style={{ ...warn, marginTop: 6 }}>A field here is picked for two of the file's fields; pick one for each before importing.</div>}
+            {plan.doubled.length === 0 && !canImport && <div className="entries-import-nothing" style={{ ...dim, marginTop: 6 }}>Nothing to import: no row makes or changes an entry.</div>}
+          </div>
+        </div>
+        <div className="modal-actions">
+          <div className="entries-import-counts" style={{ ...dim, marginRight: "auto", alignSelf: "center" }}>{c.new} new · {c.update} updated · {c.unchanged} unchanged · {c.skip} skipped</div>
+          <button className="btn btn-ghost" onClick={onCancel} autoFocus>Cancel</button>
+          <button className="btn btn-accent entries-import-go" disabled={!canImport} onClick={() => onConfirm(plan)}>Import</button>
+        </div>
+      </div>
+    </div>
+  );
+}
