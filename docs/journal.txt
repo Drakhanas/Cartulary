@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen) ===
+=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1725,3 +1725,45 @@ a semicolon. Two of those reach r048's JSON import as well: the decoding
 I changed for every entries file and checked only for a CSV, and the
 Multi-select's rule, which r048 wrote and r049 copied. They're filed for
 the next cut on the import.
+
+r050 took Drak's three calls, a, a, and a: a line stuck to a pin keeps
+its end at the pin's point whether the pin shows or not, in time mode, a
+download, or an export; a line stuck to a stamp keeps its end on the
+stamp's box while the stamp isn't drawn; and Freehand's ends stay free
+when drawn, a line past forty points getting handles at its two ends so
+they can be stuck by a drag. Tabula's logic carried over almost whole: the map hands
+its pins and stamps to tabulaDrawnPoints as boxes, a pin a box of no
+size, and the one new thing Tabula's helper had to learn was a box that
+turns, since a stamp has a rotation and a card never did.
+
+The probe's first runs failed where the page had moved under it. A
+line's first point grows the strip by a row and pushes the canvas down,
+and the pin editor's label takes focus and scrolls the page, so a click
+aimed at a pin from a position read before either landed well above the
+pin; later, a screenshot of the editor scrolled the page and moved a
+double-click the same way. The probe reads a position again right
+before it uses one now.
+
+The probe passed its 44 checks on the build, and the planted copies
+found one gap. The copy that put back the old pin id passed: the load's
+id fix runs every time the editor reads the map, so a duplicate came
+apart at the next edit, and the pin editor opening on the older pin was
+the only thing left to see. The probe checks that now, and caught the
+copy on the rerun. The other 48 copies were caught at their own checks
+the first time.
+
+Drak passed it, and the independent read of this turnover found sixteen
+defects in the documents and none in the build. Six claimed more than
+the code or the probe does, among them what an end sticks to, said
+without the shown layer; Freehand's free ends, said without "when
+drawn"; and the probe's hand-worked points, said of every check where
+two of them read a freed end off the page. Three got a place wrong:
+the canvas-size paragraph is on the site's Cartographia page, not its
+editor page; the HTML export draws a pin as a circle centred on its
+point, so a line's end sits under the circle's middle, not at a
+teardrop's foot; and a pin's hit box is the marker inside its data-pin
+wrapper. There was no record of the gate's teeth on the frozen tree, so
+they ran during the read, eighteen bitten. The help's and the site's
+Limitations still say there's no snapping beyond the rotation knob's
+Shift snap; how that reads beside an end that jumps onto a pin is
+r051's to word.

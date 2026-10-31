@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 58934,
-  "raw_body_lines": 58934,
-  "canonical_lines": 56121,
-  "decl_count": 944,
+  "total_lines": 59139,
+  "raw_body_lines": 59139,
+  "canonical_lines": 56319,
+  "decl_count": 950,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r049-body.jsx"
+  "active_anchor": "reference-r050-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 58934,
+   "value": 59139,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 944,
+   "value": 950,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56121,
+   "value": 56319,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 58934,
+   "value": 59139,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3208343,
+   "value": 3220452,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-four",
-    74
+    "seventy-five",
+    75
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -104,7 +104,7 @@
    "pattern": "github\\.com/(Drakhanas/Cartulary)"
   },
   "cartographia_lines": {
-   "value": 5296,
+   "value": 5485,
    "pattern": "18_cartographia/` \\(([\\d,]+) lines"
   },
   "header_pairs_cold_start": {
@@ -121,17 +121,17 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-four",
-    74
+    "seventy-five",
+    75
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r049": {
-   "value": "01c18b3052925582",
-   "pattern": "working[^\\n]{0,40}at r049 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r050": {
+   "value": "886d937d36240d0f",
+   "pattern": "working[^\\n]{0,40}at r050 hashes to sha256 `([0-9a-f]{16})`"
   },
   "assembled_body_lines": {
-   "value": 58934,
+   "value": 59139,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -272,52 +272,52 @@
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 209,
+   "line": 315,
    "contains": "function ensureMapStamps"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 257,
+   "line": 363,
    "contains": "const MAP_STAMP_ALLOWLIST"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 279,
+   "line": 385,
    "contains": "const MAP_RASTER_TIP"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 286,
+   "line": 392,
    "contains": "const MAP_STAMP_ID_MAX"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 384,
+   "line": 490,
    "contains": "function mapReadAbr"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 590,
+   "line": 696,
    "contains": "function mapReadBplist"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 674,
+   "line": 780,
    "contains": "async function buildMapStampPngZip"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 722,
+   "line": 828,
    "contains": "function sanitizeMapStampBody"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 871,
+   "line": 977,
    "contains": "async function mapReadStampFiles"
   },
   {
    "file": "18_cartographia/00_model.jsx",
-   "line": 1085,
+   "line": 1191,
    "contains": "function MapStampGlyph"
   },
   {
@@ -357,47 +357,47 @@
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 101,
+   "line": 102,
    "contains": "const MAP_FREEHAND"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 108,
+   "line": 112,
    "contains": "const MAP_PAINT"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 208,
+   "line": 212,
    "contains": "const MAP_FILL"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 317,
+   "line": 321,
    "contains": "function mapSvgToCanvas"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 354,
+   "line": 358,
    "contains": "function mapShapeFrame"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1402,
+   "line": 1464,
    "contains": "function mapTrimHistory"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1432,
+   "line": 1494,
    "contains": "function useMapHistory"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1920,
+   "line": 1982,
    "contains": "function MapStampPicker"
   },
   {
    "file": "18_cartographia/02_tools.jsx",
-   "line": 1976,
+   "line": 2038,
    "contains": "function MapLayerPanel"
   },
   {
@@ -422,22 +422,22 @@
   },
   {
    "file": "18_cartographia/03_view.jsx",
-   "line": 120,
+   "line": 121,
    "contains": "function buildMapDownloadSvg"
   },
   {
    "file": "18_cartographia/03_view.jsx",
-   "line": 183,
+   "line": 185,
    "contains": "function rasterizeMapSvg"
   },
   {
    "file": "18_cartographia/03_view.jsx",
-   "line": 205,
+   "line": 207,
    "contains": "const MAP_CAMERA"
   },
   {
    "file": "18_cartographia/03_view.jsx",
-   "line": 207,
+   "line": 209,
    "contains": "function useMapCamera"
   },
   {
@@ -527,17 +527,17 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 966,
+   "line": 968,
    "contains": "const renderMapHtml"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1549,
+   "line": 1552,
    "contains": "HTML export modal"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1560,
+   "line": 1563,
    "contains": "function HtmlExportModal"
   },
   {
@@ -667,7 +667,7 @@
   },
   {
    "file": "21_stemma/05_tabula-drawing.jsx",
-   "line": 61,
+   "line": 74,
    "contains": "function useTabulaDrawing"
   },
   {
@@ -787,22 +787,22 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1630,
+   "line": 1633,
    "contains": "Entries export (v1.7 r047)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1643,
+   "line": 1646,
    "contains": "const entriesExportKeys"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1984,
+   "line": 1987,
    "contains": "Entries import (v1.7 r048)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1996,
+   "line": 1999,
    "contains": "const entriesImportRead"
   },
   {
@@ -817,13 +817,23 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2648,
+   "line": 2651,
    "contains": "Entries import from CSV (v1.7 r049)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2670,
+   "line": 2673,
    "contains": "const entriesImportReadCsv"
+  },
+  {
+   "file": "18_cartographia/00_model.jsx",
+   "line": 232,
+   "contains": "function mapWithAnchors"
+  },
+  {
+   "file": "18_cartographia/02_tools.jsx",
+   "line": 105,
+   "contains": "const MAP_STICK"
   }
  ],
  "spans": {
@@ -844,28 +854,28 @@
   "18_cartographia/00_model.jsx": [
    [
     1,
-    1100,
+    1206,
     "model"
    ]
   ],
   "18_cartographia/01_renderer.jsx": [
    [
     1,
-    417,
+    421,
     "renderer"
    ]
   ],
   "18_cartographia/02_tools.jsx": [
    [
     1,
-    2147,
+    2218,
     "tools"
    ]
   ],
   "18_cartographia/03_view.jsx": [
    [
     1,
-    1286,
+    1294,
     "view"
    ]
   ],
@@ -928,7 +938,7 @@
   "21_stemma/05_tabula-drawing.jsx": [
    [
     1,
-    489,
+    502,
     "Tabula's drawing layer"
    ]
   ],
@@ -1154,10 +1164,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r049-body.jsx",
-   "reference-r049-layout.json",
-   "e11d0f9359600722",
-   "01c18b3052925582",
+   "reference-r050-body.jsx",
+   "reference-r050-layout.json",
+   "ab2cd3cd0b680d44",
+   "886d937d36240d0f",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1165,7 +1175,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r050, Pipes' twelfth cut: sticky line ends on maps",
+   "r051, Pipes' thirteenth cut: the help",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1230,7 +1240,12 @@
    "since r044 `pre-rename`, and since r048 `pre-entries-import`",
    "v1.7_r049",
    "Entries import from CSV (v1.7 r049)",
-   "entriesImportReadCsv"
+   "entriesImportReadCsv",
+   "v1.7_r050",
+   "Sticky line ends on maps",
+   "mapAnchorBoxes",
+   "the turned box of a stamp on a shown layer",
+   "stay free when drawn"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1440,7 +1455,7 @@
    "seventeen flat + five directories",
    "(48 → 54)",
    "reference-r039-body.jsx",
-   "reference-r049-layout.json",
+   "reference-r050-layout.json",
    "5585102f8f74825a",
    "ab71966a032f6058",
    "On v1.7 r039 verification",
@@ -1499,7 +1514,14 @@
    "e11d0f9359600722",
    "01c18b3052925582",
    "On v1.7 r049 verification",
-   "Entries import from CSV (v1.7 r049)"
+   "Entries import from CSV (v1.7 r049)",
+   "reference-r050-body.jsx",
+   "ab2cd3cd0b680d44",
+   "886d937d36240d0f",
+   "On v1.7 r050 verification",
+   "MAP_STICK",
+   "on a world of six maps",
+   "r050 added none)"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1776,7 +1798,15 @@
    "01c18b3052925582",
    "v1.7_r049_csv_import.py",
    "Turnover v1.7_r049",
-   "the round trip stops at C2"
+   "the round trip stops at C2",
+   "v1.7_r050",
+   "dc66f5b",
+   "893730f",
+   "886d937d36240d0f",
+   "v1.7_r050_sticky_ends.py",
+   "Turnover v1.7_r050",
+   "the middle of the HTML export's numbered circle",
+   "P3 finds no id at all"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1905,7 +1935,12 @@
    "What r049 left for r051",
    "The entries import can't take a Multi-select's own values",
    "An entries file saved as UTF-16 no longer reads",
-   "Importing From Other Tools"
+   "Importing From Other Tools",
+   "r050 is in",
+   "v1.7_r050",
+   "What r050 left for r051",
+   "The site's Cartographia page says the same",
+   "dropped before r050"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -2001,7 +2036,10 @@
    "Where the editor and the load disagree on a value",
    "A screen is first looked at with the case it was built for",
    "A planted copy no check can catch marks dead code or a blind probe",
-   "Where the preview counts two values as the same, the write leaves the stored one"
+   "Where the preview counts two values as the same, the write leaves the stored one",
+   "A repair that runs at every read hides the bug it repairs",
+   "A position read off the screen holds until the next render",
+   "within about a second can share one"
   ],
   "journal.txt": [
    "r030",
@@ -2074,7 +2112,9 @@
    "r046 took Drak's two calls",
    "r047 took Drak's two calls",
    "r048 took Drak's two calls",
-   "r049 took Drak's three calls"
+   "r049 took Drak's three calls",
+   "r050 took Drak's three calls",
+   "the independent read of this turnover found sixteen"
   ]
  }
 }
