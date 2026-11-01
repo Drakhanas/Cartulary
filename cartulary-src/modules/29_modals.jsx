@@ -390,7 +390,11 @@ function RecordDeleteModal() {
 // many places link by it and what Rename only leaves them doing, and offers
 // Rename and update links, or Rename only, alone when the new name already
 // reaches a record ahead of this one. Where the record keeps former names, a
-// box adds the old name there, unticked (call 1). App draws it once.
+// box adds the old name there, unticked (call 1). Since r054 a rename to a
+// name another record answers to asks here too, links by the old name or
+// none, saying how many places link by the new name and where those links
+// lead after; with none by the old name it offers Rename (Drak's call a, to
+// warn and allow). App draws it once.
 
 const RECORD_RENAME = { open: null };
 
@@ -400,7 +404,7 @@ const RECORD_RENAME = { open: null };
 const askRename = (ask) => {
   if (RECORD_RENAME.open) { RECORD_RENAME.open(ask); return; }
   const p = ask.plan;
-  const update = !p.taken && window.confirm(`Update the [[links]] by "${p.oldName}" to "${p.newName}"?`);
+  const update = p.places > 0 && !p.taken && window.confirm(`Update the [[links]] by "${p.oldName}" to "${p.newName}"?`);
   ask.onConfirm({ update, former: false, places: p.places });
 };
 
@@ -421,6 +425,17 @@ const renameLeavesLine = (plan, former) => {
   if (l.how === "kept") return `With Rename only, they stay as typed and still lead to it, through its ${plan.formerLabel || "former names"}.`;
   if (l.how === "moved") return `With Rename only, they stay as typed and lead instead to ${renameRecordNoun(l.to)}.`;
   return "With Rename only, they stay as typed and show as broken.";
+};
+
+// Where the [[links]] by the new name lead, where another record answers to
+// it now (v1.7 r054): here after the rename, or still there.
+const renameHolderLine = (p) => {
+  if (!p.holder) return null;
+  const n = p.holderPlaces;
+  const from = n > 0 ? `, from ${n} ${n === 1 ? "place" : "places"}` : "";
+  if (!p.taken) return `[[${p.newName}]] leads to ${renameRecordNoun(p.holder)} now${from}; after the rename ${n > 0 ? "those links" : "it"} will lead here.`;
+  if (p.places > 0) return null;
+  return `[[${p.newName}]] leads to ${renameRecordNoun(p.taken)}${from}, and still will after the rename, so a [[link]] by "${p.newName}" won't reach it.`;
 };
 
 // The modal, drawn once by App; askRename opens it. Esc and a click outside
@@ -461,21 +476,23 @@ function RecordRenameModal() {
       <div className="modal record-rename" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">Rename "{p.oldName}" to "{p.newName}"?</div>
         <div className="modal-body">
-          <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>
-          {p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>[[{p.newName}]] already leads to {renameRecordNoun(p.taken)}, so updating the links would send them there. It can be renamed without updating them.</p>}
+          {p.places > 0 && <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>}
+          {p.places > 0 && p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>[[{p.newName}]] already leads to {renameRecordNoun(p.taken)}, so updating the links would send them there. It can be renamed without updating them.</p>}
           {p.former && (
             <label className="record-rename-former" style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0", cursor: "pointer" }}>
               <input type="checkbox" checked={former} onChange={e => setFormer(e.target.checked)} />
               <span>Add "{p.oldName}" to its {p.former}</span>
             </label>
           )}
-          <p className="record-rename-line" style={{ margin: "8px 0 0" }}>{renameLeavesLine(p, former)}</p>
-          {!p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>Updating them saves a restore point first, Before rename, in Version History.</p>}
+          {p.places > 0 && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>{renameLeavesLine(p, former)}</p>}
+          {p.places > 0 && !p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>Updating them saves a restore point first, Before rename, in Version History.</p>}
+          {renameHolderLine(p) && <p className="record-rename-line record-rename-holder" style={{ margin: p.places > 0 ? "10px 0 0" : 0 }}>{renameHolderLine(p)}</p>}
         </div>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={cancel}>Cancel</button>
-          <button className="btn record-rename-only" onClick={() => done(false)} autoFocus={!!p.taken}>Rename only</button>
-          {!p.taken && <button className="btn btn-accent record-rename-update" onClick={() => done(true)} autoFocus>Rename and update links</button>}
+          {p.places === 0 && <button className="btn btn-accent record-rename-go" onClick={() => done(false)} autoFocus>Rename</button>}
+          {p.places > 0 && <button className="btn record-rename-only" onClick={() => done(false)} autoFocus={!!p.taken}>Rename only</button>}
+          {p.places > 0 && !p.taken && <button className="btn btn-accent record-rename-update" onClick={() => done(true)} autoFocus>Rename and update links</button>}
         </div>
       </div>
     </div>
