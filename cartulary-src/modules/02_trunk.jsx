@@ -3,9 +3,24 @@
 
 const genId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+// A date as the page shows it. A bare day, a Date field's "2026-10-30", is
+// that day wherever the reader is: new Date() reads one as midnight UTC, the
+// day before anywhere west of it, so it's built as a local day (v1.7 r051),
+// years below 100 included. A timestamp, and a day no calendar has, read as
+// before.
 const fmtDate = (iso) => {
   if (!iso) return "";
-  try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+  try {
+    const m = typeof iso === "string" ? /^(\d{4,})-(\d{2})-(\d{2})$/.exec(iso) : null;
+    let d = null;
+    if (m) {
+      const y = Number(m[1]), mo = Number(m[2]) - 1, day = Number(m[3]);
+      d = new Date(2000, 0, 1);
+      d.setFullYear(y, mo, day);
+      if (d.getFullYear() !== y || d.getMonth() !== mo || d.getDate() !== day) d = null;
+    }
+    return (d || new Date(iso)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
   catch { return ""; }
 };
 

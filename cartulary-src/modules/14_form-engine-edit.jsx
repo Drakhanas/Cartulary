@@ -750,9 +750,11 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
     // dropdown as if empty (so the user picks fresh). The stored value persists
     // until they save — defensive normalize cleans it up then. This keeps the
     // editor from showing an invalid selection that's no longer in the dropdown.
-    const visibleDropdownValue = availableOptions.includes(dropdownValue) ? dropdownValue : "";
-
+    // A dependent dropdown with no parent choice is off, and the save clears
+    // it, an Other and its text included (10_migrate), so it shows empty too
+    // (v1.7 r051).
     const cascadeDisabled = isCascadeChild && !parentValueStr;
+    const visibleDropdownValue = !cascadeDisabled && availableOptions.includes(dropdownValue) ? dropdownValue : "";
 
     const handleDropdownChange = (newVal) => {
       if (hasOtherText) {
@@ -783,7 +785,7 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
         {cascadeDisabled && parentField && (
           <div className="field-hint">Select {parentField.label} first</div>
         )}
-        {hasOtherText && dropdownValue === "Other" && (
+        {hasOtherText && visibleDropdownValue === "Other" && (
           <input
             className="input cascade-other-text"
             value={customText}

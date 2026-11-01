@@ -202,8 +202,8 @@ const makeInitialState = () => migrate({
   // Ephemeris celestial bodies (v1.5). Top-level state slice for stars,
   // planets, moons, and other body kinds. Stored at world scope (persisted to
   // JSON save). Each body carries the six classical orbital elements plus
-  // physical parameters; kind-aware fields layer on via the kind:celestial-
-  // body system template. Empty on fresh worlds; existing v1.4 worlds get
+  // physical parameters, and the descriptive fields and tags that
+  // makeNewCelestialBody writes. Empty on fresh worlds; existing v1.4 worlds get
   // their `calendar.celestials` data migrated into here during migrate() with
   // parentBodyId: null (user re-homes the bodies in Ephemeris).
   celestialBodies: [],

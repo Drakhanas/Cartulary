@@ -127,13 +127,15 @@ const normalizeEntryFields = (fields, valueMap) => {
       // 2. Cascade child (dependsOn): if the stored dropdown value isn't in the
       //    current optionsByParent[parentValue] list, clear it silently. This is
       //    the defensive cleanup for hand-edited JSON, version-skewed worlds, or
-      //    parent-option renames that left the child orphaned.
+      //    parent-option renames that left the child orphaned. Other, which the
+      //    editor offers under every parent where the field keeps an Other text
+      //    (14_form-engine-edit), stays with its text (v1.7 r051).
       if (f.dependsOn) {
         const parentVal = selectValueOnly(valueMap[f.dependsOn]);
         const ownVal = selectValueOnly(valueMap[f.id]);
         if (parentVal && ownVal) {
           const allowed = (f.optionsByParent || {})[parentVal] || [];
-          if (!allowed.includes(ownVal)) {
+          if (!allowed.includes(ownVal) && !(f.otherTextField && ownVal === "Other")) {
             // Orphan — clear. Preserve object shape if otherTextField is enabled.
             if (f.otherTextField) {
               valueMap[f.id] = { value: "", customText: "" };
