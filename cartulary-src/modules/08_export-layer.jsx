@@ -1961,7 +1961,7 @@ function EntriesExportModal({ state, template, onCancel, onConfirm }) {
             </div>
             <div className="entries-export-about" style={{ marginTop: 8, ...dim }}>
               {format === "csv"
-                ? "A row for each entry and a column for each field, for a spreadsheet. Groups and grids are left out, a reference is written as its record's name, and several values in one cell are joined by semicolons."
+                ? "A row for each entry and a column for each field, for a spreadsheet. Groups and grids are left out, a reference is written as its record's name, and several values in one cell are joined by semicolons, with a backslash before any semicolon or backslash inside a value."
                 : "Every field as the world keeps it, a reference written as its record's name and template beside its id."}
             </div>
           </div>
@@ -2116,12 +2116,14 @@ const entriesImportCalendarOf = (file, entry) => {
   return c == null ? cals.findIndex(x => x && x.id == null) : cals.findIndex(x => x && (typeof x.key === "string" ? x.key : x.name) === c);
 };
 
-// A dropdown's options: its own, a dependent dropdown's under every parent's
-// choice, and Other where the field keeps an Other text.
+// A dropdown's or a Multi-select's options: its own, a dependent dropdown's
+// under every parent's choice, and a dropdown's Other where it keeps an Other
+// text. A Multi-select's Other box keeps values of the user's own, not an
+// option called Other, so an own "other" reads as typed (v1.7 r053).
 const entriesImportOptions = (field) => {
   const own = Array.isArray(field.options) ? field.options : [];
   const by = field.optionsByParent && typeof field.optionsByParent === "object" ? Object.values(field.optionsByParent).flat() : [];
-  return [...own, ...by, ...(field.otherTextField ? ["Other"] : [])].filter(o => typeof o === "string");
+  return [...own, ...by, ...(field.otherTextField && field.type !== "multiselect" ? ["Other"] : [])].filter(o => typeof o === "string");
 };
 
 // A date as a calendar here reads it: whole numbers, a month the calendar
@@ -2732,7 +2734,7 @@ const entriesImportReadCsv = (text) => {
     if (c && !calKey.has(entriesImportNorm(c))) { calKey.set(entriesImportNorm(c), c); calendars.push({ name: c, key: c, id: `csv:${c}` }); }
     const values = {};
     fields.forEach(f => { values[f.key] = cell(r, f.col); });
-    return { row: n, id: cell(r, at.id).trim() || null, name: cell(r, at.name), tags: entriesImportCsvList(cell(r, at.tags), null), calendar: c ? calKey.get(entriesImportNorm(c)) : null, fields: values };
+    return { row: n, id: cell(r, at.id).trim() || null, name: cell(r, at.name), tags: entriesImportCsvList(cell(r, at.tags)), calendar: c ? calKey.get(entriesImportNorm(c)) : null, fields: values };
   });
   if (entries.some(e => e.calendar == null)) calendars.unshift({ name: "", id: null, blank: true });
   return { file: { csv: true, columns: fixed.size + fields.length, tagsColumn: at.tags >= 0, calendarColumn: at.calendar >= 0, template: { name: "", fields }, calendars, entries } };
@@ -2834,12 +2836,11 @@ const entriesImportFindByName = (field, name, ctx) => {
 
 // A CSV cell's several values (v1.7 r052, Drak's call c): split at each ";"
 // the export didn't escape, "\;" read as a ";" inside a value and "\\" as a
-// backslash (entriesCsvEscape), each trimmed, the empty ones dropped. Where
-// `known` is given, a piece it doesn't take alone is joined with the pieces
-// after it, the longest run it takes reading as one value, so a file written
-// before r052, which escaped nothing, reads an option or a name holding a
-// ";"; a piece it takes alone stays alone, as the export meant it.
-const entriesImportCsvList = (text, known) => {
+// backslash (entriesCsvEscape), each trimmed, the empty ones dropped. Since
+// r053 nothing is joined back (Drak's call): a file doesn't say what wrote
+// it, so a join meant for a file that escaped nothing ran the export's own
+// values together; a spreadsheet's cell keeps a ";" inside a value as "\;".
+const entriesImportCsvList = (text) => {
   const s = String(text == null ? "" : text);
   const pieces = [];
   let cur = "";
@@ -2850,29 +2851,18 @@ const entriesImportCsvList = (text, known) => {
     else cur += c;
   }
   pieces.push(cur);
-  const out = [];
-  for (let i = 0; i < pieces.length; i++) {
-    const one = pieces[i].trim();
-    if (known && one && !known(one)) {
-      let k = pieces.length - 1;
-      for (; k > i; k--) if (known(pieces.slice(i, k + 1).join(";").trim())) break;
-      if (k > i) { out.push(pieces.slice(i, k + 1).join(";").trim()); i = k; continue; }
-    }
-    if (one) out.push(one);
-  }
-  return out;
+  return pieces.map(x => x.trim()).filter(Boolean);
 };
 
 // A CSV's cell as a field here reads its text, or why it doesn't: text as
 // typed; an image's file name, a color as #rrggbb, a real-world date as
 // YYYY-MM-DD on a day its month has (v1.7 r052), and a Number as a number,
 // trimmed; a Tag List's, a Multi-select's, a reference field's, and a Name
-// History's values as entriesImportCsvList reads them, a Multi-select's
-// rejoined by its options, a reference's by the names here, and a Name
-// History's by the entry's own names, and a Multi-select's other values,
-// where it keeps values of its own, read as those and listed in ctx.others
-// (v1.7 r052); a dropdown's option by its text, case aside, else Other with the
-// text where the field keeps an Other text, listed in ctx.others (call 2);
+// History's values as entriesImportCsvList reads them, and a Multi-select's
+// other values, where it keeps values of its own, read as those and listed
+// in ctx.others (v1.7 r052); a dropdown's option by its text, case aside,
+// else Other with the text where the field keeps an Other text, listed in
+// ctx.others (call 2);
 // a date, or a range's half, as entriesImportDateText reads it in `cal`
 // (call 1); a reference by its record's name (entriesImportFindByName),
 // counted as entriesImportRefs counts one. `old` is the matched entry's
@@ -2882,7 +2872,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
   const ok = (value) => ({ ok: true, value });
   const no = (why) => ({ ok: false, why });
   const t = String(text).trim();
-  const parts = entriesImportCsvList(t, null);
+  const parts = entriesImportCsvList(t);
   const calName = cal && cal.name ? cal.name : "its calendar";
   const opt = (x) => {
     const opts = entriesImportOptions(field);
@@ -2910,7 +2900,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
       return ok({ value: "Other", customText: t });
     }
     case "multiselect": {
-      const list = entriesImportCsvList(t, (x) => opt(x) != null);
+      const list = parts;
       const got = list.map(opt);
       const bad = list.filter((x, k) => got[k] == null);
       if (bad.length && !field.otherTextField) return no(`${bad.map(x => `"${x}"`).join(", ")} ${bad.length === 1 ? "isn't one of its options" : "aren't among its options"}`);
@@ -2932,7 +2922,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
     case "name-history": {
       const had = Array.isArray(old) ? old.filter(h => h && typeof h.name === "string") : [];
       const rows = [];
-      entriesImportCsvList(t, (x) => had.some(h => entriesImportNorm(h.name) === entriesImportNorm(x))).forEach(name => {
+      parts.forEach(name => {
         if (rows.some(h => entriesImportNorm(h.name) === entriesImportNorm(name))) return;
         const h = had.find(x => entriesImportNorm(x.name) === entriesImportNorm(name));
         rows.push({ name, from: h && h.from ? h.from : null, to: h && h.to ? h.to : null });
@@ -2942,7 +2932,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
     case "entry-ref": {
       const had = field.relationKind ? getRelationValues(old, field.multi) : [];
       const out = [];
-      entriesImportCsvList(t, (x) => !!entriesImportFindByName(field, x, ctx)).forEach(name => {
+      parts.forEach(name => {
         const id = entriesImportFindByName(field, name, ctx);
         const why = !id ? "none" : id === where.self ? "self" : !entriesImportRefAllowed(field, id, ctx) ? "barred" : null;
         if (why) { ctx.unresolved.push({ row: where.row, field: where.field, name, why }); return; }
