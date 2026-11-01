@@ -86,10 +86,11 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - The Export entries dialog's CSV note names the escape.
 - The Sweep's later cuts each moved up one.
 
-**r054, renames say where the links go** (`22_trunk`, `29_modals`)
+**r054, renames say where the links go** (`22_trunk`, `29_modals`). Its open detail decided at the cut (Drak, 2026-11-01, a of two): warn and allow, where the other was to refuse the name. r041's P2, the link index's time after an edit, which had reached its limit in r053's full run, came in at his call a after r053's turnover. **Done** (2026-11-01, `d2e3566`, passed).
 
-- Renaming a record to a name another record already answers to opens the modal even when the old name has no links, and says how many `[[links]]` by the new name reach that record now and will reach this one after.
-- Open at the cut: warn and allow, or refuse the name (section 9).
+- Renaming a record to a name another record already answers to opens the modal even when the old name has no links, and says how many places link by the new name to that record now and where those links lead after: here, where this record will claim the name first, or still there, where the other keeps it. Where the old name has links and the other record keeps the name, r044's line names that record and gives no count. With no links by the old name the modal offers Cancel and Rename.
+- After an edit the link index is brought from the last build: the records kept keep their targets, the records that came, changed, or went and those whose `[[links]]` a name change moves are read again, and the list of every target they touch is put together again. It's built whole where the records that came or went, a changed record counting as both, and those read again for a moved name number more than one in sixteen (64 at least), or where the records kept come in a new order.
+- Changed from the plan before staging: the plan made the index's two flat lists only when first read, through getters, which made Concordance's loop over r041's generated world about five times slower than r053's; they're made with the index, as in r053.
 
 **r055, Chronometric fits its frame** (`19_chronometric`)
 
@@ -142,7 +143,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 1. **r051, fields kept and shown as entered.** Section 3. **Done** (2026-10-31, `494ac2f`, passed).
 2. **r052, entries files make the round trip.** Section 3. **Done** (2026-11-01, `be001d2`, passed).
 3. **r053, entries CSVs read back exactly.** Section 3. **Done** (2026-11-01, `51ec83c`, passed).
-4. **r054, renames say where the links go.** Section 3.
+4. **r054, renames say where the links go.** Section 3. **Done** (2026-11-01, `d2e3566`, passed).
 5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first.
 6. **r056, Fabula's screens.** Section 3.
 7. **r057, a grid's starting shape.** Section 3.
@@ -152,7 +153,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 ## 9. Open at lock, decided at the cut
 
 - r052: a value holding a semicolon. The export can escape it, the reader can rejoin the pieces that make a name or an option it knows, or both; an escape changes the CSV the export writes, and a rejoin can't help a tag, which matches nothing. Decided at the cut (Drak, 2026-11-01): c, both, since re-exports will retire the files that escaped nothing.
-- r054: a rename to a name another record answers to. Warn and allow, or refuse the name.
+- r054: a rename to a name another record answers to. Warn and allow, or refuse the name. Decided at the cut (Drak, 2026-11-01): a, warn and allow.
 - r057: the builder's controls for a starting shape; the most rows and columns the prompt takes.
 
 ## 10. Acceptance tests
@@ -162,7 +163,7 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 - **r051:** a cascade child's Other with its text survives a save and a reload under a parent whose options don't list Other, and a value the parent doesn't offer is still cleared; a real-world Date reads its own day in Chicago's time zone and in one east of UTC, and a timestamp reads as before; the search finds a Long Text by its shown words and not by a link's address or the markup; and, added after the first staging, with its parent cleared the editor shows a dependent dropdown empty and its Other text gone.
 - **r052:** a UTF-16 file in each byte order reads; a Multi-select's own values make the round trip in JSON and in CSV, but for one spelled "other" in another case, which comes back as Other; a month name holding a comma makes the round trip; the semicolon rule as called; a file written as r050's export writes it, by hand (S1, S2), reads as it did there but for what section 3 changes; and a filter reads each Long Text once while the world stays the same.
 - **r053:** the CSV and the JSON the export writes read back with nothing changed and nothing listed, an own value beside an option or another own value that spells an option with it among them; a reference and a Name History read across worlds as the cell lists them; a spreadsheet's unescaped "Salt; Pepper" split, its pieces listed as own values where the field keeps them and refused where it keeps none and has no such options, its escaped one the option; an own "other" as typed, from JSON and from a CSV; the dialog's note.
-- **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now; the old-name case reads as it did; the rule as called.
+- **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now and after, and renaming to an earlier entry's name says the links stay with it; the old-name case reads as it did, the new line last; the rule as called, Rename offered where the old name has no links; and, with r041's P2 brought in, the index after each of fifteen kinds of edit the same as a whole build of it, quicker than r053's in the same run, its flat lists held as r053 held them.
 - **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame; parity at matched widths is identical step for step; a release right after the last move lands there.
 - **r056:** the outline walked by keyboard alone; a long title at 900 pixels; the pickers' separator; Reset to Default after a delete reads no (missing entry).
 - **r057:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.

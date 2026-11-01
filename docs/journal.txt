@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly) ===
+=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1830,3 +1830,14 @@ only on his test builds, and taking it out leaves a spreadsheet to write
 the escape where it means a semicolon. It came out ten lines shorter,
 and the control failed every check on what r053 changes, passing the
 three on what it keeps.
+
+Approaching two hours into r054's checks, Drak asked whether I was
+running excessive tests again. About thirty minutes were: one-off timing
+scripts working out which part of the cut made the index faster, and
+planted copies run again that a change couldn't reach. The rest found
+things. The planted copies showed the probe never took a link away, and
+the acceptance test named a map's name the probe skipped. One of the
+timing scripts found the defect the plan would have shipped: the flat
+lists I'd made lazy cost Concordance's loop five times what r053's did,
+since every element it read went through a getter. Making them with the
+index again costs each edit a little and the readers nothing.
