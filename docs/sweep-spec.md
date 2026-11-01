@@ -58,21 +58,24 @@ Paths are under `cartulary-src/modules/`; line numbers are r050's. All but the t
 
 ## 3. The cuts
 
-Each is a content cut gated by `edit`, probed with planted copies and the earlier probes, staged for Drak's pass, frozen, and turned over, as Pipes' were.
+Each is a content cut gated by `edit`, probed with planted copies and the earlier probes (from r052 the ones that reach the cut's changes while it's built, and all of them once on the build staged, as the handoff's Content cut says), staged for Drak's pass, frozen, and turned over, as Pipes' were.
 
-**r051, fields kept and shown as entered** (`02_trunk`, `09_trunk`, `10_migrate`, `13_form-engine-display`)
+**r051, fields kept and shown as entered** (`02_trunk`, `09_trunk`, `10_migrate`, `13_form-engine-display`, and `14_form-engine-edit`, added after its first staging). **Done** (2026-10-31, `494ac2f`, passed).
 
 - A dependent dropdown's Other survives the save and every load: the cleanup lets Other through under any parent when the field keeps Other text, as the editor offers it. Text already cleared doesn't come back.
 - A real-world Date field shows its own day: `fmtDate` reads a bare date as a local day, and a timestamp as before.
 - The search reads a Long Text the way the page draws it: a link's address and the markup's characters out, the words shown in.
 - The `celestialBodies` comment says what the bodies carry, without the template.
+- Added after the first staging, found checking the build before its message went out: with no parent choice the save still clears a dependent dropdown, Other included, so the editor shows it empty and its Other text gone, where it went on showing them.
 
-**r052, entries files make the round trip** (`08_export-layer`, `12_trunk`)
+**r052, entries files make the round trip** (`08_export-layer`, `12_trunk`, and `13_form-engine-display` for the filter's reading)
 
 - A file with a UTF-16 byte-order mark reads as UTF-16, either byte order.
 - A Multi-select's own values read where the field keeps them, from JSON and from CSV.
 - A month name holding a comma reads back.
 - The import takes a dependent dropdown's Other by r051's rule.
+- A real-world Date reads only on a day its month has (found checking r051's build: the import's pattern takes a 30th or a 31st in any month).
+- A filter's text condition on a Long Text reads each text once per change to the world, kept with the query's memo as the search keeps its texts (found by the read of r051's turnover; Drak's call, 2026-11-01).
 - Open at the cut: a value holding a semicolon (section 9).
 - A file written by r047 through r050 reads as it did, except where these fixes read what it couldn't.
 
@@ -129,7 +132,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 
 ## 8. Cut plan
 
-1. **r051, fields kept and shown as entered.** Section 3.
+1. **r051, fields kept and shown as entered.** Section 3. **Done** (2026-10-31, `494ac2f`, passed).
 2. **r052, entries files make the round trip.** Section 3.
 3. **r053, renames say where the links go.** Section 3.
 4. **r054, Chronometric fits its frame.** Section 3; the tooling commit first.
@@ -146,9 +149,9 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 
 ## 10. Acceptance tests
 
-Each cut's probe works its expectations out by hand, runs the last passed build as control, plants a copy for every rule, and runs the earlier probes and both parity tools, as Pipes' cuts did.
+Each cut's probe works its expectations out by hand, runs the last passed build as control, and plants a copy for every rule, as Pipes' cuts did; from r052 the earlier probes and both parity tools run as the handoff's Content cut says (Drak's call, 2026-10-31): the earlier probes that reach the cut's changes while it's built, and all of them and both tools once, on the build staged.
 
-- **r051:** a cascade child's Other with its text survives a save and a reload under a parent whose options don't list Other, and a value the parent doesn't offer is still cleared; a real-world Date reads its own day in Chicago's time zone and in one east of UTC, and a timestamp reads as before; the search finds a Long Text by its shown words and not by a link's address or the markup.
+- **r051:** a cascade child's Other with its text survives a save and a reload under a parent whose options don't list Other, and a value the parent doesn't offer is still cleared; a real-world Date reads its own day in Chicago's time zone and in one east of UTC, and a timestamp reads as before; the search finds a Long Text by its shown words and not by a link's address or the markup; and, added after the first staging, with its parent cleared the editor shows a dependent dropdown empty and its Other text gone.
 - **r052:** a UTF-16 file in each byte order reads; a Multi-select's own values make the round trip in JSON and in CSV; a month name holding a comma makes the round trip; the semicolon rule as called; a file written by r050's export reads as it did there.
 - **r053:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now; the old-name case reads as it did; the rule as called.
 - **r054:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame; parity at matched widths is identical step for step; a release right after the last move lands there.

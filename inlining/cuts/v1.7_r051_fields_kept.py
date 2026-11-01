@@ -21,7 +21,7 @@ open detail; Claude's plan for the cut, said to Drak and not stopped (18:56,
    day no calendar has, read as before. The search reads a Date through
    fmtDate, so it follows; a filter's before, after, and between compare
    the stored day, and the exports write the stored text, as before.
-3. The search reads a Long Text the way the page draws it: through the
+3. The search reads a Long Text from the HTML the page draws for it: through the
    same marked, with the wiki-link extension 10_migrate gives it, the words
    shown kept and a line between blocks, so a link's address and the
    markup's characters no longer count and a word broken by markup is
@@ -35,8 +35,8 @@ open detail; Claude's plan for the cut, said to Drak and not stopped (18:56,
 4. The comment over celestialBodies stops naming the celestial-body
    template v1.5's r004 deleted and says what a body carries.
 
-Added while checking the build before it went to Drak, and said in its
-staging message:
+Added while checking the build after it was first staged, before its
+staging message went out:
 
 5. With no parent choice a dependent dropdown is off and the save clears
    it, Other and its text included, as before (item 1). The editor went on

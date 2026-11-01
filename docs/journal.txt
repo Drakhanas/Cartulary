@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned) ===
+=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1784,3 +1784,22 @@ r057. The independent read of these documents found twelve things wrong
 before they went in, the worst a NEXT banner still offering a question
 Drak had just decided; I'd also written that the bugs sat in code no cut
 had touched, and they didn't.
+
+r051 keeps what a person enters in a dependent dropdown's Other, shows a
+real-world date on its own day in Chicago, and stops the search reading
+a link's address as if it were text. It took about four hours, and Drak
+asked whether checks had run that didn't need to. Some had. The first
+two builds each got every earlier probe, about fifty minutes a run, and
+I told him only five of the thirteen runs reach anything r051 touched.
+That was wrong, and the read of this turnover caught it: every probe
+loads its entries through the cleanup r051 changed, so any of them could
+have caught a crash in it, and the five are only the ones that meet what
+it does differently. He'd taken the leaner rule on my count, so I told
+him, and the nine probes my count had skipped ran on the frozen build
+after the freeze; they scored as on r050. Three reruns were mine: a
+search reader that blew r045's time limit, a threshold I wrote wrong,
+and an editor case I found after staging. The plan had cited the
+editor's code as the reason Other should survive the save, and the same
+code showed a greyed-out Other with its text still open to typing once
+the parent was cleared, which the save then dropped. I'd read it for the
+case the fix changed and not for the case it left alone.

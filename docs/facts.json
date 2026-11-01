@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59139,
-  "raw_body_lines": 59139,
-  "canonical_lines": 56319,
-  "decl_count": 950,
+  "total_lines": 59197,
+  "raw_body_lines": 59197,
+  "canonical_lines": 56376,
+  "decl_count": 952,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r050-body.jsx"
+  "active_anchor": "reference-r051-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59139,
+   "value": 59197,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 950,
+   "value": 952,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56319,
+   "value": 56376,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59139,
+   "value": 59197,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3220452,
+   "value": 3223481,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-five",
-    75
+    "seventy-six",
+    76
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,43 +121,43 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-five",
-    75
+    "seventy-six",
+    76
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
-  "working_hash_r050": {
-   "value": "886d937d36240d0f",
-   "pattern": "working[^\\n]{0,40}at r050 hashes to sha256 `([0-9a-f]{16})`"
-  },
   "assembled_body_lines": {
-   "value": 59139,
+   "value": 59197,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
    "value": "f37ebb7cf2a74655",
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
+  },
+  "working_hash_r051": {
+   "value": "e253e66398049dca",
+   "pattern": "working[^\\n]{0,40}at r051 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1303,
+   "line": 1305,
    "contains": "Longform + rich text editor"
   },
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1305,
+   "line": 1307,
    "contains": "function LongformEditor"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1318,
+   "line": 1357,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1320,
+   "line": 1359,
    "contains": "function LongformDisplay"
   },
   {
@@ -497,7 +497,7 @@
   },
   {
    "file": "10_migrate.jsx",
-   "line": 6281,
+   "line": 6283,
    "contains": "marked.use({"
   },
   {
@@ -702,7 +702,7 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1176,
+   "line": 1215,
    "contains": "Referenced by (v1.7 r041)"
   },
   {
@@ -752,12 +752,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 860,
+   "line": 899,
    "contains": "Saved lists (v1.7 r046)"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 873,
+   "line": 912,
    "contains": "const LIST_PSEUDO_LABELS"
   },
   {
@@ -1139,10 +1139,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r050-body.jsx",
-   "reference-r050-layout.json",
-   "ab2cd3cd0b680d44",
-   "886d937d36240d0f",
+   "reference-r051-body.jsx",
+   "reference-r051-layout.json",
+   "09c0c20ea07aa4bf",
+   "e253e66398049dca",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1150,7 +1150,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r051, the Sweep's first cut: fields kept and shown as entered",
+   "r052, the Sweep's second cut: entries files make the round trip",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1222,7 +1222,10 @@
    "the turned box of a stamp on a shown layer",
    "stay free when drawn",
    "docs/sweep-spec.md",
-   "cartulary-spine-manifest-v1.7-r050.md"
+   "cartulary-spine-manifest-v1.7-r050.md",
+   "v1.7_r051",
+   "Which earlier probes run is Drak's call of 2026-10-31",
+   "queryMarkdownText"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1253,7 +1256,7 @@
    "r050",
    "r051",
    "r052",
-   "10_migrate:6281",
+   "10_migrate:6283",
    "FABULA_KINDS",
    "FabulaReadingOrder",
    "FabulaStoryPage",
@@ -1270,12 +1273,13 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r050-layout.json",
+   "reference-r051-layout.json",
    "Five exist",
-   "reference-r050-body.jsx",
-   "ab2cd3cd0b680d44",
+   "reference-r051-body.jsx",
+   "09c0c20ea07aa4bf",
    "MAP_STICK",
-   "cartulary-spine-manifest-v1.7-r050.md"
+   "cartulary-spine-manifest-v1.7-r050.md",
+   "queryMarkdownBox"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1561,7 +1565,11 @@
    "Turnover v1.7_r050",
    "the middle of the HTML export's numbered circle",
    "P3 finds no id at all",
-   "The Sweep planned, and the spine manifest frozen"
+   "The Sweep planned, and the spine manifest frozen",
+   "v1.7_r051: Fields kept and shown as entered",
+   "v1.7_r051_fields_kept.py",
+   "e253e66398049dca",
+   "Drak's call on the regressions"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1672,8 +1680,8 @@
    "v1.7_r045",
    "r045 is in",
    "What r045 left for r057",
-   "A real-world Date field shows the day before its date",
-   "The search reads a Long Text's markdown as typed",
+   "The entries import counts a dependent dropdown's Other as a value that didn't read",
+   "The entries import takes a real-world Date on a day its month doesn't have",
    "v1.7_r046",
    "r046 is in",
    "What r046 left for r057",
@@ -1684,7 +1692,7 @@
    "v1.7_r048",
    "r048 is in",
    "What r048 left for r057",
-   "A dependent dropdown's Other is cleared by the save and every load",
+   "What r051 left for r057",
    "r049 is in",
    "v1.7_r049",
    "What r049 left for r057",
@@ -1700,7 +1708,10 @@
    "The Sweep is planned",
    "**Planned:** r056",
    "The spine manifest's freeze: done 2026-10-31",
-   "**Planned:** r053"
+   "**Planned:** r053",
+   "r051 is in",
+   "v1.7_r051",
+   "the code comment in r051"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1800,7 +1811,9 @@
    "A repair that runs at every read hides the bug it repairs",
    "A position read off the screen holds until the next render",
    "within about a second can share one",
-   "A defect filed for the next cut that touches its file waits"
+   "A defect filed for the next cut that touches its file waits",
+   "A probe reaches a change by running its code",
+   "A fix that leaves one case to the old rule reads what the screen shows in that case"
   ],
   "journal.txt": [
    "r030",
@@ -1876,7 +1889,8 @@
    "r049 took Drak's three calls",
    "r050 took Drak's three calls",
    "the independent read of this turnover found sixteen",
-   "Before the help, Drak asked what in v1.7 was still open"
+   "Before the help, Drak asked what in v1.7 was still open",
+   "r051 keeps what a person enters in a dependent dropdown's Other"
   ]
  }
 }
