@@ -1195,9 +1195,24 @@ const seedBuiltinTemplates = () => {
 
 const genId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+// A date as the page shows it. A bare day, a Date field's "2026-10-30", is
+// that day wherever the reader is: new Date() reads one as midnight UTC, the
+// day before anywhere west of it, so it's built as a local day (v1.7 r051),
+// years below 100 included. A timestamp, and a day no calendar has, read as
+// before.
 const fmtDate = (iso) => {
   if (!iso) return "";
-  try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+  try {
+    const m = typeof iso === "string" ? /^(\d{4,})-(\d{2})-(\d{2})$/.exec(iso) : null;
+    let d = null;
+    if (m) {
+      const y = Number(m[1]), mo = Number(m[2]) - 1, day = Number(m[3]);
+      d = new Date(2000, 0, 1);
+      d.setFullYear(y, mo, day);
+      if (d.getFullYear() !== y || d.getMonth() !== mo || d.getDate() !== day) d = null;
+    }
+    return (d || new Date(iso)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
   catch { return ""; }
 };
 
@@ -7360,8 +7375,8 @@ const makeInitialState = () => migrate({
   // Ephemeris celestial bodies (v1.5). Top-level state slice for stars,
   // planets, moons, and other body kinds. Stored at world scope (persisted to
   // JSON save). Each body carries the six classical orbital elements plus
-  // physical parameters; kind-aware fields layer on via the kind:celestial-
-  // body system template. Empty on fresh worlds; existing v1.4 worlds get
+  // physical parameters, and the descriptive fields and tags that
+  // makeNewCelestialBody writes. Empty on fresh worlds; existing v1.4 worlds get
   // their `calendar.celestials` data migrated into here during migrate() with
   // parentBodyId: null (user re-homes the bodies in Ephemeris).
   celestialBodies: [],
@@ -7509,13 +7524,15 @@ const normalizeEntryFields = (fields, valueMap) => {
       // 2. Cascade child (dependsOn): if the stored dropdown value isn't in the
       //    current optionsByParent[parentValue] list, clear it silently. This is
       //    the defensive cleanup for hand-edited JSON, version-skewed worlds, or
-      //    parent-option renames that left the child orphaned.
+      //    parent-option renames that left the child orphaned. Other, which the
+      //    editor offers under every parent where the field keeps an Other text
+      //    (14_form-engine-edit), stays with its text (v1.7 r051).
       if (f.dependsOn) {
         const parentVal = selectValueOnly(valueMap[f.dependsOn]);
         const ownVal = selectValueOnly(valueMap[f.id]);
         if (parentVal && ownVal) {
           const allowed = (f.optionsByParent || {})[parentVal] || [];
-          if (!allowed.includes(ownVal)) {
+          if (!allowed.includes(ownVal) && !(f.otherTextField && ownVal === "Other")) {
             // Orphan — clear. Preserve object shape if otherTextField is enabled.
             if (f.otherTextField) {
               valueMap[f.id] = { value: "", customText: "" };
@@ -20687,6 +20704,44 @@ const queryLinkWords = (s) => s.replace(/\[\[([^\]\n]+)\]\]/g, (whole, inner) =>
   return pipe >= 0 ? inner.substring(pipe + 1).trim() : inner;
 });
 
+// The element a Long Text's HTML is read in, made once, in a document of its
+// own (createHTMLDocument), which loads nothing: no image, no script.
+let queryMarkdownBox = null;
+
+// A Long Text as the page draws it (MarkdownDisplay), as text: its markdown
+// through the same marked, with the wiki-link extension 10_migrate gives it,
+// the words shown kept and a line between blocks, so a link's address and
+// the markup's characters don't count (v1.7 r051). A text with no character
+// markdown reads, its [[links]] aside, and no line starting with a space or
+// a number a list would take, is read without marked, line by line, as
+// marked draws it, so the first search on a 10,000-entry world stays as
+// quick as r045 made it. Should marked fail, the text is read as written, its
+// [[links]] as their words.
+const queryMarkdownText = (s) => {
+  const plain = s.replace(/\r\n?/g, "\n").replace(/\[\[([^\]\n]+)\]\]/g, (w, inner) => {
+    const t = inner.trim(), i = t.indexOf("|");
+    return i >= 0 ? t.substring(i + 1).trim() : t;
+  });
+  if (!/[\\`*_[\]()<>#&|~=+\t-]/.test(plain) && !/^( |\d+[.)])/m.test(plain)) {
+    // marked's way with such a text: each line's trailing spaces dropped, a
+    // blank line closing a paragraph
+    const out = [];
+    plain.split("\n").forEach(l => { const k = l.replace(/ +$/, ""); if (k) out.push(k); });
+    return out.join("\n").trim();
+  }
+  try {
+    const html = marked.parse(s)
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<hr\s*\/?>/gi, "\n")
+      .replace(/<\/(p|h[1-6]|li|blockquote|pre|tr|th|td|ul|ol|table|div)>/gi, "$&\n");
+    if (!queryMarkdownBox) queryMarkdownBox = document.implementation.createHTMLDocument("").createElement("div");
+    queryMarkdownBox.innerHTML = html;
+    return queryMarkdownBox.textContent.replace(/\n{2,}/g, "\n").trim();
+  } catch (e) {
+    return queryLinkWords(s);
+  }
+};
+
 // A field's value as the entry page shows it (FieldValueDisplay), as text:
 // a dropdown's choice, a date as written in the entry's calendar (ctx.cal),
 // a reference's names, a grid's own labels and cells; an image shows none.
@@ -20694,7 +20749,8 @@ const queryShown = (f, v, ctx) => {
   if (v == null || v === "") return "";
   const day = (d) => (d && typeof d === "object" && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, ctx.cal)}` : "");
   switch (f.type) {
-    case "text": case "textarea": return typeof v === "string" ? queryLinkWords(v) : "";
+    case "text": return typeof v === "string" ? queryLinkWords(v) : "";
+    case "textarea": return typeof v === "string" ? queryMarkdownText(v) : "";
     case "longform": return typeof v === "string" ? v.split("\f").join("\n") : "";
     case "date": return fmtDate(v) || String(v);
     case "select": return formatSelectDisplay(v);
@@ -22888,9 +22944,11 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
     // dropdown as if empty (so the user picks fresh). The stored value persists
     // until they save — defensive normalize cleans it up then. This keeps the
     // editor from showing an invalid selection that's no longer in the dropdown.
-    const visibleDropdownValue = availableOptions.includes(dropdownValue) ? dropdownValue : "";
-
+    // A dependent dropdown with no parent choice is off, and the save clears
+    // it, an Other and its text included (10_migrate), so it shows empty too
+    // (v1.7 r051).
     const cascadeDisabled = isCascadeChild && !parentValueStr;
+    const visibleDropdownValue = !cascadeDisabled && availableOptions.includes(dropdownValue) ? dropdownValue : "";
 
     const handleDropdownChange = (newVal) => {
       if (hasOtherText) {
@@ -22921,7 +22979,7 @@ function FieldEditor({ field, value, onChange, entries, templates, bodies, regis
         {cascadeDisabled && parentField && (
           <div className="field-hint">Select {parentField.label} first</div>
         )}
-        {hasOtherText && dropdownValue === "Other" && (
+        {hasOtherText && visibleDropdownValue === "Other" && (
           <input
             className="input cascade-other-text"
             value={customText}
