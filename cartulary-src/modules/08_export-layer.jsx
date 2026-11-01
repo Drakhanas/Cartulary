@@ -1825,6 +1825,11 @@ const entriesCsvCell = (s) => {
   return /[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
 };
 
+// A value in a cell that holds several, as the CSV writes it: each backslash
+// doubled and each ";" written "\;", so the reader tells a ";" inside a value
+// from the one between values (v1.7 r052, Drak's call c).
+const entriesCsvEscape = (s) => String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;");
+
 // The CSV's columns after id, Name, Tags, and Calendar: one for each field
 // the file writes at the top level, in the template's order, a date range
 // two, its start and its end; groups and grids are left out, and a label
@@ -1845,13 +1850,14 @@ const entriesCsvColumns = (template, includeSecrets) => {
 // kept; a date in the entry's calendar as the page writes it, "~" before an
 // approximate one, and a real-world date as stored; a dropdown's choice, an
 // Other as its text; several values (a Multi-select's, a Tag List's, a
-// reference's names, a Name History's names) joined by "; "; an image's
-// file name, and one kept inside the world as empty.
+// reference's names, a Name History's names) joined by "; ", each escaped
+// (entriesCsvEscape, v1.7 r052); an image's file name, and one kept inside
+// the world as empty.
 const entriesCsvValue = (col, v, cal, ctx) => {
   const f = col.field;
   if (queryIsBlank(f, v)) return "";
   const day = (d) => (d && typeof d === "object" && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, cal)}` : "");
-  const words = (list) => list.map(x => String(x == null ? "" : x).trim()).filter(Boolean).join("; ");
+  const words = (list) => list.map(x => String(x == null ? "" : x).trim()).filter(Boolean).map(entriesCsvEscape).join("; ");
   switch (f.type) {
     case "calendar-date": return day(v);
     case "calendar-date-range": return v && typeof v === "object" ? day(v[col.side]) : "";
@@ -1877,7 +1883,7 @@ const buildEntriesExportCsv = (state, template, options) => {
   entries.forEach(e => {
     const values = e.fields || {};
     const cal = cals.calOf(e);
-    rows.push([e.id, e.name || "", Array.isArray(e.tags) ? e.tags.join("; ") : "", cals.nameOf(e),
+    rows.push([e.id, e.name || "", Array.isArray(e.tags) ? e.tags.map(entriesCsvEscape).join("; ") : "", cals.nameOf(e),
       ...cols.map(c => entriesCsvValue(c, values[c.field.id], cal, ctx))]);
   });
   return "\uFEFF" + rows.map(r => r.map(entriesCsvCell).join(",")).join("\r\n") + "\r\n";
@@ -2328,7 +2334,7 @@ const entriesImportGroup = (ff, field, v, cal, ctx, where) => {
       subs.forEach(sf => {
         if (sf.type !== "select" || !sf.dependsOn || !(sf.id in out)) return;
         const own = selectValueOnly(out[sf.id]), parent = selectValueOnly(out[sf.dependsOn]);
-        if (!own || (parent && (((sf.optionsByParent || {})[parent]) || []).includes(own))) return;
+        if (!own || (parent && ((((sf.optionsByParent || {})[parent]) || []).includes(own) || (sf.otherTextField && own === "Other")))) return;
         const ps = subs.find(x => x.id === sf.dependsOn);
         const pl = ps ? ps.label : "its parent";
         ctx.unread.push({ row: where.row, field: `${where.field} › ${sf.label}`, why: parent ? `"${own}" isn't offered under ${pl}'s "${parent}"` : `it needs a choice in ${pl} first` });
@@ -2379,10 +2385,24 @@ const entriesImportGrid = (field, v, ctx, where) => {
   return { ok: true, value: coerceGridValue(g) };
 };
 
+// Whether a real-world date's text, YYYY-MM-DD, names a day its month has,
+// February's 29th in a leap year by the Gregorian rule, as the browser's
+// date box counts them (v1.7 r052).
+const entriesImportRealDay = (t) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof t === "string" ? t : "");
+  if (!m) return false;
+  const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+  return !!days && d >= 1 && d <= days;
+};
+
 // A file's value as a field here reads it, or why it doesn't: the value the
 // export writes for the field's type, a text between the text-like types and
 // a number into one, a dropdown's option by its text, a date in `cal` whose
-// month and day it has, and references found by entriesImportFindRef.
+// month and day it has, and references found by entriesImportFindRef; since
+// v1.7 r052 a Multi-select's values of its own where it keeps them, and a
+// real-world date only on a day its month has.
 const entriesImportValue = (ff, field, v, cal, ctx, where) => {
   const ok = (value) => ({ ok: true, value });
   const no = (why) => ({ ok: false, why });
@@ -2398,7 +2418,8 @@ const entriesImportValue = (ff, field, v, cal, ctx, where) => {
     case "color":
       return typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v.trim()) ? ok(v.trim()) : no("it isn't a color written as #rrggbb");
     case "date":
-      return typeof v === "string" && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v.trim()) ? ok(v.trim()) : no("it isn't a date written as YYYY-MM-DD");
+      if (typeof v !== "string" || !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v.trim())) return no("it isn't a date written as YYYY-MM-DD");
+      return entriesImportRealDay(v.trim()) ? ok(v.trim()) : no(`"${v.trim()}" names a day its month doesn't have`);
     case "number":
       if (typeof v === "number" && Number.isFinite(v)) return ok(String(v));
       return typeof v === "string" && fieldNumberValue(v) != null ? ok(v.trim()) : no("it isn't a number");
@@ -2417,8 +2438,19 @@ const entriesImportValue = (ff, field, v, cal, ctx, where) => {
       if (!Array.isArray(v) || !v.every(x => typeof x === "string")) return no("it isn't a list of options");
       const opts = entriesImportOptions(field);
       const bad = v.filter(x => !opts.includes(x));
-      if (bad.length) return no(`${bad.map(x => `"${x}"`).join(", ")} ${bad.length === 1 ? "isn't one of its options" : "aren't among its options"}`);
-      return ok([...v]);
+      if (bad.length && !field.otherTextField) return no(`${bad.map(x => `"${x}"`).join(", ")} ${bad.length === 1 ? "isn't one of its options" : "aren't among its options"}`);
+      if (!field.otherTextField) return ok([...v]);
+      // where the field keeps values of its own, its Other box's (r005), one
+      // that isn't an option is one of those, and one matching an option,
+      // case aside, is the option, as the editor takes it (v1.7 r052)
+      const out = [];
+      v.forEach(x => {
+        const t = x.trim();
+        if (!t) return;
+        const o = opts.find(y => entriesImportNorm(y) === entriesImportNorm(t)) || t;
+        if (!out.some(y => entriesImportNorm(y) === entriesImportNorm(o))) out.push(o);
+      });
+      return ok(out);
     }
     case "calendar-date": {
       const d = entriesImportDate(v, cal);
@@ -2561,9 +2593,11 @@ const entriesImportPlan = (state, template, file, choices) => {
       fields[id] = { ...was, start: "start" in halves[id] ? halves[id].start : was.start || null, end: "end" in halves[id] ? halves[id].end : was.end || null };
     });
     // A dependent dropdown's choice reads where its parent's choice offers
-    // it, as a load keeps it (migrate's cleanup), and a parent's new choice
-    // isn't written where it would leave the entry's own choice below it
-    // without a place, since the load would clear that choice (call 2).
+    // it, or, where the field keeps an Other text, as Other under any
+    // parent's choice (v1.7 r052), as a load keeps it (migrate's cleanup),
+    // and a parent's new choice isn't written where it would leave the
+    // entry's own choice below it without a place, since the load would
+    // clear that choice (call 2). In a group's rows, the same.
     const val = (id) => selectValueOnly(id in fields ? fields[id] : entry && entry.fields ? entry.fields[id] : null);
     const shown = (id) => { const o = ctx.others.slice(mark).find(x => x.id === id && id in fields); return o ? o.text : val(id); };
     for (let again = true; again;) {
@@ -2571,7 +2605,7 @@ const entriesImportPlan = (state, template, file, choices) => {
       tplFields.forEach(f => {
         if (f.type !== "select" || !f.dependsOn || !(f.id in fields || f.dependsOn in fields)) return;
         const own = val(f.id), parent = val(f.dependsOn);
-        if (!own || (parent && (((f.optionsByParent || {})[parent]) || []).includes(own))) return;
+        if (!own || (parent && ((((f.optionsByParent || {})[parent]) || []).includes(own) || (f.otherTextField && own === "Other")))) return;
         const pf = tplFields.find(x => x.id === f.dependsOn);
         const pl = pf ? pf.label : "its parent";
         if (f.id in fields) {
@@ -2698,7 +2732,7 @@ const entriesImportReadCsv = (text) => {
     if (c && !calKey.has(entriesImportNorm(c))) { calKey.set(entriesImportNorm(c), c); calendars.push({ name: c, key: c, id: `csv:${c}` }); }
     const values = {};
     fields.forEach(f => { values[f.key] = cell(r, f.col); });
-    return { row: n, id: cell(r, at.id).trim() || null, name: cell(r, at.name), tags: cell(r, at.tags).split(";").map(x => x.trim()).filter(Boolean), calendar: c ? calKey.get(entriesImportNorm(c)) : null, fields: values };
+    return { row: n, id: cell(r, at.id).trim() || null, name: cell(r, at.name), tags: entriesImportCsvList(cell(r, at.tags), null), calendar: c ? calKey.get(entriesImportNorm(c)) : null, fields: values };
   });
   if (entries.some(e => e.calendar == null)) calendars.unshift({ name: "", id: null, blank: true });
   return { file: { csv: true, columns: fixed.size + fields.length, tagsColumn: at.tags >= 0, calendarColumn: at.calendar >= 0, template: { name: "", fields }, calendars, entries } };
@@ -2734,7 +2768,8 @@ const entriesImportCsvPicks = (fields, fileFields) => {
 
 // A date as a CSV's cell writes it, in `cal` (call 1): in the calendar's
 // own order, the month by its name or its abbreviation, case aside, commas
-// anywhere; or as numbers, year-month-day, the month counted from 1. A "~"
+// anywhere, a month's own name among them (v1.7 r052); or as numbers,
+// year-month-day, the month counted from 1. A "~"
 // before it marks it approximate, and an era's short name after it must be
 // the era its year falls in. null for anything else, or for a month or a
 // day the calendar doesn't have.
@@ -2760,9 +2795,12 @@ const entriesImportDateText = (text, cal) => {
     const m = (fmt === "name-month" ? /^(.+) (\d+) (-?\d+)$/ : fmt === "abbr-year-pad" ? /^(-?\d+) (.+) (\d+)$/ : /^(\d+) (.+) (-?\d+)$/).exec(t);
     if (!m) return null;
     const [word, day, year] = fmt === "name-month" ? [m[1], m[2], m[3]] : fmt === "abbr-year-pad" ? [m[2], m[3], m[1]] : [m[2], m[1], m[3]];
-    const w = entriesImportNorm(word);
-    let mi = cal.months.findIndex((mo, i) => entriesImportNorm(mo && mo.name ? mo.name : `Month ${i + 1}`) === w);
-    if (mi < 0) mi = cal.months.findIndex((mo, i) => entriesImportNorm(mo && mo.abbreviation ? mo.abbreviation : mo && mo.name ? deriveMonthAbbreviation(mo.name) : `M${i + 1}`) === w);
+    // a month's name or abbreviation read as the date's text is, its commas
+    // gone, so a month whose name holds one reads too (v1.7 r052)
+    const flat = (s) => entriesImportNorm(String(s).replace(/,/g, " ").replace(/\s+/g, " "));
+    const w = flat(word);
+    let mi = cal.months.findIndex((mo, i) => flat(mo && mo.name ? mo.name : `Month ${i + 1}`) === w);
+    if (mi < 0) mi = cal.months.findIndex((mo, i) => flat(mo && mo.abbreviation ? mo.abbreviation : mo && mo.name ? deriveMonthAbbreviation(mo.name) : `M${i + 1}`) === w);
     if (mi < 0) return null;
     d = { year: Number(year), monthIndex: mi, day: Number(day) };
   }
@@ -2794,11 +2832,46 @@ const entriesImportFindByName = (field, name, ctx) => {
   return ctx.byName.get(n) || ctx.nodeByName.get(n) || ctx.rowNames.get(n) || null;
 };
 
+// A CSV cell's several values (v1.7 r052, Drak's call c): split at each ";"
+// the export didn't escape, "\;" read as a ";" inside a value and "\\" as a
+// backslash (entriesCsvEscape), each trimmed, the empty ones dropped. Where
+// `known` is given, a piece it doesn't take alone is joined with the pieces
+// after it, the longest run it takes reading as one value, so a file written
+// before r052, which escaped nothing, reads an option or a name holding a
+// ";"; a piece it takes alone stays alone, as the export meant it.
+const entriesImportCsvList = (text, known) => {
+  const s = String(text == null ? "" : text);
+  const pieces = [];
+  let cur = "";
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "\\" && (s[i + 1] === ";" || s[i + 1] === "\\")) { cur += s[i + 1]; i++; }
+    else if (c === ";") { pieces.push(cur); cur = ""; }
+    else cur += c;
+  }
+  pieces.push(cur);
+  const out = [];
+  for (let i = 0; i < pieces.length; i++) {
+    const one = pieces[i].trim();
+    if (known && one && !known(one)) {
+      let k = pieces.length - 1;
+      for (; k > i; k--) if (known(pieces.slice(i, k + 1).join(";").trim())) break;
+      if (k > i) { out.push(pieces.slice(i, k + 1).join(";").trim()); i = k; continue; }
+    }
+    if (one) out.push(one);
+  }
+  return out;
+};
+
 // A CSV's cell as a field here reads its text, or why it doesn't: text as
 // typed; an image's file name, a color as #rrggbb, a real-world date as
-// YYYY-MM-DD, and a Number as a number, trimmed; a Tag List's, a
-// Multi-select's, a reference field's, and a Name History's values split at
-// ";"; a dropdown's option by its text, case aside, else Other with the
+// YYYY-MM-DD on a day its month has (v1.7 r052), and a Number as a number,
+// trimmed; a Tag List's, a Multi-select's, a reference field's, and a Name
+// History's values as entriesImportCsvList reads them, a Multi-select's
+// rejoined by its options, a reference's by the names here, and a Name
+// History's by the entry's own names, and a Multi-select's other values,
+// where it keeps values of its own, read as those and listed in ctx.others
+// (v1.7 r052); a dropdown's option by its text, case aside, else Other with the
 // text where the field keeps an Other text, listed in ctx.others (call 2);
 // a date, or a range's half, as entriesImportDateText reads it in `cal`
 // (call 1); a reference by its record's name (entriesImportFindByName),
@@ -2809,7 +2882,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
   const ok = (value) => ({ ok: true, value });
   const no = (why) => ({ ok: false, why });
   const t = String(text).trim();
-  const parts = t.split(";").map(x => x.trim()).filter(Boolean);
+  const parts = entriesImportCsvList(t, null);
   const calName = cal && cal.name ? cal.name : "its calendar";
   const opt = (x) => {
     const opts = entriesImportOptions(field);
@@ -2823,7 +2896,8 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
     case "color":
       return /^#[0-9a-f]{6}$/i.test(t) ? ok(t) : no(`"${t}" isn't a color written as #rrggbb`);
     case "date":
-      return /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(t) ? ok(t) : no(`"${t}" isn't a date written as YYYY-MM-DD`);
+      if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(t)) return no(`"${t}" isn't a date written as YYYY-MM-DD`);
+      return entriesImportRealDay(t) ? ok(t) : no(`"${t}" names a day its month doesn't have`);
     case "number":
       return fieldNumberValue(t) != null ? ok(t) : no(`"${t}" isn't a number`);
     case "tags":
@@ -2836,10 +2910,20 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
       return ok({ value: "Other", customText: t });
     }
     case "multiselect": {
-      const got = parts.map(opt);
-      const bad = parts.filter((x, k) => got[k] == null);
-      if (bad.length) return no(`${bad.map(x => `"${x}"`).join(", ")} ${bad.length === 1 ? "isn't one of its options" : "aren't among its options"}`);
-      return got.length ? ok([...new Set(got)]) : no(null);
+      const list = entriesImportCsvList(t, (x) => opt(x) != null);
+      const got = list.map(opt);
+      const bad = list.filter((x, k) => got[k] == null);
+      if (bad.length && !field.otherTextField) return no(`${bad.map(x => `"${x}"`).join(", ")} ${bad.length === 1 ? "isn't one of its options" : "aren't among its options"}`);
+      // a value that isn't an option, where the field keeps values of its
+      // own, is one of those, listed as an Other's text is (v1.7 r052)
+      const out = [];
+      list.forEach((x, k) => {
+        const v = got[k] != null ? got[k] : x;
+        if (out.some(y => entriesImportNorm(y) === entriesImportNorm(v))) return;
+        if (got[k] == null) ctx.others.push({ row: where.row, field: where.field, id: where.id, text: x });
+        out.push(v);
+      });
+      return out.length ? ok(out) : no(null);
     }
     case "calendar-date": case "calendar-date-range": {
       const d = entriesImportDateText(t, cal);
@@ -2848,7 +2932,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
     case "name-history": {
       const had = Array.isArray(old) ? old.filter(h => h && typeof h.name === "string") : [];
       const rows = [];
-      parts.forEach(name => {
+      entriesImportCsvList(t, (x) => had.some(h => entriesImportNorm(h.name) === entriesImportNorm(x))).forEach(name => {
         if (rows.some(h => entriesImportNorm(h.name) === entriesImportNorm(name))) return;
         const h = had.find(x => entriesImportNorm(x.name) === entriesImportNorm(name));
         rows.push({ name, from: h && h.from ? h.from : null, to: h && h.to ? h.to : null });
@@ -2858,7 +2942,7 @@ const entriesImportText = (field, text, cal, ctx, where, old) => {
     case "entry-ref": {
       const had = field.relationKind ? getRelationValues(old, field.multi) : [];
       const out = [];
-      parts.forEach(name => {
+      entriesImportCsvList(t, (x) => !!entriesImportFindByName(field, x, ctx)).forEach(name => {
         const id = entriesImportFindByName(field, name, ctx);
         const why = !id ? "none" : id === where.self ? "self" : !entriesImportRefAllowed(field, id, ctx) ? "barred" : null;
         if (why) { ctx.unresolved.push({ row: where.row, field: where.field, name, why }); return; }

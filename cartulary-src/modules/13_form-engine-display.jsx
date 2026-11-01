@@ -301,7 +301,16 @@ const queryShown = (f, v, ctx) => {
   const day = (d) => (d && typeof d === "object" && d.year != null ? `${d.approximate ? "~" : ""}${formatCalendarDate(d, ctx.cal)}` : "");
   switch (f.type) {
     case "text": return typeof v === "string" ? queryLinkWords(v) : "";
-    case "textarea": return typeof v === "string" ? queryMarkdownText(v) : "";
+    case "textarea": {
+      // kept with the query's memo, so a filter reads each Long Text once
+      // while the world stays the same, as the search does (v1.7 r052)
+      if (typeof v !== "string") return "";
+      const kept = ctx && ctx.longTexts;
+      if (!kept) return queryMarkdownText(v);
+      let s = kept.get(v);
+      if (s === undefined) { s = queryMarkdownText(v); kept.set(v, s); }
+      return s;
+    }
     case "longform": return typeof v === "string" ? v.split("\f").join("\n") : "";
     case "date": return fmtDate(v) || String(v);
     case "select": return formatSelectDisplay(v);
@@ -341,9 +350,9 @@ const queryShown = (f, v, ctx) => {
 // What a query reads, built once and kept while the slices it reads and
 // whether secrets show stay the same (QUERY_MEMO): the templates, a record's
 // name by id as a reference chip finds it (resolveRefTarget's order), each
-// calendar, the link index's links either way, and each entry's search
-// text, made when first asked. ctx.cal is the calendar of the entry being
-// read, set before each.
+// calendar, the link index's links either way, each Long Text's reading
+// (v1.7 r052), and each entry's search text, made when first asked. ctx.cal
+// is the calendar of the entry being read, set before each.
 const QUERY_MEMO = { keys: null, ctx: null, texts: null };
 const queryContextOf = (state, showSecrets) => {
   const st = state || {};
@@ -380,6 +389,7 @@ const queryContextOf = (state, showSecrets) => {
   };
   const ctx = {
     showSecrets: !!showSecrets,
+    longTexts: new Map(),
     tplById: byId(st.templates),
     nodes,
     cal: null,

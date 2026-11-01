@@ -3320,7 +3320,9 @@ function App() {
   // without waiting on it. Not in Lock mode. Since r049 a .csv is read as a
   // CSV (entriesImportReadCsv), and a file's bytes, past a UTF-8 byte-order
   // mark, as UTF-8, or as Windows-1252 where they aren't UTF-8, as a
-  // spreadsheet may save them.
+  // spreadsheet may save them; since v1.7 r052 one whose bytes start with a
+  // UTF-16 byte-order mark as UTF-16 in that order, as readAsText read it
+  // through r048.
   const pickEntriesFile = (tplId) => {
     if (isLocked || !tplId) return;
     entriesImportFor.current = tplId;
@@ -3332,9 +3334,13 @@ function App() {
     const reader = new FileReader();
     reader.onload = () => {
       const all = new Uint8Array(reader.result);
-      const bytes = all[0] === 0xEF && all[1] === 0xBB && all[2] === 0xBF ? all.subarray(3) : all;
+      const utf16 = all[0] === 0xFF && all[1] === 0xFE ? "utf-16le" : all[0] === 0xFE && all[1] === 0xFF ? "utf-16be" : null;
+      const bytes = utf16 ? all.subarray(2) : all[0] === 0xEF && all[1] === 0xBB && all[2] === 0xBF ? all.subarray(3) : all;
       let text;
-      try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch (e) { text = new TextDecoder("windows-1252").decode(bytes); }
+      if (utf16) text = new TextDecoder(utf16).decode(bytes);
+      else {
+        try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch (e) { text = new TextDecoder("windows-1252").decode(bytes); }
+      }
       const csv = /\.csv$/i.test(f.name || "") || /^text\/csv$/i.test(f.type || "");
       const got = csv ? entriesImportReadCsv(text) : entriesImportRead(text);
       if (got.error) { flash(got.error, "error"); return; }
