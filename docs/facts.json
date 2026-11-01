@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59297,
-  "raw_body_lines": 59297,
-  "canonical_lines": 56473,
+  "total_lines": 59287,
+  "raw_body_lines": 59287,
+  "canonical_lines": 56463,
   "decl_count": 955,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r052-body.jsx"
+  "active_anchor": "reference-r053-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59297,
+   "value": 59287,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -30,11 +30,11 @@
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56473,
+   "value": 56463,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59297,
+   "value": 59287,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3228896,
+   "value": 3228406,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-seven",
-    77
+    "seventy-eight",
+    78
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,22 +121,22 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-seven",
-    77
+    "seventy-eight",
+    78
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59297,
+   "value": 59287,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
    "value": "f37ebb7cf2a74655",
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   },
-  "working_hash_r052": {
-   "value": "ae6d2835840a2e03",
-   "pattern": "working[^\\n]{0,40}at r052 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r053": {
+   "value": "7d901665683841b5",
+   "pattern": "working[^\\n]{0,40}at r053 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -792,12 +792,12 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2685,
+   "line": 2687,
    "contains": "Entries import from CSV (v1.7 r049)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2707,
+   "line": 2709,
    "contains": "const entriesImportReadCsv"
   },
   {
@@ -1139,10 +1139,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r052-body.jsx",
-   "reference-r052-layout.json",
-   "67c4813f93ae06a3",
-   "ae6d2835840a2e03",
+   "reference-r053-body.jsx",
+   "reference-r053-layout.json",
+   "a4e3fde499478215",
+   "7d901665683841b5",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1150,7 +1150,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r053, the Sweep's third cut: renames say where the links go",
+   "r054, the Sweep's fourth cut: renames say where the links go",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1228,7 +1228,9 @@
    "queryMarkdownText",
    "v1.7_r052",
    "`longTexts`",
-   "entriesImportCsvList"
+   "entriesImportCsvList",
+   "v1.7_r053",
+   "r053 took out at Drak's call"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1276,10 +1278,10 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r052-layout.json",
+   "reference-r053-layout.json",
    "Five exist",
-   "reference-r052-body.jsx",
-   "67c4813f93ae06a3",
+   "reference-r053-body.jsx",
+   "a4e3fde499478215",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
    "queryMarkdownBox",
@@ -1578,7 +1580,10 @@
    "v1.7_r052: Entries files make the round trip",
    "v1.7_r052_entries_round_trip.py",
    "ae6d2835840a2e03",
-   "Found writing this turnover, and filed"
+   "Found writing this turnover, and filed",
+   "v1.7_r053: Entries CSVs read back exactly",
+   "v1.7_r053_entries_csv_exact.py",
+   "7d901665683841b5"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1668,7 +1673,7 @@
    "Two lines r039 left stale",
    "v1.7_r040",
    "r040 is in",
-   "What r040 left for r057",
+   "What r040 left for r058",
    "offers Allow on every visit",
    "v1.7_r041",
    "r041 is in",
@@ -1676,52 +1681,53 @@
    "v1.7_r042",
    "r042 is in",
    "Deleting a word leaves the words that name it",
-   "What r042 left for r057",
+   "What r042 left for r058",
    "Concordance can order a merged edge's labels",
    "v1.7_r043",
    "r043 is in",
-   "What r043 left for r057",
+   "What r043 left for r058",
    "v1.7_r044",
    "r044 is in",
-   "What r044 left for r057",
+   "What r044 left for r058",
    "A rename to a name another record answers to",
    "A map record has no createdAt",
    "v1.7_r045",
    "r045 is in",
-   "What r045 left for r057",
-   "A CSV written by r052's export can read several values back as one",
-   "What r052 left for r057",
+   "What r045 left for r058",
+   "r053 is in",
+   "What r052 and r053 left for r058",
    "v1.7_r046",
    "r046 is in",
-   "What r046 left for r057",
+   "What r046 left for r058",
    "v1.7_r047",
    "r047 is in",
    "Fabula's index hides Export ↓ in Lock mode",
-   "What r047 left for r057",
+   "What r047 left for r058",
    "v1.7_r048",
    "r048 is in",
-   "What r048 left for r057",
-   "What r051 left for r057",
+   "What r048 left for r058",
+   "What r051 left for r058",
    "r049 is in",
    "v1.7_r049",
-   "What r049 left for r057",
-   "r051 and r052 are in",
+   "What r049 left for r058",
+   "r051 through r053 are in",
    "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
    "v1.7_r050",
-   "What r050 left for r057",
+   "What r050 left for r058",
    "The site's Cartographia page says the same",
    "dropped before r050",
    "The Sweep: v1.7's open items cleared before the help",
    "The Sweep is planned",
-   "**Planned:** r056",
+   "**Planned:** r057",
    "The spine manifest's freeze: done 2026-10-31",
-   "**Planned:** r053",
+   "**Planned:** r054",
    "r051 is in",
    "v1.7_r051",
    "the code comment in r051",
-   "v1.7_r052"
+   "v1.7_r052",
+   "v1.7_r053"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1825,7 +1831,8 @@
    "A probe reaches a change by running its code",
    "A fix that leaves one case to the old rule reads what the screen shows in that case",
    "A count of rows can't see a value the import skipped",
-   "A reader that joins split values back guesses for every file it reads"
+   "A reader that joins split values back guesses for every file it reads",
+   "Before building a path for old files, ask who holds them"
   ],
   "journal.txt": [
    "r030",
@@ -1903,7 +1910,8 @@
    "the independent read of this turnover found sixteen",
    "Before the help, Drak asked what in v1.7 was still open",
    "r051 keeps what a person enters in a dependent dropdown's Other",
-   "r052 went the other way from r051"
+   "r052 went the other way from r051",
+   "r053 undid half of r052's call c"
   ]
  }
 }

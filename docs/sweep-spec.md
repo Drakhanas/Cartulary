@@ -11,7 +11,7 @@ Before the help describes v1.7, the Sweep fixes what v1.7's cuts found and filed
 ## 1. Decisions (Drak, 2026-10-31)
 
 - **Scope** (17:34): clear out what Claude's answer to the question listed: the open bugs, the tolerated rows, and the tabled decisions.
-- **A grid's starting shape, call 1, option a** (17:42). The template's Grid field takes a starting shape, row and column labels and a cell type per column, which each new entry's grid copies and can change; an empty grid with no shape asks for rows by columns. A new property on the field definition, which the schema, template files, and packs carry, with nothing to migrate. Its own cut, r056, so the help moves to r057. The other ways were only the prompt on an empty grid, riding in r051, and leaving it out of v1.7.
+- **A grid's starting shape, call 1, option a** (17:42). The template's Grid field takes a starting shape, row and column labels and a cell type per column, which each new entry's grid copies and can change; an empty grid with no shape asks for rows by columns. A new property on the field definition, which the schema, template files, and packs carry, with nothing to migrate. Its own cut, r057 (r056 at the plan), so the help moves to r058 (r057 at the plan). The other ways were only the prompt on an empty grid, riding in r051, and leaving it out of v1.7.
 - **Fabula's tabled features, call 2, option a** (17:46). All five go to the backlog, each with the reason it was set aside (section 7); v1.7 takes none. The other ways were building some now, a call each, or all five, about five to seven cuts before the help.
 - **The spine manifest, call 3, option a** (17:53). Frozen now, in the documents commit that lands this sheet: its record through r050 moves verbatim to `docs/cartulary-spine-manifest-v1.7-r050.md`, as the handoff's did at v1.6, and the live manifest keeps the module map, the gate design, the current tree with line counts, the active anchor, and the header census. From r051 on, a turnover adds no manifest row or verification note per cut; the changelog carries both. The other ways were freezing it with v1.7's ship turnover, or dropping the item.
 - **Claude's defaults, said with the plan and not stopped:** the cuts and their order (section 3), each cut's fixes as written there, the help and the site after them (section 4), the commit without an r-number (section 5), and the two items that stay tolerated (section 6).
@@ -76,28 +76,35 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - The import takes a dependent dropdown's Other by r051's rule.
 - A real-world Date reads only on a day its month has (found checking r051's build: the import's pattern takes a 30th or a 31st in any month).
 - A filter's text condition on a Long Text reads each text once while the world and the secrets setting stay the same, kept with the query's memo as the search keeps its texts (found by the read of r051's turnover; Drak's call, 2026-11-01).
-- Open at the cut: a value holding a semicolon (section 9). Decided: Drak's call c, both. In a cell that can hold several values, however many it holds, the export writes a ";" inside a value as `\;` and a backslash as `\\`, and the reader splits at a bare ";" only, undoes the escapes, and joins a piece that doesn't read alone with the pieces after it into the longest run that does.
+- Open at the cut: a value holding a semicolon (section 9). Decided: Drak's call c, both. In a cell that can hold several values, however many it holds, the export writes a ";" inside a value as `\;` and a backslash as `\\`, and the reader splits at a bare ";" only, undoes the escapes, and joins a piece that doesn't read alone with the pieces after it into the longest run that does. r053 took the join back out (Drak's call a, 2026-11-01): a file doesn't say what wrote it, so the join ran the export's own values together.
 - A file written by r047 through r051 reads as it did, except where these fixes read what it couldn't, a Date on a day its month doesn't have, which it no longer takes, and a backslash before a ";" or another in a cell that can hold several values, which it reads as an escape (call c).
 
-**r053, renames say where the links go** (`22_trunk`, `29_modals`)
+**r053, entries CSVs read back exactly** (`08_export-layer`). Added 2026-11-01 at Drak's call a, after writing r052's turnover found the join running on the export's own files and its read found it reached further; the other was to keep the join, the help describing both cases. Its place, next, was Claude's default. **Done** (2026-11-01, `51ec83c`, passed).
+
+- The CSV reader splits a cell of a column that can hold several values at each bare ";", undoes `\;` and `\\`, and joins nothing back: a Multi-select's, a reference's, and a Name History's values read as the cell lists them. A spreadsheet's cell keeps a ";" inside such a value by writing `\;`; one that doesn't is split, each piece read on its own: one naming an option, a record, or a name is taken without a word, and one read as a value of the field's own, or not read, is listed. A dropdown's or a text's cell is read whole.
+- A Multi-select's Other box doesn't make Other one of its options on import, so an own value spelled "other" comes back as typed.
+- The Export entries dialog's CSV note names the escape.
+- The Sweep's later cuts each moved up one.
+
+**r054, renames say where the links go** (`22_trunk`, `29_modals`)
 
 - Renaming a record to a name another record already answers to opens the modal even when the old name has no links, and says how many `[[links]]` by the new name reach that record now and will reach this one after.
 - Open at the cut: warn and allow, or refuse the name (section 9).
 
-**r054, Chronometric fits its frame** (`19_chronometric`)
+**r055, Chronometric fits its frame** (`19_chronometric`)
 
 - The chart takes its width from the frame it's drawn in, so its right margin and its last year label show.
 - A drag's last position is kept where the move is handled, so a release right after it lands there.
 - Every step of `tools/chrono-parity` changes width, so the check runs with the last passed build drawn 36 pixels narrower, where both charts are the same width and should draw the same, step for step. The tool gains that option without an r-number (section 5).
 
-**r055, Fabula's screens** (`28_fabula`)
+**r056, Fabula's screens** (`28_fabula`)
 
 - The outline's arrow keys step the focus from row to row, Home and End to the first and last, and Alt with the arrows still moves a row.
 - On the index, a story title too long for its row takes a line of its own instead of being cut to fit.
 - A picker's option reads "A · The Ford", the position and the title split by a middle dot, as the site's headings split theirs.
 - A field brought back by Reset to Default drops its links to records deleted while it was gone, so it doesn't read (missing entry).
 
-**r056, a grid's starting shape** (`14_form-engine-edit`, `15_template-builder`, and where the files are read and written)
+**r057, a grid's starting shape** (`14_form-engine-edit`, `15_template-builder`, and where the files are read and written)
 
 - A Grid field in the template builder takes a starting shape: row labels, column labels, and a cell type per column.
 - A new entry's grid starts as the shape, and the entry changes it as any grid; entries made before keep their grids.
@@ -107,13 +114,13 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 
 ## 4. The help and the site
 
-- **r057, the help**: Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r056 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs.
+- **r058, the help** (r057 at the plan): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r057 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs.
 - **The site**, without an r-number, written from the help. Then v1.7's finals.
 
 ## 5. Without an r-number
 
 - **In the documents commit that lands this sheet:** Fabula's spec loses the filters its lists don't have; Stemma v2's spec marks its two settled details; the spine manifest is frozen (call 3).
-- **A tooling commit before r054:** the release build's d3 comment says 7.9.0; CI's three actions move to the majors that target Node 24, checked against their release notes; `tools/chrono-parity` gains the narrower recording r054 needs.
+- **A tooling commit before r055:** the release build's d3 comment says 7.9.0; CI's three actions move to the majors that target Node 24, checked against their release notes; `tools/chrono-parity` gains the narrower recording r055 needs.
 
 ## 6. Staying tolerated (Claude's defaults)
 
@@ -134,18 +141,19 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 
 1. **r051, fields kept and shown as entered.** Section 3. **Done** (2026-10-31, `494ac2f`, passed).
 2. **r052, entries files make the round trip.** Section 3. **Done** (2026-11-01, `be001d2`, passed).
-3. **r053, renames say where the links go.** Section 3.
-4. **r054, Chronometric fits its frame.** Section 3; the tooling commit first.
-5. **r055, Fabula's screens.** Section 3.
-6. **r056, a grid's starting shape.** Section 3.
-7. **r057, the help.** Section 4.
-8. **The site**, without an r-number. Then v1.7's finals.
+3. **r053, entries CSVs read back exactly.** Section 3. **Done** (2026-11-01, `51ec83c`, passed).
+4. **r054, renames say where the links go.** Section 3.
+5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first.
+6. **r056, Fabula's screens.** Section 3.
+7. **r057, a grid's starting shape.** Section 3.
+8. **r058, the help.** Section 4.
+9. **The site**, without an r-number. Then v1.7's finals.
 
 ## 9. Open at lock, decided at the cut
 
 - r052: a value holding a semicolon. The export can escape it, the reader can rejoin the pieces that make a name or an option it knows, or both; an escape changes the CSV the export writes, and a rejoin can't help a tag, which matches nothing. Decided at the cut (Drak, 2026-11-01): c, both, since re-exports will retire the files that escaped nothing.
-- r053: a rename to a name another record answers to. Warn and allow, or refuse the name.
-- r056: the builder's controls for a starting shape; the most rows and columns the prompt takes.
+- r054: a rename to a name another record answers to. Warn and allow, or refuse the name.
+- r057: the builder's controls for a starting shape; the most rows and columns the prompt takes.
 
 ## 10. Acceptance tests
 
@@ -153,10 +161,11 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 
 - **r051:** a cascade child's Other with its text survives a save and a reload under a parent whose options don't list Other, and a value the parent doesn't offer is still cleared; a real-world Date reads its own day in Chicago's time zone and in one east of UTC, and a timestamp reads as before; the search finds a Long Text by its shown words and not by a link's address or the markup; and, added after the first staging, with its parent cleared the editor shows a dependent dropdown empty and its Other text gone.
 - **r052:** a UTF-16 file in each byte order reads; a Multi-select's own values make the round trip in JSON and in CSV, but for one spelled "other" in another case, which comes back as Other; a month name holding a comma makes the round trip; the semicolon rule as called; a file written as r050's export writes it, by hand (S1, S2), reads as it did there but for what section 3 changes; and a filter reads each Long Text once while the world stays the same.
-- **r053:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now; the old-name case reads as it did; the rule as called.
-- **r054:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame; parity at matched widths is identical step for step; a release right after the last move lands there.
-- **r055:** the outline walked by keyboard alone; a long title at 900 pixels; the pickers' separator; Reset to Default after a delete reads no (missing entry).
-- **r056:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.
+- **r053:** the CSV and the JSON the export writes read back with nothing changed and nothing listed, an own value beside an option or another own value that spells an option with it among them; a reference and a Name History read across worlds as the cell lists them; a spreadsheet's unescaped "Salt; Pepper" split, its pieces listed as own values where the field keeps them and refused where it keeps none and has no such options, its escaped one the option; an own "other" as typed, from JSON and from a CSV; the dialog's note.
+- **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now; the old-name case reads as it did; the rule as called.
+- **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame; parity at matched widths is identical step for step; a release right after the last move lands there.
+- **r056:** the outline walked by keyboard alone; a long title at 900 pixels; the pickers' separator; Reset to Default after a delete reads no (missing entry).
+- **r057:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.
 
 ## Sources
 

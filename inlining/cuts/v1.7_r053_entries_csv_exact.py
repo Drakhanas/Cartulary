@@ -1,13 +1,14 @@
 r"""
 v1.7 r053: Entries CSVs read back exactly, the Sweep's third cut.
 
-Drak's call (2026-11-01, option a of two, after the read of r052's turnover
-found that r052's join runs on the export's own files): the CSV reader joins
-nothing back. The other was to keep the join as r052 left it, the help
-describing both cases. His reason: Cartulary ships only at full versions, so
-no entries export written before r052 is out in the world; the files that escape
-nothing are a spreadsheet's, and a join there costs the export's own files
-their exactness. Claude's plan, said to Drak and not stopped:
+Drak's call (2026-11-01, option a of two, after writing r052's turnover found
+that r052's join runs on the export's own files, and its read that the join
+reached further): the CSV reader joins nothing back. The other was to keep
+the join as r052 left it, the help describing both cases. His reason:
+Cartulary ships only at full versions, so no entries export written before
+r052 is out in the world; the files that escape nothing are a spreadsheet's,
+and a join there costs the export's own files their exactness. Claude's plan,
+said to Drak and not stopped:
 
 1. The CSV reader splits a cell at each bare ";", undoes "\;" and "\\", and
    joins nothing back: a Multi-select's, a reference's, and a Name History's
@@ -17,6 +18,11 @@ their exactness. Claude's plan, said to Drak and not stopped:
    as a record "Ash; Elm"). A spreadsheet's cell keeps a ";" inside a value
    by writing "\;"; one that doesn't is split, and the preview lists the
    pieces as it lists any value that didn't read, or read as Other.
+   (The read of r053's turnover: item 1 says more than the code does. Only
+   a cell of a column that can hold several values is split, a dropdown's
+   or a text's being read whole; and a piece that names an option, a
+   record, or a name is taken without a word, only one read as a value of
+   the field's own, or not read, being listed.)
 2. A Multi-select's Other box doesn't make Other one of its options on
    import, from JSON or from a CSV: an own value spelled "other" comes back
    as typed, as the editor keeps it. A dropdown's Other is as before.
