@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 31 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered) ===
+=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1803,3 +1803,18 @@ editor's code as the reason Other should survive the save, and the same
 code showed a greyed-out Other with its text still open to typing once
 the parent was cleared, which the save then dropped. I'd read it for the
 case the fix changed and not for the case it left alone.
+
+r052 went the other way from r051: one build, one full run, and nothing
+in the code to go back for. The surprise was in the probe. Its screen
+checks read the import preview's counts, and a planted copy that broke
+the month with a comma passed them, because an import that skips a value
+leaves the entry unchanged, and unchanged is what the counts said. A
+round trip has to read what the preview lists as well as what it counts.
+Drak's call on the semicolon was c, both, his reason that re-exports
+retire the old files. Once the export escapes every semicolon inside a
+value, a bare one in its files is always a separator, so the rejoin
+starts only from a piece that doesn't read on its own. It still can't
+tell the export's files from old ones, which I found writing the
+turnover, or from a spreadsheet's, and it takes in the pieces after it
+whether they read alone or not, which the independent read found by
+running the function.

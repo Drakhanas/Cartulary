@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59197,
-  "raw_body_lines": 59197,
-  "canonical_lines": 56376,
-  "decl_count": 952,
+  "total_lines": 59297,
+  "raw_body_lines": 59297,
+  "canonical_lines": 56473,
+  "decl_count": 955,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r051-body.jsx"
+  "active_anchor": "reference-r052-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59197,
+   "value": 59297,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 952,
+   "value": 955,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56376,
+   "value": 56473,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59197,
+   "value": 59297,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3223481,
+   "value": 3228896,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-six",
-    76
+    "seventy-seven",
+    77
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,22 +121,22 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-six",
-    76
+    "seventy-seven",
+    77
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59197,
+   "value": 59297,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
    "value": "f37ebb7cf2a74655",
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   },
-  "working_hash_r051": {
-   "value": "e253e66398049dca",
-   "pattern": "working[^\\n]{0,40}at r051 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r052": {
+   "value": "ae6d2835840a2e03",
+   "pattern": "working[^\\n]{0,40}at r052 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -152,12 +152,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1357,
+   "line": 1367,
    "contains": "Longform + markdown display"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1359,
+   "line": 1369,
    "contains": "function LongformDisplay"
   },
   {
@@ -702,7 +702,7 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 1215,
+   "line": 1225,
    "contains": "Referenced by (v1.7 r041)"
   },
   {
@@ -752,12 +752,12 @@
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 899,
+   "line": 909,
    "contains": "Saved lists (v1.7 r046)"
   },
   {
    "file": "13_form-engine-display.jsx",
-   "line": 912,
+   "line": 922,
    "contains": "const LIST_PSEUDO_LABELS"
   },
   {
@@ -772,12 +772,12 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1987,
+   "line": 1993,
    "contains": "Entries import (v1.7 r048)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 1999,
+   "line": 2005,
    "contains": "const entriesImportRead"
   },
   {
@@ -792,12 +792,12 @@
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2651,
+   "line": 2685,
    "contains": "Entries import from CSV (v1.7 r049)"
   },
   {
    "file": "08_export-layer.jsx",
-   "line": 2673,
+   "line": 2707,
    "contains": "const entriesImportReadCsv"
   },
   {
@@ -1139,10 +1139,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r051-body.jsx",
-   "reference-r051-layout.json",
-   "09c0c20ea07aa4bf",
-   "e253e66398049dca",
+   "reference-r052-body.jsx",
+   "reference-r052-layout.json",
+   "67c4813f93ae06a3",
+   "ae6d2835840a2e03",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1150,7 +1150,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r052, the Sweep's second cut: entries files make the round trip",
+   "r053, the Sweep's third cut: renames say where the links go",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1225,7 +1225,10 @@
    "cartulary-spine-manifest-v1.7-r050.md",
    "v1.7_r051",
    "Which earlier probes run is Drak's call of 2026-10-31",
-   "queryMarkdownText"
+   "queryMarkdownText",
+   "v1.7_r052",
+   "`longTexts`",
+   "entriesImportCsvList"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1273,13 +1276,15 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r051-layout.json",
+   "reference-r052-layout.json",
    "Five exist",
-   "reference-r051-body.jsx",
-   "09c0c20ea07aa4bf",
+   "reference-r052-body.jsx",
+   "67c4813f93ae06a3",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
-   "queryMarkdownBox"
+   "queryMarkdownBox",
+   "entriesCsvEscape",
+   "entriesImportRealDay"
   ],
   "changelog.md": [
    "changelog-v1.6.md",
@@ -1569,7 +1574,11 @@
    "v1.7_r051: Fields kept and shown as entered",
    "v1.7_r051_fields_kept.py",
    "e253e66398049dca",
-   "Drak's call on the regressions"
+   "Drak's call on the regressions",
+   "v1.7_r052: Entries files make the round trip",
+   "v1.7_r052_entries_round_trip.py",
+   "ae6d2835840a2e03",
+   "Found writing this turnover, and filed"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1680,8 +1689,8 @@
    "v1.7_r045",
    "r045 is in",
    "What r045 left for r057",
-   "The entries import counts a dependent dropdown's Other as a value that didn't read",
-   "The entries import takes a real-world Date on a day its month doesn't have",
+   "A CSV written by r052's export can read several values back as one",
+   "What r052 left for r057",
    "v1.7_r046",
    "r046 is in",
    "What r046 left for r057",
@@ -1696,8 +1705,8 @@
    "r049 is in",
    "v1.7_r049",
    "What r049 left for r057",
-   "The entries import can't take a Multi-select's own values",
-   "An entries file saved as UTF-16 no longer reads",
+   "r051 and r052 are in",
+   "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
    "v1.7_r050",
@@ -1711,7 +1720,8 @@
    "**Planned:** r053",
    "r051 is in",
    "v1.7_r051",
-   "the code comment in r051"
+   "the code comment in r051",
+   "v1.7_r052"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1813,7 +1823,9 @@
    "within about a second can share one",
    "A defect filed for the next cut that touches its file waits",
    "A probe reaches a change by running its code",
-   "A fix that leaves one case to the old rule reads what the screen shows in that case"
+   "A fix that leaves one case to the old rule reads what the screen shows in that case",
+   "A count of rows can't see a value the import skipped",
+   "A reader that joins split values back guesses for every file it reads"
   ],
   "journal.txt": [
    "r030",
@@ -1890,7 +1902,8 @@
    "r050 took Drak's three calls",
    "the independent read of this turnover found sixteen",
    "Before the help, Drak asked what in v1.7 was still open",
-   "r051 keeps what a person enters in a dependent dropdown's Other"
+   "r051 keeps what a person enters in a dependent dropdown's Other",
+   "r052 went the other way from r051"
   ]
  }
 }
