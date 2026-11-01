@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "a4e3fde49947821561bca529a93194c7acf953618f386b332020ed6e0c317342",
+  "anchor_sha256": "8cb69d2f4c4b98515096b162832a629c7c91dbb06c57b04830fe1b083cfb197d",
   "shell_sha256": "00b312a346ba38f65cec0dbe483159c4064956d0a0b7ed63738900a454b90df0",
   "files": [
     [
@@ -132,7 +132,7 @@
     ],
     [
       "22_trunk.jsx",
-      1299
+      1450
     ],
     [
       "23_glossopoeia/00_schemas.jsx",
@@ -244,7 +244,7 @@
     ],
     [
       "29_modals.jsx",
-      658
+      675
     ],
     [
       "30_trunk.jsx",

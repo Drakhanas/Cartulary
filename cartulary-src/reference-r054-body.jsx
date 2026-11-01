@@ -39611,8 +39611,8 @@ const wikiOtherNames = (st) => {
 // find(name) gives the record a trimmed, lowercased name reaches, as
 // { id, kind, source, name, opens }, kind entry, body, map, stemma, fabula,
 // or conlang, source its template or its registry source; resolve(name) its
-// id; and names every name that reaches a record, in the order above, for
-// the autocomplete.
+// id; names every name that reaches a record, in the order above, for the
+// autocomplete; and since r054 byKey, each name's record by its key.
 const wikiResolverBuild = (st, skip) => {
   const byKey = new Map();
   const names = [];
@@ -39643,7 +39643,7 @@ const wikiResolverBuild = (st, skip) => {
   kept(st.glossopoeia && st.glossopoeia.conlangs).forEach(c => claim(c.name, record(c, "conlang", SYNTH_TPL_CONLANG), "name"));
   const find = (key) => byKey.get(key) || null;
   const resolve = (key) => { const rec = byKey.get(key); return rec ? rec.id : null; };
-  return { find, resolve, names };
+  return { find, resolve, names, byKey };
 };
 
 // The world's resolver, built once and kept while what it reads is the same
@@ -39663,6 +39663,15 @@ const wikiResolverOf = (state) => {
   m.others = others;
   m.resolver = wikiResolverBuild(st, null);
   return m.resolver;
+};
+
+// The keys two resolvers send to different records, or one of them to none,
+// which the link index reads again (linkIndexStep, v1.7 r054).
+const wikiResolverChangedKeys = (a, b) => {
+  const out = new Set();
+  a.byKey.forEach((rec, k) => { const r = b.byKey.get(k); if (!r || r.id !== rec.id) out.add(k); });
+  b.byKey.forEach((rec, k) => { if (!a.byKey.has(k)) out.add(k); });
+  return out;
 };
 
 // The resolver App draws with, for whatever below it reads a [[link]].
@@ -39729,8 +39738,10 @@ const LINK_SOURCE_WORLD = "__world_description__";
 // built from, each record's links (by the record, with what they were read
 // through), and the fields read for Fabula's kinds and ConLangs while the
 // world keeps no schema of its own. The names are the resolver's own
-// (WIKI_RESOLVER_MEMO) since r043.
-const LINK_INDEX_MEMO = { keys: null, index: null, records: new WeakMap(), schemas: new Map(), mapFields: null };
+// (WIKI_RESOLVER_MEMO) since r043. Since r054 it keeps the build the index
+// was made from, which the next starts from (built, linkIndexStep), and the
+// world description's links while it's the same (desc).
+const LINK_INDEX_MEMO = { keys: null, index: null, built: null, desc: null, records: new WeakMap(), schemas: new Map(), mapFields: null };
 
 // A link as the index keeps it, made once when its record is read (r042): the
 // record it's in (src); what it points at (to), a stored link's id or a
@@ -39834,39 +39845,18 @@ const linkKindFields = (state, kind) => {
   return fields;
 };
 
-// The index, { byTarget, links, targets }: each target's links as linkPush
-// makes them, src the source as { id, kind, group, name, storyId }, its kind
-// entry, fabula, map, stemma, body, conlang, lexeme, or world, and its group its
-// template, its Fabula kind, or its kind again; and since r043 every link in
-// the order its record was read (links), beside its target (targets), which
-// Concordance draws in. Put together again only when a slice it reads has
-// changed.
-const linkIndexOf = (state) => {
+// Every record's links, each record's read or kept (linkRecordLinks), in the
+// order the index reads the records: entries, Fabula's records, maps,
+// stemmas, bodies, ConLangs, words, and the world description (v1.7 r054,
+// pulled out of linkIndexOf).
+const linkIndexRecords = (state) => {
   const st = state || {};
   const fab = st.fabula || {};
   const glo = st.glossopoeia || {};
   const desc = st.world && typeof st.world.description === "string" ? st.world.description : "";
-  const keys = [st.entries, st.templates, st.fabula, st.cartographia, st.stemmas, st.celestialBodies, glo.conlangs, glo.lexemes, desc];
   const memo = LINK_INDEX_MEMO;
-  if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
-  const wiki = wikiResolverOf(st);
-  const byTarget = new Map();
-  const links = [], targets = [];
-  // A kept link goes into its target's list as it is; a [[link]]'s target is
-  // found by name at every build, since names change without the link.
-  const add = (x) => {
-    const ls = x.links;
-    for (let i = 0; i < ls.length; i++) {
-      const l = ls[i];
-      const target = l.kind === "wiki" ? wiki.resolve(l.to) : l.to;
-      if (typeof target !== "string" || !target || target === l.src.id) continue;
-      let list = byTarget.get(target);
-      if (!list) { list = []; byTarget.set(target, list); }
-      list.push(l);
-      links.push(l);
-      targets.push(target);
-    }
-  };
+  const out = [];
+  const add = (x) => { out.push(x); };
   // Entries, through their templates.
   const tplById = new Map((Array.isArray(st.templates) ? st.templates : []).filter(t => t && t.id).map(t => [t.id, t]));
   (Array.isArray(st.entries) ? st.entries : []).forEach(e => {
@@ -39972,12 +39962,153 @@ const linkIndexOf = (state) => {
   }
   // The world description.
   if (desc) {
-    const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, links: [] };
-    linkWikiNames(desc, "description", "", "", false, x);
-    add(x);
+    // kept while the description is the same, as a record's links are
+    if (!memo.desc || memo.desc.text !== desc) {
+      const x = { src: { id: LINK_SOURCE_WORLD, kind: "world", group: "world", name: "World description", storyId: null }, links: [] };
+      linkWikiNames(desc, "description", "", "", false, x);
+      memo.desc = { text: desc, x };
+    }
+    add(memo.desc.x);
   }
+  return out;
+};
+
+// One record's targets, beside its links: a stored link's id, a [[link]]'s
+// record by name (wiki, the resolver), since names change without the link,
+// and null for a link that finds nothing or points at its own record, which
+// the index leaves out.
+const linkIndexResolve = (x, wiki) => {
+  const ls = x.links;
+  const out = new Array(ls.length);
+  for (let i = 0; i < ls.length; i++) {
+    const l = ls[i];
+    const t = l.kind === "wiki" ? wiki.resolve(l.to) : l.to;
+    out[i] = typeof t === "string" && t && t !== l.src.id ? t : null;
+  }
+  return out;
+};
+
+// A build of the whole index: { wiki, xs, tgs, byTarget }, the resolver it
+// read names through, every record's links (xs) and their targets beside
+// them (tgs), and each target's links in the order they were read.
+const linkIndexBuild = (state) => {
+  const st = state || {};
+  const wiki = wikiResolverOf(st);
+  const xs = linkIndexRecords(st);
+  const tgs = xs.map(x => linkIndexResolve(x, wiki));
+  const byTarget = new Map();
+  for (let i = 0; i < xs.length; i++) {
+    const ls = xs[i].links, ts = tgs[i];
+    for (let j = 0; j < ls.length; j++) {
+      const t = ts[j];
+      if (t === null) continue;
+      let list = byTarget.get(t);
+      if (!list) { list = []; byTarget.set(t, list); }
+      list.push(ls[j]);
+    }
+  }
+  return { wiki, xs, tgs, byTarget };
+};
+
+// The last build brought to state, the same as a build of the whole would
+// give, or null where building it whole is the way (v1.7 r054, Drak's call
+// a): the records kept keep their targets, and the target lists that no
+// record touches are kept as they are; the records that came, changed, or
+// went, and those whose [[links]] a name now sends elsewhere
+// (wikiResolverChangedKeys), have their targets read again, and the lists of
+// every target they touch, before or after, are put together again in the
+// records' order. A change that reaches more than one record in sixteen (64
+// at least), or records kept in a new order, builds it whole.
+const linkIndexStep = (prev, state) => {
+  if (!prev) return null;
+  const st = state || {};
+  const wiki = wikiResolverOf(st);
+  const xs = linkIndexRecords(st);
+  const n = xs.length;
+  const most = Math.max(64, n >> 4);
+  const was = new Map();
+  for (let p = 0; p < prev.xs.length; p++) was.set(prev.xs[p], p);
+  const tgs = new Array(n);
+  const fresh = [];
+  let last = -1;
+  for (let i = 0; i < n; i++) {
+    const p = was.get(xs[i]);
+    if (p === undefined) { fresh.push(i); continue; }
+    if (p < last) return null;
+    last = p;
+    tgs[i] = prev.tgs[p];
+    was.delete(xs[i]);
+  }
+  if (fresh.length + was.size > most) return null;
+  const dirty = new Set();
+  const mark = (ts) => { for (let j = 0; j < ts.length; j++) if (ts[j] !== null) dirty.add(ts[j]); };
+  was.forEach(p => mark(prev.tgs[p]));
+  if (wiki !== prev.wiki) {
+    const moved = wikiResolverChangedKeys(prev.wiki, wiki);
+    if (moved.size > 0) {
+      let redone = 0;
+      for (let i = 0; i < n; i++) {
+        if (tgs[i] === undefined) continue;
+        const ls = xs[i].links;
+        let hit = false;
+        for (let j = 0; j < ls.length && !hit; j++) hit = ls[j].kind === "wiki" && moved.has(ls[j].to);
+        if (!hit) continue;
+        redone += 1;
+        if (fresh.length + was.size + redone > most) return null;
+        mark(tgs[i]);
+        tgs[i] = linkIndexResolve(xs[i], wiki);
+        mark(tgs[i]);
+      }
+    }
+  }
+  fresh.forEach(i => { tgs[i] = linkIndexResolve(xs[i], wiki); mark(tgs[i]); });
+  const byTarget = new Map(prev.byTarget);
+  dirty.forEach(t => byTarget.delete(t));
+  if (dirty.size > 0) {
+    for (let i = 0; i < n; i++) {
+      const ls = xs[i].links, ts = tgs[i];
+      for (let j = 0; j < ls.length; j++) {
+        const t = ts[j];
+        if (t === null || !dirty.has(t)) continue;
+        let list = byTarget.get(t);
+        if (!list) { list = []; byTarget.set(t, list); }
+        list.push(ls[j]);
+      }
+    }
+  }
+  return { wiki, xs, tgs, byTarget };
+};
+
+// The index a build gives out, { byTarget, links, targets }, with its two
+// flat lists, every link in the order its record was read beside its target,
+// which Concordance and a Linked with condition read (v1.7 r054).
+const linkIndexOut = (built) => {
+  const links = [], targets = [];
+  for (let i = 0; i < built.xs.length; i++) {
+    const ls = built.xs[i].links, ts = built.tgs[i];
+    for (let j = 0; j < ls.length; j++) if (ts[j] !== null) { links.push(ls[j]); targets.push(ts[j]); }
+  }
+  return { byTarget: built.byTarget, links, targets };
+};
+
+// The index, { byTarget, links, targets }: each target's links as linkPush
+// makes them, src the source as { id, kind, group, name, storyId }, its kind
+// entry, fabula, map, stemma, body, conlang, lexeme, or world, and its group its
+// template, its Fabula kind, or its kind again; and since r043 every link in
+// the order its record was read (links), beside its target (targets), which
+// Concordance draws in. Put together again only when a slice it reads has
+// changed, since r054 brought from the last build when an edit reaches few
+// records (linkIndexStep).
+const linkIndexOf = (state) => {
+  const st = state || {};
+  const glo = st.glossopoeia || {};
+  const desc = st.world && typeof st.world.description === "string" ? st.world.description : "";
+  const keys = [st.entries, st.templates, st.fabula, st.cartographia, st.stemmas, st.celestialBodies, glo.conlangs, glo.lexemes, desc];
+  const memo = LINK_INDEX_MEMO;
+  if (memo.index && memo.keys.every((k, i) => k === keys[i])) return memo.index;
+  memo.built = linkIndexStep(memo.built, st) || linkIndexBuild(st);
   memo.keys = keys;
-  memo.index = { byTarget, links, targets };
+  memo.index = linkIndexOut(memo.built);
   return memo.index;
 };
 
@@ -40350,41 +40481,61 @@ const renameCopiedNames = (state, id, oldName, name) => {
   return next;
 };
 
+// How many places hold a [[link]] by key: the records renameRewrite would
+// change for it, the world description as one (v1.7 r054).
+const renamePlaces = (state, key) => renameRewrite(state, key, `${key}${String.fromCharCode(1)}`).places;
+
 // What a rename of record id from oldName to newName would do, for the
 // modal, or null when there's nothing to ask: the name is the same but for
-// case, the old name doesn't reach the record, or no text links by it. state
-// is the world as the save will leave it but for the name (a draft's texts
-// in, the old name kept). { id, kind, oldName, newName, places, formerLabel
-// (where the record keeps former names, or null), former (that label, where
-// the modal offers to add the old name there, or null when the old name is
-// among them already), leaves and leavesFormer (what Rename only leaves the
-// links doing, without the old name added and with it: { how: "broken" |
-// "kept" | "moved", to }), taken (the record [[newName]] would reach instead
-// of this one, or null) }.
+// case, or the old name reaches the record from no text and, since r054, the
+// new name reaches no other record. state is the world as the save will
+// leave it but for the name (a draft's texts in, the old name kept). { id,
+// kind, oldName, newName, places (those whose [[links]] by the old name reach
+// it, none where the old name doesn't), formerLabel (where the record keeps
+// former names, or null), former (that label, where the modal offers to add
+// the old name there, or null when the old name is among them already),
+// leaves and leavesFormer (what Rename only leaves those links doing,
+// without the old name added and with it: { how: "broken" | "kept" |
+// "moved", to }, or null with no places), taken (the record [[newName]]
+// would reach instead of this one, or null), and since r054 holder (the
+// record [[newName]] reaches now, where it's another) and holderPlaces
+// (those whose [[links]] by the new name reach it) }.
 const renamePlan = (state, id, oldName, newName) => {
   const st = state || {};
   const was = typeof oldName === "string" ? oldName.trim() : "";
   const now = typeof newName === "string" ? newName.trim() : "";
   const key = renameKey(was);
-  if (!key || !now || key === renameKey(now)) return null;
-  const rec = wikiResolverBuild(st, null).find(key);
-  if (!rec || rec.id !== id) return null;
-  const places = renameRewrite(st, key, now).places;
-  if (places === 0) return null;
-  const formerLabel = renameFormerLabel(st, id, rec.kind);
+  const nowKey = renameKey(now);
+  if (!key || !now || key === nowKey) return null;
+  const wiki = wikiResolverBuild(st, null);
+  const rec = wiki.find(key);
+  const owns = !!rec && rec.id === id;
+  const places = owns ? renameRewrite(st, key, now).places : 0;
+  const there = wiki.find(nowKey);
+  const holder = there && there.id !== id ? there : null;
+  if (places === 0 && !holder) return null;
   const after = (also) => wikiResolverBuild(renameCopiedNames(renameRecordIn(st, id, now, also), id, was, now), null);
+  const plain = after(null);
+  const other = plain.find(nowKey);
+  const taken = other && other.id !== id ? other : null;
+  const holderPlaces = holder ? renamePlaces(st, nowKey) : 0;
+  if (places === 0) {
+    return {
+      id, kind: owns ? rec.kind : null, oldName: was, newName: now, places, formerLabel: null, former: null,
+      leaves: null, leavesFormer: null, taken, holder, holderPlaces,
+    };
+  }
+  const formerLabel = renameFormerLabel(st, id, rec.kind);
   const reach = (w) => {
     const r = w.find(key);
     return !r ? { how: "broken", to: null } : r.id === id ? { how: "kept", to: null } : { how: "moved", to: r };
   };
-  const plain = after(null);
   const leaves = reach(plain);
   const former = formerLabel && leaves.how !== "kept" ? formerLabel : null;
-  const other = plain.find(renameKey(now));
   return {
     id, kind: rec.kind, oldName: was, newName: now, places, formerLabel, former,
     leaves, leavesFormer: former ? reach(after(was)) : null,
-    taken: other && other.id !== id ? other : null,
+    taken, holder, holderPlaces,
   };
 };
 
@@ -59014,7 +59165,11 @@ function RecordDeleteModal() {
 // many places link by it and what Rename only leaves them doing, and offers
 // Rename and update links, or Rename only, alone when the new name already
 // reaches a record ahead of this one. Where the record keeps former names, a
-// box adds the old name there, unticked (call 1). App draws it once.
+// box adds the old name there, unticked (call 1). Since r054 a rename to a
+// name another record answers to asks here too, links by the old name or
+// none, saying how many places link by the new name and where those links
+// lead after; with none by the old name it offers Rename (Drak's call a, to
+// warn and allow). App draws it once.
 
 const RECORD_RENAME = { open: null };
 
@@ -59024,7 +59179,7 @@ const RECORD_RENAME = { open: null };
 const askRename = (ask) => {
   if (RECORD_RENAME.open) { RECORD_RENAME.open(ask); return; }
   const p = ask.plan;
-  const update = !p.taken && window.confirm(`Update the [[links]] by "${p.oldName}" to "${p.newName}"?`);
+  const update = p.places > 0 && !p.taken && window.confirm(`Update the [[links]] by "${p.oldName}" to "${p.newName}"?`);
   ask.onConfirm({ update, former: false, places: p.places });
 };
 
@@ -59045,6 +59200,17 @@ const renameLeavesLine = (plan, former) => {
   if (l.how === "kept") return `With Rename only, they stay as typed and still lead to it, through its ${plan.formerLabel || "former names"}.`;
   if (l.how === "moved") return `With Rename only, they stay as typed and lead instead to ${renameRecordNoun(l.to)}.`;
   return "With Rename only, they stay as typed and show as broken.";
+};
+
+// Where the [[links]] by the new name lead, where another record answers to
+// it now (v1.7 r054): here after the rename, or still there.
+const renameHolderLine = (p) => {
+  if (!p.holder) return null;
+  const n = p.holderPlaces;
+  const from = n > 0 ? `, from ${n} ${n === 1 ? "place" : "places"}` : "";
+  if (!p.taken) return `[[${p.newName}]] leads to ${renameRecordNoun(p.holder)} now${from}; after the rename ${n > 0 ? "those links" : "it"} will lead here.`;
+  if (p.places > 0) return null;
+  return `[[${p.newName}]] leads to ${renameRecordNoun(p.taken)}${from}, and still will after the rename, so a [[link]] by "${p.newName}" won't reach it.`;
 };
 
 // The modal, drawn once by App; askRename opens it. Esc and a click outside
@@ -59085,21 +59251,23 @@ function RecordRenameModal() {
       <div className="modal record-rename" ref={box} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="modal-hdr">Rename "{p.oldName}" to "{p.newName}"?</div>
         <div className="modal-body">
-          <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>
-          {p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>[[{p.newName}]] already leads to {renameRecordNoun(p.taken)}, so updating the links would send them there. It can be renamed without updating them.</p>}
+          {p.places > 0 && <p className="record-rename-line" style={{ margin: 0 }}>[[Links]] in {p.places} {p.places === 1 ? "place" : "places"} lead to it by the old name.</p>}
+          {p.places > 0 && p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>[[{p.newName}]] already leads to {renameRecordNoun(p.taken)}, so updating the links would send them there. It can be renamed without updating them.</p>}
           {p.former && (
             <label className="record-rename-former" style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0", cursor: "pointer" }}>
               <input type="checkbox" checked={former} onChange={e => setFormer(e.target.checked)} />
               <span>Add "{p.oldName}" to its {p.former}</span>
             </label>
           )}
-          <p className="record-rename-line" style={{ margin: "8px 0 0" }}>{renameLeavesLine(p, former)}</p>
-          {!p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>Updating them saves a restore point first, Before rename, in Version History.</p>}
+          {p.places > 0 && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>{renameLeavesLine(p, former)}</p>}
+          {p.places > 0 && !p.taken && <p className="record-rename-line" style={{ margin: "8px 0 0" }}>Updating them saves a restore point first, Before rename, in Version History.</p>}
+          {renameHolderLine(p) && <p className="record-rename-line record-rename-holder" style={{ margin: p.places > 0 ? "10px 0 0" : 0 }}>{renameHolderLine(p)}</p>}
         </div>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={cancel}>Cancel</button>
-          <button className="btn record-rename-only" onClick={() => done(false)} autoFocus={!!p.taken}>Rename only</button>
-          {!p.taken && <button className="btn btn-accent record-rename-update" onClick={() => done(true)} autoFocus>Rename and update links</button>}
+          {p.places === 0 && <button className="btn btn-accent record-rename-go" onClick={() => done(false)} autoFocus>Rename</button>}
+          {p.places > 0 && <button className="btn record-rename-only" onClick={() => done(false)} autoFocus={!!p.taken}>Rename only</button>}
+          {p.places > 0 && !p.taken && <button className="btn btn-accent record-rename-update" onClick={() => done(true)} autoFocus>Rename and update links</button>}
         </div>
       </div>
     </div>
