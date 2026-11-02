@@ -10,7 +10,7 @@
 - **Defensive validation always before state touches.** Hand-edited JSONs WILL happen.
 - **Load is non-destructive; save reconciles.** Asymmetric pre-feature data inherits unchanged; next save reconciles.
 - **Per-feature QA after each major feature.** Parse passes are not runtime passes.
-- **Mobile UX deferred indefinitely.** Cartulary is not a phone app.
+- **Mobile UX deferred indefinitely.** Cartulary is not a phone app. *(Reversed by Drak, 2026-11-02: mobile support is v1.8's headliner; see `roadmap.md`, v1.8.)*
 - **High bar for new templates.** Three or more structured fields, OR native rendering, OR an absent domain that justifies inclusion.
 - **Other Names is not universal** *(v1.3)*. Only entries with plausible in-world aliases; authorial-tracking artifacts excluded.
 - **Status fields universally get Other + otherTextField** *(v1.3)*. Type fields follow the same pattern.

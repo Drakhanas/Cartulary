@@ -8,8 +8,9 @@ Nothing in the backlog is committed to a version. A row is a claim about the tre
 
 ## v1.8
 
-Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (the review's Pipes item 5), and Kalendarium and Ephemeris improvements he has a rough idea of and hasn't written down yet. The leap rules want a spec before code.
+Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (the review's Pipes item 5), and Kalendarium and Ephemeris improvements he has a rough idea of and hasn't written down yet. The leap rules want a spec before code. On 2026-11-02 he added mobile support as its headliner.
 
+- **Mobile support: the headliner** (Drak, 2026-11-02: "add for 1.8: mobile support, it'll be the headliner"; out of Deferred indefinitely). Its scope isn't set, and like Fabula, Stemma v2, and Pipes it wants a plan before code. Where the tree stands: the help's Browser Compatibility topic (`26_home-data`) says Cartulary loads on phones and tablets but the UI is desktop-shaped, that most mobile browsers need desktop-site mode for menus and controls to behave, and that mobile is not the target audience; that line changes with whatever v1.8 builds.
 - **Leap rules.** No leap or intercalary rule exists anywhere in the source, and absolute-day math multiplies a fixed days-per-year. A leap rule reaches that math, the cross-calendar anchors, the grid, seasons, date validation, and everything downstream that reads absolute days (Chronometric, Ephemeris). Dates are stored as year, month, and day, so adding a rule to a calendar that already holds dates moves the absolute day of every date after the first leap, and whatever is pinned to an absolute day (a calendar's `anchor.absoluteDay`, a moon's `phaseAnchorDay`) has to move with it or knowingly stay. The review's Dul Pantra figure is arithmetically right (a leap week every eight years is 0.875 days a year, 87.5 a century); the leap week itself lives in Drak's world file, not in the repository.
 
 ---
@@ -55,7 +56,6 @@ Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (th
 ## Deferred indefinitely
 
 - World-scoped custom assets (they gate the Scrap conlang migration)
-- Mobile UX
 - Per-filter-state Concordance position storage (positions are global per world)
 - "Star Map" as a separate sidebar view (Concordance with saved positions is the star map)
 - The Ephemeris sky-from-surface view
@@ -63,3 +63,7 @@ Not named or opened. Drak put two things in it on 2026-10-23: the leap rules (th
 === ADDED 2026-11-02 (session 22, after the v1.7 ship: the close) ===
 
 **v1.7 shipped 2026-11-02** from the r059 tree: `Cartulary_v1.7.html` (sha256 `9b495ef338ab33dd`) and `Cartulary_v1.7_Readable.html` (`5cdf993176cb4d8e`), with `v1.7_Release` on `cfe0e9e`. **No line is open**; v1.8 is next, not named or opened, with the two things in its section above. **What changed in this file:** the v1.7 section and every dated block from the cut-back after the v1.6 ship to v1.7's ship moved verbatim to `roadmap-archive.md`. The v1.8 section and the standing backlog are as they were.
+
+=== ADDED 2026-11-02 (session 22, later: mobile support for v1.8) ===
+
+**Mobile support is v1.8's headliner** (Drak, 2026-11-02). It's in the v1.8 section above with where the tree stands, its scope not yet set, and Mobile UX is out of Deferred indefinitely; `roadmap-principles.md`'s "Mobile UX deferred indefinitely" is marked reversed. **No line is open**; v1.8 opens with the `VERSION` bump.
