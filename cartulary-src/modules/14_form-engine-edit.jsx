@@ -1107,6 +1107,11 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
 // rename/reorder never disturbs bindings.
 function GridEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar }) {
   const g = coerceGridValue(value);
+  // v1.7 r057: the field's starting shape, if it has one, and the empty
+  // grid's prompt, rows by columns.
+  const shape = gridShapeOf(field);
+  const [askRows, setAskRows] = useState("2");
+  const [askCols, setAskCols] = useState("2");
 
   const commit = (next) => onChange(coerceGridValue(next));
   const clone = () => ({
@@ -1117,7 +1122,20 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
 
   const setRowAxisLabel = (v) => { const n = clone(); n.rowAxisLabel = v; commit(n); };
   const setColAxisLabel = (v) => { const n = clone(); n.colAxisLabel = v; commit(n); };
-  const addRow = () => { const n = clone(); n.rows.push({ id: genId(), label: "" }); commit(n); };
+  // A row added takes, in a column the field's shape names, the type the
+  // shape gives that column's cells (v1.7 r057).
+  const addRow = () => {
+    const n = clone();
+    const id = genId();
+    n.rows.push({ id, label: "" });
+    if (shape) n.cols.forEach(c => {
+      const sc = shape.cols.find(x => x.label === (c.label || "").trim());
+      if (!sc || sc.type === "text") return;
+      if (!n.cells[id]) n.cells[id] = {};
+      n.cells[id][c.id] = makeGridCell(sc.type);
+    });
+    commit(n);
+  };
   const addCol = () => { const n = clone(); n.cols.push({ id: genId(), label: "" }); commit(n); };
   const renameRow = (rid, label) => { const n = clone(); const r = n.rows.find(x => x.id === rid); if (r) r.label = label; commit(n); };
   const renameCol = (cid, label) => { const n = clone(); const c = n.cols.find(x => x.id === cid); if (c) c.label = label; commit(n); };
@@ -1185,6 +1203,25 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
     );
   };
 
+  // v1.7 r057: an empty grid starts from its field's shape with a button, or,
+  // with no shape, asks for rows by columns, at most GRID_PROMPT_MAX of each,
+  // a number above it lowered to it, as the line under the boxes says. The
+  // axis names typed before stay.
+  const count = (n, one) => `${n} ${n === 1 ? one : `${one}s`}`;
+  const shapeText = shape
+    ? `The template's grid starts with ${[shape.rows.length > 0 ? count(shape.rows.length, "row") : null, shape.cols.length > 0 ? count(shape.cols.length, "column") : null].filter(Boolean).join(" and ")}.`
+    : "";
+  const startShape = () => commit({ ...gridFromShape(shape), rowAxisLabel: g.rowAxisLabel, colAxisLabel: g.colAxisLabel });
+  const askSize = (s) => Math.min(GRID_PROMPT_MAX, Math.max(1, Math.floor(Number(s)) || 1));
+  const askOver = Number(askRows) > GRID_PROMPT_MAX || Number(askCols) > GRID_PROMPT_MAX;
+  const makeAsked = () => {
+    const n = clone();
+    n.rows = Array.from({ length: askSize(askRows) }, () => ({ id: genId(), label: "" }));
+    n.cols = Array.from({ length: askSize(askCols) }, () => ({ id: genId(), label: "" }));
+    n.cells = {};
+    commit(n);
+  };
+
   const miniBtn = { background: "none", border: "1px solid var(--border)", color: "var(--text-dim)", cursor: "pointer", borderRadius: 3, padding: "0 5px", lineHeight: 1.6, fontSize: "0.8em" };
   const hdrInput = { width: "100%", boxSizing: "border-box", fontWeight: 600 };
 
@@ -1201,9 +1238,24 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
         </label>
       </div>
 
-      {g.rows.length === 0 && g.cols.length === 0 ? (
-        <div className="field-hint" style={{ marginBottom: 8 }}>Add a row and a column to start the grid.</div>
+      {g.rows.length === 0 && g.cols.length === 0 ? (shape ? (
+        <div className="grid-shape-start" style={{ marginBottom: 8, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+          <span className="field-hint" style={{ margin: 0 }}>{shapeText}</span>
+          <button className="btn btn-ghost" onClick={startShape}>Start from the template's shape</button>
+        </div>
       ) : (
+        <div className="grid-size-prompt" style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, fontSize: "0.9em" }}>
+            <span>Start with</span>
+            <input className="input" type="number" min={1} max={GRID_PROMPT_MAX} aria-label="Rows" value={askRows} onChange={e => setAskRows(e.target.value)} style={{ width: 64 }} />
+            <span>rows by</span>
+            <input className="input" type="number" min={1} max={GRID_PROMPT_MAX} aria-label="Columns" value={askCols} onChange={e => setAskCols(e.target.value)} style={{ width: 64 }} />
+            <span>columns</span>
+            <button className="btn btn-ghost" onClick={makeAsked}>Make grid</button>
+          </div>
+          {askOver && <div className="field-hint grid-size-over" style={{ marginTop: 4 }}>The prompt makes at most {GRID_PROMPT_MAX} rows and {GRID_PROMPT_MAX} columns, so this makes {askSize(askRows)} by {askSize(askCols)}; + Row and + Column add more after.</div>}
+        </div>
+      )) : (
         <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
           <thead>
             <tr>

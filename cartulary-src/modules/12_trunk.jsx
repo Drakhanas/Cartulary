@@ -1622,7 +1622,7 @@ function App() {
       else if (f.type === "entry-ref" && f.multi) draft.fields[f.id] = [];
       else if (f.type === "name-history") draft.fields[f.id] = [];
       else if (f.type === "multiselect") draft.fields[f.id] = [];
-      else if (f.type === "grid") draft.fields[f.id] = makeEmptyGrid();
+      else if (f.type === "grid") draft.fields[f.id] = gridFromShape(gridShapeOf(f));  // v1.7 r057: as its shape, or empty
       else draft.fields[f.id] = "";
     });
     if (validOverride) setActiveTemplateId(validOverride.id);
@@ -1761,7 +1761,7 @@ function App() {
     if (isLocked) return;
     if (!confirmDiscardDraft()) return;
     const id = `fab-corpus-${genId()}`;
-    const draft = { id, name: "", fields: {} };
+    const draft = { id, name: "", fields: gridsFromShapes(fabulaKindFields(state, "corpus")) };  // v1.7 r057
     setActiveCorpusId(id);
     setCorpusDraft(draft);
     initialCorpusDraftRef.current = JSON.stringify(draft);
@@ -2132,7 +2132,8 @@ function App() {
     if (isLocked || !activeStoryId) return;
     if (!confirmDiscardDraft()) return;
     const id = `fab-${kind}-${genId()}`;
-    const draft = { id, name: "", fields: {} };
+    // v1.7 r057: a Grid field with a starting shape starts as it.
+    const draft = { id, name: "", fields: gridsFromShapes(fabulaKindFields(state, kind)) };
     setFabulaBack(b => [...b, fabulaHere()]);
     setActiveRecord({ kind, id });
     setRecordDraft(draft);
@@ -2587,6 +2588,13 @@ function App() {
       // Group fields must have a subfields array — coerce if missing/wrong.
       if (f.type === "group" && !Array.isArray(f.subfields)) {
         f.subfields = [];
+      }
+      // v1.7 r057: a Grid field's starting shape as it reads (gridShapeOf),
+      // or none, for a template file and a pack.
+      if (f.type === "grid" && "gridShape" in f) {
+        const shape = gridShapeOf(f);
+        if (shape) f.gridShape = shape;
+        else delete f.gridShape;
       }
       // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup,
       // with an id new to the template (v1.7 r039).

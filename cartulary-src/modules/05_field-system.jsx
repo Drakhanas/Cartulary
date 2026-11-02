@@ -82,6 +82,46 @@ const coerceGridValue = (v) => {
   };
 };
 const gridIsEmpty = (g) => !g || ((g.rows || []).length === 0 && (g.cols || []).length === 0);
+// v1.7 r057: a Grid field's starting shape (gridShape on the field,
+// docs/sweep-spec.md, section 3): its row labels, and its column labels each
+// with the type the column's cells start as; either list can be empty.
+// gridShapeOf reads a stored or hand-edited shape into that form, or null
+// for none; gridFromShape makes a new grid from it, with fresh ids for its
+// rows and columns; gridsFromShapes gives a new record's grids, by field id,
+// for the shaped Grid fields among fields. GRID_PROMPT_MAX is the most rows
+// and columns an empty grid's prompt makes (Drak's call at the cut, a).
+const GRID_PROMPT_MAX = 20;
+const gridShapeOf = (field) => {
+  const s = field && field.gridShape;
+  if (!s || typeof s !== "object" || Array.isArray(s)) return null;
+  const label = (x) => (typeof x === "string" ? x.trim() : "");
+  const rows = (Array.isArray(s.rows) ? s.rows : []).map(label).filter(Boolean);
+  const cols = (Array.isArray(s.cols) ? s.cols : [])
+    .map(c => (c && typeof c === "object" ? { label: label(c.label), type: GRID_CELL_TYPE_SET.has(c.type) ? c.type : "text" } : { label: label(c), type: "text" }))
+    .filter(c => c.label);
+  return rows.length > 0 || cols.length > 0 ? { rows, cols } : null;
+};
+const gridFromShape = (shape) => {
+  const g = makeEmptyGrid();
+  if (!shape) return g;
+  g.rows = shape.rows.map(label => ({ id: genId(), label }));
+  g.cols = shape.cols.map(c => ({ id: genId(), label: c.label }));
+  g.rows.forEach(r => shape.cols.forEach((c, i) => {
+    if (c.type === "text") return;
+    if (!g.cells[r.id]) g.cells[r.id] = {};
+    g.cells[r.id][g.cols[i].id] = makeGridCell(c.type);
+  }));
+  return g;
+};
+const gridsFromShapes = (fields) => Object.fromEntries((Array.isArray(fields) ? fields : [])
+  .filter(f => f && f.type === "grid" && gridShapeOf(f))
+  .map(f => [f.id, gridFromShape(gridShapeOf(f))]));
+// A field with its shape set, or without the key when shape is none, so a
+// cleared shape leaves no gridShape behind.
+const withGridShape = (f, shape) => {
+  const { gridShape, ...rest } = f;
+  return shape ? { ...rest, gridShape: shape } : rest;
+};
 // Walk every entry-ref cell value in a grid (used by ref-integrity sweeps).
 const forEachGridRefCell = (g, fn) => {
   if (!g || !g.cells) return;

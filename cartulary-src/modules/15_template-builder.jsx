@@ -36,6 +36,46 @@ function SelectOptionsInput({ value, onCommit, placeholder, style }) {
   );
 }
 
+// v1.7 r057: a Grid field's starting shape in the builder (docs/sweep-spec.md,
+// section 3, and Drak's call at the cut, a): its rows and its columns each as
+// a line split by "|", as a dropdown's options are, and under them a cell
+// type for each column, which follows the column's place in its line. Both
+// lines empty leave the field without a shape, a grid each entry shapes
+// itself.
+function GridShapeInput({ field, onChange }) {
+  const shape = gridShapeOf(field) || { rows: [], cols: [] };
+  const put = (rows, cols) => onChange(rows.length > 0 || cols.length > 0 ? { rows, cols } : undefined);
+  const name = { fontSize: 12, color: "var(--text-dim)", minWidth: 62 };
+  return (
+    <div className="tpl-grid-shape" style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 5 }}>
+      <div className="tpl-cascade-label">Starting shape</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={name}>Rows</span>
+        <SelectOptionsInput value={shape.rows} onCommit={rows => put(rows, shape.cols)} placeholder="Nominative | Accusative | Genitive" style={{ flex: 1 }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={name}>Columns</span>
+        <SelectOptionsInput value={shape.cols.map(c => c.label)} onCommit={labels => put(shape.rows, labels.map((label, i) => ({ label, type: shape.cols[i] ? shape.cols[i].type : "text" })))} placeholder="Singular | Plural" style={{ flex: 1 }} />
+      </div>
+      {shape.cols.length > 0 && (
+        <div className="tpl-grid-shape-types" style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+          {shape.cols.map((c, i) => (
+            <label key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+              <span>{c.label}</span>
+              <select className="input" aria-label={`${c.label}: cell type`} value={c.type} onChange={e => put(shape.rows, shape.cols.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))} style={{ fontSize: 12, padding: "1px 4px" }}>
+                {GRID_CELL_TYPES.map(t => <option key={t} value={t}>{GRID_CELL_TYPE_LABELS[t]}</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
+      )}
+      <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+        Each new entry's grid starts with these rows and columns, each column's cells of its type, and the entry can change them. Leave both lines empty for a grid each entry shapes itself. Reference cells can point at any entry.
+      </div>
+    </div>
+  );
+}
+
 // Per-parent-value options matrix for a cascade-select child field.
 // Renders one row per option in the parent field, each with its own
 // SelectOptionsInput. Result is committed to `optionsByParent` keyed by the
@@ -1134,9 +1174,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
           ))}
 
           {field.type === "grid" && (
-            <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
-              Rows, columns, and each cell's type (text, number, entry reference, calendar date, or calendar date range) are set per entry. Reference cells can point at any entry.
-            </div>
+            <GridShapeInput field={field} onChange={gridShape => onChange({ ...draft, fields: draft.fields.map(f => (f.id === field.id ? withGridShape(f, gridShape) : f)) })} />
           )}
 
           {/* v1.3: showWhen conditional visibility — pick a parent select field
