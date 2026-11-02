@@ -60,10 +60,10 @@ const fabulaStoryCounts = (state, storyId) => {
   return { cast: count("cast"), scenes: count("scenes") };
 };
 
-function FabulaStoryLine({ state, story, onOpen }) {
-  const counts = fabulaStoryCounts(state, story.id);
-  const status = formatSelectDisplay((story.fields || {}).status);
-  // v1.7 r008: a click on the line opens the story's page.
+// A story's title, the button that opens its page (v1.7 r008). Since v1.7
+// r056 its counts are a part of the row of their own (FabulaStoryCounts), so
+// a title too long to sit beside them and the row's buttons can take a line.
+function FabulaStoryLine({ story, onOpen }) {
   const open = onOpen ? {
     role: "button",
     tabIndex: 0,
@@ -72,13 +72,20 @@ function FabulaStoryLine({ state, story, onOpen }) {
     onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(story.id); } },
   } : {};
   return (
-    <div className="fabula-story-line" {...open} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, cursor: onOpen ? "pointer" : undefined }}>
-      <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>{story.name || "(untitled story)"}</div>
-      <div style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
-        {status && <span>{status} · </span>}
-        {counts.cast} cast · {counts.scenes} {counts.scenes === 1 ? "scene" : "scenes"}
-        {story.updatedAt && <span> · updated {fmtDate(story.updatedAt)}</span>}
-      </div>
+    <div className="fabula-story-line" {...open} style={{ flex: "1 1 auto", minWidth: 0, fontSize: 15, fontWeight: 500, overflowWrap: "anywhere", cursor: onOpen ? "pointer" : undefined }}>{story.name || "(untitled story)"}</div>
+  );
+}
+
+// A story's counts and date, after its title; a click on them opens the
+// story too, as it did when they were part of the title's button.
+function FabulaStoryCounts({ state, story, onOpen }) {
+  const counts = fabulaStoryCounts(state, story.id);
+  const status = formatSelectDisplay((story.fields || {}).status);
+  return (
+    <div className="fabula-story-counts" title={onOpen ? "Open this story" : undefined} onClick={onOpen ? () => onOpen(story.id) : undefined} style={{ fontSize: 12, color: "var(--text-dim)", whiteSpace: "nowrap", cursor: onOpen ? "pointer" : undefined }}>
+      {status && <span>{status} · </span>}
+      {counts.cast} cast · {counts.scenes} {counts.scenes === 1 ? "scene" : "scenes"}
+      {story.updatedAt && <span> · updated {fmtDate(story.updatedAt)}</span>}
     </div>
   );
 }
@@ -86,7 +93,10 @@ function FabulaStoryLine({ state, story, onOpen }) {
 // One story's row, with its title renamed in place. autoRename opens the
 // title for typing, for a story just made, and onRenameEnd tells the parent
 // the typing is over. leading comes before the title (the reading order's
-// number), actions before Rename, trailing after it.
+// number), actions before Rename, trailing after it. A title too long to sit
+// beside its counts and the buttons takes the row's first line, whole, and
+// they go on the line under it (v1.7 r056), where the title's column gave
+// and a long title was cut to fit.
 function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRenameEnd, onOpen, leading, actions, trailing, rowProps }) {
   const [renaming, setRenaming] = useState(!!autoRename);
   const [text, setText] = useState(story.name || "");
@@ -99,7 +109,7 @@ function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRename
   };
   const { style: rowStyle, ...rest } = rowProps || {};
   return (
-    <div className="stemma-index-row" {...rest} style={{ padding: "10px 16px", background: "var(--surf)", display: "flex", alignItems: "center", gap: 12, ...(rowStyle || {}) }}>
+    <div className="stemma-index-row" {...rest} style={{ padding: "10px 16px", background: "var(--surf)", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 12, rowGap: 6, ...(rowStyle || {}) }}>
       {leading}
       {renaming && !isLocked ? (
         <input
@@ -116,13 +126,20 @@ function FabulaStoryRow({ state, story, isLocked, autoRename, onRename, onRename
           onBlur={commit}
           style={{ flex: 1 }}
         />
-      ) : <FabulaStoryLine state={state} story={story} onOpen={onOpen} />}
-      {!isLocked && !renaming && (
-        <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
-          {actions}
-          <button className="btn" style={{ padding: "3px 8px", fontSize: 12 }} onClick={() => { setText(story.name || ""); setRenaming(true); }} title="Rename this story">Rename</button>
-          {trailing}
-        </div>
+      ) : (
+        <>
+          <FabulaStoryLine story={story} onOpen={onOpen} />
+          <div className="fabula-story-rest" style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: 12, rowGap: 6 }}>
+            <FabulaStoryCounts state={state} story={story} onOpen={onOpen} />
+            {!isLocked && (
+              <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                {actions}
+                <button className="btn" style={{ padding: "3px 8px", fontSize: 12 }} onClick={() => { setText(story.name || ""); setRenaming(true); }} title="Rename this story">Rename</button>
+                {trailing}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

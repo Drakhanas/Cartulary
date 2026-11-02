@@ -115,11 +115,61 @@ const fabulaResetAnalysis = (state, kind) => {
   };
 };
 
+// The seed's fields that Reset to Default brings back to one of Fabula's
+// kinds (v1.7 r056): each one the kind's schema lacks or holds as another
+// type, and, in a group the schema still has, the subfields that holds for.
+const fabulaResetBack = (seedFields, haveFields) => {
+  const have = new Map((Array.isArray(haveFields) ? haveFields : []).filter(f => f && f.id).map(f => [f.id, f]));
+  const back = [];
+  (Array.isArray(seedFields) ? seedFields : []).forEach(sf => {
+    const hf = have.get(sf.id);
+    if (!hf || hf.type !== sf.type) back.push(sf);
+    else if (sf.type === "group") {
+      const subfields = fabulaResetBack(sf.subfields, hf.subfields);
+      if (subfields.length > 0) back.push({ ...sf, subfields });
+    }
+  });
+  return back;
+};
+
+// A kind's records with the links that fields hold to records the world no
+// longer has dropped, through the walk a delete clears links with
+// (scrubEntryRefs), for the fields Reset to Default brings back (v1.7 r056):
+// a delete clears links through the fields a kind has (fabulaKindFields),
+// so these kept their links to what was deleted while they were gone, and
+// came back reading (missing entry). A record it changes nothing in keeps
+// its identity.
+const fabulaDropDeadLinks = (state, k, records, fields, now) => {
+  if (!fields || fields.length === 0) return records;
+  const live = new Set([...(state.entries || []), ...(state.celestialBodies || []), ...getRegisteredGraphNodes(state)].filter(x => x && x.id).map(x => x.id));
+  const dead = new Set();
+  const gone = (id) => { if (typeof id === "string" && id && !live.has(id)) dead.add(id); };
+  const look = (list, vals) => (Array.isArray(list) ? list : []).forEach(f => {
+    const v = vals && typeof vals === "object" ? vals[f.id] : null;
+    if (v == null || v === "") return;
+    if (f.type === "entry-ref") (Array.isArray(v) ? v : [v]).forEach(x => gone(typeof x === "string" ? x : x && x.id));
+    else if (f.type === "group" && Array.isArray(v)) v.forEach(inst => look(f.subfields, inst));
+    else if (f.type === "grid") forEachGridRefCell(v, (rid, cid, cell) => gone(cell.value));
+  });
+  records.forEach(r => { if (r && r.fields) look(fields, r.fields); });
+  if (dead.size === 0) return records;
+  const tpl = { id: k.id, fields };
+  return records.map(r => {
+    if (!r || !r.fields || typeof r.fields !== "object") return r;
+    const tagged = { ...r, templateId: k.id };
+    const [out] = scrubEntryRefs([tagged], [tpl], dead);
+    if (out === tagged) return r;
+    const { templateId, ...rest } = out;
+    return { ...rest, updatedAt: now };
+  });
+};
+
 // Reset to Default for one of Fabula's kinds: the seed's schema, unedited,
 // and every value its records hold under a field the seed doesn't have
 // cleared, as a built-in template's reset clears its entries'. A reference
-// the seed takes more than one of keeps what it held, as a list of one.
-// Returns Fabula.
+// the seed takes more than one of keeps what it held, as a list of one, and
+// since v1.7 r056 a field the reset brings back drops its links to records
+// that are gone (fabulaDropDeadLinks). Returns Fabula.
 const fabulaResetSchema = (state, kind) => {
   const k = FABULA_KINDS.find(x => x.kind === kind);
   const fab = state.fabula || {};
@@ -139,7 +189,8 @@ const fabulaResetSchema = (state, kind) => {
     });
     return changed ? { ...r, fields, updatedAt: now } : r;
   });
-  return { ...fab, [k.slice]: records, schemas: { ...(fab.schemas || {}), [kind]: seed } };
+  const back = fabulaResetBack(seed.fields, fabulaSchemaOf(state, kind).fields);
+  return { ...fab, [k.slice]: fabulaDropDeadLinks(state, k, records, back, now), schemas: { ...(fab.schemas || {}), [kind]: seed } };
 };
 
 // Fabula's kinds a field on kind can point at, as the seeded links do: the

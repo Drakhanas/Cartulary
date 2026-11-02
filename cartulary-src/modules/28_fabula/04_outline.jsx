@@ -393,14 +393,46 @@ function FabulaOutlineTab({ state, story, isLocked, folds, onToggleFold, onOpenR
 
   const ARROWS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "out", ArrowRight: "in" };
   const typing = (e) => { const tag = e.target && e.target.tagName; return tag === "INPUT" || tag === "TEXTAREA"; };
-  const onNodeKey = (e, node) => {
+  // v1.7 r056: the plain arrows step the focus as a tree's do, from a row
+  // itself and not from its buttons or boxes. Up and Down go to the row
+  // above and below, beats included, and Home and End to the first and the
+  // last in sight; Right unfolds a folded row or steps to the first row in
+  // it, and Left folds an open row or steps out to the row it sits in. node
+  // is null for a beat, which holds no rows. Alt with the arrows still moves
+  // a row, and Tab works as it did.
+  const STEP_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"];
+  const step = (e, node, folded) => {
+    if (e.target !== e.currentTarget || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || !STEP_KEYS.includes(e.key)) return false;
+    e.preventDefault();
+    const row = e.currentTarget;
+    const rows = rootRef.current ? [...rootRef.current.querySelectorAll('[role="treeitem"]')] : [];
+    const at = rows.indexOf(row);
+    let to = null;
+    if (e.key === "ArrowDown") to = rows[at + 1];
+    else if (e.key === "ArrowUp") to = rows[at - 1];
+    else if (e.key === "Home") to = rows[0];
+    else if (e.key === "End") to = rows[rows.length - 1];
+    else if (e.key === "ArrowRight") {
+      if (node && folded) onToggleFold(node.id);
+      else if (node && row.nextElementSibling) to = row.nextElementSibling.querySelector('[role="treeitem"]');
+    } else if (node && !folded) onToggleFold(node.id);
+    else {
+      const up = row.closest('[role="group"], [role="tree"]');
+      to = up && up.getAttribute("role") === "group" ? up.previousElementSibling : null;
+    }
+    if (to && to !== row && to.getAttribute("role") === "treeitem") to.focus();
+    return true;
+  };
+  const onNodeKey = (e, node, folded) => {
     if (typing(e)) return;
     if (e.altKey && ARROWS[e.key]) { e.preventDefault(); move(node.id, ARROWS[e.key]); return; }
+    if (step(e, node, folded)) return;
     if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); onOpenRecord(node.kind, node.id); }
   };
   const onBeatKey = (e, sceneId, i) => {
     if (typing(e)) return;
     if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) { e.preventDefault(); moveBeat(sceneId, i, e.key === "ArrowUp" ? i - 1 : i + 1); return; }
+    if (step(e, null, false)) return;
     if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); startEdit(sceneId, i, "beat"); }
   };
   // A click on a row's own space, not on one of its buttons or boxes.
@@ -640,7 +672,7 @@ function FabulaOutlineTab({ state, story, isLocked, folds, onToggleFold, onOpenR
           aria-expanded={!folded}
           tabIndex={0}
           title={`Open this ${FABULA_NOUNS[node.kind].one}`}
-          onKeyDown={e => onNodeKey(e, node)}
+          onKeyDown={e => onNodeKey(e, node, folded)}
           onClick={e => { if (!onControl(e)) onOpenRecord(node.kind, node.id); }}
           {...dragProps(node.id, { id: node.id, kind: node.kind }, e => nodeWhere(e, node), (d, where) => {
             if (d.beat) { write(f => fabulaMoveBeat(f, d.sceneId, d.index, node.id, null)); return; }

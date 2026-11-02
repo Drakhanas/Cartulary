@@ -852,9 +852,11 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
     // instances. `registeredNodes` is the precomputed getRegisteredGraphNodes
     // list, threaded from the form; on body-only callers it is absent and this
     // is a no-op, so the existing bodies behavior is untouched.
+    // A node's place in its story's outline comes along (v1.7 r056), for
+    // formatEntryLabel.
     const synthReg = (allowedSet) => (registeredNodes || [])
       .filter(n => n && n.templateId !== BODY_REF_SENTINEL && (!allowedSet || allowedSet.has(n.templateId)))
-      .map(n => ({ id: n.id, name: n.name || "(unnamed)", templateId: n.templateId, _isSynth: true }));
+      .map(n => ({ id: n.id, name: n.name || "(unnamed)", templateId: n.templateId, _isSynth: true, ...(n.place ? { place: n.place } : {}) }));
     if (Array.isArray(field.refTemplatesId) && field.refTemplatesId.length > 0) {
       const allowed = new Set(field.refTemplatesId);
       pool = pool.filter(e => allowed.has(e.templateId));
@@ -915,6 +917,10 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
   // the resolved cascade display ("Eastwatch (Location - Town)").
   const isMultiTpl = Array.isArray(field.refTemplatesId) && field.refTemplatesId.length > 1;
   const formatEntryLabel = (e) => {
+    // v1.7 r056: an act, a chapter, or a scene placed in its story's outline
+    // (fabulaStoryNodes) reads its place and its name split by a middle dot,
+    // "A · The Ford", where the option's plain text ran them together.
+    if (e.place) return `${e.place.path} · ${e.place.name}`;
     if (!isMultiTpl) return e.name;
     // v1.5 r004: body entries show the BODY_REF_LABEL badge.
     if (e.templateId === BODY_REF_SENTINEL) return `${e.name} (${BODY_REF_LABEL})`;
