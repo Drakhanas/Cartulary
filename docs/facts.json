@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59715,
-  "raw_body_lines": 59715,
-  "canonical_lines": 56878,
+  "total_lines": 59755,
+  "raw_body_lines": 59755,
+  "canonical_lines": 56901,
   "decl_count": 972,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r058-body.jsx"
+  "active_anchor": "reference-r059-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59715,
+   "value": 59755,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -30,11 +30,11 @@
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56878,
+   "value": 56901,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59715,
+   "value": 59755,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3251701,
+   "value": 3266684,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "eighty-three",
-    83
+    "eighty-four",
+    84
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,13 +121,13 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "eighty-three",
-    83
+    "eighty-four",
+    84
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59715,
+   "value": 59755,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -138,9 +138,9 @@
    "value": 972,
    "pattern": "decl-name set\\s+: PASS \\((\\d+) names\\)"
   },
-  "working_hash_r058": {
-   "value": "e9f89cccc359d6ec",
-   "pattern": "working[^\\n]{0,40}at r058 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r059": {
+   "value": "84d85a97f533a98f",
+   "pattern": "working[^\\n]{0,40}at r059 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -1143,10 +1143,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r058-body.jsx",
-   "reference-r058-layout.json",
-   "ce9a2c799caaa65a",
-   "e9f89cccc359d6ec",
+   "reference-r059-body.jsx",
+   "reference-r059-layout.json",
+   "40b9d0c2b4f8e8a9",
+   "84d85a97f533a98f",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1154,7 +1154,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r059, the help, after the Sweep's eight cuts",
+   "the site, without an r-number, written from the help",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1241,7 +1241,8 @@
    "v1.7_r055",
    "v1.7_r056",
    "v1.7_r057",
-   "v1.7_r058"
+   "v1.7_r058",
+   "v1.7_r059"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1289,10 +1290,10 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r058-layout.json",
+   "reference-r059-layout.json",
    "Five exist",
-   "reference-r058-body.jsx",
-   "ce9a2c799caaa65a",
+   "reference-r059-body.jsx",
+   "40b9d0c2b4f8e8a9",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
    "queryMarkdownBox",
@@ -1609,7 +1610,10 @@
    "11d0e0884320ecb1",
    "v1.7_r058: the rest of Fabula's new records start from their shapes",
    "v1.7_r058_fabula_shapes.py",
-   "e9f89cccc359d6ec"
+   "e9f89cccc359d6ec",
+   "v1.7_r059: the help, after the Sweep's eight cuts",
+   "v1.7_r059_help.py",
+   "84d85a97f533a98f"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1699,7 +1703,7 @@
    "Two lines r039 left stale",
    "v1.7_r040",
    "r040 is in",
-   "What r040 left for r059",
+   "What r040 left for the site step",
    "offers Allow on every visit",
    "v1.7_r041",
    "r041 is in",
@@ -1707,41 +1711,41 @@
    "v1.7_r042",
    "r042 is in",
    "Deleting a word leaves the words that name it",
-   "What r042 left for r059",
+   "What r042 left for the site step",
    "Concordance can order a merged edge's labels",
    "v1.7_r043",
    "r043 is in",
-   "What r043 left for r059",
+   "What r043 left for the site step",
    "v1.7_r044",
    "r044 is in",
-   "What r044 and r054 left for r059",
+   "What r044 and r054 left for the site step",
    "r054 is in",
    "A map record has no createdAt",
    "v1.7_r045",
    "r045 is in",
-   "What r045 left for r059",
+   "What r045 left for the site step",
    "r053 is in",
-   "What r052 and r053 left for r059",
+   "What r052 and r053 left for the site step",
    "v1.7_r046",
    "r046 is in",
-   "What r046 left for r059",
+   "What r046 left for the site step",
    "v1.7_r047",
    "r047 is in",
    "Fabula's index hides Export ↓ in Lock mode",
-   "What r047 left for r059",
+   "What r047 left for the site step",
    "v1.7_r048",
    "r048 is in",
-   "What r048 left for r059",
-   "What r051 left for r059",
+   "What r048 left for the site step",
+   "What r051 left for the site step",
    "r049 is in",
    "v1.7_r049",
-   "What r049 left for r059",
-   "r051 through r058 are in",
+   "What r049 left for the site step",
+   "r051 through r059, the help, are in",
    "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
    "v1.7_r050",
-   "What r050 left for r059",
+   "What r050 left for the site step",
    "The site's Cartographia page says the same",
    "dropped before r050",
    "The Sweep: v1.7's open items cleared before the help",
@@ -1760,9 +1764,11 @@
    "A built-in template's Reset to Default keeps a field's values through a change of its type",
    "v1.7_r057",
    "r057 is in",
-   "What r057 left for r059",
+   "What r057 left for the site step",
    "v1.7_r058",
-   "r058 is in"
+   "r058 is in",
+   "v1.7_r059",
+   "r059 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1874,7 +1880,8 @@
    "A check on what a step saves reads the value the step writes",
    "A label reads only what the object it's built from carries",
    "A property that goes away is deleted, not set to undefined",
-   "A default worded for a kind of record is built wherever such a record is made"
+   "A default worded for a kind of record is built wherever such a record is made",
+   "A check on new text reads what a change adds, not the lines it touches"
   ],
   "journal.txt": [
    "r030",
@@ -1958,7 +1965,8 @@
    "r055 was staged before its full run",
    "r056 had Drak's pass two minutes after it was staged",
    "r057's plan named three files",
-   "r058 exists because r057's read did what reading my own work hadn't"
+   "r058 exists because r057's read did what reading my own work hadn't",
+   "r059 was the cut every other one had been leaving lines for"
   ]
  }
 }

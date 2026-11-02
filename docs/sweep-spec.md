@@ -125,7 +125,7 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 
 ## 4. The help and the site
 
-- **r059, the help** (r057 at the plan, r058 after r053 went in, r059 after r058 did): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r058 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs.
+- **r059, the help** (r057 at the plan, r058 after r053 went in, r059 after r058 did): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r058 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs. Its check, by Drak's call a at its plan: every number and name the new text states held to the build, the new text clean, r058 as the control, a planted copy for each check, and earlier probes only where one reads the help. The probe held most of them, numbers to the source's constants, names to the source's strings rather than the live page, and keys and behavior in the page, and left some unchecked: Import entries…, + Row and + Column, the builder's Rows and Columns, the sidebar's Lists, the Filter's chip, All, Any, Clear, and Rename, Start with, and the CSV's month counted from 1. A search of the earlier probes kept in session 22 found none that reads the help. **Done** (2026-11-02, `7375a98`, passed).
 - **The site**, without an r-number, written from the help. Then v1.7's finals.
 
 ## 5. Without an r-number
@@ -158,7 +158,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 6. **r056, Fabula's screens.** Section 3. **Done** (2026-11-01, `f82ea02`, passed).
 7. **r057, a grid's starting shape.** Section 3. **Done** (2026-11-02, `20f8802`, passed).
 8. **r058, the rest of Fabula's new records start from their shapes.** Section 3; added 2026-11-02. **Done** (2026-11-02, `d48c128`, passed).
-9. **r059, the help.** Section 4.
+9. **r059, the help.** Section 4. **Done** (2026-11-02, `7375a98`, passed).
 10. **The site**, without an r-number. Then v1.7's finals.
 
 ## 9. Open at lock, decided at the cut
@@ -179,6 +179,7 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 - **r056:** the outline walked by keyboard alone, Right and Left as a tree's, and nothing stepping from a row's fold button or a beat's line; a long title at 900 pixels on a line of its own, on the index and on a corpus page, and a click on the counts opening the story; the pickers' separator, in the options and the picked rows; Reset to Default after a delete reads no (missing entry), a subfield brought back and a field whose type comes back included, and changes nothing else.
 - **r057:** the builder's two lines and each column's type, and a shape cleared taking its key off; a template with a shape gives each new entry that grid, a column's cells and a row added of the column's type, which the entry can change; entries made before keep theirs, an empty one offered the shape; a template file and a pack round-trip the shape, a hand-edited one cleaned; a world without shapes loads as it did on r056; the prompt on an empty grid, and its limit; a new Fabula record's grid.
 - **r058:** a new story, act, chapter, scene, and plot point, and a thread and theme made from a story's page, start their grids from their shapes; a kind with no shaped Grid field makes them as before.
+- **r059:** the numbers and names the new help states held to the build, its constants in the source, its names as the source's buttons, rows, and labels, and its behavior in the page; the new topic shown in the help; no em dash or banned word in the new text; the lines named wrong gone.
 
 ## Sources
 
