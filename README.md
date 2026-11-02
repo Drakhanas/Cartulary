@@ -1,6 +1,6 @@
 # Cartulary
 
-Cartulary is a worldbuilding application in one HTML file. Open it in a browser and build a world: typed templates for characters, places, factions, and the rest; your own templates when those don't fit; family trees, a cross-reference graph, timelines, custom calendars, a conlang workspace, orbital mechanics for your sky, and maps you draw inside the tool. No account, no cloud, no subscription, no telemetry. Your world is a .json file on your disk that you can read in a text editor.
+Cartulary is a worldbuilding application in one HTML file. Open it in a browser and build a world: typed templates for characters, places, factions, and the rest; your own templates when those don't fit; family trees, a cross-reference graph, timelines, custom calendars, a conlang workspace, orbital mechanics for your sky, maps you draw inside the tool, and planning for the stories set in your world. No account, no cloud, no subscription, no telemetry. Your world is a .json file on your disk that you can read in a text editor.
 
 - **Download:** [drakhanas.itch.io/cartulary](https://drakhanas.itch.io/cartulary). The zip holds the build to run, a Readable build with the source intact, and a getting-started README. Nothing in this repository needs to be built to use Cartulary.
 - **Documentation:** [cartulary.world](https://cartulary.world), and the same guide inside the application under ◐ Home.
@@ -72,7 +72,7 @@ python3 inlining/build_inline.py finals
 for f in inlining/out/Cartulary_v*.html; do node inlining/validate_html.js "$f"; done
 ```
 
-`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v<version>.html`, the precompiled build users run, and `Cartulary_v<version>_Readable.html`, the same application with the JSX intact and Babel inside to compile it (at `v1.6.1_Release`, `Cartulary_v1.6.1.html` and `Cartulary_v1.6.1_Readable.html`). The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's, and `v1.6.1_Release` v1.6.1's).
+`finals` writes two files to `inlining/out/`, named for the version in `inlining/build_inline.py`: `Cartulary_v<version>.html`, the precompiled build users run, and `Cartulary_v<version>_Readable.html`, the same application with the JSX intact and Babel inside to compile it (at `v1.7_Release`, `Cartulary_v1.7.html` and `Cartulary_v1.7_Readable.html`). The build is deterministic: a clean checkout of a release's tag produces the files shipped on itch.io for it, byte for byte (the `v1.6` tag produces v1.6's, `v1.6.1_Release` v1.6.1's, and `v1.7_Release` v1.7's).
 
 ## How a change is made
 
@@ -82,9 +82,9 @@ A **content change** edits the modules through a script in `inlining/cuts/` and 
 
 A **pure reorganization** (carving a module out of a larger one, renumbering) changes no byte of the body. `build_inline.py verify` reassembles the tree, canonicalizes it, and compares it to the anchor; anything but an exact match fails.
 
-Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. A patch continues its version's count: v1.6.1's fix, `v1.6.1_r052`, came after v1.6's r051 and is the first tag in this naming. A new minor version starts over, so v1.7's first change will be `v1.7_r001`. A release is tagged `v<version>_Release` on the commit that records it as shipped, so v1.6.1's is `v1.6.1_Release`. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
+Each change is tagged, on the commit where its gates went green, as `v<version>_rNNN`: the version it belongs to and its revision number. A patch continues its version's count: v1.6.1's fix, `v1.6.1_r052`, came after v1.6's r051 and is the first tag in this naming. A new minor version starts over: v1.7's changes are `v1.7_r001` through `v1.7_r059`. A release is tagged `v<version>_Release` on the commit that records it as shipped, so v1.6.1's is `v1.6.1_Release` and v1.7's `v1.7_Release`. The tags from before this naming are `r030` through `r051`, all v1.6, and `v1.6`, which marks the v1.6 release.
 
-A change's script in `inlining/cuts/` carries the same name, so v1.7's first will be `v1.7_r001_<description>.py`; v1.6's are `r025_sweep.py` through `r051_font_inline.py`. From r031 on, each one run against the tag before it reproduces its tag exactly, except where two cuts share one tagged commit: r039 and r040 are both tagged on `0eab394`, and r048 and r049 on `547926f`. r039 and r048 reproduce their own commits instead, `d67eb3f` and `fd59f72`, and r040 and r049 replay from those. r025 through r030 came into the repository with the tree already past them, so they're a record of what ran, not something to re-run.
+A change's script in `inlining/cuts/` carries the same name: v1.7's are `v1.7_r001_text_fixes.py` through `v1.7_r059_help.py`, and v1.6's `r025_sweep.py` through `r051_font_inline.py`. From v1.6's r031 to its r051, each one run against the tag before it reproduces its tag exactly, except where two cuts share one tagged commit: r039 and r040 are both tagged on `0eab394`, and r048 and r049 on `547926f`. r039 and r048 reproduce their own commits instead, `d67eb3f` and `fd59f72`, and r040 and r049 replay from those. r025 through r030 came into the repository with the tree already past them, so they're a record of what ran, not something to re-run.
 
 `inlining/prove_gate_teeth.py` and `tools/turnover/prove_teeth.py` inject one defect at a time into a throwaway copy of the tree or the docs and prove each gate still fails on what it should, so a gate that has gone quiet is caught. The project shipped two that had been scoring wrong for twenty revisions before these existed.
 
@@ -102,9 +102,9 @@ The GitHub Actions workflow in `.github/workflows/` runs all of this on every pu
 - `cartulary-doctrine.md`, `doctrine-code-watch.md`, `doctrine-site.md`: standing rules learned from mistakes, each with the mistake that taught it.
 - `cartulary-spine-manifest.md`: the module tree with line counts and what each module holds.
 - `cartographia-plus-spec.md`, `maps-promotion-spec.md`, and the Glossopoeia documents: the specs the larger features were built from.
-- `release-notes/`: what each release shipped, verbatim: the patch notes, the text in each zip, and an index with every release's finals hashes; for v1.6, also the public copy and the finals checklist.
+- `release-notes/`: what each release shipped, verbatim: the patch notes, the text in each zip, and an index with every release's finals hashes; for v1.6 and v1.7, also the public copy and the finals checklist.
 
-The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page. Since v1.7's r001 both give every field type's value shape, `longform` and `grid` included; the released v1.6.1 and the live site lack them until v1.7 ships.
+The save-file format has no separate document. It is the in-app help's JSON Save File Schema topic (Home, then JSON Save File Schema; the text lives in the help module under `cartulary-src/modules/`), and cartulary.world's [JSON Structure](https://cartulary.world/helloworld.html#json-structure) page. Since v1.7 both give every field type's value shape, `longform` and `grid` included.
 
 ## Contributing
 

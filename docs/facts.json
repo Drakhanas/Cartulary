@@ -132,7 +132,7 @@
   },
   "site_repo_hash": {
    "value": "f957c180f52992f7",
-   "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
+   "pattern": "from the repository, whose copy hashes to `([0-9a-f]{16})`"
   },
   "decl_count_verify": {
    "value": 972,
@@ -141,6 +141,14 @@
   "working_hash_r059": {
    "value": "84d85a97f533a98f",
    "pattern": "working[^\\n]{0,40}at r059 hashes to sha256 `([0-9a-f]{16})`"
+  },
+  "v17_final_hash": {
+   "value": "9b495ef338ab33dd",
+   "pattern": "`Cartulary_v1\\.7\\.html` \\([0-9,]+ bytes, sha256 `([0-9a-f]{16})`"
+  },
+  "v17_readable_hash": {
+   "value": "5cdf993176cb4d8e",
+   "pattern": "`Cartulary_v1\\.7_Readable\\.html` \\([0-9,]+ bytes, sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -991,7 +999,6 @@
    "c10c693bbacbe9e6",
    "docs/release-notes/v1.6.1/finals-pass.md",
    "fabula-spec.md",
-   "v1.7 is OPEN",
    "Common Year",
    "stop hook",
    "f957c180f52992f7",
@@ -1154,7 +1161,6 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "v1.7's finals",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1242,7 +1248,11 @@
    "v1.7_r056",
    "v1.7_r057",
    "v1.7_r058",
-   "v1.7_r059"
+   "v1.7_r059",
+   "v1.7 is SHIPPED",
+   "docs/release-notes/v1.7/finals-pass.md",
+   "9b495ef338ab33dd",
+   "5cdf993176cb4d8e"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1615,7 +1625,10 @@
    "v1.7_r059_help.py",
    "84d85a97f533a98f",
    "Site: v1.7's pages written from the help",
-   "f957c180f52992f7"
+   "f957c180f52992f7",
+   "**v1.7 shipped**",
+   "9b495ef338ab33dd",
+   "5cdf993176cb4d8e"
   ],
   "roadmap.md": [
    "roadmap-archive.md",

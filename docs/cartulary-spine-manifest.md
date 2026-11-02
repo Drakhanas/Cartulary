@@ -14,7 +14,7 @@ them against the current tree. The build source of record is no longer this HTML
 module tree. **Section 10 is the live source layout, current tree, and r-policy, and
 supersedes any pre-carve framing above it.**
 
-Status (session 22, v1.7 r059; v1.7 open since 2026-10-24, v1.6.1 SHIPPED 2026-10-23 from its r052 tree and v1.6 the same day from its r051 tree): the source lives in `github.com/Drakhanas/Cartulary` (public since the ship)
+Status (session 22, v1.7 r059; v1.7 SHIPPED 2026-11-02 from its r059 tree, no line open, v1.6.1 SHIPPED 2026-10-23 from its r052 tree and v1.6 the same day from its r051 tree): the source lives in `github.com/Drakhanas/Cartulary` (public since the ship)
 as of session 19, with CI running every gate on every push. The pipeline assembles the babel
 body from a module tree and is DIRECTORY-AWARE; the reconstitution gate scores five conditions
 on a pure split, four on a gather, and seven on a scoped content edit (`edit` mode, session

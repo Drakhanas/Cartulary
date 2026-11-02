@@ -1,0 +1,187 @@
+CARTULARY v1.7 - PATCH NOTES
+============================
+
+v1.7 is the Letters and Pipes update. Letters is two new ways to plan:
+Fabula, a view for the stories set in your world, and a second Stemma
+layout, the tabula, a board for loose thinking. Pipes is the plumbing
+underneath everything: saving you can count on, backups, links that
+survive deletes and renames, a real filter on the entry list, and a way
+to move a template's entries in and out as JSON or CSV.
+
+
+FABULA
+------
+
+A view for planning the stories set in your world, with the writing
+itself done somewhere else. Fabula's records aren't entries: they live in
+their own part of the save file and point out at your entries.
+
+  - The index lists every corpus with its stories in reading order, then
+    the stories in no corpus. A corpus gathers stories that belong
+    together: a series, a shared setting, an anthology.
+  - A story's page has seven tabs: Story (the premise and folding
+    panels for the rest), People (the cast, their arcs, and their
+    relationships), Plot (threads, plot points under the structure's
+    slots, and promises and payoffs, with unpaid ones flagged),
+    Outline, Meaning (themes and motifs, and where each runs), Notes
+    (research notes and what they're used in), and Timeline.
+  - Outline is the story as one tree: acts, chapters, scenes, and each
+    scene's beats, added in place by title. Positions follow where
+    records sit (acts I, II, III; chapters 1, 2, 3; scenes A, B, C;
+    beats i, ii, iii), and show on every page and reference, "II.4.A".
+    Rows move by their arrows, by Alt and an arrow, or by drag; the
+    plain arrows walk the tree from the keyboard.
+  - The timeline draws a story's scenes, or a corpus's, three ways:
+    Chrono (story time), Narratio (telling order), and Anachronia (the
+    two together, so flashbacks and leaps show).
+  - Fabula's eleven record kinds each have a schema the template builder
+    edits. Fields Fabula reads stay put; everything else is yours.
+  - The story bible exports a story or a corpus as HTML or Markdown,
+    with its own include-secrets choice.
+  - Plot Thread and Theme / Motif are Fabula's now: still entries,
+    listed and edited from Fabula's index.
+  - A story's Brainstorm field links the stemmas behind it, rota or
+    tabula, each opening on its canvas.
+
+
+STEMMA v2
+---------
+
+Stemma has two layouts now.
+
+  - The rota is the radial tree it was, rebuilt: a focal node with its
+    children in slots around it, drilled into by a click. It gains
+    undo, reordering by drag and by Alt and the arrows, a full keyboard
+    walk, zoom, and linked nodes that can point at any record in the
+    world.
+  - The tabula is new: a board without edges. Five kinds of card (Note,
+    Link, Image, Column, and Board, a board inside the board), columns
+    with lanes and rows, stacks under cards, a multi-selection, and a
+    drawing layer of lines whose ends stick to the cards they land on.
+  - Both export as Markdown for reading, beside the .stemma.json that
+    comes back in.
+
+
+SAVING AND BACKUPS
+------------------
+
+  - A change is written 250 ms after you stop, a Save writes at once,
+    and whatever is waiting is written when the page is hidden.
+  - A save that fails says so in a Not saved. banner, with Try now and
+    Export now, and keeps trying until one lands.
+  - Cartulary asks the browser to keep its storage, and Settings says
+    what the browser answered.
+  - Folder backups: with an image folder connected, the world is written
+    into a cartulary-backups folder inside it as you edit, at most every
+    10 minutes, keeping the newest 10. A backup counts for the backup
+    reminder. A folder whose permission lapses is kept, with Reconnect.
+  - A reset or an import keeps your restore points.
+  - A world holding two records with one id loads repaired instead of
+    refusing to open.
+
+
+LINKS
+-----
+
+  - Referenced by: at the end of an entry's, a map's, a body's, a
+    corpus's, and a Fabula record's page, every record that links there,
+    by the fields it links through.
+  - Every delete of a record something links to asks first, in one
+    window that counts what it will clear, and then clears it.
+  - A [[link]] reaches any record by name: an entry, a body, a map, a
+    stemma, a Fabula record, or a language. The exports resolve links
+    the way the page does.
+  - Renaming a record that [[links]] reach by its old name asks first,
+    and can update every such link (after a Before rename restore point)
+    or add the old name to its Former Names. It also warns when the new
+    name already belongs to another record.
+  - Concordance draws its edges from the same index, so links it used to
+    miss now show.
+
+
+THE ENTRY LIST
+--------------
+
+  - All entries lists every entry in the world, the way to search all of
+    it at once.
+  - Filter: conditions on any field, by its label across templates, with
+    operators for its type, joined by All or Any, shown as chips.
+  - Saved lists: a filter kept by name in the sidebar's Lists section,
+    travelling with the world.
+  - The search reads what the page shows: a reference by its record's
+    name, a date as your calendar writes it, a Long Text without its
+    markup.
+
+
+A TEMPLATE'S ENTRIES, IN AND OUT
+--------------------------------
+
+  - Export entries... writes a template's entries as JSON, in the world
+    file's own shapes, or as a CSV for a spreadsheet.
+  - Import entries... reads either back through one mapping screen: the
+    file's fields matched to yours, a preview counting what it adds,
+    updates, leaves, and skips, and a restore point before it writes. An
+    import never empties a field.
+  - A CSV from elsewhere reads too: dates as your calendar writes them or
+    as numbers, own values beside a dropdown's options, values with ";"
+    escaped as \;, and UTF-8, Windows-1252, or UTF-16 files.
+
+
+MAPS
+----
+
+  - A line's end put down on a pin or a stamp sticks to it and follows
+    it, in the editor, the view, and the downloads.
+  - A long line keeps handles at its two ends.
+
+
+FIELDS AND TEMPLATES
+--------------------
+
+  - A Grid field can take a starting shape in the template builder:
+    rows, columns, and a cell type per column, which every new entry's
+    grid starts as. An empty grid with no shape asks for rows by
+    columns.
+  - A multi-select can take values of your own under Other.
+  - A dependent dropdown keeps its Other text under any choice of its
+    parent.
+  - References can point at records that aren't entries (a body, a
+    language, a map, a stemma) and show them by name.
+  - The default calendar is Common Year.
+
+
+SMALLER CHANGES
+---------------
+
+- Chronometric's lanes make room for what's drawn, long titles wrap, era
+  names stay clear of the year labels, and the chart fits its frame.
+- Fields keep what you typed: a Date reads its own day in any time zone,
+  and a Required Number field saves.
+- The in-app help covers everything above, with a new topic, Import &
+  Export Entries, and the save file's schema in full. cartulary.world
+  has pages for Fabula and Stemma, and the rest written from the help.
+
+
+UNDER THE HOOD
+--------------
+
+Cartulary is still one HTML file. The module tree it's built from is 62
+files now, with Fabula and Stemma each a folder of their own, and every
+change still has to parse, pass its own checks, and reassemble against a
+frozen reference before it ships. The Readable build ships beside the
+compiled one, with the JSX source intact.
+
+
+WHERE TO FIND HELP
+------------------
+
+The full usage guide is inside the application: click the Home icon
+in the sidebar. Full documentation is also at cartulary.world.
+
+The source is public at github.com/Drakhanas/Cartulary: the module
+tree the single file is built from, the build, the gates that check
+it, and the project's own documentation.
+
+Questions or bug reports: drakhanas.itch.io/cartulary (page comments)
+or the Discord at discord.gg/zWMKXfZtcC. Bug reports can also be filed
+as issues at github.com/Drakhanas/Cartulary.

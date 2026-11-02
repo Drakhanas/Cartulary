@@ -1899,3 +1899,10 @@ strings. Its own checks were the ones the help never needed: routes that
 scroll sideways, links that go nowhere, and requests a page opened from
 a disk shouldn't make. None fired on the new text, and the planted
 copies showed they would have.
+
+v1.7 went up at 10:35 on November 2. The finals ran the lighter of the
+two headless sets, Drak's call with his week's limit close, and what
+failed on the compiled file was three kinds of check it can't pass: a
+comment the compile drops, a reading r053 changed, and strings that
+only exist as JSX. His one change before the pass was to the devlog,
+a dark and stormy night in place of another Latin proverb.
