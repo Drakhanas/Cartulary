@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59571,
-  "raw_body_lines": 59571,
-  "canonical_lines": 56736,
-  "decl_count": 966,
+  "total_lines": 59709,
+  "raw_body_lines": 59709,
+  "canonical_lines": 56872,
+  "decl_count": 972,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r056-body.jsx"
+  "active_anchor": "reference-r057-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59571,
+   "value": 59709,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 966,
+   "value": 972,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56736,
+   "value": 56872,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59571,
+   "value": 59709,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3242777,
+   "value": 3251002,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "eighty-one",
-    81
+    "eighty-two",
+    82
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,13 +121,13 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "eighty-one",
-    81
+    "eighty-two",
+    82
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59571,
+   "value": 59709,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
@@ -135,23 +135,23 @@
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   },
   "decl_count_verify": {
-   "value": 966,
+   "value": 972,
    "pattern": "decl-name set\\s+: PASS \\((\\d+) names\\)"
   },
-  "working_hash_r056": {
-   "value": "80b8c6f75082d13d",
-   "pattern": "working[^\\n]{0,40}at r056 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r057": {
+   "value": "11d0e0884320ecb1",
+   "pattern": "working[^\\n]{0,40}at r057 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1311,
+   "line": 1363,
    "contains": "Longform + rich text editor"
   },
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1313,
+   "line": 1365,
    "contains": "function LongformEditor"
   },
   {
@@ -1143,10 +1143,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r056-body.jsx",
-   "reference-r056-layout.json",
-   "f5a5a733a4fba2dc",
-   "80b8c6f75082d13d",
+   "reference-r057-body.jsx",
+   "reference-r057-layout.json",
+   "2e4c3f284061def4",
+   "11d0e0884320ecb1",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1154,7 +1154,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r057, the Sweep's seventh cut: a grid's starting shape",
+   "r058, the Sweep's eighth cut: the rest of Fabula's new records start from their shapes",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1239,7 +1239,8 @@
    "linkIndexStep",
    "renameHolderLine",
    "v1.7_r055",
-   "v1.7_r056"
+   "v1.7_r056",
+   "v1.7_r057"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1287,10 +1288,10 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r056-layout.json",
+   "reference-r057-layout.json",
    "Five exist",
-   "reference-r056-body.jsx",
-   "f5a5a733a4fba2dc",
+   "reference-r057-body.jsx",
+   "2e4c3f284061def4",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
    "queryMarkdownBox",
@@ -1601,7 +1602,10 @@
    "9b7a1407879a896f",
    "v1.7_r056: Fabula's screens",
    "v1.7_r056_fabula_screens.py",
-   "80b8c6f75082d13d"
+   "80b8c6f75082d13d",
+   "v1.7_r057: a grid's starting shape",
+   "v1.7_r057_grid_shape.py",
+   "11d0e0884320ecb1"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1691,7 +1695,7 @@
    "Two lines r039 left stale",
    "v1.7_r040",
    "r040 is in",
-   "What r040 left for r058",
+   "What r040 left for r059",
    "offers Allow on every visit",
    "v1.7_r041",
    "r041 is in",
@@ -1699,46 +1703,45 @@
    "v1.7_r042",
    "r042 is in",
    "Deleting a word leaves the words that name it",
-   "What r042 left for r058",
+   "What r042 left for r059",
    "Concordance can order a merged edge's labels",
    "v1.7_r043",
    "r043 is in",
-   "What r043 left for r058",
+   "What r043 left for r059",
    "v1.7_r044",
    "r044 is in",
-   "What r044 and r054 left for r058",
+   "What r044 and r054 left for r059",
    "r054 is in",
    "A map record has no createdAt",
    "v1.7_r045",
    "r045 is in",
-   "What r045 left for r058",
+   "What r045 left for r059",
    "r053 is in",
-   "What r052 and r053 left for r058",
+   "What r052 and r053 left for r059",
    "v1.7_r046",
    "r046 is in",
-   "What r046 left for r058",
+   "What r046 left for r059",
    "v1.7_r047",
    "r047 is in",
    "Fabula's index hides Export ↓ in Lock mode",
-   "What r047 left for r058",
+   "What r047 left for r059",
    "v1.7_r048",
    "r048 is in",
-   "What r048 left for r058",
-   "What r051 left for r058",
+   "What r048 left for r059",
+   "What r051 left for r059",
    "r049 is in",
    "v1.7_r049",
-   "What r049 left for r058",
-   "r051 through r056 are in",
+   "What r049 left for r059",
+   "r051 through r057 are in",
    "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
    "v1.7_r050",
-   "What r050 left for r058",
+   "What r050 left for r059",
    "The site's Cartographia page says the same",
    "dropped before r050",
    "The Sweep: v1.7's open items cleared before the help",
    "The Sweep is planned",
-   "**Planned:** r057",
    "The spine manifest's freeze: done 2026-10-31",
    "r051 is in",
    "v1.7_r051",
@@ -1750,7 +1753,12 @@
    "r055 is in",
    "v1.7_r056",
    "r056 is in",
-   "A built-in template's Reset to Default keeps a field's values through a change of its type"
+   "A built-in template's Reset to Default keeps a field's values through a change of its type",
+   "v1.7_r057",
+   "r057 is in",
+   "What r057 left for r059",
+   "A new story, act, chapter, scene, or plot point starts its grids empty",
+   "**Planned:** r058"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1860,7 +1868,8 @@
    "A value made when first read, behind a getter",
    "A timing check against a fixed number",
    "A check on what a step saves reads the value the step writes",
-   "A label reads only what the object it's built from carries"
+   "A label reads only what the object it's built from carries",
+   "A property that goes away is deleted, not set to undefined"
   ],
   "journal.txt": [
    "r030",
@@ -1942,7 +1951,8 @@
    "r053 undid half of r052's call c",
    "Approaching two hours into r054's checks",
    "r055 was staged before its full run",
-   "r056 had Drak's pass two minutes after it was staged"
+   "r056 had Drak's pass two minutes after it was staged",
+   "r057's plan named three files"
   ]
  }
 }

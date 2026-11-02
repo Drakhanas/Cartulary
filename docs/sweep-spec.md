@@ -11,7 +11,7 @@ Before the help describes v1.7, the Sweep fixes what v1.7's cuts found and filed
 ## 1. Decisions (Drak, 2026-10-31)
 
 - **Scope** (17:34): clear out what Claude's answer to the question listed: the open bugs, the tolerated rows, and the tabled decisions.
-- **A grid's starting shape, call 1, option a** (17:42). The template's Grid field takes a starting shape, row and column labels and a cell type per column, which each new entry's grid copies and can change; an empty grid with no shape asks for rows by columns. A new property on the field definition, which the schema, template files, and packs carry, with nothing to migrate. Its own cut, r057 (r056 at the plan), so the help moves to r058 (r057 at the plan). The other ways were only the prompt on an empty grid, riding in r051, and leaving it out of v1.7.
+- **A grid's starting shape, call 1, option a** (17:42). The template's Grid field takes a starting shape, row and column labels and a cell type per column, which each new entry's grid copies and can change; an empty grid with no shape asks for rows by columns. A new property on the field definition, which the schema, template files, and packs carry, with nothing to migrate. Its own cut, r057 (r056 at the plan), so the help moves to r058 (r057 at the plan), and to r059 since r058 went in after r057. The other ways were only the prompt on an empty grid, riding in r051, and leaving it out of v1.7.
 - **Fabula's tabled features, call 2, option a** (17:46). All five go to the backlog, each with the reason it was set aside (section 7); v1.7 takes none. The other ways were building some now, a call each, or all five, about five to seven cuts before the help.
 - **The spine manifest, call 3, option a** (17:53). Frozen now, in the documents commit that lands this sheet: its record through r050 moves verbatim to `docs/cartulary-spine-manifest-v1.7-r050.md`, as the handoff's did at v1.6, and the live manifest keeps the module map, the gate design, the current tree with line counts, the active anchor, and the header census. From r051 on, a turnover adds no manifest row or verification note per cut; the changelog carries both. The other ways were freezing it with v1.7's ship turnover, or dropping the item.
 - **Claude's defaults, said with the plan and not stopped:** the cuts and their order (section 3), each cut's fixes as written there, the help and the site after them (section 4), the commit without an r-number (section 5), and the two items that stay tolerated (section 6).
@@ -108,17 +108,23 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - A field Reset to Default brings back to one of Fabula's kinds drops its links to records the world no longer has, so it doesn't read (missing entry), and keeps its other values and its links to records still here.
 - Claude's defaults in the plan: that covers a subfield brought back into a group the kind kept, and a field whose type the reset turns back into a link; a dead link in a field the kind kept all along is left alone; the confirmation doesn't change. A default the plan didn't state, flagged to Drak at the staging: a field whose type the reset turns back into a link drops every value that names no record, typed text with it.
 
-**r057, a grid's starting shape** (`14_form-engine-edit`, `15_template-builder`, and where the files are read and written)
+**r057, a grid's starting shape** (`05_field-system` for the grid's helpers, `12_trunk`, where a new record starts and the files are read, `14_form-engine-edit`, and `15_template-builder`). Its two open details decided at the cut (Drak, 2026-11-01): the builder's controls, a of three, where the others were a small table filled in place and lists with a box per label; and the prompt's limit, a. **Done** (2026-11-02, `20f8802`, passed).
 
-- A Grid field in the template builder takes a starting shape: row labels, column labels, and a cell type per column.
+- A Grid field in the template builder takes a starting shape: row labels, column labels, and a cell type per column. By Drak's call a, a Rows line and a Columns line, labels split by "|" as a dropdown's options are, with a cell-type dropdown for each column under them; a column's type follows its place in the line.
+- Claude's defaults in the plan: either line can be left empty, and the axis names stay per entry. A default the plan didn't state, flagged to Drak at the staging: clearing both lines takes the shape off the field.
 - A new entry's grid starts as the shape, and the entry changes it as any grid; entries made before keep their grids.
+- Claude's defaults in the plan: a new Fabula record does the same where one of Fabula's kinds has a shaped Grid field, built for a corpus, a cast record, an arc, a relationship, a promise, and a research note, and not for a story, an act, a chapter, a scene, or a plot point, nor a thread or theme made from a story's page, which the turnover's read found, and r058 takes; an older entry's empty grid, where its field has a shape now, offers it with a button; entries an import makes keep what the file gives. A default the plan didn't state, flagged to Drak at the staging: a row added takes, in a column the shape names, that column's type.
 - A template file and a pack carry the shape and read it back; a world without shapes loads and saves as it was.
-- An empty grid with no starting shape asks for rows by columns.
-- Open at the cut: the builder's controls and the prompt's limits (section 9).
+- Claude's default in the plan: a shape in a hand-edited file that doesn't read is cleaned on import. How, neither the plan nor the staging said: its labels trimmed, blanks and what isn't a label dropped, an unknown type read as Text, and a shape with nothing left taken off.
+- An empty grid with no starting shape asks for rows by columns, two boxes and Make grid, where it said "Add a row and a column to start the grid"; + Row and + Column stay. By Drak's call a, at most 20 by 20, with Claude's defaults that came with the option: the boxes starting at 2 by 2, a number above the limit lowered to it with a line saying so, and a template's shape without a limit.
+
+**r058, the rest of Fabula's new records start from their shapes** (`12_trunk`, `28_fabula`). Added at Drak's call a (2026-11-02), after r057's turnover read found them starting empty; the help moves to r059.
+
+- A new story, act, chapter, scene, or plot point, and a Plot Thread or Theme / Motif entry made from a story's page, start their grids from their shapes, as r057's other new records do; a kind without a shaped Grid field makes its records as before.
 
 ## 4. The help and the site
 
-- **r058, the help** (r057 at the plan): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r057 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs.
+- **r059, the help** (r057 at the plan, r058 after r053 went in, r059 after r058 did): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r058 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs.
 - **The site**, without an r-number, written from the help. Then v1.7's finals.
 
 ## 5. Without an r-number
@@ -149,15 +155,16 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 4. **r054, renames say where the links go.** Section 3. **Done** (2026-11-01, `d2e3566`, passed).
 5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first. **Done** (2026-11-01, `4156349`, passed).
 6. **r056, Fabula's screens.** Section 3. **Done** (2026-11-01, `f82ea02`, passed).
-7. **r057, a grid's starting shape.** Section 3.
-8. **r058, the help.** Section 4.
-9. **The site**, without an r-number. Then v1.7's finals.
+7. **r057, a grid's starting shape.** Section 3. **Done** (2026-11-02, `20f8802`, passed).
+8. **r058, the rest of Fabula's new records start from their shapes.** Section 3; added 2026-11-02.
+9. **r059, the help.** Section 4.
+10. **The site**, without an r-number. Then v1.7's finals.
 
 ## 9. Open at lock, decided at the cut
 
 - r052: a value holding a semicolon. The export can escape it, the reader can rejoin the pieces that make a name or an option it knows, or both; an escape changes the CSV the export writes, and a rejoin can't help a tag, which matches nothing. Decided at the cut (Drak, 2026-11-01): c, both, since re-exports will retire the files that escaped nothing.
 - r054: a rename to a name another record answers to. Warn and allow, or refuse the name. Decided at the cut (Drak, 2026-11-01): a, warn and allow.
-- r057: the builder's controls for a starting shape; the most rows and columns the prompt takes.
+- r057: the builder's controls for a starting shape; the most rows and columns the prompt takes. Decided at the cut (Drak, 2026-11-01): a, two lines with a cell-type dropdown for each column; and a, up to 20 by 20.
 
 ## 10. Acceptance tests
 
@@ -169,7 +176,8 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 - **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now and after, and renaming to an earlier entry's name says the links stay with it; the old-name case reads as it did, the new line last; the rule as called, Rename offered where the old name has no links; and, with r041's P2 brought in, the index after each of fifteen kinds of edit the same as a whole build of it, quicker than r053's in the same run, its flat lists held as r053 held them.
 - **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame, and the export is the chart's width; parity at matched widths is identical step for step; a release right after the last move lands there, as do moves and a release all at once, and a move right after the release starts no drag of its own.
 - **r056:** the outline walked by keyboard alone, Right and Left as a tree's, and nothing stepping from a row's fold button or a beat's line; a long title at 900 pixels on a line of its own, on the index and on a corpus page, and a click on the counts opening the story; the pickers' separator, in the options and the picked rows; Reset to Default after a delete reads no (missing entry), a subfield brought back and a field whose type comes back included, and changes nothing else.
-- **r057:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.
+- **r057:** the builder's two lines and each column's type, and a shape cleared taking its key off; a template with a shape gives each new entry that grid, a column's cells and a row added of the column's type, which the entry can change; entries made before keep theirs, an empty one offered the shape; a template file and a pack round-trip the shape, a hand-edited one cleaned; a world without shapes loads as it did on r056; the prompt on an empty grid, and its limit; a new Fabula record's grid.
+- **r058:** a new story, act, chapter, scene, and plot point, and a thread and theme made from a story's page, start their grids from their shapes; a kind with no shaped Grid field makes them as before.
 
 ## Sources
 
