@@ -113,14 +113,15 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - A Grid field in the template builder takes a starting shape: row labels, column labels, and a cell type per column. By Drak's call a, a Rows line and a Columns line, labels split by "|" as a dropdown's options are, with a cell-type dropdown for each column under them; a column's type follows its place in the line.
 - Claude's defaults in the plan: either line can be left empty, and the axis names stay per entry. A default the plan didn't state, flagged to Drak at the staging: clearing both lines takes the shape off the field.
 - A new entry's grid starts as the shape, and the entry changes it as any grid; entries made before keep their grids.
-- Claude's defaults in the plan: a new Fabula record does the same where one of Fabula's kinds has a shaped Grid field, built for a corpus, a cast record, an arc, a relationship, a promise, and a research note, and not for a story, an act, a chapter, a scene, or a plot point, nor a thread or theme made from a story's page, which the turnover's read found, and r058 takes; an older entry's empty grid, where its field has a shape now, offers it with a button; entries an import makes keep what the file gives. A default the plan didn't state, flagged to Drak at the staging: a row added takes, in a column the shape names, that column's type.
+- Claude's defaults in the plan: a new Fabula record does the same where one of Fabula's kinds has a shaped Grid field, built for a corpus, a cast record, an arc, a relationship, a promise, and a research note, and not for a story, an act, a chapter, a scene, or a plot point, nor a thread or theme made from a story's page, which the turnover's read found, and r058 built; an older entry's empty grid, where its field has a shape now, offers it with a button; entries an import makes keep what the file gives. A default the plan didn't state, flagged to Drak at the staging: a row added takes, in a column the shape names, that column's type.
 - A template file and a pack carry the shape and read it back; a world without shapes loads and saves as it was.
 - Claude's default in the plan: a shape in a hand-edited file that doesn't read is cleaned on import. How, neither the plan nor the staging said: its labels trimmed, blanks and what isn't a label dropped, an unknown type read as Text, and a shape with nothing left taken off.
 - An empty grid with no starting shape asks for rows by columns, two boxes and Make grid, where it said "Add a row and a column to start the grid"; + Row and + Column stay. By Drak's call a, at most 20 by 20, with Claude's defaults that came with the option: the boxes starting at 2 by 2, a number above the limit lowered to it with a line saying so, and a template's shape without a limit.
 
-**r058, the rest of Fabula's new records start from their shapes** (`12_trunk`, `28_fabula`). Added at Drak's call a (2026-11-02), after r057's turnover read found them starting empty; the help moves to r059.
+**r058, the rest of Fabula's new records start from their shapes** (`12_trunk`, `28_fabula`). Added at Drak's call a (2026-11-02), after r057's turnover read found them starting empty; the help moves to r059. Its checks, by Drak's call a at its plan: its own probe with r057 as the control, a planted copy for each path, and r057's probe, the only earlier one whose world holds shapes, and no full run on the build staged; and, Claude's default with it, the turnover's independent read scoped to the cut's files and records. **Done** (2026-11-02, `d48c128`, passed).
 
 - A new story, act, chapter, scene, or plot point, and a Plot Thread or Theme / Motif entry made from a story's page, start their grids from their shapes, as r057's other new records do; a kind without a shaped Grid field makes its records as before.
+- Claude's defaults in the plan: a new plot point keeps its slot beside its grids; a thread or theme takes its grids alone, its other fields as the buttons made them; and, with the checks, the turnover's read scoped to the cut.
 
 ## 4. The help and the site
 
@@ -156,7 +157,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first. **Done** (2026-11-01, `4156349`, passed).
 6. **r056, Fabula's screens.** Section 3. **Done** (2026-11-01, `f82ea02`, passed).
 7. **r057, a grid's starting shape.** Section 3. **Done** (2026-11-02, `20f8802`, passed).
-8. **r058, the rest of Fabula's new records start from their shapes.** Section 3; added 2026-11-02.
+8. **r058, the rest of Fabula's new records start from their shapes.** Section 3; added 2026-11-02. **Done** (2026-11-02, `d48c128`, passed).
 9. **r059, the help.** Section 4.
 10. **The site**, without an r-number. Then v1.7's finals.
 

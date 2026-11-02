@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 11-02 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go; r055, Chronometric fits its frame; r056, Fabula's screens; r057, a grid's starting shape) ===
+=== 2026-10-29 to 11-02 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go; r055, Chronometric fits its frame; r056, Fabula's screens; r057, a grid's starting shape; r058, the rest of Fabula's new records start from their shapes) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1874,3 +1874,13 @@ undefined, which an export drops and the store keeps. The probe's first
 run caught the second, reading what the store held, and both went to
 Drak flagged at the staging. His pass came two minutes after it, three
 minutes into the full run.
+
+r058 exists because r057's read did what reading my own work hadn't: it
+searched for every place a Fabula record is made, and found five makers
+r057's defaults covered and its code never reached. The fix was eleven
+lines in and five out. Drak asked me on the way to mind usage on
+unneeded tests, near his weekly cutoff, and the case for them was thin:
+no earlier world but r057's holds a shape, so an hour of the rest could
+only have agreed with r057. The probe ran its makers in the page instead
+of clicking through every tab, which is cheaper and leaves the buttons'
+wiring, unchanged by the cut, to Drak's pass.
