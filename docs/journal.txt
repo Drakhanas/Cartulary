@@ -1906,3 +1906,10 @@ failed on the compiled file was three kinds of check it can't pass: a
 comment the compile drops, a reading r053 changed, and strings that
 only exist as JSX. His one change before the pass was to the devlog,
 a dark and stormy night in place of another Latin proverb.
+
+The close went in three commits, the changelog, the roadmap, and the
+handoff, each moved verbatim and checked byte for byte before the live
+file was cut back. The handoff's version line alone had grown past
+38,000 characters, a summary of every cut; it's one paragraph of
+current state now, and the rest of the file can wait for a session
+with more room.
