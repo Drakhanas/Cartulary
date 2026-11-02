@@ -15795,7 +15795,8 @@ function App() {
     const now = isoNow();
     updateFabula(fab => ({
       ...fab,
-      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: {}, outline: [], createdAt: now, updatedAt: now }],
+      // v1.7 r058: Story's shaped grids, as a new corpus takes Corpus's.
+      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: gridsFromShapes(fabulaKindFields({ fabula: fab }, "story")), outline: [], createdAt: now, updatedAt: now }],
       corpora: fabArr(fab, "corpora").map(c => c.id === corpusId ? { ...c, storyIds: [...(c.storyIds || []), id], updatedAt: now } : c),
     }));
     return id;
@@ -55519,7 +55520,7 @@ const fabulaOutlineCreate = (fab, storyId, parentId, kind, name, id) => {
   const tree = fabulaOutlineAppend(fabulaOutlineTree({ fabula: fab }, story), parentId, { id, kind, children: [] });
   if (!tree) return fab;
   const now = isoNow();
-  const rec = { id, storyId, name, fields: {}, createdAt: now, updatedAt: now };
+  const rec = { id, storyId, name, fields: gridsFromShapes(fabulaKindFields({ fabula: fab }, kind)), createdAt: now, updatedAt: now };  // v1.7 r058: its kind's shaped grids
   return fabulaWithOutline({ ...fab, [k.slice]: [...(Array.isArray(fab[k.slice]) ? fab[k.slice] : []), rec] }, storyId, tree);
 };
 
@@ -56278,7 +56279,8 @@ const fabulaPlotCreate = (fab, storyId, heading, title, id) => {
   const story = fabulaStoryOf(fab, storyId);
   if (!story || !heading || !heading.name) return fab;
   const now = isoNow();
-  const rec = { id, storyId, name: title || heading.name, fields: { slot: fabulaSlotValue(heading) }, createdAt: now, updatedAt: now };
+  // v1.7 r058: Plot Point's shaped grids beside the slot.
+  const rec = { id, storyId, name: title || heading.name, fields: { ...gridsFromShapes(fabulaKindFields({ fabula: fab }, "plotPoint")), slot: fabulaSlotValue(heading) }, createdAt: now, updatedAt: now };
   const next = { ...fab, plotPoints: [...fabulaArr(fab, "plotPoints"), rec] };
   return fabulaPlotApply(next, storyId, { headings: fabulaPlotHeadings({ fabula: next }, fabulaStoryOf(next, storyId)), moved: null });
 };
@@ -56308,7 +56310,9 @@ const fabulaWithNewThread = (state, storyId, name) => {
   const tplId = fabulaThreadTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  // v1.7 r058: the template's shaped grids, as + New Entry gives them.
+  const tpl = (state.templates || []).find(t => t && t.id === tplId);
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: gridsFromShapes(tpl && tpl.fields), tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThreads(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 
@@ -56908,7 +56912,9 @@ const fabulaWithNewTheme = (state, storyId, name) => {
   const tplId = fabulaThemeTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "theme"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  // v1.7 r058: the template's shaped grids, as + New Entry gives them.
+  const tpl = (state.templates || []).find(t => t && t.id === tplId);
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "theme"), templateId: tplId, name: title, calendarId: null, fields: gridsFromShapes(tpl && tpl.fields), tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThemes(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 
