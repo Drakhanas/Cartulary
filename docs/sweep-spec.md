@@ -99,12 +99,14 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - Claude's default in the plan: the SVG and PNG exports follow the chart's width, still whole, the SVG 36 pixels narrower than r054's and the PNG, drawn at twice the size, 72.
 - Every step of `tools/chrono-parity` changes width, so the check runs with the last passed build drawn 36 pixels narrower, where both charts are the same width and should draw the same, step for step. The tool gains that option without an r-number (section 5).
 
-**r056, Fabula's screens** (`28_fabula`)
+**r056, Fabula's screens** (`28_fabula`, and `14_form-engine-edit` for the pickers). Section 9 left it no open detail. **Done** (2026-11-01, `f82ea02`, passed).
 
-- The outline's arrow keys step the focus from row to row, Home and End to the first and last, and Alt with the arrows still moves a row.
-- On the index, a story title too long for its row takes a line of its own instead of being cut to fit.
-- A picker's option reads "A · The Ford", the position and the title split by a middle dot, as the site's headings split theirs.
-- A field brought back by Reset to Default drops its links to records deleted while it was gone, so it doesn't read (missing entry).
+- The outline's plain arrows step the focus from row to row: Up and Down to the row above and below, beats included, and Home and End to the first and last in sight. Alt with the arrows still moves a row.
+- Claude's defaults in the plan: Right unfolds a folded row or steps to the first row in it, and Left folds an open row or steps out to the row it sits in, as a tree's do; the arrows step only from a row itself, not from its buttons or boxes; Tab works as it did.
+- On the index, a story title too long to sit beside its counts and buttons takes the row's first line, whole, wrapping there if it has to, and by Claude's default the counts, the date, and the buttons go on the line under it. The counts leave the title's button, and a click on them still opens the story; a corpus page's reading order uses the same row.
+- A picker's option reads its place and its name split by a middle dot, "A · The Ford", and by Claude's defaults so does every act, chapter, and scene in a picker, "I.1.A · Crossing", and the picked rows of a field that holds several; the chips stay as they were. The picker builds its options from copies of the records, which carry the place since this cut.
+- A field Reset to Default brings back to one of Fabula's kinds drops its links to records the world no longer has, so it doesn't read (missing entry), and keeps its other values and its links to records still here.
+- Claude's defaults in the plan: that covers a subfield brought back into a group the kind kept, and a field whose type the reset turns back into a link; a dead link in a field the kind kept all along is left alone; the confirmation doesn't change. A default the plan didn't state, flagged to Drak at the staging: a field whose type the reset turns back into a link drops every value that names no record, typed text with it.
 
 **r057, a grid's starting shape** (`14_form-engine-edit`, `15_template-builder`, and where the files are read and written)
 
@@ -146,7 +148,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 3. **r053, entries CSVs read back exactly.** Section 3. **Done** (2026-11-01, `51ec83c`, passed).
 4. **r054, renames say where the links go.** Section 3. **Done** (2026-11-01, `d2e3566`, passed).
 5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first. **Done** (2026-11-01, `4156349`, passed).
-6. **r056, Fabula's screens.** Section 3.
+6. **r056, Fabula's screens.** Section 3. **Done** (2026-11-01, `f82ea02`, passed).
 7. **r057, a grid's starting shape.** Section 3.
 8. **r058, the help.** Section 4.
 9. **The site**, without an r-number. Then v1.7's finals.
@@ -166,7 +168,7 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 - **r053:** the CSV and the JSON the export writes read back with nothing changed and nothing listed, an own value beside an option or another own value that spells an option with it among them; a reference and a Name History read across worlds as the cell lists them; a spreadsheet's unescaped "Salt; Pepper" split, its pieces listed as own values where the field keeps them and refused where it keeps none and has no such options, its escaped one the option; an own "other" as typed, from JSON and from a CSV; the dialog's note.
 - **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now and after, and renaming to an earlier entry's name says the links stay with it; the old-name case reads as it did, the new line last; the rule as called, Rename offered where the old name has no links; and, with r041's P2 brought in, the index after each of fifteen kinds of edit the same as a whole build of it, quicker than r053's in the same run, its flat lists held as r053 held them.
 - **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame, and the export is the chart's width; parity at matched widths is identical step for step; a release right after the last move lands there, as do moves and a release all at once, and a move right after the release starts no drag of its own.
-- **r056:** the outline walked by keyboard alone; a long title at 900 pixels; the pickers' separator; Reset to Default after a delete reads no (missing entry).
+- **r056:** the outline walked by keyboard alone, Right and Left as a tree's, and nothing stepping from a row's fold button or a beat's line; a long title at 900 pixels on a line of its own, on the index and on a corpus page, and a click on the counts opening the story; the pickers' separator, in the options and the picked rows; Reset to Default after a delete reads no (missing entry), a subfield brought back and a field whose type comes back included, and changes nothing else.
 - **r057:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.
 
 ## Sources

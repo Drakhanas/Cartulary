@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59465,
-  "raw_body_lines": 59465,
-  "canonical_lines": 56633,
-  "decl_count": 963,
+  "total_lines": 59571,
+  "raw_body_lines": 59571,
+  "canonical_lines": 56736,
+  "decl_count": 966,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r055-body.jsx"
+  "active_anchor": "reference-r056-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59465,
+   "value": 59571,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -26,15 +26,15 @@
    "pattern": "(\\d+) of the 62 files have no trailing newline"
   },
   "decl_count": {
-   "value": 963,
+   "value": 966,
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56633,
+   "value": 56736,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59465,
+   "value": 59571,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3236723,
+   "value": 3242777,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "eighty",
-    80
+    "eighty-one",
+    81
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,33 +121,37 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "eighty",
-    80
+    "eighty-one",
+    81
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59465,
+   "value": 59571,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
    "value": "f37ebb7cf2a74655",
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   },
-  "working_hash_r055": {
-   "value": "9b7a1407879a896f",
-   "pattern": "working[^\\n]{0,40}at r055 hashes to sha256 `([0-9a-f]{16})`"
+  "decl_count_verify": {
+   "value": 966,
+   "pattern": "decl-name set\\s+: PASS \\((\\d+) names\\)"
+  },
+  "working_hash_r056": {
+   "value": "80b8c6f75082d13d",
+   "pattern": "working[^\\n]{0,40}at r056 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1305,
+   "line": 1311,
    "contains": "Longform + rich text editor"
   },
   {
    "file": "14_form-engine-edit.jsx",
-   "line": 1307,
+   "line": 1313,
    "contains": "function LongformEditor"
   },
   {
@@ -1139,10 +1143,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r055-body.jsx",
-   "reference-r055-layout.json",
-   "945471af5af68d3d",
-   "9b7a1407879a896f",
+   "reference-r056-body.jsx",
+   "reference-r056-layout.json",
+   "f5a5a733a4fba2dc",
+   "80b8c6f75082d13d",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1150,7 +1154,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r056, the Sweep's sixth cut: Fabula's screens",
+   "r057, the Sweep's seventh cut: a grid's starting shape",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1234,7 +1238,8 @@
    "v1.7_r054",
    "linkIndexStep",
    "renameHolderLine",
-   "v1.7_r055"
+   "v1.7_r055",
+   "v1.7_r056"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1282,10 +1287,10 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r055-layout.json",
+   "reference-r056-layout.json",
    "Five exist",
-   "reference-r055-body.jsx",
-   "945471af5af68d3d",
+   "reference-r056-body.jsx",
+   "f5a5a733a4fba2dc",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
    "queryMarkdownBox",
@@ -1593,7 +1598,10 @@
    "7d6e11f56dd7d6c5",
    "v1.7_r055: Chronometric fits its frame",
    "v1.7_r055_chrono_fits_frame.py",
-   "9b7a1407879a896f"
+   "9b7a1407879a896f",
+   "v1.7_r056: Fabula's screens",
+   "v1.7_r056_fabula_screens.py",
+   "80b8c6f75082d13d"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1720,7 +1728,7 @@
    "r049 is in",
    "v1.7_r049",
    "What r049 left for r058",
-   "r051 through r055 are in",
+   "r051 through r056 are in",
    "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
@@ -1732,7 +1740,6 @@
    "The Sweep is planned",
    "**Planned:** r057",
    "The spine manifest's freeze: done 2026-10-31",
-   "**Planned:** r056",
    "r051 is in",
    "v1.7_r051",
    "the code comment in r051",
@@ -1740,7 +1747,10 @@
    "v1.7_r053",
    "v1.7_r054",
    "v1.7_r055",
-   "r055 is in"
+   "r055 is in",
+   "v1.7_r056",
+   "r056 is in",
+   "A built-in template's Reset to Default keeps a field's values through a change of its type"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1849,7 +1859,8 @@
    "Check an incremental structure against a whole build after things are taken away",
    "A value made when first read, behind a getter",
    "A timing check against a fixed number",
-   "A check on what a step saves reads the value the step writes"
+   "A check on what a step saves reads the value the step writes",
+   "A label reads only what the object it's built from carries"
   ],
   "journal.txt": [
    "r030",
@@ -1930,7 +1941,8 @@
    "r052 went the other way from r051",
    "r053 undid half of r052's call c",
    "Approaching two hours into r054's checks",
-   "r055 was staged before its full run"
+   "r055 was staged before its full run",
+   "r056 had Drak's pass two minutes after it was staged"
   ]
  }
 }

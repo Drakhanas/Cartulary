@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go; r055, Chronometric fits its frame) ===
+=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go; r055, Chronometric fits its frame; r056, Fabula's screens) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1851,3 +1851,15 @@ copies, because I compared an entry's whole fields after a drag, and the
 load fills fields out, so a drag that saved nothing still looked like a
 move. The parity tool's new option, built in the tooling commit, matched
 r055 to r054 at every step, which is the check the cut was waiting for.
+
+r056 had Drak's pass two minutes after it was staged, when the full run
+on it had just begun. The plan said the pickers' middle dot was one line
+in the form engine, and the probe's first run said otherwise: the
+options are copies of the records that keep an id, a name, and a
+template, so the place the label reads wasn't there, while the picked
+rows, from the story's list, which adds the place, already read "I.1.A ·
+Crossing". The reset's rule took more thought than its code. Worded for
+links, it meets every value a field has held, and a field whose type the
+reset turns back into a link can hold typed text, which reads (missing
+entry) as surely as a dead link; dropping both was my call, and I
+flagged it at the staging instead of leaving it to be found.

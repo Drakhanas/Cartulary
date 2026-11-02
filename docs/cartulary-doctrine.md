@@ -924,3 +924,7 @@ When the application changes, both follow in the same pass. Neither is restated 
 ### ADDED 2026-11-01 (session 22, v1.7 r055)
 
 - **A check on what a step saves reads the value the step writes, not the whole record a load fills out.** *(v1.7, session 22; r055's probe.)* r055's drag checks compared the dragged entry's fields as saved with the fields seeded into the world, to know the drag had moved it, and a load adds the template's empty fields, so the two never matched. Two planted copies whose drags saved nothing passed every drag check; the checks compare the saved dates now, and both copies fail them.
+
+### ADDED 2026-11-01 (session 22, v1.7 r056)
+
+- **A label reads only what the object it's built from carries: follow its input back to where the list's items are made.** *(v1.7, session 22; r056's first probe run.)* r056's plan put the pickers' middle dot in one line of the form engine, the label that sets a scene's place before its name. The probe's first run found the options still reading "A The Ford": the picker builds its options from copies of the records that keep an id, a name, and a template, so the place the label reads wasn't there, while the picked rows, looked up in the story's own list of its records (`fabulaStoryNodes`), which adds the place, read "I.1.A · Crossing". The copies carry the place now, the cut's second line there. Reading where the label's input came from, as well as the label, would have found it before the probe did.
