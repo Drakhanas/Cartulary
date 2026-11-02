@@ -4,7 +4,7 @@
 // step below drawing the same SVG, text for text, as the build Drak last
 // passed. Two commands:
 //
-//   node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]
+//   node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...] [--narrower PX]
 //   node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...] [--aside eras]
 //
 // record opens the build in Chromium (Playwright), loads each of the four
@@ -22,6 +22,13 @@
 // nothing else (v1.7's r021).
 // Exit codes: record 0, or 3 when a step failed (the failure is recorded);
 // compare 0 when every step matches, 1 when any differs.
+//
+// --narrower PX draws the build's chart PX pixels narrower than it would:
+// Chronometric's width is read from .chrono-view's clientWidth, which counts
+// the view's padding, and this takes PX off that one reading, so a build
+// recorded with --narrower 36 draws its chart the width of its frame, as
+// r055 is to, at the same window and with everything else in place.
+// The record says so (run.json's narrower), and compare pairs runs by name.
 //
 // --libs names a folder holding the six libraries the page loads from the
 // CDN, unpacked from deps/ as <name>-<version>/ (run.py does this). Fonts are
@@ -277,6 +284,16 @@ async function record(build, outdir, opts) {
   const sha = crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex').slice(0, 16);
   const browser = await chromium.launch();
   const ctx = await openContext(browser, path.resolve(opts.libs));
+  const narrower = Number(opts.narrower) || 0;
+  if (narrower) {
+    await ctx.addInitScript((px) => {
+      const own = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth');
+      Object.defineProperty(Element.prototype, 'clientWidth', {
+        configurable: true,
+        get() { const w = own.get.call(this); return this.classList && this.classList.contains('chrono-view') ? Math.max(0, w - px) : w; },
+      });
+    }, narrower);
+  }
   const page = await ctx.newPage();
   page.setDefaultTimeout(8000);
   page.setDefaultNavigationTimeout(180000);
@@ -344,12 +361,12 @@ async function record(build, outdir, opts) {
     }
   }
   fs.writeFileSync(path.join(outdir, 'run.json'), JSON.stringify({
-    build: html, sha256_16: sha, fixtures: path.resolve(fixtures), widths: WIDTHS, runs,
+    build: html, sha256_16: sha, fixtures: path.resolve(fixtures), widths: WIDTHS, narrower, runs,
     playwright: (() => { try { return require('playwright/package.json').version; } catch (e) { return null; } })(),
     chromium: browser.version(), when: new Date().toISOString(),
   }, null, 1));
   await browser.close();
-  console.log(`recorded ${path.basename(html)} (${sha}) into ${outdir}${failed ? `; ${failed} run(s) stopped at a failed step` : ''}`);
+  console.log(`recorded ${path.basename(html)} (${sha})${narrower ? `, its chart ${narrower} pixels narrower,` : ''} into ${outdir}${failed ? `; ${failed} run(s) stopped at a failed step` : ''}`);
   return failed ? 3 : 0;
 }
 
@@ -439,11 +456,11 @@ function compare(dirA, dirB, only, aside) {
   if (cmd === 'record' && pos.length === 2) {
     const libs = opt('libs') || path.join(__dirname, '..', '..', 'inlining', 'out', 'chrono-parity', 'libs');
     const only = opt('only') ? opt('only').split(',') : null;
-    process.exit(await record(pos[0], pos[1], { libs, fixtures: opt('fixtures'), only }));
+    process.exit(await record(pos[0], pos[1], { libs, fixtures: opt('fixtures'), only, narrower: opt('narrower') }));
   } else if (cmd === 'compare' && pos.length === 2) {
     process.exit(compare(pos[0], pos[1], opt('only') ? opt('only').split(',') : null, opt('aside') ? opt('aside').split(',') : null));
   } else {
-    console.log('usage: node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...]\n'
+    console.log('usage: node parity.js record <build.html> <outdir> [--libs DIR] [--fixtures DIR] [--only NAME@WIDTH,...] [--narrower PX]\n'
       + '       node parity.js compare <baseline outdir> <candidate outdir> [--only FIELD,...] [--aside eras]');
     process.exit(2);
   }

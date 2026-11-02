@@ -116,7 +116,7 @@ JS_LIBS_BASE = [
      'react-dom/umd/react-dom.production.min.js', None),
     ('marked/4.3.0/marked.min.js',
      'marked/marked.min.js', None),
-    ('d3/7.8.5/d3.min.js',
+    ('d3/7.9.0/d3.min.js',
      'd3/dist/d3.min.js', None),
     ('jszip/3.10.1/jszip.min.js',
      'jszip/dist/jszip.min.js', None),

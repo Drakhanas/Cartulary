@@ -8,6 +8,9 @@ build the candidate, record both through the same steps, and compare.
         a commit (any git ref) against it instead
     python3 tools/chrono-parity/run.py v1.7_r017 --out DIR
         somewhere other than inlining/out/chrono-parity
+    python3 tools/chrono-parity/run.py v1.7_r054 --narrower 36
+        the baseline's chart drawn 36 pixels narrower, as wide as its frame,
+        for a candidate that draws its chart the frame's width (v1.7's r055)
 
 The baseline is built in a temporary git worktree with that ref's own
 build_inline.py, so it is the build Drak passed, byte for byte. The six
@@ -79,6 +82,8 @@ def main():
     ap.add_argument('--candidate', default=None, help='a git ref to check instead of the working tree')
     ap.add_argument('--out', default=str(ROOT / 'inlining' / 'out' / 'chrono-parity'))
     ap.add_argument('--aside', default=None, help="what compare sets aside, e.g. eras (see parity.js)")
+    ap.add_argument('--narrower', type=int, default=0,
+                    help="draw the baseline's chart this many pixels narrower (see parity.js; r055: 36)")
     args = ap.parse_args()
 
     out = Path(args.out).resolve()
@@ -93,7 +98,8 @@ def main():
 
     parity = str(HERE / 'parity.js')
     steps = [
-        ['node', parity, 'record', str(base_html), str(out / 'baseline'), '--libs', str(libs)],
+        ['node', parity, 'record', str(base_html), str(out / 'baseline'), '--libs', str(libs)]
+        + (['--narrower', str(args.narrower)] if args.narrower else []),
         ['node', parity, 'record', str(cand_html), str(out / 'candidate'), '--libs', str(libs),
          '--fixtures', str(out / 'baseline' / 'fixtures')],
     ]

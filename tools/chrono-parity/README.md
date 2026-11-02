@@ -95,3 +95,16 @@ so its drawing differs wherever an era is drawn; with the era bands set aside
 it had to come out identical to r020's, and a copy of r021 with one year label
 moved a pixel had to come out different, so the setting-aside is known to hide
 nothing else.
+
+`run.py <ref> --narrower 36`, or `parity.js record ... --narrower 36`, draws
+the baseline's chart 36 pixels narrower than it would. Chronometric takes its
+width from `.chrono-view`'s `clientWidth`, which counts the view's padding, 18
+pixels a side, so up to r054 the chart is drawn 36 pixels wider than the frame
+that shows it; the option takes those 36 off that one reading, at the same
+window and with everything else in place, so the baseline's chart is as wide as
+its frame. r055 is to draw its chart the frame's width, which changes every
+step's drawing, and to check against r054 drawn this way, where both charts are
+the same width and should draw the same, step for step. Before r055, it was
+proved two ways on r054's build: drawn narrower, r054 differs from itself drawn
+as it is, and it comes out identical to a copy of r054 whose chart reads its
+width 36 pixels short, which is what the option stands in for.
