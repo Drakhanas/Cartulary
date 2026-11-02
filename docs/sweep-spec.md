@@ -92,10 +92,11 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 - After an edit the link index is brought from the last build: the records kept keep their targets, the records that came, changed, or went and those whose `[[links]]` a name change moves are read again, and the list of every target they touch is put together again. It's built whole where the records that came or went, a changed record counting as both, and those read again for a moved name number more than one in sixteen (64 at least), or where the records kept come in a new order.
 - Changed from the plan before staging: the plan made the index's two flat lists only when first read, through getters, which made Concordance's loop over r041's generated world about five times slower than r053's; they're made with the index, as in r053.
 
-**r055, Chronometric fits its frame** (`19_chronometric`)
+**r055, Chronometric fits its frame** (`19_chronometric`). Section 9 left it no open detail. **Done** (2026-11-01, `4156349`, passed).
 
 - The chart takes its width from the frame it's drawn in, so its right margin and its last year label show.
-- A drag's last position is kept where the move is handled, so a release right after it lands there.
+- A drag's position is written to its ref where the press, the move, and the release are handled, the release clearing it, and the effect that copied it after each render is gone, so a release right after the last move lands there.
+- Claude's default in the plan: the SVG and PNG exports follow the chart's width, still whole, the SVG 36 pixels narrower than r054's and the PNG, drawn at twice the size, 72.
 - Every step of `tools/chrono-parity` changes width, so the check runs with the last passed build drawn 36 pixels narrower, where both charts are the same width and should draw the same, step for step. The tool gains that option without an r-number (section 5).
 
 **r056, Fabula's screens** (`28_fabula`)
@@ -144,7 +145,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 2. **r052, entries files make the round trip.** Section 3. **Done** (2026-11-01, `be001d2`, passed).
 3. **r053, entries CSVs read back exactly.** Section 3. **Done** (2026-11-01, `51ec83c`, passed).
 4. **r054, renames say where the links go.** Section 3. **Done** (2026-11-01, `d2e3566`, passed).
-5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first.
+5. **r055, Chronometric fits its frame.** Section 3; the tooling commit first. **Done** (2026-11-01, `4156349`, passed).
 6. **r056, Fabula's screens.** Section 3.
 7. **r057, a grid's starting shape.** Section 3.
 8. **r058, the help.** Section 4.
@@ -164,7 +165,7 @@ Each cut's probe works its expectations out by hand, runs the last passed build 
 - **r052:** a UTF-16 file in each byte order reads; a Multi-select's own values make the round trip in JSON and in CSV, but for one spelled "other" in another case, which comes back as Other; a month name holding a comma makes the round trip; the semicolon rule as called; a file written as r050's export writes it, by hand (S1, S2), reads as it did there but for what section 3 changes; and a filter reads each Long Text once while the world stays the same.
 - **r053:** the CSV and the JSON the export writes read back with nothing changed and nothing listed, an own value beside an option or another own value that spells an option with it among them; a reference and a Name History read across worlds as the cell lists them; a spreadsheet's unescaped "Salt; Pepper" split, its pieces listed as own values where the field keeps them and refused where it keeps none and has no such options, its escaped one the option; an own "other" as typed, from JSON and from a CSV; the dialog's note.
 - **r054:** renaming to a former name, a body's other name, and a map's name opens the modal with the count and where the links lead now and after, and renaming to an earlier entry's name says the links stay with it; the old-name case reads as it did, the new line last; the rule as called, Rename offered where the old name has no links; and, with r041's P2 brought in, the index after each of fifteen kinds of edit the same as a whole build of it, quicker than r053's in the same run, its flat lists held as r053 held them.
-- **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame; parity at matched widths is identical step for step; a release right after the last move lands there.
+- **r055:** at 1,400 and 900 pixels the chart's right margin and last year label sit inside the frame, and the export is the chart's width; parity at matched widths is identical step for step; a release right after the last move lands there, as do moves and a release all at once, and a move right after the release starts no drag of its own.
 - **r056:** the outline walked by keyboard alone; a long title at 900 pixels; the pickers' separator; Reset to Default after a delete reads no (missing entry).
 - **r057:** a template with a shape gives each new entry that grid, which the entry can change; entries made before keep theirs; a template file and a pack round-trip the shape; a world without shapes saves as it was; the prompt on an empty grid.
 

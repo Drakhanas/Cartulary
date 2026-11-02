@@ -18,8 +18,9 @@ asked for the staged file:
    so a release right after the last move commits that move and not the one
    before it.
 
-- 19_chronometric: TimelineView's width measure and its comment, the ref
-  moved from .chrono-view to .chrono-svg-wrap; the drag's ref written in
+- 19_chronometric: ChronometricsView's width measure and its comment (named
+  TimelineView here until the read of r055's turnover), the ref moved from
+  .chrono-view to .chrono-svg-wrap; the drag's ref written in
   handleEventMouseDown and in the drag commit effect's move and release, the
   effect that copied dragState into it gone, and the drag comment.
 

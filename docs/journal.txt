@@ -1272,7 +1272,7 @@ my shape with his yes on it, and each cut's own plan is where that gets
 tested. The build sheet is written, and the cuts start in a fresh
 session at r039.
 
-=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go) ===
+=== 2026-10-29 to 11-01 (session 22, r039, saving: Pipes' first cut; r040, backups into the images folder; r041, the link index and the Referenced by lists; r042, the delete warnings and Concordance from the link index; r043, one resolver for every [[link]]; r044, the rename modal; r045, the filter builder, the search fix, and All entries; r046, saved lists; r047, Export entries in JSON and CSV; r048, Import entries from JSON through the mapping screen; r049, Import entries from CSV through the same screen; r050, sticky line ends on maps, the pin-id fix first; the Sweep planned; r051, fields kept and shown as entered; r052, entries files make the round trip; r053, entries CSVs read back exactly; r054, renames say where the links go; r055, Chronometric fits its frame) ===
 
 A fresh chat again, and the cold start held: every gate green on the clone,
 the figures where the handoff said, and one sentence wrong. It counted four
@@ -1841,3 +1841,13 @@ timing scripts found the defect the plan would have shipped: the flat
 lists I'd made lazy cost Concordance's loop five times what r053's did,
 since every element it read went through a getter. Making them with the
 index again costs each edit a little and the readers nothing.
+
+r055 was staged before its full run, which ran on for nearly an hour
+after Drak's pass. He asked for the file after my plan, whose last line
+described his browser pass as if a build were ready. The cut itself was
+small, a ref moved one element down and three lines writing the drag's
+position where it happens. The probe's own first planted run missed two
+copies, because I compared an entry's whole fields after a drag, and the
+load fills fields out, so a drag that saved nothing still looked like a
+move. The parity tool's new option, built in the tooling commit, matched
+r055 to r054 at every step, which is the check the cut was waiting for.

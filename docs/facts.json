@@ -1,12 +1,12 @@
 {
  "derived": {
   "module_file_count": 62,
-  "total_lines": 59455,
-  "raw_body_lines": 59455,
-  "canonical_lines": 56623,
+  "total_lines": 59465,
+  "raw_body_lines": 59465,
+  "canonical_lines": 56633,
   "decl_count": 963,
   "no_trailing_newline": 54,
-  "active_anchor": "reference-r054-body.jsx"
+  "active_anchor": "reference-r055-body.jsx"
  },
  "published": {
   "module_file_count": {
@@ -14,7 +14,7 @@
    "pattern": "\\*\\*(\\d+) files, [\\d,]+ lines"
   },
   "total_lines": {
-   "value": 59455,
+   "value": 59465,
    "pattern": "\\*\\*\\d+ files, ([\\d,]+) lines"
   },
   "arc_count": {
@@ -30,11 +30,11 @@
    "pattern": "decl-set (?:PASS at )?(\\d+)"
   },
   "canonical_lines": {
-   "value": 56623,
+   "value": 56633,
    "pattern": "sequence PASS at ([\\d,]+)"
   },
   "raw_body_lines": {
-   "value": 59455,
+   "value": 59465,
    "pattern": "raw line count PASS at ([\\d,]+)"
   },
   "header_count": {
@@ -81,13 +81,13 @@
    "pattern": "proven on (\\d+) carves"
   },
   "anchor_bytes": {
-   "value": 3236165,
+   "value": 3236723,
    "pattern": "anchor is ([\\d,]+) bytes"
   },
   "anchor_rotations": {
    "value": [
-    "seventy-nine",
-    79
+    "eighty",
+    80
    ],
    "pattern": "(?i)rotated ([a-z]+(?:-[a-z]+)?|\\d+) times"
   },
@@ -121,22 +121,22 @@
   },
   "anchor_rotations_made": {
    "value": [
-    "seventy-nine",
-    79
+    "eighty",
+    80
    ],
    "pattern": "(?i)which makes ([a-z]+(?:-[a-z]+)?|\\d+) rotations"
   },
   "assembled_body_lines": {
-   "value": 59455,
+   "value": 59465,
    "pattern": "current assembled body is \\*\\*([\\d,]+) lines\\*\\*"
   },
   "site_repo_hash": {
    "value": "f37ebb7cf2a74655",
    "pattern": "the repository's copy now hashes to `([0-9a-f]{16})`"
   },
-  "working_hash_r054": {
-   "value": "7d6e11f56dd7d6c5",
-   "pattern": "working[^\\n]{0,40}at r054 hashes to sha256 `([0-9a-f]{16})`"
+  "working_hash_r055": {
+   "value": "9b7a1407879a896f",
+   "pattern": "working[^\\n]{0,40}at r055 hashes to sha256 `([0-9a-f]{16})`"
   }
  },
  "assertions": [
@@ -172,7 +172,7 @@
   },
   {
    "file": "19_chronometric.jsx",
-   "line": 1772,
+   "line": 1782,
    "contains": "}"
   },
   {
@@ -864,7 +864,7 @@
   "19_chronometric.jsx": [
    [
     1,
-    1772,
+    1782,
     "chronometric"
    ]
   ],
@@ -1139,10 +1139,10 @@
    "exportStemmaMarkdown",
    "v1.7_r036",
    "130d2b4",
-   "reference-r054-body.jsx",
-   "reference-r054-layout.json",
-   "8cb69d2f4c4b9851",
-   "7d6e11f56dd7d6c5",
+   "reference-r055-body.jsx",
+   "reference-r055-layout.json",
+   "945471af5af68d3d",
+   "9b7a1407879a896f",
    "v1.7_r037",
    "eight anchor-rotating gathers",
    "v1.7_r038",
@@ -1150,7 +1150,7 @@
    "five directories",
    "`21_stemma/05_tabula-drawing`",
    "docs/pipes-spec.md",
-   "r055, the Sweep's fifth cut: Chronometric fits its frame",
+   "r056, the Sweep's sixth cut: Fabula's screens",
    "252143c",
    "A staged build reaches him two ways",
    "v1.7_r039",
@@ -1233,7 +1233,8 @@
    "r053 took out at Drak's call",
    "v1.7_r054",
    "linkIndexStep",
-   "renameHolderLine"
+   "renameHolderLine",
+   "v1.7_r055"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1281,10 +1282,10 @@
    "renderEntryFieldsHtml",
    "28_fabula/",
    "seventeen flat + five directories",
-   "reference-r054-layout.json",
+   "reference-r055-layout.json",
    "Five exist",
-   "reference-r054-body.jsx",
-   "8cb69d2f4c4b9851",
+   "reference-r055-body.jsx",
+   "945471af5af68d3d",
    "MAP_STICK",
    "cartulary-spine-manifest-v1.7-r050.md",
    "queryMarkdownBox",
@@ -1589,7 +1590,10 @@
    "7d901665683841b5",
    "v1.7_r054: Renames say where the links go",
    "v1.7_r054_renames_say.py",
-   "7d6e11f56dd7d6c5"
+   "7d6e11f56dd7d6c5",
+   "v1.7_r055: Chronometric fits its frame",
+   "v1.7_r055_chrono_fits_frame.py",
+   "9b7a1407879a896f"
   ],
   "roadmap.md": [
    "roadmap-archive.md",
@@ -1716,7 +1720,7 @@
    "r049 is in",
    "v1.7_r049",
    "What r049 left for r058",
-   "r051 through r054 are in",
+   "r051 through r055 are in",
    "r052 is in",
    "Importing From Other Tools",
    "r050 is in",
@@ -1728,13 +1732,15 @@
    "The Sweep is planned",
    "**Planned:** r057",
    "The spine manifest's freeze: done 2026-10-31",
-   "**Planned:** r055",
+   "**Planned:** r056",
    "r051 is in",
    "v1.7_r051",
    "the code comment in r051",
    "v1.7_r052",
    "v1.7_r053",
-   "v1.7_r054"
+   "v1.7_r054",
+   "v1.7_r055",
+   "r055 is in"
   ],
   "cartulary-doctrine.md": [
    "r030",
@@ -1842,7 +1848,8 @@
    "Before building a path for old files, ask who holds them",
    "Check an incremental structure against a whole build after things are taken away",
    "A value made when first read, behind a getter",
-   "A timing check against a fixed number"
+   "A timing check against a fixed number",
+   "A check on what a step saves reads the value the step writes"
   ],
   "journal.txt": [
    "r030",
@@ -1922,7 +1929,8 @@
    "r051 keeps what a person enters in a dependent dropdown's Other",
    "r052 went the other way from r051",
    "r053 undid half of r052's call c",
-   "Approaching two hours into r054's checks"
+   "Approaching two hours into r054's checks",
+   "r055 was staged before its full run"
   ]
  }
 }
