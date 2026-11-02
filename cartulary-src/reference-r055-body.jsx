@@ -33030,6 +33030,9 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
   const visStart = effStart + pan;
   const visEnd = visStart + visibleRange;
 
+  // The chart's width is its frame's, .chrono-svg-wrap's, which the ref is on
+  // since v1.7 r055: .chrono-view's counts its padding, 18 pixels a side, and
+  // drew the chart 36 pixels wider than the frame, which hid its right margin.
   const containerRef = useRef(null);
   const svgRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(1000);
@@ -33259,10 +33262,12 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
   // Mousedown on an event in edit mode starts drag tracking. Mousemove on
   // window updates deltaYears (also sets moved=true once past threshold).
   // Mouseup commits the change via onUpdateEntryDate, OR if the user never
-  // moved, treats it as a click and selects the event.
+  // moved, treats it as a click and selects the event. The handlers read the
+  // drag from dragStateRef, which they write as they set dragState (v1.7
+  // r055): an effect that copied it after the render left a release that came
+  // before the last move's render to commit the move before it.
   const [dragState, setDragState] = useState(null);
   const dragStateRef = useRef(null);
-  useEffect(() => { dragStateRef.current = dragState; }, [dragState]);
 
   const handleEventMouseDown = (ev, edge) => (mouseEvent) => {
     if (!editMode || ev.readOnly) {
@@ -33275,14 +33280,16 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
     }
     mouseEvent.stopPropagation();  // suppress pan
     mouseEvent.preventDefault();
-    setDragState({
+    const next = {
       eventKey: eventKey(ev),
       edge,
       startX: mouseEvent.clientX,
       startEvent: ev,
       deltaYears: 0,
       moved: false,
-    });
+    };
+    dragStateRef.current = next;
+    setDragState(next);
   };
 
   // ── Image export ─────────────────────────────────────────────────────────────
@@ -33407,10 +33414,13 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
       const dx = e.clientX - cur.startX;
       const deltaYears = (dx / chartWidth) * visibleRange;
       const moved = cur.moved || Math.abs(dx) > 3;
-      setDragState({ ...cur, deltaYears, moved });
+      const next = { ...cur, deltaYears, moved };
+      dragStateRef.current = next;
+      setDragState(next);
     };
     const onUp = () => {
       const cur = dragStateRef.current;
+      dragStateRef.current = null;
       setDragState(null);
       if (!cur) return;
       const ev = cur.startEvent;
@@ -33481,7 +33491,7 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
   }
 
   return (
-    <div className="chrono-view" ref={containerRef}>
+    <div className="chrono-view">
       <div className="chrono-controls">
         {hasAdditional && (
           <div className="chrono-controls-row" style={{ borderBottom: "1px solid var(--border)", paddingBottom: 8, marginBottom: 4 }}>
@@ -33542,7 +33552,7 @@ function ChronometricsView({ state, onOpenEntry, showSecrets, onUpdateEntryDate,
         </div>
       </div>
 
-      <div className="chrono-svg-wrap">
+      <div className="chrono-svg-wrap" ref={containerRef}>
         <svg
           ref={svgRef}
           width={containerWidth}
