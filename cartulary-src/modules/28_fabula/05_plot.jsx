@@ -214,7 +214,8 @@ const fabulaPlotCreate = (fab, storyId, heading, title, id) => {
   const story = fabulaStoryOf(fab, storyId);
   if (!story || !heading || !heading.name) return fab;
   const now = isoNow();
-  const rec = { id, storyId, name: title || heading.name, fields: { slot: fabulaSlotValue(heading) }, createdAt: now, updatedAt: now };
+  // v1.7 r058: Plot Point's shaped grids beside the slot.
+  const rec = { id, storyId, name: title || heading.name, fields: { ...gridsFromShapes(fabulaKindFields({ fabula: fab }, "plotPoint")), slot: fabulaSlotValue(heading) }, createdAt: now, updatedAt: now };
   const next = { ...fab, plotPoints: [...fabulaArr(fab, "plotPoints"), rec] };
   return fabulaPlotApply(next, storyId, { headings: fabulaPlotHeadings({ fabula: next }, fabulaStoryOf(next, storyId)), moved: null });
 };
@@ -244,7 +245,9 @@ const fabulaWithNewThread = (state, storyId, name) => {
   const tplId = fabulaThreadTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  // v1.7 r058: the template's shaped grids, as + New Entry gives them.
+  const tpl = (state.templates || []).find(t => t && t.id === tplId);
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "thread"), templateId: tplId, name: title, calendarId: null, fields: gridsFromShapes(tpl && tpl.fields), tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThreads(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 

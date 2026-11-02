@@ -1838,7 +1838,8 @@ function App() {
     const now = isoNow();
     updateFabula(fab => ({
       ...fab,
-      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: {}, outline: [], createdAt: now, updatedAt: now }],
+      // v1.7 r058: Story's shaped grids, as a new corpus takes Corpus's.
+      stories: [...fabArr(fab, "stories"), { id, name: "Untitled story", fields: gridsFromShapes(fabulaKindFields({ fabula: fab }, "story")), outline: [], createdAt: now, updatedAt: now }],
       corpora: fabArr(fab, "corpora").map(c => c.id === corpusId ? { ...c, storyIds: [...(c.storyIds || []), id], updatedAt: now } : c),
     }));
     return id;

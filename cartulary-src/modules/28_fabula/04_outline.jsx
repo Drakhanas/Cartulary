@@ -235,7 +235,7 @@ const fabulaOutlineCreate = (fab, storyId, parentId, kind, name, id) => {
   const tree = fabulaOutlineAppend(fabulaOutlineTree({ fabula: fab }, story), parentId, { id, kind, children: [] });
   if (!tree) return fab;
   const now = isoNow();
-  const rec = { id, storyId, name, fields: {}, createdAt: now, updatedAt: now };
+  const rec = { id, storyId, name, fields: gridsFromShapes(fabulaKindFields({ fabula: fab }, kind)), createdAt: now, updatedAt: now };  // v1.7 r058: its kind's shaped grids
   return fabulaWithOutline({ ...fab, [k.slice]: [...(Array.isArray(fab[k.slice]) ? fab[k.slice] : []), rec] }, storyId, tree);
 };
 

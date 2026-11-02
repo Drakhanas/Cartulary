@@ -36,7 +36,9 @@ const fabulaWithNewTheme = (state, storyId, name) => {
   const tplId = fabulaThemeTemplateId(state);
   if (!title || !tplId || !fabulaStoryOf(state.fabula || {}, storyId)) return state;
   const now = isoNow();
-  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "theme"), templateId: tplId, name: title, calendarId: null, fields: {}, tags: [], createdAt: now, updatedAt: now };
+  // v1.7 r058: the template's shaped grids, as + New Entry gives them.
+  const tpl = (state.templates || []).find(t => t && t.id === tplId);
+  const entry = { id: freshNameId("ent", title, new Set((state.entries || []).map(e => e && e.id)), "theme"), templateId: tplId, name: title, calendarId: null, fields: gridsFromShapes(tpl && tpl.fields), tags: [], createdAt: now, updatedAt: now };
   return { ...state, entries: [...(state.entries || []), entry], fabula: fabulaWithStoryThemes(state.fabula || {}, storyId, ids => [...ids, entry.id]) };
 };
 
