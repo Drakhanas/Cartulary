@@ -121,7 +121,7 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 ## 5. Without an r-number
 
 - **In the documents commit that lands this sheet:** Fabula's spec loses the filters its lists don't have; Stemma v2's spec marks its two settled details; the spine manifest is frozen (call 3).
-- **A tooling commit before r055:** the release build's d3 comment says 7.9.0; CI's three actions move to the majors that target Node 24, checked against their release notes; `tools/chrono-parity` gains the narrower recording r055 needs.
+- **A tooling commit before r055:** the release build's d3 comment says 7.9.0; CI's three actions move to the majors that target Node 24, checked against their release notes; `tools/chrono-parity` gains the narrower recording r055 needs. **Done** (2026-11-01, `2e6f88d`): the actions at v7, their current majors, and `--narrower PX` on `run.py` and `parity.js record`.
 
 ## 6. Staying tolerated (Claude's defaults)
 
