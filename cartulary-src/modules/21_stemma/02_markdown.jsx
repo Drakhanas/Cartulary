@@ -5,7 +5,7 @@
 // description, then a rota's tree as a nested list in slot order from 12
 // o'clock, the root the first item (a freeform node its label, a linked
 // node a [[wiki-link]] to the record's name in the pool, so a paste into a
-// longform field links, an orphan its cached name marked unlinked), or a
+// Short or Long Text links, an orphan its cached name marked unlinked), or a
 // tabula's board: its free cards in reading order (top to bottom, then
 // left to right) as a list, each column a heading with its cards as a
 // list, a laned column (r033) its lanes as headings below it, a sub-board
