@@ -126,7 +126,7 @@ Each is a content cut gated by `edit`, probed with planted copies and the earlie
 ## 4. The help and the site
 
 - **r059, the help** (r057 at the plan, r058 after r053 went in, r059 after r058 did): Pipes' r051 (`docs/pipes-spec.md`, section 9), everything listed there, and with it what r051 through r058 change where the help describes it (a dependent dropdown's Other, the entries files' formats, the rename modal, and a grid's starting shape in the Templates, Field Types, and JSON Save File Schema topics), and the Limitations line on snapping. Held to the build as r024 and r036 held theirs. Its check, by Drak's call a at its plan: every number and name the new text states held to the build, the new text clean, r058 as the control, a planted copy for each check, and earlier probes only where one reads the help. The probe held most of them, numbers to the source's constants, names to the source's strings rather than the live page, and keys and behavior in the page, and left some unchecked: Import entries…, + Row and + Column, the builder's Rows and Columns, the sidebar's Lists, the Filter's chip, All, Any, Clear, and Rename, Start with, and the CSV's month counted from 1. A search of the earlier probes kept in session 22 found none that reads the help. **Done** (2026-11-02, `7375a98`, passed).
-- **The site**, without an r-number, written from the help. Then v1.7's finals.
+- **The site**, without an r-number, written from the help. Then v1.7's finals. Its check, by Drak's call a at its plan: every number and name the new text states held to the build's source or the page, every route at 1,400, 900, and 430 pixels with no sideways overflow, page error, or network request, every in-page link resolving, the new text clean, the old site as control, a planted copy per check, and his read at the pass. The probe held the numbers and most of the names to the r059 build's source, and some names to the site alone. **Done** (2026-11-02, `04cdb60`, passed).
 
 ## 5. Without an r-number
 
@@ -159,7 +159,7 @@ Each waits on the condition it was set aside under: that using Fabula shows it's
 7. **r057, a grid's starting shape.** Section 3. **Done** (2026-11-02, `20f8802`, passed).
 8. **r058, the rest of Fabula's new records start from their shapes.** Section 3; added 2026-11-02. **Done** (2026-11-02, `d48c128`, passed).
 9. **r059, the help.** Section 4. **Done** (2026-11-02, `7375a98`, passed).
-10. **The site**, without an r-number. Then v1.7's finals.
+10. **The site**, without an r-number. Then v1.7's finals. **Done** (2026-11-02, `04cdb60`, passed).
 
 ## 9. Open at lock, decided at the cut
 
