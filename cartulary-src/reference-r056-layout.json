@@ -1,5 +1,5 @@
 {
-  "anchor_sha256": "945471af5af68d3dc21371858d0ec8697ce918c69ef993afa8099341fb872d75",
+  "anchor_sha256": "f5a5a733a4fba2dc7126f3738aaa7ac030ce4c2f9f845d3c6f73bf050d560893",
   "shell_sha256": "00b312a346ba38f65cec0dbe483159c4064956d0a0b7ed63738900a454b90df0",
   "files": [
     [
@@ -60,7 +60,7 @@
     ],
     [
       "14_form-engine-edit.jsx",
-      1807
+      1813
     ],
     [
       "15_template-builder.jsx",
@@ -200,7 +200,7 @@
     ],
     [
       "28_fabula/01_index.jsx",
-      290
+      307
     ],
     [
       "28_fabula/02_story.jsx",
@@ -212,7 +212,7 @@
     ],
     [
       "28_fabula/04_outline.jsx",
-      748
+      780
     ],
     [
       "28_fabula/05_plot.jsx",
@@ -232,7 +232,7 @@
     ],
     [
       "28_fabula/09_templates.jsx",
-      282
+      333
     ],
     [
       "28_fabula/10_timeline.jsx",
