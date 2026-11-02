@@ -2069,6 +2069,46 @@ const coerceGridValue = (v) => {
   };
 };
 const gridIsEmpty = (g) => !g || ((g.rows || []).length === 0 && (g.cols || []).length === 0);
+// v1.7 r057: a Grid field's starting shape (gridShape on the field,
+// docs/sweep-spec.md, section 3): its row labels, and its column labels each
+// with the type the column's cells start as; either list can be empty.
+// gridShapeOf reads a stored or hand-edited shape into that form, or null
+// for none; gridFromShape makes a new grid from it, with fresh ids for its
+// rows and columns; gridsFromShapes gives a new record's grids, by field id,
+// for the shaped Grid fields among fields. GRID_PROMPT_MAX is the most rows
+// and columns an empty grid's prompt makes (Drak's call at the cut, a).
+const GRID_PROMPT_MAX = 20;
+const gridShapeOf = (field) => {
+  const s = field && field.gridShape;
+  if (!s || typeof s !== "object" || Array.isArray(s)) return null;
+  const label = (x) => (typeof x === "string" ? x.trim() : "");
+  const rows = (Array.isArray(s.rows) ? s.rows : []).map(label).filter(Boolean);
+  const cols = (Array.isArray(s.cols) ? s.cols : [])
+    .map(c => (c && typeof c === "object" ? { label: label(c.label), type: GRID_CELL_TYPE_SET.has(c.type) ? c.type : "text" } : { label: label(c), type: "text" }))
+    .filter(c => c.label);
+  return rows.length > 0 || cols.length > 0 ? { rows, cols } : null;
+};
+const gridFromShape = (shape) => {
+  const g = makeEmptyGrid();
+  if (!shape) return g;
+  g.rows = shape.rows.map(label => ({ id: genId(), label }));
+  g.cols = shape.cols.map(c => ({ id: genId(), label: c.label }));
+  g.rows.forEach(r => shape.cols.forEach((c, i) => {
+    if (c.type === "text") return;
+    if (!g.cells[r.id]) g.cells[r.id] = {};
+    g.cells[r.id][g.cols[i].id] = makeGridCell(c.type);
+  }));
+  return g;
+};
+const gridsFromShapes = (fields) => Object.fromEntries((Array.isArray(fields) ? fields : [])
+  .filter(f => f && f.type === "grid" && gridShapeOf(f))
+  .map(f => [f.id, gridFromShape(gridShapeOf(f))]));
+// A field with its shape set, or without the key when shape is none, so a
+// cleared shape leaves no gridShape behind.
+const withGridShape = (f, shape) => {
+  const { gridShape, ...rest } = f;
+  return shape ? { ...rest, gridShape: shape } : rest;
+};
 // Walk every entry-ref cell value in a grid (used by ref-integrity sweeps).
 const forEachGridRefCell = (g, fn) => {
   if (!g || !g.cells) return;
@@ -15539,7 +15579,7 @@ function App() {
       else if (f.type === "entry-ref" && f.multi) draft.fields[f.id] = [];
       else if (f.type === "name-history") draft.fields[f.id] = [];
       else if (f.type === "multiselect") draft.fields[f.id] = [];
-      else if (f.type === "grid") draft.fields[f.id] = makeEmptyGrid();
+      else if (f.type === "grid") draft.fields[f.id] = gridFromShape(gridShapeOf(f));  // v1.7 r057: as its shape, or empty
       else draft.fields[f.id] = "";
     });
     if (validOverride) setActiveTemplateId(validOverride.id);
@@ -15678,7 +15718,7 @@ function App() {
     if (isLocked) return;
     if (!confirmDiscardDraft()) return;
     const id = `fab-corpus-${genId()}`;
-    const draft = { id, name: "", fields: {} };
+    const draft = { id, name: "", fields: gridsFromShapes(fabulaKindFields(state, "corpus")) };  // v1.7 r057
     setActiveCorpusId(id);
     setCorpusDraft(draft);
     initialCorpusDraftRef.current = JSON.stringify(draft);
@@ -16049,7 +16089,8 @@ function App() {
     if (isLocked || !activeStoryId) return;
     if (!confirmDiscardDraft()) return;
     const id = `fab-${kind}-${genId()}`;
-    const draft = { id, name: "", fields: {} };
+    // v1.7 r057: a Grid field with a starting shape starts as it.
+    const draft = { id, name: "", fields: gridsFromShapes(fabulaKindFields(state, kind)) };
     setFabulaBack(b => [...b, fabulaHere()]);
     setActiveRecord({ kind, id });
     setRecordDraft(draft);
@@ -16504,6 +16545,13 @@ function App() {
       // Group fields must have a subfields array — coerce if missing/wrong.
       if (f.type === "group" && !Array.isArray(f.subfields)) {
         f.subfields = [];
+      }
+      // v1.7 r057: a Grid field's starting shape as it reads (gridShapeOf),
+      // or none, for a template file and a pack.
+      if (f.type === "grid" && "gridShape" in f) {
+        const shape = gridShapeOf(f);
+        if (shape) f.gridShape = shape;
+        else delete f.gridShape;
       }
       // De-dupe field ids: if a hand-edit duplicates an id, regenerate the dup,
       // with an id new to the template (v1.7 r039).
@@ -23391,6 +23439,11 @@ function EntryRefEditor({ field, value, onChange, entries, templates, bodies, re
 // rename/reorder never disturbs bindings.
 function GridEditor({ field, value, onChange, entries, templates, bodies, registeredNodes, selfEntryId, calendar }) {
   const g = coerceGridValue(value);
+  // v1.7 r057: the field's starting shape, if it has one, and the empty
+  // grid's prompt, rows by columns.
+  const shape = gridShapeOf(field);
+  const [askRows, setAskRows] = useState("2");
+  const [askCols, setAskCols] = useState("2");
 
   const commit = (next) => onChange(coerceGridValue(next));
   const clone = () => ({
@@ -23401,7 +23454,20 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
 
   const setRowAxisLabel = (v) => { const n = clone(); n.rowAxisLabel = v; commit(n); };
   const setColAxisLabel = (v) => { const n = clone(); n.colAxisLabel = v; commit(n); };
-  const addRow = () => { const n = clone(); n.rows.push({ id: genId(), label: "" }); commit(n); };
+  // A row added takes, in a column the field's shape names, the type the
+  // shape gives that column's cells (v1.7 r057).
+  const addRow = () => {
+    const n = clone();
+    const id = genId();
+    n.rows.push({ id, label: "" });
+    if (shape) n.cols.forEach(c => {
+      const sc = shape.cols.find(x => x.label === (c.label || "").trim());
+      if (!sc || sc.type === "text") return;
+      if (!n.cells[id]) n.cells[id] = {};
+      n.cells[id][c.id] = makeGridCell(sc.type);
+    });
+    commit(n);
+  };
   const addCol = () => { const n = clone(); n.cols.push({ id: genId(), label: "" }); commit(n); };
   const renameRow = (rid, label) => { const n = clone(); const r = n.rows.find(x => x.id === rid); if (r) r.label = label; commit(n); };
   const renameCol = (cid, label) => { const n = clone(); const c = n.cols.find(x => x.id === cid); if (c) c.label = label; commit(n); };
@@ -23469,6 +23535,25 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
     );
   };
 
+  // v1.7 r057: an empty grid starts from its field's shape with a button, or,
+  // with no shape, asks for rows by columns, at most GRID_PROMPT_MAX of each,
+  // a number above it lowered to it, as the line under the boxes says. The
+  // axis names typed before stay.
+  const count = (n, one) => `${n} ${n === 1 ? one : `${one}s`}`;
+  const shapeText = shape
+    ? `The template's grid starts with ${[shape.rows.length > 0 ? count(shape.rows.length, "row") : null, shape.cols.length > 0 ? count(shape.cols.length, "column") : null].filter(Boolean).join(" and ")}.`
+    : "";
+  const startShape = () => commit({ ...gridFromShape(shape), rowAxisLabel: g.rowAxisLabel, colAxisLabel: g.colAxisLabel });
+  const askSize = (s) => Math.min(GRID_PROMPT_MAX, Math.max(1, Math.floor(Number(s)) || 1));
+  const askOver = Number(askRows) > GRID_PROMPT_MAX || Number(askCols) > GRID_PROMPT_MAX;
+  const makeAsked = () => {
+    const n = clone();
+    n.rows = Array.from({ length: askSize(askRows) }, () => ({ id: genId(), label: "" }));
+    n.cols = Array.from({ length: askSize(askCols) }, () => ({ id: genId(), label: "" }));
+    n.cells = {};
+    commit(n);
+  };
+
   const miniBtn = { background: "none", border: "1px solid var(--border)", color: "var(--text-dim)", cursor: "pointer", borderRadius: 3, padding: "0 5px", lineHeight: 1.6, fontSize: "0.8em" };
   const hdrInput = { width: "100%", boxSizing: "border-box", fontWeight: 600 };
 
@@ -23485,9 +23570,24 @@ function GridEditor({ field, value, onChange, entries, templates, bodies, regist
         </label>
       </div>
 
-      {g.rows.length === 0 && g.cols.length === 0 ? (
-        <div className="field-hint" style={{ marginBottom: 8 }}>Add a row and a column to start the grid.</div>
+      {g.rows.length === 0 && g.cols.length === 0 ? (shape ? (
+        <div className="grid-shape-start" style={{ marginBottom: 8, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+          <span className="field-hint" style={{ margin: 0 }}>{shapeText}</span>
+          <button className="btn btn-ghost" onClick={startShape}>Start from the template's shape</button>
+        </div>
       ) : (
+        <div className="grid-size-prompt" style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, fontSize: "0.9em" }}>
+            <span>Start with</span>
+            <input className="input" type="number" min={1} max={GRID_PROMPT_MAX} aria-label="Rows" value={askRows} onChange={e => setAskRows(e.target.value)} style={{ width: 64 }} />
+            <span>rows by</span>
+            <input className="input" type="number" min={1} max={GRID_PROMPT_MAX} aria-label="Columns" value={askCols} onChange={e => setAskCols(e.target.value)} style={{ width: 64 }} />
+            <span>columns</span>
+            <button className="btn btn-ghost" onClick={makeAsked}>Make grid</button>
+          </div>
+          {askOver && <div className="field-hint grid-size-over" style={{ marginTop: 4 }}>The prompt makes at most {GRID_PROMPT_MAX} rows and {GRID_PROMPT_MAX} columns, so this makes {askSize(askRows)} by {askSize(askCols)}; + Row and + Column add more after.</div>}
+        </div>
+      )) : (
         <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
           <thead>
             <tr>
@@ -24130,6 +24230,46 @@ function SelectOptionsInput({ value, onCommit, placeholder, style }) {
         onCommit(parsed);
       }}
     />
+  );
+}
+
+// v1.7 r057: a Grid field's starting shape in the builder (docs/sweep-spec.md,
+// section 3, and Drak's call at the cut, a): its rows and its columns each as
+// a line split by "|", as a dropdown's options are, and under them a cell
+// type for each column, which follows the column's place in its line. Both
+// lines empty leave the field without a shape, a grid each entry shapes
+// itself.
+function GridShapeInput({ field, onChange }) {
+  const shape = gridShapeOf(field) || { rows: [], cols: [] };
+  const put = (rows, cols) => onChange(rows.length > 0 || cols.length > 0 ? { rows, cols } : undefined);
+  const name = { fontSize: 12, color: "var(--text-dim)", minWidth: 62 };
+  return (
+    <div className="tpl-grid-shape" style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 5 }}>
+      <div className="tpl-cascade-label">Starting shape</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={name}>Rows</span>
+        <SelectOptionsInput value={shape.rows} onCommit={rows => put(rows, shape.cols)} placeholder="Nominative | Accusative | Genitive" style={{ flex: 1 }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={name}>Columns</span>
+        <SelectOptionsInput value={shape.cols.map(c => c.label)} onCommit={labels => put(shape.rows, labels.map((label, i) => ({ label, type: shape.cols[i] ? shape.cols[i].type : "text" })))} placeholder="Singular | Plural" style={{ flex: 1 }} />
+      </div>
+      {shape.cols.length > 0 && (
+        <div className="tpl-grid-shape-types" style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+          {shape.cols.map((c, i) => (
+            <label key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+              <span>{c.label}</span>
+              <select className="input" aria-label={`${c.label}: cell type`} value={c.type} onChange={e => put(shape.rows, shape.cols.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))} style={{ fontSize: 12, padding: "1px 4px" }}>
+                {GRID_CELL_TYPES.map(t => <option key={t} value={t}>{GRID_CELL_TYPE_LABELS[t]}</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
+      )}
+      <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
+        Each new entry's grid starts with these rows and columns, each column's cells of its type, and the entry can change them. Leave both lines empty for a grid each entry shapes itself. Reference cells can point at any entry.
+      </div>
+    </div>
   );
 }
 
@@ -25231,9 +25371,7 @@ function TemplateBuilder({ draft, templates, onChange, flash, entries, calendar,
           ))}
 
           {field.type === "grid" && (
-            <div className="tpl-cascade-hint" style={{ marginLeft: 0 }}>
-              Rows, columns, and each cell's type (text, number, entry reference, calendar date, or calendar date range) are set per entry. Reference cells can point at any entry.
-            </div>
+            <GridShapeInput field={field} onChange={gridShape => onChange({ ...draft, fields: draft.fields.map(f => (f.id === field.id ? withGridShape(f, gridShape) : f)) })} />
           )}
 
           {/* v1.3: showWhen conditional visibility — pick a parent select field
