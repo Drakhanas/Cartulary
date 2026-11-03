@@ -1932,3 +1932,13 @@ probes lived and didn't tie it to what leaned on them. Drak took the row
 in v1.8 with one letter. Its scope waits for a plan, and the first thing
 that plan has to settle is whether GitHub's runner has a Chrome to
 drive.
+
+Then the planning. My first fork for v1.8's order leaned on a reason
+Drak knocked out before answering it: computed fields would start with
+age, I'd written, and age reads the absolute days leap rules move. Age
+has been there since v1.4. The row I was reading from had searched the
+help for the words a feature would be called by and missed the one it is
+called by, the same miss as the r039 record's, and from the same
+session. He picked mobile first over my default, and his reason was
+better than mine: it's the headliner, so if anything has to give, it
+shouldn't be the headline.
