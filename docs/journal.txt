@@ -1913,3 +1913,22 @@ file was cut back. The handoff's version line alone had grown past
 38,000 characters, a summary of every cut; it's one paragraph of
 current state now, and the rest of the file can wait for a session
 with more room.
+
+=== 2026-11-03 (session 23, a cold start; the probe suite into v1.8) ===
+
+The brief said the record of what Chrome and Brave answered at r039's
+pass was somewhere, and session 22 had written down that it wasn't. It
+was in three places, one of them the journal entry just above this one.
+My guess is that the search looked for the row's words, refused and
+persistence, where every place it's written uses the setting's own, May
+be cleared. The fix was a citation.
+
+The other loose end was a question Drak hadn't answered: whether to
+commit the behavior probes so CI runs them. Reading the procedures
+before asking showed it was more than tidiness. The content cut tells
+every staged build to run every earlier probe, and the earlier probes
+are gone, all but the two parity tools. Session 22 noticed where the
+probes lived and didn't tie it to what leaned on them. Drak took the row
+in v1.8 with one letter. Its scope waits for a plan, and the first thing
+that plan has to settle is whether GitHub's runner has a Chrome to
+drive.

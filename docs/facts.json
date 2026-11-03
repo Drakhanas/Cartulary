@@ -1202,7 +1202,8 @@
    "5cdf993176cb4d8e",
    "handoff-v1.7.md",
    "changelog-v1.7.md",
-   "NEXT: v1.8"
+   "NEXT: v1.8",
+   "only the two parity tools are in the repository"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1281,7 +1282,8 @@
    "CI's two warnings",
    "A map record has no createdAt",
    "A built-in template's Reset to Default keeps a field's values through a change of its type",
-   "v1.7 shipped 2026-11-02"
+   "v1.7 shipped 2026-11-02",
+   "A probe suite in the repository, run by CI"
   ],
   "cartulary-doctrine.md": [
    "r030",
