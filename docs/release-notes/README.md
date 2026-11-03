@@ -22,5 +22,5 @@ Notes on the originals, which are left as they shipped:
 - v1.5's zip held no README: only the two builds and the patch notes.
 - Two old records have the early dates wrong. `v1.3/CHANGELOG.md` puts v1.0 in March 2026 and v1.1 in April, and the frozen `changelog-v1.1-v1.3.md` puts v1.1 in late April, but their devlog posts are dated May 4 and May 8, and the files in their zips May 3 to 7.
 - v1.6.1's zip carried its patch notes and its README as `README_v1.6.1.md`, which `v1.6.1/` keeps under that name.
-- v1.7's itch page and devlog are the text as staged for the upload, not pulled from the published pages; the devlog's title comment is the title as posted.
+- v1.7's itch page and devlog are the text as staged for the upload, not pulled from the published pages; the devlog's title comment is the title as posted, and the itch page's manuscript-editor limitation is the line corrected after the ship (2026-11-02), when it still denied the scene structure Fabula has.
 - The early READMEs name files the zips don't hold under those names: v1.0's says `cartulary.html` for `Cartulary.html`, and v1.1's says `cartulary.html` and `cartulary-readable.html` for `Cartulary_v1.1.html` and `Cartulary_v1.1_Readable.html`.
