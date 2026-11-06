@@ -1939,6 +1939,13 @@ age, I'd written, and age reads the absolute days leap rules move. Age
 has been there since v1.4. The row I was reading from had searched the
 help for the words a feature would be called by and missed the one it is
 called by, the same miss as the r039 record's, and from the same
-session. He picked mobile first over my default, and his reason was
-better than mine: it's the headliner, so if anything has to give, it
-shouldn't be the headline.
+session. He picked mobile first over my default because it's the largest
+hurdle, and that held up better than my reason for waiting: it's the
+headliner, so if anything has to give, it shouldn't be the headline.
+
+Mobile's plan took six calls, and Drak's test on his phone settled more
+than any of them. The file opens on Android and keeps a world; the
+sidebar ate sixty percent of the screen, which no amount of my reading
+would have put a number on. He turned down my default twice, both times
+for the same reason, fewer versions of the app to keep, and both times
+the reason was sound.
