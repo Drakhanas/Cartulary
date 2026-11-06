@@ -80,9 +80,9 @@ The app's pages go into the browser's history, so Android's back gesture and a d
 - To confirm on a real device when the cut is built: whether a home-screen app keeps its worker across a restart.
 - A site edit, no r-number, shipped with the finals.
 
-## 8. Help and site (cut 9)
+## 8. Site text (cut 9)
 
-After the walkthrough's plan, since that plan decides whether the reference stays in the help. What changes: the help's Mobile paragraph and its "drag reorder is mouse-only" line, Settings' "use Chrome or Edge" line for folders now that Chrome for Android counts, the itch page, and the site's iPhone and iPad page.
+A site edit: the walkthrough's plan (2026-11-06, `docs/walkthrough-spec.md`) moved the full reference to the site, and a cut's reference text goes there, the in-app help staying as v1.7 left it until Start here replaces it. What changes: the site's Mobile paragraph and its "drag reorder is mouse-only" line, the itch page, and the site's iPhone and iPad page. Settings' "use Chrome or Edge" line for folders, app text, goes in cut 6, now that Chrome for Android counts.
 
 ## 9. Cut plan
 
@@ -96,7 +96,7 @@ After the walkthrough's plan, since that plan decides whether the reference stay
 | 6 | Visible controls | The inventory, then the controls (section 6) |
 | 7 | Each view at phone width | Per view; its count comes from cut 6 |
 | 8 | The hosted copy | Section 7 |
-| 9 | Mobile's help cut | Section 8 |
+| 9 | Mobile's site text | Section 8, a site edit |
 
 The probe suite lands before cut 2. Cuts 2 to 6 get Drak's desktop pass as well, for call 4's condition.
 
