@@ -7,3 +7,4 @@ __pycache__/
 *.pyc
 # the parse gate's old hard-coded input path
 /cartulary.html
+tools/probes/.deps/

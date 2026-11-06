@@ -1,7 +1,8 @@
 name: gate
 
 # Every push runs the same gates a session runs by hand. Nothing here reaches the
-# network: the parser comes from deps/, the tree carries its own anchor.
+# network: the parser and playwright-core come from deps/, the probes drive the
+# runner image's Google Chrome, and the tree carries its own anchor.
 on: [push, pull_request]
 
 jobs:
@@ -27,6 +28,12 @@ jobs:
           mkdir -p babelcheck/node_modules/@babel/parser
           tar -xzf deps/parser-7.25.3.tgz -C babelcheck/node_modules/@babel/parser --strip-components=1
           node babelcheck/check.js
+
+      - name: behavior probes (the runner's Google Chrome, playwright-core from deps/)
+        run: node tools/probes/run.js
+
+      - name: behavior-probe teeth
+        run: node tools/probes/teeth.js
 
       - name: build-gate teeth
         run: python3 inlining/prove_gate_teeth.py

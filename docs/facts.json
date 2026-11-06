@@ -1203,7 +1203,7 @@
    "handoff-v1.7.md",
    "changelog-v1.7.md",
    "NEXT: v1.8",
-   "only the two parity tools are in the repository"
+   "the earlier probes are the suite in `tools/probes/`"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
