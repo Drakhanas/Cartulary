@@ -68,7 +68,7 @@ The app's pages go into the browser's history, so Android's back gesture and a d
 ## 6. Visible controls (cut 6) and each view at phone width (cut 7)
 
 - Cut 6 inventories every action that lives only on a hover, a double-click, or a right-click, then gives each a button or a menu item, on desktop too. The mouse shortcuts stay.
-- The hover descriptions for the view names (the roadmap's row) need a visible form on touch, decided at that row's cut.
+- The hover descriptions for the view names go in this cut (planned 2026-11-06; the roadmap's row has the calls and the wording): a hover title, and a ? toggle by the Views heading on every device that shows each description under its name.
 - Cut 7 fits each view's toolbars, panels, and grids into a phone's width; how many cuts it takes comes from cut 6's inventory.
 
 ## 7. The hosted copy (cut 8)
