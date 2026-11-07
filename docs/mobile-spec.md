@@ -94,7 +94,7 @@ A site edit: the walkthrough's plan (2026-11-06, `docs/walkthrough-spec.md`) mov
 | 4 | Drags on pointer events | Reordering, handles, the sidebar's width (section 5) |
 | 5 | Canvas drags and pinch | Section 5 |
 | 6 | Visible controls | The inventory, then the controls (section 6) |
-| 7 | Each view at phone width | Per view; its count comes from cut 6 |
+| 7 | Each view at phone width | Per view; its count comes from cut 6. Carries a map record's createdAt (the roadmap's row, 2026-11-07) |
 | 8 | The hosted copy | Section 7 |
 | 9 | Mobile's site text | Section 8, a site edit |
 
