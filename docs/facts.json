@@ -1280,7 +1280,7 @@
    "Language / Glossary",
    "A map template of the user's own, promoted to Cartographia before r004",
    "CI's two warnings",
-   "A map record has no createdAt",
+   "A map record's createdAt",
    "A built-in template's Reset to Default keeps a field's values through a change of its type",
    "v1.7 shipped 2026-11-02",
    "A probe suite in the repository, run by CI",
