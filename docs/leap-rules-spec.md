@@ -21,7 +21,7 @@ Leap rules that stack on any calendar (extra days with exceptions, and inserted 
 ## 2. What the plan found
 
 - A calendar is months with fixed day counts (`DEFAULT_CALENDAR`, `06_calendar-engine`); its year length is their sum (`daysPerCalendarYear`), every year alike.
-- Seven call sites multiply or divide by that length: the two conversions (`calendarDateToAbsoluteDay`, `absoluteDayToCalendarDate`), age (`computeLifespanAge`), Kalendarium's grid (`25_kalendarium`), and Chronometric's year axis (four in `19_chronometric`). Month lengths are read directly for the grid and for date validation.
+- `daysPerCalendarYear` has eight callers: seven multiply or divide by it, the two conversions (`calendarDateToAbsoluteDay`, `absoluteDayToCalendarDate`) and age (`computeLifespanAge`) in `06_calendar-engine` and four in Chronometric's axis and steps (`19_chronometric`), and Kalendarium only prints it (`25_kalendarium`). Three places work the year out without it: Force Align (`24_ephemeris/04_forcealign`), the season editor (`06_calendar-engine`), and Observe's step buttons (`24_ephemeris/03_observe`), which sum a `daysPerMonth` no month has, so ±1y always steps 365 days and ±1mo 365 over the month count, a bug in v1.7 as shipped (found 2026-11-10). Month lengths are read directly by the grid, date validation, the in-world date picker (`14_form-engine-edit`), and Chronometric's axis and day steps.
 - Dates are stored as year, month index, and day. A calendar other than the primary carries `anchor.absoluteDay`; a moon on a hand-set cycle carries `phaseAnchorDay`.
 - Seasons are hand-set day-of-year ranges (`getSeasonForDayOfYear`). Ephemeris propagates every body by absolute day (`computeRootRelativePosition`, `24_ephemeris/06_orbital-math`) and stores a planet's axial tilt. A calendar links moons (`celestials`), not its planet.
 - Phases: `computeMoonPhaseGeometric` reads the star, planet, and moon angle, unsigned, into five glyphs (`MOON_GLYPHS`, `BUCKET_TO_PHASE`, waxing and waning folded); the hand-set cycle keeps the full fraction and folds it the same way.
@@ -30,14 +30,14 @@ Leap rules that stack on any calendar (extra days with exceptions, and inserted 
 
 - Stored on the calendar; any number per calendar; each of one of the two kinds in section 1, with an optional first year.
 - Year length and month lengths per year; the conversions work out leap years arithmetically, not by walking year by year, so a date thousands of years out costs the same as one nearby.
-- The seven call sites switch from the fixed length.
+- The eight callers and the three places that work the year out themselves switch to the per-year length, which fixes Observe's step buttons.
 - An inserted period appears in leap years in the grid, the date pickers, and every date display. A date inside one is stored as the year, the period's id, and the day; L1 fixes the shape and what an older version makes of it.
 - Age counts birthdays: whole years by date, not days divided by one year length (`computeLifespanAge`, which auto-age and computed fields' Age both use).
 
 ## 4. Adding a rule to a calendar with dates (cut L2)
 
 - What's written stays: March 1, 1200 still reads March 1, 1200, its absolute day moved by the leap days before it.
-- A pin set as a date in this calendar's terms is re-pinned so it still means that date: another calendar's anchor, a moon's phase anchor where it was set as a date. L2 checks each pin for whether it was entered as a date or as a number; only date-entered pins move.
+- A pin set as a date is re-pinned so it still means that date, and no pin records how it was entered, so it goes by kind (checked 2026-11-10): a calendar's anchor is only ever set from a date in the primary calendar (Re-pin, `25_kalendarium`) and stored as an absolute day, so a rule on the primary re-pins every anchor to the same primary date and a rule on any other calendar leaves anchors alone; a moon's phase anchor is only ever entered as an absolute day (`24_ephemeris/02_asbo`, or migrated from `offsetDays`, `10_migrate`), so it stays.
 - Ephemeris's orbits stay on absolute days: a body's position on a day doesn't change, only the calendar's name for the day.
 - Before the rule saves, a preview says how many dates it moves, from which year, and by up to how many days.
 

@@ -21,7 +21,7 @@ A Start here list on Home replaces the in-app help: step cards that take a new u
 
 - The help is 42 topics, about 219,000 characters of source (`26_home-data`); the site's reference was written from it at r059 (`04cdb60`), and the save file's schema lives in its JSON Save File Schema topic.
 - `site/helloworld.html` is one file, about 620 KB at `2d467c7`, and two commits this week document the twenty built-in templates in full, a format pass pending.
-- No text anywhere else in the app points into the help, so taking it out leaves nothing dangling.
+- One line elsewhere in the app points into the help: Settings' Browser storage row ends "(Help: Working With Multiple Worlds)" when the page is opened from a file (`16_trunk`). W4 points it at the site.
 - Cartulary makes no request, so a link from the app to the site works only online. The site's page is one HTML file, so saving it beside Cartulary is the offline answer; on iPhone and iPad the hosted copy's service worker can cache it with the app (`docs/mobile-spec.md`, section 7).
 - The app keeps one world per browser profile; opening another replaces it, which Import does today behind a warning that offers Export world first when the world has entries.
 - The only example data in the app is Ephemeris's Sol, Terra, and Luna.
@@ -37,7 +37,7 @@ A Start here list on Home replaces the in-app help: step cards that take a new u
 
 ## 4. The sample world (cuts W2 and W3)
 
-- Claude drafts it as `docs/sample-world.md` for Drak's edit before anything is built: about a dozen entries across Character, Location, Faction, and Historical Event; one place renamed over time through Name History; a family line for Linea and Stemma; a map with pins; dated events for both timelines; a story with a few scenes for Fabula; a short conlang for Glossopoeia; and Ephemeris's Sol, Terra, and Luna.
+- Claude drafts it as `docs/sample-world.md` for Drak's edit before anything is built: about a dozen entries across Character, Location, Faction, and Historical Event; one place renamed over time through Name History; a family line for Linea, and a rota or tabula of its own for Stemma, which reads no family links; a map with pins; dated events for both timelines; a story with a few scenes for Fabula; a short conlang for Glossopoeia; and Ephemeris's Sol, Terra, and Luna.
 - Built into the app file. An Open the sample world step in Start here loads it as Import does: straight away on a world with no entries, through Import's warning, with Export world first, on one with entries. Leaving it is Reset, or importing the user's own world.
 - A map needs its image inside the file; the image is kept small, and W3 reports what the sample world adds to the file's size.
 
@@ -54,7 +54,7 @@ Last in the line, per the order in the roadmap's v1.8 section.
 | W1 | The site carries the reference | Everything the help says, and v1.8's features as their cuts land; the schema topic copied into `docs/`. A site edit, no r-number |
 | W2 | The sample world, drafted | `docs/sample-world.md`, for Drak's edit (section 4) |
 | W3 | The sample world, built | In the app file, with its Open step; the size it adds, image included |
-| W4 | Start here | The help leaves Home; the step cards, the link, the cloud-drive guidance, and the one-file wording (section 3) |
+| W4 | Start here | The help leaves Home; the step cards, the link, the cloud-drive guidance, and the one-file wording (section 3); Settings' pointer into the help points at the site |
 | W5 | Probes | The suite gains opening the sample world and each Show me step |
 
 ## 7. Won't-have in v1.8

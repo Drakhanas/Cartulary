@@ -1946,6 +1946,23 @@ headliner, so if anything has to give, it shouldn't be the headline.
 Mobile's plan took six calls, and Drak's test on his phone settled more
 than any of them. The file opens on Android and keeps a world; the
 sidebar ate sixty percent of the screen, which no amount of my reading
-would have put a number on. He turned down my default twice, both times
-for the same reason, fewer versions of the app to keep, and both times
-the reason was sound.
+would have put a number on. He turned down my default once, on what a
+phone gets, for fewer versions of the app to keep, and the reason was
+sound.
+
+The rest of the line got planned over the next four days, a block at a
+time, and the plans kept finding the tree ahead of them. Moon phases
+from position were already there when Drak asked if they could be. The
+CSV importer June's plan wanted to build had been built in v1.7 for
+entries, mapping step and all, and the lexicon only needed pointing at
+it. Age was there too, which Drak had to point out. Where the tree
+wasn't ahead and Drak went past my default, it was toward the bigger
+build: formulas as well as built-ins, values on every link instead of a
+list on the stars. "As long as we're doing this, we may as well do it
+right" is a fair summary of how he planned v1.8, and of why it's going
+to be a long line.
+
+The probe suite was the one thing built. Its first CI run passed on the
+runner's own Chrome, and its teeth found one probe that passed with its
+drag switched off, because it compared against a value the world had
+never saved. That lesson went into doctrine.

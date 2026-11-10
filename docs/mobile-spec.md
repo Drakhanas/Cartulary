@@ -23,9 +23,9 @@ Mobile support makes every view and every edit work on a phone and a tablet with
 ### The tree (r059, `3e3cfc1`)
 
 - One media query in the whole app: the Home help's contents list collapsing at 760 px (`shell.html`).
-- The sidebar is a fixed column, 236 px by default, resized from 200 to 500 by a mouse drag on its edge (`onMouseDown`; `12_trunk`), with the world's name, Home and Project pinned, the views, All entries, Templates, Lists, and Tags in one scrolling column, and four buttons at its foot. Nothing hides it.
+- The sidebar is a fixed column, 236 px by default, resized from 200 to 500 by a mouse drag on its edge (`onMouseDown`; `12_trunk`), with the world's name, Home and Project pinned, the views, All entries, and the Templates, Lists, Packs, and Tags sections in one scrolling column, and four buttons at its foot, a fifth (Restore Built-ins) after a built-in template is deleted. Nothing hides it.
 - Browser history: only the Home help's topics push entries (`#section=`, `27_trunk`). Everything else is in-app state, so Android's back gesture leaves Cartulary, and an iPhone home-screen app has no browser back at all.
-- Touch: the map editor and Rota's and Tabula's drags run on pointer events (`18_cartographia`, `21_stemma`); Concordance and Linea use d3's drag and zoom. Chronometric's drag edit, Ephemeris's views, and Fabula's timeline listen for the mouse only (`19_chronometric`, `24_ephemeris`, `28_fabula/10_timeline`). Reordering by drag (the sidebar's views, Fabula's index, outline, and plot) uses the browser's drag and drop, which the help calls mouse-only.
+- Touch: the map editor and Rota's and Tabula's drags run on pointer events (`18_cartographia`, `21_stemma`); Concordance and Linea use d3's drag and zoom. Chronometric's pan and drag edit, Ephemeris's views, and Fabula's timeline listen for the mouse only (`19_chronometric`, `24_ephemeris`, `28_fabula/10_timeline`). Reordering by drag uses the browser's drag and drop, which the help calls mouse-only: the shared `useDragReorder` (`00_trunk`) for the sidebar's views, templates, and saved lists, the template builder's fields, and the calendar editor's months, and Fabula's own for its index, outline, and plot (`28_fabula/01_index`, `04_outline`, `05_plot`).
 - Some controls show only on hover: the sidebar's drag handles, Tabula's grips.
 
 ### Drak's phone (Android; Brave and Chrome; 2026-11-03, 14:23)
@@ -59,10 +59,10 @@ The app's pages go into the browser's history, so Android's back gesture and a d
 
 ## 5. Drags (cuts 4 and 5)
 
-- Reordering by drag (the sidebar's views; Fabula's index, outline, and plot) moves off the browser's drag and drop onto pointer events, which take a mouse, a pen, and a finger alike. The faded copy the browser draws under the cursor gives way to one the app draws; the drop lands the same.
+- Reordering by drag (every user of `useDragReorder`, and Fabula's index, outline, and plot; section 2) moves off the browser's drag and drop onto pointer events, which take a mouse, a pen, and a finger alike, and cut 4's desktop pass covers each. The faded copy the browser draws under the cursor gives way to one the app draws; the drop lands the same.
 - Handles and grips are always shown on touch screens.
 - The sidebar's width takes a finger.
-- Chronometric's drag edit, Ephemeris's views, Fabula's timeline, and Rota's mouse-only parts move to pointer events.
+- Chronometric's pan and drag edit, Ephemeris's views, Fabula's timeline, and Rota's mouse-only parts move to pointer events.
 - Pinch zooms wherever Ctrl+wheel zooms and pinch doesn't yet.
 
 ## 6. Visible controls (cut 6) and each view at phone width (cut 7)
@@ -82,13 +82,13 @@ The app's pages go into the browser's history, so Android's back gesture and a d
 
 ## 8. Site text (cut 9)
 
-A site edit: the walkthrough's plan (2026-11-06, `docs/walkthrough-spec.md`) moved the full reference to the site, and a cut's reference text goes there, the in-app help staying as v1.7 left it until Start here replaces it. What changes: the site's Mobile paragraph and its "drag reorder is mouse-only" line, the itch page, and the site's iPhone and iPad page. Settings' "use Chrome or Edge" line for folders, app text, goes in cut 6, now that Chrome for Android counts.
+A site edit: the walkthrough's plan (2026-11-06, `docs/walkthrough-spec.md`) moved the full reference to the site, and a cut's reference text goes there, the in-app help staying as v1.7 left it until Start here replaces it. What changes: the site gains what the in-app help says about phones and about drag reorder being mouse-only (`26_home-data`), which `site/` doesn't carry yet, written as mobile now works; the itch page; and the site's iPhone and iPad page. Settings' "use Chrome or Edge" line for folders, app text, goes in cut 6, now that Chrome for Android counts.
 
 ## 9. Cut plan
 
 | # | Cut | What it does |
 |---|---|---|
-| 1 | r001, carry-in | The export's version literals and the stale Kalendarium comment |
+| 1 | r001, carry-in | The four version literals in the two HTML exports (`08_export-layer`; Fabula's story export, `28_fabula/11_export`) and the stale Kalendarium comment |
 | 2 | The frame | Section 3 |
 | 3 | Back in history | Section 4 |
 | 4 | Drags on pointer events | Reordering, handles, the sidebar's width (section 5) |

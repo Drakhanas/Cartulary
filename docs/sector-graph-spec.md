@@ -19,10 +19,10 @@ Reference fields can become link fields, each with a name, a line style, a color
 
 ## 2. What the plan found
 
-- Concordance has drawn Ephemeris's stars, planets, and moons as nodes since v1.5, through the node-source registry, with `parentBodyId` as "orbits" edges; nothing links one system to another. It saves node positions (`state.concordance.positions`).
-- Ephemeris bodies aren't entries: no template, no reference fields. Narrative kinds carry no orbital math. A body's orbit is around one parent's mass.
+- Concordance has drawn Ephemeris's stars, planets, and moons as nodes since v1.5, through the node-source registry, with `parentBodyId` as "orbits" edges. Nothing made for it links one system to another, though a body's Visible From pick of another body, or a [[link]] in a body's text, draws an edge between systems today. It saves node positions (`state.concordance.positions`).
+- Ephemeris bodies aren't entries and have no template, but each carries four reference lists, Visible From, Notable Locations, Inhabited By, and Sacred to (`24_ephemeris/00_body-kinds`), edited with `EntryRefEditor` (`02_asbo`), read by the link index (`22_trunk`), and drawn by Concordance (`17_concordance`); Visible From can name another body. Link fields on bodies are lists of the same kind, defined once for the world. Narrative kinds carry no orbital math. A body's orbit is around one parent's mass.
 - `relationKind` has two values, parent and spouse; spouse links carry Married and Ended dates and mirror to the partner (since v1.2), and parent links carry a label (the typed relations row).
-- Colors come from a preset palette (`COLORS`); the decided-no list rules out a custom color picker for the map editor. This is the app's first full picker, the browser's own color input, which works on desktop and phones.
+- The browser's own color input is already in five places: the Color field type's editor, a map pin's color, season colors, a body's Observe color, and Observe's per-kind colors (`14_form-engine-edit`, `18_cartographia/03_view`, `06_calendar-engine`, `24_ephemeris/02_asbo`, `24_ephemeris/03_observe`); the preset palette `COLORS` (`00_trunk`) feeds template colors and Stemma. A link field's color uses the same input.
 
 ## 3. Link fields (cuts S1 and S2)
 

@@ -19,7 +19,7 @@ A computed field type, worked out when read and never stored: built-ins first (a
 ## 2. What the plan found
 
 - The entry list sorts by name, updated, and created only (`12_trunk`, the `sortBy` menu in `13_form-engine-display`); no field of any type sorts. So sortable means sort by field first, for every field.
-- The filter (`queryTest`, `13_form-engine-display`) tests fields by kind: numbers, dates, references, text.
+- The filter (`queryTest`, `13_form-engine-display`) tests fields by the kind `QUERY_KINDS` gives each type: text, choice, multi, number, day (a real-world Date), date (a Calendar Date), ref, and image (filled or empty). A computed type needs an entry there.
 - The entries exports, JSON and CSV, write stored field values; age isn't stored, so neither carries it.
 - Seventeen field types (`FIELD_TYPES`, `00_trunk`), none derived. Age is display-side (`computeLifespanAge`, `06_calendar-engine`, since v1.4): the suffix on the first date range of a template whose Status offers Deceased, and the entry view's and the HTML export's Died at age line, counting days and dividing by the calendar's fixed year length.
 
@@ -34,7 +34,7 @@ A computed field type, worked out when read and never stored: built-ins first (a
 ## 4. Auto-age becomes Age (cut C3)
 
 - A migration adds an Age field, once, to each template whose Status offers Deceased, counting from its first date range, the field the suffix uses today. It marks each template done, so a user who deletes the field doesn't get it back on the next load.
-- The suffix goes. The field shows what auto-age showed, "~N" and "died at N", and the Died at age line in the entry view and the HTML export comes from the field.
+- The suffix goes. The field shows what the suffix shows, which reads " (age N)" or " (died at age N)" today with "~" before N when a date is approximate (`06_calendar-engine`), its own wording set at C3's pass; the "Died at age N" line in the entry view and the HTML export comes from the field.
 - Those templates' CSV exports gain an Age column, read-only.
 
 ## 5. Formulas (cut C4)

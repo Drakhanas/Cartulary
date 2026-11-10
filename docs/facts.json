@@ -149,6 +149,20 @@
   "v17_readable_hash": {
    "value": "5cdf993176cb4d8e",
    "pattern": "`Cartulary_v1\\.7_Readable\\.html` \\([0-9,]+ bytes, sha256 `([0-9a-f]{16})`"
+  },
+  "behavior_probe_count": {
+   "value": [
+    11,
+    "eleven"
+   ],
+   "pattern": "(?i)\\b(\\w+) probes and \\w+ planted defects"
+  },
+  "behavior_probe_mutations": {
+   "value": [
+    8,
+    "eight"
+   ],
+   "pattern": "(?i)probes and (\\w+) planted defects"
   }
  },
  "assertions": [
@@ -1203,7 +1217,9 @@
    "handoff-v1.7.md",
    "changelog-v1.7.md",
    "NEXT: v1.8",
-   "the earlier probes are the suite in `tools/probes/`"
+   "the earlier probes are the suite in `tools/probes/`",
+   "every item planned",
+   "we're still in planning"
   ],
   "cartulary-spine-manifest.md": [
    "## 11. Header integrity",
@@ -1285,7 +1301,8 @@
    "v1.7 shipped 2026-11-02",
    "A probe suite in the repository, run by CI",
    "The order: mobile first",
-   "A design pass with Claude's design tool"
+   "A design pass with Claude's design tool",
+   "planned end to end"
   ],
   "cartulary-doctrine.md": [
    "r030",

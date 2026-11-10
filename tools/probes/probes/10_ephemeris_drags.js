@@ -21,8 +21,9 @@ module.exports = {
     await page.locator("button", { hasText: /^Compute$/ }).click();
     const sep = page.locator("[role=separator][aria-orientation=horizontal]");
     await sep.waitFor();
-    // Two drags, down then up: the second ratio must sit well above the
-    // first, which a split that ignores the pointer can't manage.
+    // Two drags, down then up: the second saved ratio must be smaller than
+    // the first by more than 0.05, which a split that ignores the pointer
+    // can't manage.
     const ratio = () => lib.worldState(page).then(st => st.ephemeris.compute.querySplitRatio);
     let s = await sep.boundingBox();
     await lib.drag(page, s.x + s.width / 2, s.y + s.height / 2, s.x + s.width / 2, s.y + s.height / 2 + 120);
